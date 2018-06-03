@@ -38,7 +38,7 @@
                   </div>
                   <?php
                   echo '<i class="fa fa-question-circle" data-toggle="tooltip" data-title="'._l('tasks_bull_actions_assign_notice').'"></i>';
-                  $staff_bulk_assigned = $this->staff_model->get('',1);
+                  $staff_bulk_assigned = $this->staff_model->get('', ['active'=>1]);
                   echo render_select('task_bulk_assignees',$staff_bulk_assigned,array('staffid',array('firstname','lastname')),'task_assigned','',array('multiple'=>true));
                   if(isset($project)){
                       echo render_select('task_bulk_milestone', $this->projects_model->get_milestones($project->id), array(

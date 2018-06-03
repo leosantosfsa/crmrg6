@@ -37,7 +37,7 @@
                 </div>
                 <div class="clearfix"></div>
                 <div class="col-md-12">
-                    <hr />
+                    <hr class="hr-10" />
                 </div>
             </div>
         </div>

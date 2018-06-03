@@ -26,7 +26,7 @@
 					<ul class="mtop10 articles_list">
 						<?php foreach($related_articles as $relatedArticle) { ?>
 						<li>
-							<a href="<?php echo site_url('knowledge_base/'.$relatedArticle['slug']); ?>" class="article-heading"><?php echo $relatedArticle['subject']; ?></a>
+							<a href="<?php echo site_url('knowledge-base/article/'.$relatedArticle['slug']); ?>" class="article-heading"><?php echo $relatedArticle['subject']; ?></a>
 							<div class="text-muted mtop10"><?php echo mb_substr(strip_tags($relatedArticle['description']),0,150); ?>...</div>
 						</li>
 						<hr />

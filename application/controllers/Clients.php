@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Clients extends Clients_controller
@@ -6,7 +7,6 @@ class Clients extends Clients_controller
     public function __construct()
     {
         parent::__construct();
-        $this->form_validation->set_error_delimiters('<p class="text-danger alert-validation">', '</p>');
         do_action('after_clients_area_init', $this);
     }
 
@@ -19,6 +19,7 @@ class Clients extends Clients_controller
         $this->load->model('reports_model');
         $data['payments_years'] = $this->reports_model->get_distinct_customer_invoices_years();
 
+        $data['project_statuses'] = $this->projects_model->get_project_statuses();
         $data['title'] = get_company_name(get_client_user_id());
         $this->data    = $data;
         $this->view    = 'home';
@@ -55,15 +56,15 @@ class Clients extends Clients_controller
             redirect(site_url('clients/login'));
         }
         $data['title'] = _l('calendar');
-        $this->view            = 'calendar';
-        $this->data            = $data;
+        $this->view    = 'calendar';
+        $this->data    = $data;
         $this->layout();
     }
 
     public function get_calendar_data()
     {
         if (!is_client_logged_in()) {
-            echo json_encode(array());
+            echo json_encode([]);
             die;
         }
         $this->load->model('utilities_model');
@@ -91,10 +92,10 @@ class Clients extends Clients_controller
 
         $data['project_statuses'] = $this->projects_model->get_project_statuses();
 
-        $where = 'clientid='.get_client_user_id();
+        $where = 'clientid=' . get_client_user_id();
 
         if (is_numeric($status)) {
-            $where .= ' AND status='.$status;
+            $where .= ' AND status=' . $status;
         } else {
             $where .= ' AND status IN (';
             foreach ($data['project_statuses'] as $projectStatus) {
@@ -105,10 +106,10 @@ class Clients extends Clients_controller
             $where = rtrim($where, ',');
             $where .= ')';
         }
-        $data['projects']         = $this->projects_model->get('', $where);
-        $data['title']            = _l('clients_my_projects');
-        $this->data               = $data;
-        $this->view               = 'projects';
+        $data['projects'] = $this->projects_model->get('', $where);
+        $data['title']    = _l('clients_my_projects');
+        $this->data       = $data;
+        $this->view       = 'projects';
         $this->layout();
     }
 
@@ -118,15 +119,21 @@ class Clients extends Clients_controller
             redirect_after_login_to_current_url();
             redirect(site_url('clients/login'));
         }
+
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
-        $project = $this->projects_model->get($id, array(
-            'clientid' => get_client_user_id(),
-        ));
 
-        $data['project'] = $project;
+        $project = $this->projects_model->get($id, [
+            'clientid' => get_client_user_id(),
+        ]);
+
+        if (!$project) {
+            show_404();
+        }
+
+        $data['project']                               = $project;
         $data['project']->settings->available_features = unserialize($data['project']->settings->available_features);
 
         $data['title'] = $data['project']->name;
@@ -137,18 +144,18 @@ class Clients extends Clients_controller
                   case 'new_task':
                   case 'edit_task':
 
-                    $data = $this->input->post();
+                    $data    = $this->input->post();
                     $task_id = false;
                     if (isset($data['task_id'])) {
                         $task_id = $data['task_id'];
                         unset($data['task_id']);
                     }
 
-                    $data['rel_type'] = 'project';
-                    $data['rel_id'] = $project->id;
+                    $data['rel_type']    = 'project';
+                    $data['rel_id']      = $project->id;
                     $data['description'] = nl2br($data['description']);
 
-                    $assignees = isset($data['assignees']) ? $data['assignees'] : array();
+                    $assignees = isset($data['assignees']) ? $data['assignees'] : [];
                     if (isset($data['assignees'])) {
                         unset($data['assignees']);
                     }
@@ -158,29 +165,29 @@ class Clients extends Clients_controller
                         $task_id = $this->tasks_model->add($data, true);
                         if ($task_id) {
                             foreach ($assignees as $assignee) {
-                                $this->tasks_model->add_task_assignees(array('taskid'=>$task_id, 'assignee'=>$assignee), false, true);
+                                $this->tasks_model->add_task_assignees(['taskid' => $task_id, 'assignee' => $assignee], false, true);
                             }
                             $uploadedFiles = handle_task_attachments_array($task_id);
                             if ($uploadedFiles && is_array($uploadedFiles)) {
                                 foreach ($uploadedFiles as $file) {
                                     $file['contact_id'] = get_contact_user_id();
-                                    $this->misc_model->add_attachment_to_database($task_id, 'task', array($file));
+                                    $this->misc_model->add_attachment_to_database($task_id, 'task', [$file]);
                                 }
                             }
                             set_alert('success', _l('added_successfully', _l('task')));
-                            redirect(site_url('clients/project/' . $project->id . '?group=project_tasks&taskid='.$task_id));
+                            redirect(site_url('clients/project/' . $project->id . '?group=project_tasks&taskid=' . $task_id));
                         }
                     } else {
                         if ($project->settings->edit_tasks == 1
-                            && total_rows('tblstafftasks', array('is_added_from_contact'=>1, 'addedfrom'=>get_contact_user_id())) > 0) {
+                            && total_rows('tblstafftasks', ['is_added_from_contact' => 1, 'addedfrom' => get_contact_user_id()]) > 0) {
                             $affectedRows = 0;
-                            $updated = $this->tasks_model->update($data, $task_id, true);
+                            $updated      = $this->tasks_model->update($data, $task_id, true);
                             if ($updated) {
                                 $affectedRows++;
                             }
 
-                            $currentAssignees = $this->tasks_model->get_task_assignees($task_id);
-                            $currentAssigneesIds = array();
+                            $currentAssignees    = $this->tasks_model->get_task_assignees($task_id);
+                            $currentAssigneesIds = [];
                             foreach ($currentAssignees as $assigned) {
                                 array_push($currentAssigneesIds, $assigned['assigneeid']);
                             }
@@ -204,7 +211,7 @@ class Clients extends Clients_controller
                                 }
                                 foreach ($assignees as $assignee) {
                                     if (!$this->tasks_model->is_task_assignee($assignee, $task_id)) {
-                                        if ($this->tasks_model->add_task_assignees(array('taskid'=>$task_id, 'assignee'=>$assignee), false, true)) {
+                                        if ($this->tasks_model->add_task_assignees(['taskid' => $task_id, 'assignee' => $assignee], false, true)) {
                                             $affectedRows++;
                                         }
                                     }
@@ -213,11 +220,12 @@ class Clients extends Clients_controller
                             if ($affectedRows > 0) {
                                 set_alert('success', _l('updated_successfully', _l('task')));
                             }
-                            redirect(site_url('clients/project/' . $project->id . '?group=project_tasks&taskid='.$task_id));
+                            redirect(site_url('clients/project/' . $project->id . '?group=project_tasks&taskid=' . $task_id));
                         }
                     }
 
                     redirect(site_url('clients/project/' . $project->id . '?group=project_tasks'));
+
                     break;
                 case 'discussion_comments':
                     echo json_encode($this->projects_model->get_discussion_comments($this->input->post('discussion_id'), $this->input->post('discussion_type')));
@@ -225,14 +233,17 @@ class Clients extends Clients_controller
                 case 'new_discussion_comment':
                     echo json_encode($this->projects_model->add_discussion_comment($this->input->post(), $this->input->post('discussion_id'), $this->input->post('discussion_type')));
                     die;
+
                     break;
                 case 'update_discussion_comment':
                     echo json_encode($this->projects_model->update_discussion_comment($this->input->post(), $this->input->post('discussion_id')));
                     die;
+
                     break;
                 case 'delete_discussion_comment':
                     echo json_encode($this->projects_model->delete_discussion_comment($this->input->post('id')));
                     die;
+
                     break;
                 case 'new_discussion':
                     $discussion_data = $this->input->post();
@@ -242,20 +253,23 @@ class Clients extends Clients_controller
                         set_alert('success', _l('added_successfully', _l('project_discussion')));
                     }
                     redirect(site_url('clients/project/' . $id . '?group=project_discussions'));
+
                     break;
                 case 'upload_file':
                     handle_project_file_uploads($id);
                     die;
+
                     break;
                 case 'project_file_dropbox':
-                        $data = array();
-                        $data['project_id'] = $id;
-                        $data['files'] = $this->input->post('files');
-                        $data['external'] = $this->input->post('external');
+                        $data                        = [];
+                        $data['project_id']          = $id;
+                        $data['files']               = $this->input->post('files');
+                        $data['external']            = $this->input->post('external');
                         $data['visible_to_customer'] = 1;
-                        $data['contact_id'] = get_contact_user_id();
+                        $data['contact_id']          = get_contact_user_id();
                         $this->projects_model->add_external_file($data);
                 die;
+
                 break;
                 case 'get_file':
                     $file_data['discussion_user_profile_image_url'] = contact_profile_image_url(get_contact_user_id());
@@ -263,31 +277,34 @@ class Clients extends Clients_controller
                     $file_data['file']                              = $this->projects_model->get_file($this->input->post('id'), $this->input->post('project_id'));
 
                     if (!$file_data['file']) {
-                        header("HTTP/1.0 404 Not Found");
+                        header('HTTP/1.0 404 Not Found');
                         die;
                     }
                     echo get_template_part('projects/file', $file_data, true);
                     die;
+
                     break;
                 case 'update_file_data':
                     $file_data = $this->input->post();
                     unset($file_data['action']);
                     $this->projects_model->update_file_data($file_data);
+
                     break;
                 case 'upload_task_file':
                     $taskid = $this->input->post('task_id');
-                    $files   = handle_task_attachments_array($taskid, 'file');
+                    $files  = handle_task_attachments_array($taskid, 'file');
                     if ($files) {
-                        $i = 0;
+                        $i   = 0;
                         $len = count($files);
                         foreach ($files as $file) {
                             $file['contact_id'] = get_contact_user_id();
-                            $file['staffid'] = 0;
-                            $this->tasks_model->add_attachment_to_database($taskid, array($file), false, ($i == $len - 1 ? true : false));
+                            $file['staffid']    = 0;
+                            $this->tasks_model->add_attachment_to_database($taskid, [$file], false, ($i == $len - 1 ? true : false));
                             $i++;
                         }
                     }
                     die;
+
                     break;
                 case 'add_task_external_file':
                     $taskid                = $this->input->post('task_id');
@@ -296,22 +313,25 @@ class Clients extends Clients_controller
                     $file[0]['staffid']    = 0;
                     $this->tasks_model->add_attachment_to_database($this->input->post('task_id'), $file, $this->input->post('external'));
                     die;
+
                     break;
                 case 'new_task_comment':
-                    $comment_data = $this->input->post();
+                    $comment_data            = $this->input->post();
                     $comment_data['content'] = nl2br($comment_data['content']);
-                    $comment_id      = $this->tasks_model->add_task_comment($comment_data);
-                    $url = site_url('clients/project/' . $id . '?group=project_tasks&taskid=' . $comment_data['taskid']);
+                    $comment_id              = $this->tasks_model->add_task_comment($comment_data);
+                    $url                     = site_url('clients/project/' . $id . '?group=project_tasks&taskid=' . $comment_data['taskid']);
 
                     if ($comment_id) {
                         set_alert('success', _l('task_comment_added'));
-                        $url .= '#comment_'.$comment_id;
+                        $url .= '#comment_' . $comment_id;
                     }
 
                     redirect($url);
+
                     break;
                 default:
                     redirect(site_url('clients/project/' . $id));
+
                     break;
             }
         }
@@ -320,11 +340,12 @@ class Clients extends Clients_controller
         } else {
             $group = $this->input->get('group');
         }
+        $data['project_status'] = get_project_status_by_id($data['project']->status);
         if ($group != 'edit_task') {
             if ($group == 'project_overview') {
-                $data['project_status'] =  get_project_status_by_id($data['project']->status);
-                $percent          = $this->projects_model->calc_progress($id);
-                @$data['percent'] = $percent / 100;
+
+                $percent                = $this->projects_model->calc_progress($id);
+                @$data['percent']       = $percent / 100;
                 $this->load->helper('date');
                 $data['project_total_days']        = round((human_to_unix($data['project']->deadline . ' 00:00') - human_to_unix($data['project']->start_date . ' 00:00')) / 3600 / 24);
                 $data['project_days_left']         = $data['project_total_days'];
@@ -339,35 +360,35 @@ class Clients extends Clients_controller
                         $data['project_time_left_percent'] = 0;
                     }
                 }
-                $total_tasks = total_rows('tblstafftasks', array(
-            'rel_id' => $id,
-            'rel_type' => 'project',
+                $total_tasks = total_rows('tblstafftasks', [
+            'rel_id'            => $id,
+            'rel_type'          => 'project',
             'visible_to_client' => 1,
-        ));
+        ]);
 
-                $data['tasks_not_completed'] = total_rows('tblstafftasks', array(
-            'status !=' => 5,
-            'rel_id' => $id,
-            'rel_type' => 'project',
+                $data['tasks_not_completed'] = total_rows('tblstafftasks', [
+            'status !='         => 5,
+            'rel_id'            => $id,
+            'rel_type'          => 'project',
             'visible_to_client' => 1,
-        ));
+        ]);
 
-                $data['tasks_completed'] = total_rows('tblstafftasks', array(
-            'status' => 5,
-            'rel_id' => $id,
-            'rel_type' => 'project',
+                $data['tasks_completed'] = total_rows('tblstafftasks', [
+            'status'            => 5,
+            'rel_id'            => $id,
+            'rel_type'          => 'project',
             'visible_to_client' => 1,
-        ));
+        ]);
 
                 $data['total_tasks']                  = $total_tasks;
                 $data['tasks_not_completed_progress'] = ($total_tasks > 0 ? number_format(($data['tasks_completed'] * 100) / $total_tasks, 2) : 0);
             } elseif ($group == 'new_task') {
                 if ($project->settings->create_tasks == 0) {
-                    redirect(site_url('clients/project/'.$project->id));
+                    redirect(site_url('clients/project/' . $project->id));
                 }
-                $data['milestones']  = $this->projects_model->get_milestones($id);
+                $data['milestones'] = $this->projects_model->get_milestones($id);
             } elseif ($group == 'project_gantt') {
-                $data['gantt_data']  = $this->projects_model->get_gantt_data($id);
+                $data['gantt_data'] = $this->projects_model->get_gantt_data($id);
             } elseif ($group == 'project_discussions') {
                 if ($this->input->get('discussion_id')) {
                     $data['discussion_user_profile_image_url'] = contact_profile_image_url(get_contact_user_id());
@@ -376,29 +397,29 @@ class Clients extends Clients_controller
                 }
                 $data['discussions'] = $this->projects_model->get_discussions($id);
             } elseif ($group == 'project_files') {
-                $data['files']       = $this->projects_model->get_files($id);
+                $data['files'] = $this->projects_model->get_files($id);
             } elseif ($group == 'project_tasks') {
                 $data['tasks_statuses'] = $this->tasks_model->get_statuses();
-                $data['project_tasks'] = $this->projects_model->get_tasks($id);
+                $data['project_tasks']  = $this->projects_model->get_tasks($id);
             } elseif ($group == 'project_activity') {
-                $data['activity']   = $this->projects_model->get_activity($id);
+                $data['activity'] = $this->projects_model->get_activity($id);
             } elseif ($group == 'project_milestones') {
-                $data['milestones']  = $this->projects_model->get_milestones($id);
+                $data['milestones'] = $this->projects_model->get_milestones($id);
             } elseif ($group == 'project_invoices') {
-                $data['invoices'] = array();
+                $data['invoices'] = [];
                 if (has_contact_permission('invoices')) {
-                    $data['invoices'] = $this->invoices_model->get('', array(
-                            'clientid' => get_client_user_id(),
+                    $data['invoices'] = $this->invoices_model->get('', [
+                            'clientid'   => get_client_user_id(),
                             'project_id' => $id,
-                        ));
+                        ]);
                 }
             } elseif ($group == 'project_tickets') {
-                $data['tickets'] = array();
+                $data['tickets'] = [];
                 if (has_contact_permission('support')) {
-                    $where_tickets = array(
+                    $where_tickets = [
                         'tbltickets.userid' => get_client_user_id(),
-                        'project_id' => $id,
-                    );
+                        'project_id'        => $id,
+                    ];
 
                     if (!is_primary_contact() && get_option('only_show_contact_tickets') == 1) {
                         $where_tickets['tbltickets.contactid'] = get_contact_user_id();
@@ -407,40 +428,40 @@ class Clients extends Clients_controller
                     $data['tickets'] = $this->tickets_model->get('', $where_tickets);
                 }
             } elseif ($group == 'project_estimates') {
-                $data['estimates'] = array();
+                $data['estimates'] = [];
                 if (has_contact_permission('estimates')) {
-                    $data['estimates'] = $this->estimates_model->get('', array(
-                            'clientid' => get_client_user_id(),
+                    $data['estimates'] = $this->estimates_model->get('', [
+                            'clientid'   => get_client_user_id(),
                             'project_id' => $id,
-                        ));
+                        ]);
                 }
             } elseif ($group == 'project_timesheets') {
                 $data['timesheets'] = $this->projects_model->get_timesheets($id);
             }
 
             if ($this->input->get('taskid')) {
-                $data['view_task'] = $this->tasks_model->get($this->input->get('taskid'), array(
-                    'rel_id' => $project->id,
+                $data['view_task'] = $this->tasks_model->get($this->input->get('taskid'), [
+                    'rel_id'   => $project->id,
                     'rel_type' => 'project',
-                ));
+                ]);
 
                 $data['title'] = $data['view_task']->name;
             }
         } elseif ($group == 'edit_task') {
-            $data['task'] = $this->tasks_model->get($this->input->get('taskid'), array(
-                    'rel_id' => $project->id,
-                    'rel_type' => 'project',
-                    'addedfrom'=>get_contact_user_id(),
-                    'is_added_from_contact'=>1,
-                ));
+            $data['task'] = $this->tasks_model->get($this->input->get('taskid'), [
+                    'rel_id'                => $project->id,
+                    'rel_type'              => 'project',
+                    'addedfrom'             => get_contact_user_id(),
+                    'is_added_from_contact' => 1,
+                ]);
         }
 
-        $data['group'] = $group;
+        $data['group']    = $group;
         $data['currency'] = $this->projects_model->get_currency($id);
-        $data['members']     = $this->projects_model->get_project_members($id);
+        $data['members']  = $this->projects_model->get_project_members($id);
 
-        $this->data            = $data;
-        $this->view            = 'project';
+        $this->data = $data;
+        $this->view = 'project';
         $this->layout();
     }
 
@@ -519,9 +540,9 @@ class Clients extends Clients_controller
         if (!is_client_logged_in()) {
             redirect(site_url('clients/login'));
         }
-        echo json_encode(array(
+        echo json_encode([
             'success' => $this->tasks_model->remove_comment($id),
-        ));
+        ]);
     }
 
     public function edit_comment()
@@ -531,15 +552,15 @@ class Clients extends Clients_controller
         }
 
         if ($this->input->post()) {
-            $data = $this->input->post();
+            $data            = $this->input->post();
             $data['content'] = nl2br($data['content']);
-            $success = $this->tasks_model->edit_comment($data);
+            $success         = $this->tasks_model->edit_comment($data);
             if ($success) {
                 set_alert('success', _l('task_comment_updated'));
             }
-            echo json_encode(array(
+            echo json_encode([
                 'success' => $success,
-            ));
+            ]);
         }
     }
 
@@ -554,9 +575,9 @@ class Clients extends Clients_controller
             redirect(site_url());
         }
 
-        $where = array(
+        $where = [
             'tbltickets.userid' => get_client_user_id(),
-        );
+        ];
 
         if (!is_primary_contact() && get_option('only_show_contact_tickets') == 1) {
             $where['tbltickets.contactid'] = get_contact_user_id();
@@ -570,11 +591,11 @@ class Clients extends Clients_controller
         $where['status'] = $status;
 
         $data['list_status'] = $status;
-        $data['bodyclass'] = 'tickets';
-        $data['tickets']   = $this->tickets_model->get('', $where);
-        $data['title']     = _l('clients_tickets_heading');
-        $this->data        = $data;
-        $this->view        = 'tickets';
+        $data['bodyclass']   = 'tickets';
+        $data['tickets']     = $this->tickets_model->get('', $where);
+        $data['title']       = _l('clients_tickets_heading');
+        $this->data          = $data;
+        $this->view          = 'tickets';
         $this->layout();
     }
 
@@ -587,92 +608,6 @@ class Clients extends Clients_controller
         }
     }
 
-    public function viewproposal($id, $hash)
-    {
-        check_proposal_restrictions($id, $hash);
-        $proposal = $this->proposals_model->get($id);
-        if ($proposal->rel_type == 'customer' && !is_client_logged_in()) {
-            load_client_language($proposal->rel_id);
-        }
-        $identity_confirmation_enabled = get_option('proposal_accept_identity_confirmation');
-        if ($this->input->post()) {
-            $action = $this->input->post('action');
-            switch ($action) {
-                case 'proposal_pdf':
-
-                    $proposal_number = format_proposal_number($id);
-                    $companyname     = get_option('invoice_company_name');
-                    if ($companyname != '') {
-                        $proposal_number .= '-' . mb_strtoupper(slug_it($companyname), 'UTF-8');
-                    }
-
-                    try {
-                        $pdf = proposal_pdf($proposal);
-                    } catch (Exception $e) {
-                        echo $e->getMessage();
-                        die;
-                    }
-
-                    $pdf->Output($proposal_number . '.pdf', 'D');
-                    break;
-                case 'proposal_comment':
-                    // comment is blank
-                    if (!$this->input->post('content')) {
-                        redirect($this->uri->uri_string());
-                    }
-                    $data               = $this->input->post();
-                    $data['proposalid'] = $id;
-                    $this->proposals_model->add_comment($data, true);
-                    redirect($this->uri->uri_string());
-                    break;
-                case 'accept_proposal':
-                    $success = $this->proposals_model->mark_action_status(3, $id, true);
-                    if ($success) {
-                        $this->db->where('id', $id);
-                        $this->db->update('tblproposals', get_acceptance_info_array());
-                        redirect($this->uri->uri_string(), 'refresh');
-                    }
-                    break;
-                case 'decline_proposal':
-                    $success = $this->proposals_model->mark_action_status(2, $id, true);
-                    if ($success) {
-                        redirect($this->uri->uri_string(), 'refresh');
-                    }
-                    break;
-            }
-        }
-
-        $number_word_lang_rel_id = 'unknown';
-        if ($proposal->rel_type == 'customer') {
-            $number_word_lang_rel_id = $proposal->rel_id;
-        }
-        $this->load->library('numberword', array(
-            'clientid' => $number_word_lang_rel_id,
-        ));
-
-        $this->use_footer     = false;
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
-
-        $data['title']        = $proposal->subject;
-        $data['proposal']     = do_action('proposal_html_pdf_data', $proposal);
-        $data['bodyclass']    = 'proposal proposal-view';
-
-        $data['identity_confirmation_enabled'] = $identity_confirmation_enabled;
-        if ($identity_confirmation_enabled == '1') {
-            $data['bodyclass'] .= ' identity-confirmation';
-        }
-
-        $data['comments']     = $this->proposals_model->get_comments($id);
-        add_views_tracking('proposal', $id);
-        do_action('proposal_html_viewed', $id);
-        $data['exclude_reset_css'] = true;
-        $data = do_action('proposal_customers_area_view_data', $data);
-        $this->data                = $data;
-        $this->view                = 'viewproposal';
-        $this->layout();
-    }
-
     public function proposals()
     {
         if (!is_client_logged_in()) {
@@ -683,7 +618,7 @@ class Clients extends Clients_controller
             redirect(site_url());
         }
 
-        $where  = 'rel_id =' . get_client_user_id() . ' AND rel_type ="customer"';
+        $where = 'rel_id =' . get_client_user_id() . ' AND rel_type ="customer"';
 
         if (get_option('exclude_proposal_from_client_area_with_draft_status') == 1) {
             $where .= ' AND status != 6';
@@ -715,10 +650,10 @@ class Clients extends Clients_controller
             $this->form_validation->set_rules('subject', _l('customer_ticket_subject'), 'required');
             $this->form_validation->set_rules('department', _l('clients_ticket_open_departments'), 'required');
             $this->form_validation->set_rules('priority', _l('priority'), 'required');
-            $custom_fields = get_custom_fields('tickets', array(
+            $custom_fields = get_custom_fields('tickets', [
                 'show_on_client_portal' => 1,
-                'required' => 1,
-            ));
+                'required'              => 1,
+            ]);
             foreach ($custom_fields as $field) {
                 $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
                 if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
@@ -734,11 +669,11 @@ class Clients extends Clients_controller
                 }
             }
         }
-        $data                   = array();
-        $data['projects']       = $this->projects_model->get_projects_for_ticket(get_client_user_id());
-        $data['title']          = _l('new_ticket');
-        $this->data             = $data;
-        $this->view             = 'open_ticket';
+        $data             = [];
+        $data['projects'] = $this->projects_model->get_projects_for_ticket(get_client_user_id());
+        $data['title']    = _l('new_ticket');
+        $this->data       = $data;
+        $this->view       = 'open_ticket';
         $this->layout();
     }
 
@@ -748,27 +683,35 @@ class Clients extends Clients_controller
             redirect_after_login_to_current_url();
             redirect(site_url('clients/login'));
         }
+
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
+
         if (!$id) {
             redirect(site_url());
         }
+
+        $data['ticket'] = $this->tickets_model->get_ticket_by_id($id, get_client_user_id());
+        if (!$data['ticket'] || $data['ticket']->userid != get_client_user_id()) {
+            show_404();
+        }
+
         if ($this->input->post()) {
             $this->form_validation->set_rules('message', _l('ticket_reply'), 'required');
             if ($this->form_validation->run() !== false) {
-                $replyid = $this->tickets_model->add_reply($this->input->post(), $id);
+                $data           = $this->input->post();
+                $data['userid'] = get_client_user_id();
+
+                $replyid = $this->tickets_model->add_reply($data, $id);
                 if ($replyid) {
                     set_alert('success', _l('replied_to_ticket_successfully', $id));
-                    redirect(site_url('clients/ticket/' . $id));
                 }
+                redirect(site_url('clients/ticket/' . $id));
             }
         }
-        $data['ticket'] = $this->tickets_model->get_ticket_by_id($id, get_client_user_id());
-        if ($data['ticket']->userid != get_client_user_id()) {
-            redirect(site_url());
-        }
+
         $data['ticket_replies'] = $this->tickets_model->get_ticket_replies($id);
         $data['title']          = $data['ticket']->subject;
         $this->data             = $data;
@@ -785,12 +728,11 @@ class Clients extends Clients_controller
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
-        $this->load->model('contracts_model');
-        $data['contracts'] = $this->contracts_model->get('', array(
-            'client' => get_client_user_id(),
+        $data['contracts'] = $this->contracts_model->get('', [
+            'client'                => get_client_user_id(),
             'not_visible_to_client' => 0,
-            'trash' => 0,
-        ));
+            'trash'                 => 0,
+        ]);
 
         $data['contracts_by_type_chart'] = json_encode($this->contracts_model->get_contracts_types_chart_data());
         $data['title']                   = _l('clients_contracts');
@@ -799,46 +741,21 @@ class Clients extends Clients_controller
         $this->layout();
     }
 
-    public function contract_pdf($id)
-    {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
-        if (!has_contact_permission('contracts')) {
-            set_alert('warning', _l('access_denied'));
-            redirect(site_url());
-        }
-
-        $this->load->model('contracts_model');
-        $contract = $this->contracts_model->get($id, array(
-            'client' => get_client_user_id(),
-            'not_visible_to_client' => 0,
-            'trash' => 0,
-        ));
-
-        try {
-            $pdf      = contract_pdf($contract);
-        } catch (Exception $e) {
-            echo $e->getMessage();
-            die;
-        }
-
-        $pdf->Output(slug_it($contract->subject) . '.pdf', 'D');
-    }
-
     public function invoices($status = false)
     {
         if (!is_client_logged_in()) {
             redirect(site_url('clients/login'));
         }
+
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
-        $where = array(
+
+        $where = [
             'clientid' => get_client_user_id(),
-        );
+        ];
+
         if (is_numeric($status)) {
             $where['status'] = $status;
         }
@@ -861,73 +778,6 @@ class Clients extends Clients_controller
         $this->layout();
     }
 
-    public function viewinvoice($id = '', $hash = '')
-    {
-        check_invoice_restrictions($id, $hash);
-        $invoice = $this->invoices_model->get($id);
-
-        $invoice = do_action('before_client_view_invoice', $invoice);
-
-        if (!is_client_logged_in()) {
-            load_client_language($invoice->clientid);
-        }
-        // Handle Invoice PDF generator
-        if ($this->input->post('invoicepdf')) {
-            try {
-                $pdf            = invoice_pdf($invoice);
-            } catch (Exception $e) {
-                echo $e->getMessage();
-                die;
-            }
-
-            $invoice_number = format_invoice_number($invoice->id);
-            $companyname    = get_option('invoice_company_name');
-            if ($companyname != '') {
-                $invoice_number .= '-' . mb_strtoupper(slug_it($companyname), 'UTF-8');
-            }
-            $pdf->Output(mb_strtoupper(slug_it($invoice_number), 'UTF-8') . '.pdf', 'D');
-            die();
-        }
-        // Handle $_POST payment
-        if ($this->input->post('make_payment')) {
-            $this->load->model('payments_model');
-            if (!$this->input->post('paymentmode')) {
-                set_alert('warning', _l('invoice_html_payment_modes_not_selected'));
-                redirect(site_url('viewinvoice/' . $id . '/' . $hash));
-            } elseif ((!$this->input->post('amount') || $this->input->post('amount') == 0) && get_option('allow_payment_amount_to_be_modified') == 1) {
-                set_alert('warning', _l('invoice_html_amount_blank'));
-                redirect(site_url('viewinvoice/' . $id . '/' . $hash));
-            }
-            $this->payments_model->process_payment($this->input->post(), $id);
-        }
-        if ($this->input->post('paymentpdf')) {
-            $id                    = $this->input->post('paymentpdf');
-            $payment               = $this->payments_model->get($id);
-            $payment->invoice_data = $this->invoices_model->get($payment->invoiceid);
-            $paymentpdf            = payment_pdf($payment);
-            $paymentpdf->Output(mb_strtoupper(slug_it(_l('payment') . '-' . $payment->paymentid), 'UTF-8') . '.pdf', 'D');
-            die;
-        }
-        $this->load->library('numberword', array(
-            'clientid' => $invoice->clientid,
-        ));
-        $this->load->model('payment_modes_model');
-        $this->load->model('payments_model');
-        $data['payments']      = $this->payments_model->get_invoice_payments($id);
-        $data['payment_modes'] = $this->payment_modes_model->get();
-        $data['title']         = format_invoice_number($invoice->id);
-        $this->use_navigation  = false;
-        $this->use_submenu     = false;
-        $data['hash']          = $hash;
-        $data['invoice']       = do_action('invoice_html_pdf_data', $invoice);
-        $data['bodyclass']     = 'viewinvoice';
-        $this->data            = $data;
-        $this->view            = 'invoicehtml';
-        add_views_tracking('invoice', $id);
-        do_action('invoice_html_viewed', $id);
-        $this->layout();
-    }
-
     public function statement()
     {
         if (!is_client_logged_in()) {
@@ -938,67 +788,67 @@ class Clients extends Clients_controller
             redirect(site_url());
         }
 
-        $data = array();
+        $data = [];
         // Default to this month
         $from = _d(date('Y-m-01'));
-        $to = _d(date('Y-m-t'));
+        $to   = _d(date('Y-m-t'));
 
         if ($this->input->get('from') && $this->input->get('to')) {
             $from = $this->input->get('from');
-            $to = $this->input->get('to');
+            $to   = $this->input->get('to');
         }
 
         $data['statement'] = $this->clients_model->get_statement(get_client_user_id(), to_sql_date($from), to_sql_date($to));
 
         $data['from'] = $from;
-        $data['to'] = $to;
+        $data['to']   = $to;
 
         $data['period_today'] = json_encode(
-                     array(
+                     [
                      _d(date('Y-m-d')),
                      _d(date('Y-m-d')),
-                     )
+                     ]
         );
         $data['period_this_week'] = json_encode(
-                     array(
+                     [
                      _d(date('Y-m-d', strtotime('monday this week'))),
                      _d(date('Y-m-d', strtotime('sunday this week'))),
-                     )
+                     ]
         );
         $data['period_this_month'] = json_encode(
-                     array(
+                     [
                      _d(date('Y-m-01')),
                      _d(date('Y-m-t')),
-                     )
+                     ]
         );
 
         $data['period_last_month'] = json_encode(
-                     array(
-                     _d(date('Y-m-01', strtotime("-1 MONTH"))),
+                     [
+                     _d(date('Y-m-01', strtotime('-1 MONTH'))),
                      _d(date('Y-m-t', strtotime('-1 MONTH'))),
-                     )
+                     ]
         );
 
         $data['period_this_year'] = json_encode(
-                     array(
+                     [
                      _d(date('Y-m-d', strtotime(date('Y-01-01')))),
                      _d(date('Y-m-d', strtotime(date('Y-12-31')))),
-                     )
+                     ]
         );
         $data['period_last_year'] = json_encode(
-                     array(
-                     _d(date('Y-m-d', strtotime(date(date('Y', strtotime('last year')).'-01-01')))),
-                     _d(date('Y-m-d', strtotime(date(date('Y', strtotime('last year')). '-12-31')))),
-                     )
+                     [
+                     _d(date('Y-m-d', strtotime(date(date('Y', strtotime('last year')) . '-01-01')))),
+                     _d(date('Y-m-d', strtotime(date(date('Y', strtotime('last year')) . '-12-31')))),
+                     ]
         );
 
-        $data['period_selected'] = json_encode(array($from, $to));
+        $data['period_selected'] = json_encode([$from, $to]);
 
         $data['custom_period'] = ($this->input->get('custom_period') ? true : false);
 
-        $data['title']         = _l('customer_statement');
-        $this->data            = $data;
-        $this->view            = 'statement';
+        $data['title'] = _l('customer_statement');
+        $this->data    = $data;
+        $this->view    = 'statement';
         $this->layout();
     }
 
@@ -1007,109 +857,31 @@ class Clients extends Clients_controller
         if (!is_client_logged_in()) {
             redirect(site_url('clients/login'));
         }
+
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
 
         $from = $this->input->get('from');
-        $to = $this->input->get('to');
+        $to   = $this->input->get('to');
 
         $data['statement'] = $this->clients_model->get_statement(get_client_user_id(), to_sql_date($from), to_sql_date($to));
 
         try {
-            $pdf            = statement_pdf($data['statement']);
+            $pdf = statement_pdf($data['statement']);
         } catch (Exception $e) {
             echo $e->getMessage();
             die;
         }
 
-        $type           = 'D';
+        $type = 'D';
         if ($this->input->get('print')) {
             $type = 'I';
         }
 
-        $pdf_name = slug_it(_l('customer_statement') . '_' .get_option('companyname'));
+        $pdf_name = slug_it(_l('customer_statement') . '_' . get_option('companyname'));
         $pdf->Output($pdf_name . '.pdf', $type);
-    }
-
-    public function viewestimate($id, $hash)
-    {
-        check_estimate_restrictions($id, $hash);
-        $estimate = $this->estimates_model->get($id);
-        if (!is_client_logged_in()) {
-            load_client_language($estimate->clientid);
-        }
-
-        $identity_confirmation_enabled = get_option('estimate_accept_identity_confirmation');
-
-        if ($this->input->post('estimate_action')) {
-            $action = $this->input->post('estimate_action');
-            // Only decline and accept allowed
-            if ($action == 4 || $action == 3) {
-                $success = $this->estimates_model->mark_action_status($action, $id, true);
-
-                $redURL = $this->uri->uri_string();
-                $accepted = false;
-                if (is_array($success) && $success['invoiced'] == true) {
-                    $accepted = true;
-                    $invoice = $this->invoices_model->get($success['invoiceid']);
-                    set_alert('success', _l('clients_estimate_invoiced_successfully'));
-                    $redURL = site_url('viewinvoice/' . $invoice->id . '/' . $invoice->hash);
-                } elseif (is_array($success) && $success['invoiced'] == false || $success === true) {
-                    if ($action == 4) {
-                        $accepted = true;
-                        set_alert('success', _l('clients_estimate_accepted_not_invoiced'));
-                    } else {
-                        set_alert('success', _l('clients_estimate_declined'));
-                    }
-                } else {
-                    set_alert('warning', _l('clients_estimate_failed_action'));
-                }
-                if ($action == 4 && $accepted = true) {
-                    $this->db->where('id', $id);
-                    $this->db->update('tblestimates', get_acceptance_info_array());
-                }
-            }
-            redirect($redURL);
-        }
-        // Handle Estimate PDF generator
-        if ($this->input->post('estimatepdf')) {
-            try {
-                $pdf             = estimate_pdf($estimate);
-            } catch (Exception $e) {
-                echo $e->getMessage();
-                die;
-            }
-
-            $estimate_number = format_estimate_number($estimate->id);
-            $companyname     = get_option('invoice_company_name');
-            if ($companyname != '') {
-                $estimate_number .= '-' . mb_strtoupper(slug_it($companyname), 'UTF-8');
-            }
-            $pdf->Output(mb_strtoupper(slug_it($estimate_number), 'UTF-8') . '.pdf', 'D');
-            die();
-        }
-        $this->load->library('numberword', array(
-            'clientid' => $estimate->clientid,
-        ));
-
-        $data['title']        = format_estimate_number($estimate->id);
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
-        $data['hash']         = $hash;
-        $data['can_be_accepted'] = false;
-        $data['estimate']     = do_action('estimate_html_pdf_data', $estimate);
-        $data['bodyclass']    = 'viewestimate';
-        $data['identity_confirmation_enabled'] = $identity_confirmation_enabled;
-        if ($identity_confirmation_enabled == '1') {
-            $data['bodyclass'] .= ' identity-confirmation';
-        }
-        $this->data           = $data;
-        $this->view           = 'estimatehtml';
-        add_views_tracking('estimate', $id);
-        do_action('estimate_html_viewed', $id);
-        $this->layout();
     }
 
     public function estimates($status = '')
@@ -1121,9 +893,9 @@ class Clients extends Clients_controller
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
-        $where = array(
+        $where = [
             'clientid' => get_client_user_id(),
-        );
+        ];
         if (is_numeric($status)) {
             $where['status'] = $status;
         }
@@ -1144,58 +916,6 @@ class Clients extends Clients_controller
         $this->layout();
     }
 
-    public function survey($id, $hash)
-    {
-        if (!$hash || !$id) {
-            die('No survey specified');
-        }
-        $this->load->model('surveys_model');
-        $survey = $this->surveys_model->get($id);
-        if (!$survey || ($survey->hash != $hash)) {
-            show_404();
-        }
-        if ($survey->active == 0) {
-            // Allow users with permission manage surveys to preview the survey even if is not active
-            if (!has_permission('surveys', '', 'view')) {
-                die('Survey not active');
-            }
-        }
-        // Check if survey is only for logged in participants / staff / clients
-        if ($survey->onlyforloggedin == 1) {
-            if (!is_logged_in()) {
-                die('This survey is only for logged in users');
-            }
-        }
-        // Ip Restrict check
-        if ($survey->iprestrict == 1) {
-            $this->db->where('surveyid', $id);
-            $this->db->where('ip', $this->input->ip_address());
-            $total = $this->db->count_all_results('tblsurveyresultsets');
-            if ($total > 0) {
-                die('Already participated on this survey. Thanks');
-            }
-        }
-        if ($this->input->post()) {
-            $success = $this->surveys_model->add_survey_result($id, $this->input->post());
-            if ($success) {
-                $survey = $this->surveys_model->get($id);
-                if ($survey->redirect_url !== '') {
-                    redirect($survey->redirect_url);
-                }
-                set_alert('success', 'Thank you for participating in this survey. Your answers are very important to us.');
-                $default_redirect = do_action('survey_default_redirect', site_url());
-                redirect($default_redirect);
-            }
-        }
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
-        $data['survey']       = $survey;
-        $data['title']        = $data['survey']->subject;
-        $this->data           = $data;
-        $this->view           = 'survey_view';
-        $this->layout();
-    }
-
     public function company()
     {
         if (!is_client_logged_in()) {
@@ -1212,11 +932,11 @@ class Clients extends Clients_controller
                 $this->form_validation->set_rules('company_form', '', 'required');
             }
 
-            $custom_fields = get_custom_fields('customers', array(
-                'show_on_client_portal' => 1,
-                'required' => 1,
+            $custom_fields = get_custom_fields('customers', [
+                'show_on_client_portal'  => 1,
+                'required'               => 1,
                 'disalow_client_to_edit' => 0,
-            ));
+            ]);
 
             foreach ($custom_fields as $field) {
                 $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
@@ -1226,7 +946,7 @@ class Clients extends Clients_controller
                 $this->form_validation->set_rules($field_name, $field['name'], 'required');
             }
             if ($this->form_validation->run() !== false) {
-                $data    = $this->input->post();
+                $data = $this->input->post();
 
                 if (isset($data['company_form'])) {
                     unset($data['company_form']);
@@ -1253,11 +973,13 @@ class Clients extends Clients_controller
         if ($this->input->post('profile')) {
             $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
             $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
-            $custom_fields = get_custom_fields('contacts', array(
-                'show_on_client_portal' => 1,
-                'required' => 1,
+            $this->form_validation->set_rules('email', _l('clients_email'), 'required|valid_email');
+
+            $custom_fields = get_custom_fields('contacts', [
+                'show_on_client_portal'  => 1,
+                'required'               => 1,
                 'disalow_client_to_edit' => 0,
-            ));
+            ]);
             foreach ($custom_fields as $field) {
                 $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
                 if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
@@ -1274,10 +996,10 @@ class Clients extends Clients_controller
                 $contact = $this->clients_model->get_contact(get_contact_user_id());
 
                 if (has_contact_permission('invoices')) {
-                    $data['invoice_emails'] = isset($data['invoice_emails']) ? 1 : 0;
+                    $data['invoice_emails']     = isset($data['invoice_emails']) ? 1 : 0;
                     $data['credit_note_emails'] = isset($data['credit_note_emails']) ? 1 : 0;
                 } else {
-                    $data['invoice_emails'] = $contact->invoice_emails;
+                    $data['invoice_emails']     = $contact->invoice_emails;
                     $data['credit_note_emails'] = $contact->credit_note_emails;
                 }
 
@@ -1285,6 +1007,12 @@ class Clients extends Clients_controller
                     $data['estimate_emails'] = isset($data['estimate_emails']) ? 1 : 0;
                 } else {
                     $data['estimate_emails'] = $contact->estimate_emails;
+                }
+
+                if (has_contact_permission('support')) {
+                    $data['ticket_emails'] = isset($data['ticket_emails']) ? 1 : 0;
+                } else {
+                    $data['ticket_emails'] = $contact->ticket_emails;
                 }
 
                 if (has_contact_permission('contracts')) {
@@ -1295,10 +1023,10 @@ class Clients extends Clients_controller
 
                 if (has_contact_permission('projects')) {
                     $data['project_emails'] = isset($data['project_emails']) ? 1 : 0;
-                    $data['task_emails'] = isset($data['task_emails']) ? 1 : 0;
+                    $data['task_emails']    = isset($data['task_emails']) ? 1 : 0;
                 } else {
                     $data['project_emails'] = $contact->project_emails;
-                    $data['task_emails'] = $contact->task_emails;
+                    $data['task_emails']    = $contact->task_emails;
                 }
                 // For all cases
                 if (isset($data['password'])) {
@@ -1341,9 +1069,9 @@ class Clients extends Clients_controller
             delete_dir(get_upload_path_by_type('contact_profile_images') . get_contact_user_id());
         }
         $this->db->where('id', get_contact_user_id());
-        $this->db->update('tblcontacts', array(
+        $this->db->update('tblcontacts', [
             'profile_image' => null,
-        ));
+        ]);
         if ($this->db->affected_rows() > 0) {
             redirect(site_url('clients/profile'));
         }
@@ -1357,6 +1085,16 @@ class Clients extends Clients_controller
         if (get_option('company_is_required') == 1) {
             $this->form_validation->set_rules('company', _l('client_company'), 'required');
         }
+
+        if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions') == 1) {
+            $this->form_validation->set_rules(
+                'accept_terms_and_conditions',
+                _l('terms_and_conditions'),
+                'required',
+                    ['required' => _l('terms_and_conditions_validation')]
+            );
+        }
+
         $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
         $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
         $this->form_validation->set_rules('email', _l('client_email'), 'trim|required|is_unique[tblcontacts.email]|valid_email');
@@ -1367,15 +1105,15 @@ class Clients extends Clients_controller
             $this->form_validation->set_rules('g-recaptcha-response', 'Captcha', 'callback_recaptcha');
         }
 
-        $custom_fields = get_custom_fields('customers', array(
+        $custom_fields = get_custom_fields('customers', [
             'show_on_client_portal' => 1,
-            'required' => 1,
-        ));
+            'required'              => 1,
+        ]);
 
-        $custom_fields_contacts = get_custom_fields('contacts', array(
+        $custom_fields_contacts = get_custom_fields('contacts', [
             'show_on_client_portal' => 1,
-            'required' => 1,
-        ));
+            'required'              => 1,
+        ]);
 
         foreach ($custom_fields as $field) {
             $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
@@ -1398,6 +1136,16 @@ class Clients extends Clients_controller
                 if (isset($data['g-recaptcha-response'])) {
                     unset($data['g-recaptcha-response']);
                 }
+
+                // Auto add billing details
+                $data['billing_street']  = $data['address'];
+                $data['billing_city']    = $data['city'];
+                $data['billing_state']   = $data['state'];
+                $data['billing_zip']     = $data['zip'];
+                $data['billing_country'] = is_numeric($data['country']) ? $data['country'] : 0;
+                if (isset($data['accept_terms_and_conditions'])) {
+                    unset($data['accept_terms_and_conditions']);
+                }
                 $clientid = $this->clients_model->add($data, true);
                 if ($clientid) {
                     do_action('after_client_register', $clientid);
@@ -1414,9 +1162,8 @@ class Clients extends Clients_controller
                         $redUrl = site_url('clients/login');
                     }
 
-                    $admins = $this->db->select('email')->
-                    where('admin', 1)
-                    ->get('tblstaff')->result_array();
+                    $this->load->model('staff_model');
+                    $admins = $this->staff_model->get('', ['active' => 1, 'admin' => 1]);
 
                     $this->load->model('emails_model');
                     foreach ($admins as $admin) {
@@ -1429,10 +1176,10 @@ class Clients extends Clients_controller
             }
         }
 
-        $data['title'] = _l('clients_register_heading');
+        $data['title']     = _l('clients_register_heading');
         $data['bodyclass'] = 'register';
-        $this->data    = $data;
-        $this->view    = 'register';
+        $this->data        = $data;
+        $this->view        = 'register';
         $this->layout();
     }
 
@@ -1477,18 +1224,18 @@ class Clients extends Clients_controller
         $this->form_validation->set_rules('passwordr', _l('customer_reset_password_repeat'), 'required|matches[password]');
         if ($this->input->post()) {
             if ($this->form_validation->run() !== false) {
-                do_action('before_user_reset_password', array(
-                    'staff' => $staff,
+                do_action('before_user_reset_password', [
+                    'staff'  => $staff,
                     'userid' => $userid,
-                ));
+                ]);
                 $success = $this->Authentication_model->reset_password(0, $userid, $new_pass_key, $this->input->post('passwordr', false));
                 if (is_array($success) && $success['expired'] == true) {
                     set_alert('danger', _l('password_reset_key_expired'));
                 } elseif ($success == true) {
-                    do_action('after_user_reset_password', array(
-                        'staff' => $staff,
+                    do_action('after_user_reset_password', [
+                        'staff'  => $staff,
                         'userid' => $userid,
-                    ));
+                    ]);
                     set_alert('success', _l('password_reset_message'));
                 } else {
                     set_alert('danger', _l('password_reset_message_fail'));
@@ -1497,8 +1244,8 @@ class Clients extends Clients_controller
             }
         }
         $data['title'] = _l('admin_auth_reset_password_heading');
-        $this->data = $data;
-        $this->view = 'reset_password';
+        $this->data    = $data;
+        $this->view    = 'reset_password';
         $this->layout();
     }
 
@@ -1509,57 +1256,6 @@ class Clients extends Clients_controller
         }
         $this->misc_model->dismiss_announcement($id, false);
         redirect($_SERVER['HTTP_REFERER']);
-    }
-
-    public function knowledge_base($slug = '')
-    {
-        if ((get_option('use_knowledge_base') == 1 && !is_client_logged_in() && get_option('knowledge_base_without_registration') == 1) || (get_option('use_knowledge_base') == 1 && is_client_logged_in()) || is_staff_logged_in()) {
-            if (is_staff_logged_in() && get_option('use_knowledge_base') == 0) {
-                set_alert('warning', 'Knowledge base is disabled, navigate to Setup->Settings->Customers and set Use Knowledge Base to YES.');
-            }
-
-            $data     = array();
-            $where_kb = array();
-            if ($this->input->get('groupid')) {
-                $where_kb = 'articlegroup =' . $this->input->get('groupid');
-            } elseif ($this->input->get('kb_q')) {
-                $where_kb = '(subject LIKE "%' . $this->input->get('kb_q') . '%" OR description LIKE "%' . $this->input->get('kb_q') . '%")';
-            }
-
-            $data['groups']                = get_all_knowledge_base_articles_grouped(true, $where_kb);
-            $data['knowledge_base_search'] = true;
-            if ($slug == '' || $this->input->get('groupid')) {
-                $data['title'] = _l('clients_knowledge_base');
-                $this->view    = 'knowledge_base';
-            } else {
-                $data['article'] = $this->knowledge_base_model->get(false, $slug);
-                if ($data['article']) {
-                    $data['related_articles'] = $this->knowledge_base_model->get_related_articles($data['article']->articleid);
-                    add_views_tracking('kb_article', $data['article']->articleid);
-                    if ($data['article']->active_article == 0) {
-                        redirect(site_url('knowledge_base'));
-                    }
-                    $data['title'] = $data['article']->subject;
-
-                    $this->view = 'knowledge_base_article';
-                } else {
-                    show_404();
-                }
-            }
-            $this->data = $data;
-            $this->layout();
-        } else {
-            show_404();
-        }
-    }
-
-    public function add_kb_answer()
-    {
-        // This is for did you find this answer useful
-        if (($this->input->post() && $this->input->is_ajax_request())) {
-            echo json_encode($this->knowledge_base_model->add_article_answer($this->input->post()));
-            die();
-        }
     }
 
     public function login()
@@ -1595,8 +1291,181 @@ class Clients extends Clients_controller
         }
         $data['bodyclass'] = 'customers_login';
 
+        $this->data = $data;
+        $this->view = 'login';
+        $this->layout();
+    }
+
+    public function credit_card()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('clients/login'));
+        }
+
+        if (!is_primary_contact(get_contact_user_id()) || $this->stripe_gateway->getSetting('allow_primary_contact_to_update_credit_card') == 0) {
+            redirect(site_url());
+        }
+
+        $this->load->library('stripe_subscriptions');
+        $client = $this->clients_model->get(get_client_user_id());
+
+        if ($this->input->post('stripeToken')) {
+            try {
+                $this->stripe_subscriptions->update_customer_source($client->stripe_id, $this->input->post('stripeToken'));
+                set_alert('success', _l('updated_successfully', _l('credit_card')));
+            } catch (Exception $e) {
+                set_alert('success', $e->getMessage());
+            }
+
+            redirect(site_url('clients/credit_card'));
+        }
+
+        $data['stripe_customer'] = $this->stripe_subscriptions->get_customer_with_default_source($client->stripe_id);
+        $data['stripe_pk']       = $this->stripe_subscriptions->get_publishable_key();
+
+        $data['bodyclass'] = 'customer-credit-card';
+        $data['title']     = _l('credit_card');
+
+        $this->data = $data;
+        $this->view = 'credit_card';
+        $this->layout();
+    }
+
+    public function subscriptions()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('clients/login'));
+        }
+
+        if (!is_primary_contact(get_contact_user_id()) || get_option('show_subscriptions_in_customers_area') != '1') {
+            redirect(site_url());
+        }
+
+        $this->load->model('subscriptions_model');
+        $data['subscriptions'] = $this->subscriptions_model->get(['clientid' => get_client_user_id()]);
+
+        $data['title']     = _l('subscriptions');
+        $data['bodyclass'] = 'subscriptions';
         $this->data        = $data;
-        $this->view        = 'login';
+        $this->view        = 'subscriptions';
+        $this->layout();
+    }
+
+    public function cancel_subscription($id)
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('clients/login'));
+        }
+
+        if (!is_primary_contact(get_contact_user_id()) || get_option('show_subscriptions_in_customers_area') != '1') {
+            redirect(site_url());
+        }
+
+        $this->load->model('subscriptions_model');
+        $this->load->library('stripe_subscriptions');
+        $subscription = $this->subscriptions_model->get_by_id($id, ['clientid' => get_client_user_id()]);
+
+        if (!$subscription) {
+            show_404();
+        }
+
+        try {
+            $type    = $this->input->get('type');
+            $ends_at = time();
+            if ($type == 'immediately') {
+                $this->stripe_subscriptions->cancel($subscription->stripe_subscription_id);
+            } elseif ($type == 'at_period_end') {
+                $ends_at = $this->stripe_subscriptions->cancel_at_end_of_billing_period($subscription->stripe_subscription_id);
+            } else {
+                throw new Exception('Invalid Cancelation Type', 1);
+            }
+
+            $update = ['ends_at' => $ends_at];
+            if ($type == 'immediately') {
+                $update['status'] = 'canceled';
+            }
+            $this->subscriptions_model->update($id, $update);
+
+            set_alert('success', _l('subscription_canceled'));
+        } catch (Exception $e) {
+            set_alert('danger', $e->getMessage());
+        }
+
+        redirect(site_url('clients/subscriptions'));
+    }
+
+    public function resume_subscription($id)
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('clients/login'));
+        }
+
+        if (!is_primary_contact(get_contact_user_id()) || get_option('show_subscriptions_in_customers_area') != '1') {
+            redirect(site_url());
+        }
+
+        $this->load->model('subscriptions_model');
+        $this->load->library('stripe_subscriptions');
+        $subscription = $this->subscriptions_model->get_by_id($id, ['clientid' => get_client_user_id()]);
+
+        if (!$subscription) {
+            show_404();
+        }
+
+        try {
+            $this->stripe_subscriptions->resume($subscription->stripe_subscription_id, $subscription->stripe_plan_id);
+            $this->subscriptions_model->update($id, ['ends_at' => null]);
+            set_alert('success', _l('subscription_resumed'));
+        } catch (Exception $e) {
+            set_alert('danger', $e->getMessage());
+        }
+
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    public function privacy_policy()
+    {
+        $data['policy'] = get_option('privacy_policy');
+        $data['title']  = _l('privacy_policy') . ' - ' . get_option('companyname');
+        $this->data     = $data;
+        $this->view     = 'privacy_policy';
+        $this->layout();
+    }
+
+    public function terms_and_conditions()
+    {
+        $data['terms'] = get_option('terms_and_conditions');
+        $data['title'] = _l('terms_and_conditions') . ' - ' . get_option('companyname');
+        $this->data    = $data;
+        $this->view    = 'terms_and_conditions';
+        $this->layout();
+    }
+
+    public function gdpr()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('login'));
+        }
+
+        $this->load->model('gdpr_model');
+
+        if (is_gdpr() && $this->input->post('removal_request') && get_option('gdpr_contact_enable_right_to_be_forgotten') == '1') {
+            $success = $this->gdpr_model->add_removal_request([
+                'description'  => nl2br($this->input->post('removal_description')),
+                'request_from' => get_contact_full_name(get_contact_user_id()),
+                'contact_id'   => get_contact_user_id(),
+                'clientid'     => get_client_user_id(),
+            ]);
+            if ($success) {
+                send_gdpr_email_template('gdpr-removal-request', get_contact_user_id(), 'contact');
+                set_alert('success', _l('data_removal_request_sent'));
+            }
+            redirect(site_url('clients/gdpr'));
+        }
+
+        $data['title'] = _l('gdpr');
+        $this->data    = $data;
+        $this->view    = 'gdpr';
         $this->layout();
     }
 
@@ -1641,12 +1510,25 @@ class Clients extends Clients_controller
         }
         $lang = do_action('before_customer_change_language', $lang);
         $this->db->where('userid', get_client_user_id());
-        $this->db->update('tblclients', array('default_language'=>$lang));
+        $this->db->update('tblclients', ['default_language' => $lang]);
         if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
             redirect($_SERVER['HTTP_REFERER']);
         } else {
             redirect(site_url());
         }
+    }
+
+    public function export()
+    {
+        if (!is_client_logged_in()) {
+            redirect(site_url('login'));
+        }
+
+        if (is_gdpr() && get_option('gdpr_data_portability_contacts') == '0' || !is_gdpr()) {
+            show_error('This page is currently disabled, check back later.');
+        }
+
+        export_contact_data(get_contact_user_id());
     }
 
     /**
@@ -1656,22 +1538,22 @@ class Clients extends Clients_controller
     public function client_home_chart()
     {
         if (is_client_logged_in()) {
-            $statuses        = array(
+            $statuses = [
                 1,
                 2,
                 4,
                 3,
-            );
-            $months          = array();
-            $months_original = array();
+            ];
+            $months          = [];
+            $months_original = [];
             for ($m = 1; $m <= 12; $m++) {
                 array_push($months, _l(date('F', mktime(0, 0, 0, $m, 1))));
                 array_push($months_original, date('F', mktime(0, 0, 0, $m, 1)));
             }
-            $chart = array(
-                'labels' => $months,
-                'datasets' => array(),
-            );
+            $chart = [
+                'labels'   => $months,
+                'datasets' => [],
+            ];
             foreach ($statuses as $status) {
                 $this->db->select('total as amount, date');
                 $this->db->from('tblinvoices');
@@ -1685,12 +1567,12 @@ class Clients extends Clients_controller
                     $this->db->where('YEAR(tblinvoices.date)', $this->input->post('year'));
                 }
                 $payments      = $this->db->get()->result_array();
-                $data          = array();
+                $data          = [];
                 $data['temp']  = $months_original;
-                $data['total'] = array();
+                $data['total'] = [];
                 $i             = 0;
                 foreach ($months_original as $month) {
-                    $data['temp'][$i] = array();
+                    $data['temp'][$i] = [];
                     foreach ($payments as $payment) {
                         $_month = date('F', strtotime($payment['date']));
                         if ($_month == $month) {
@@ -1709,16 +1591,16 @@ class Clients extends Clients_controller
                     $borderColor = '#ff6f00';
                 }
 
-                $backgroundColor = 'rgba('.implode(',', hex2rgb($borderColor)).',0.3)';
+                $backgroundColor = 'rgba(' . implode(',', hex2rgb($borderColor)) . ',0.3)';
 
-                array_push($chart['datasets'], array(
-                    'label' => format_invoice_status($status, '', false, true),
+                array_push($chart['datasets'], [
+                    'label'           => format_invoice_status($status, '', false, true),
                     'backgroundColor' => $backgroundColor,
-                    'borderColor' => $borderColor,
-                    'borderWidth' => 1,
-                    'tension' => false,
-                    'data' => $data['total'],
-                ));
+                    'borderColor'     => $borderColor,
+                    'borderWidth'     => 1,
+                    'tension'         => false,
+                    'data'            => $data['total'],
+                ]);
             }
             echo json_encode($chart);
         }

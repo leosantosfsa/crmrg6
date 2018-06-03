@@ -33,6 +33,5 @@
    <?php render_datatable(array(
       _l('milestone_name'),
       _l('milestone_due_date'),
-      _l('options')
       ),'milestones'); ?>
    </div>

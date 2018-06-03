@@ -1,8 +1,9 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Settings_model extends CRM_Model
 {
-    private $encrypted_fields = array('smtp_password');
+    private $encrypted_fields = ['smtp_password'];
 
     public function __construct()
     {
@@ -26,23 +27,23 @@ class Settings_model extends CRM_Model
      */
     public function update($data)
     {
-        $original_encrypted_fields = array();
+        $original_encrypted_fields = [];
         foreach ($this->encrypted_fields as $ef) {
             $original_encrypted_fields[$ef] = get_option($ef);
         }
         $affectedRows = 0;
         $data         = do_action('before_settings_updated', $data);
         if (isset($data['tags'])) {
-            foreach ($data['tags'] as $id=>$name) {
+            foreach ($data['tags'] as $id => $name) {
                 $this->db->where('id', $id);
-                $this->db->update('tbltags', array('name'=>$name));
+                $this->db->update('tbltags', ['name' => $name]);
                 $affectedRows += $this->db->affected_rows();
             }
         } else {
             if (!isset($data['settings']['default_tax']) && isset($data['finance_settings'])) {
-                $data['settings']['default_tax'] = array();
+                $data['settings']['default_tax'] = [];
             }
-            $all_settings_looped = array();
+            $all_settings_looped = [];
             foreach ($data['settings'] as $name => $val) {
 
                 // Do not trim thousand separator option
@@ -71,7 +72,7 @@ class Settings_model extends CRM_Model
                 if ($name == 'default_contact_permissions') {
                     $val = serialize($val);
                 } elseif ($name == 'visible_customer_profile_tabs') {
-                    if ($val == '' || (is_array($val) && count($val) == 1 && $val[0] == 'all')) {
+                    if ($val == '') {
                         $val = 'all';
                     } else {
                         $val = serialize($val);
@@ -83,7 +84,7 @@ class Settings_model extends CRM_Model
                         return $value !== '';
                     });
                     $val = serialize($val);
-                } elseif ($name == 'company_info_format' || $name == 'customer_info_format' || $name == 'proposal_info_format' || strpos($name,'sms_trigger_') !== false) {
+                } elseif ($name == 'company_info_format' || $name == 'customer_info_format' || $name == 'proposal_info_format' || strpos($name, 'sms_trigger_') !== false) {
                     $val = strip_tags($val);
                     $val = nl2br($val);
                 } elseif (in_array($name, $this->encrypted_fields)) {
@@ -97,19 +98,21 @@ class Settings_model extends CRM_Model
                         $or_decrypted = $this->encryption->decrypt($original_encrypted_fields[$name]);
                         if ($or_decrypted == $val) {
                             continue;
-                        } else {
-                            $val = $this->encryption->encrypt($val);
                         }
+                        $val = $this->encryption->encrypt($val);
                     }
                 }
 
                 $this->db->where('name', $name);
-                $this->db->update('tbloptions', array(
+                $this->db->update('tbloptions', [
                     'value' => $val,
-                ));
+                ]);
 
                 if ($this->db->affected_rows() > 0) {
                     $affectedRows++;
+                    if($name == 'save_last_order_for_tables') {
+                        $this->db->query('DELETE FROM tblusermeta where meta_key like "%-table-last-order"');
+                    }
                 }
             }
 
@@ -117,18 +120,18 @@ class Settings_model extends CRM_Model
             if (!in_array('default_contact_permissions', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
                 $this->db->where('name', 'default_contact_permissions');
-                $this->db->update('tbloptions', array(
-                'value' => serialize(array()),
-            ));
+                $this->db->update('tbloptions', [
+                'value' => serialize([]),
+            ]);
                 if ($this->db->affected_rows() > 0) {
                     $affectedRows++;
                 }
             } elseif (!in_array('visible_customer_profile_tabs', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
                 $this->db->where('name', 'visible_customer_profile_tabs');
-                $this->db->update('tbloptions', array(
+                $this->db->update('tbloptions', [
                 'value' => 'all',
-            ));
+            ]);
                 if ($this->db->affected_rows() > 0) {
                     $affectedRows++;
                 }

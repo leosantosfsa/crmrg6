@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class CRM_Controller extends CI_Controller
@@ -7,11 +8,15 @@ class CRM_Controller extends CI_Controller
     {
         parent::__construct();
 
+        /*if(!$this->input->is_ajax_request()){
+            $this->output->enable_profiler(TRUE);
+        }*/
+
         /**
          * Fix for users who don't replace all files during update !!!
          */
-        if(!class_exists('ForceUTF8\Encoding') && file_exists(APPPATH.'vendor/autoload.php')) {
-            require_once(APPPATH.'vendor/autoload.php');
+        if (!class_exists('ForceUTF8\Encoding') && file_exists(APPPATH . 'vendor/autoload.php')) {
+            require_once(APPPATH . 'vendor/autoload.php');
         }
 
         if (is_dir(FCPATH . 'install') && ENVIRONMENT != 'development') {

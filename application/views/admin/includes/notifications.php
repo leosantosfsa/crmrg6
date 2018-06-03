@@ -1,8 +1,7 @@
                         <a href="#" class="dropdown-toggle notifications-icon" data-toggle="dropdown" aria-expanded="false">
                           <i class="fa fa-bell-o fa-fw fa-lg"></i>
-                          <?php
-                          if($current_user->total_unread_notifications > 0){ ?>
-                          <span class="label icon-total-indicator bg-warning icon-notifications"><?php echo $current_user->total_unread_notifications; ?></span>
+                          <?php if($current_user->total_unread_notifications > 0){ ?>
+                             <span class="label icon-total-indicator bg-warning icon-notifications"><?php echo $current_user->total_unread_notifications; ?></span>
                           <?php } ?>
                         </a>
                         <ul class="dropdown-menu notifications animated fadeIn width400" data-total-unread="<?php echo $current_user->total_unread_notifications; ?>">
@@ -10,7 +9,7 @@
                             <a href="#" onclick="mark_all_notifications_as_read_inline(); return false;"><?php echo _l('mark_all_as_read'); ?></a>
                           </li>
                           <?php
-                          $_notifications = $this->misc_model->get_user_notifications(false);
+                          $_notifications = $this->misc_model->get_user_notifications();
                           foreach($_notifications as $notification){ ?>
                           <li class="relative notification-wrapper" data-notification-id="<?php echo $notification['id']; ?>">
                             <?php if(!empty($notification['link'])){ ?>
@@ -56,7 +55,7 @@
                               }
                               echo '<span class="notification-title">'. $description .'</span>'; ?><br />
                               <small class="text-muted">
-                                <span class="text-has-action" data-toggle="tooltip" data-title="<?php echo _dt($notification['date']); ?>">
+                                <span class="text-has-action" data-placement="right" data-toggle="tooltip" data-title="<?php echo _dt($notification['date']); ?>">
                                 <?php echo time_ago($notification['date']); ?>
                               </span>
                               </small>

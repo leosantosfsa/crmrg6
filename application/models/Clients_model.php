@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Clients_model extends CRM_Model
@@ -9,9 +10,9 @@ class Clients_model extends CRM_Model
     {
         parent::__construct();
 
-        $this->contact_columns = do_action('contact_columns', array('firstname', 'lastname', 'email', 'phonenumber', 'title', 'password', 'send_set_password_email', 'donotsendwelcomeemail', 'permissions', 'direction', 'invoice_emails', 'estimate_emails', 'credit_note_emails', 'contract_emails', 'task_emails', 'project_emails', 'is_primary'));
+        $this->contact_columns = do_action('contact_columns', ['firstname', 'lastname', 'email', 'phonenumber', 'title', 'password', 'send_set_password_email', 'donotsendwelcomeemail', 'permissions', 'direction', 'invoice_emails', 'estimate_emails', 'credit_note_emails', 'contract_emails', 'task_emails', 'project_emails', 'ticket_emails', 'is_primary']);
 
-        $this->load->model(array('client_vault_entries_model', 'client_groups_model', 'statement_model'));
+        $this->load->model(['client_vault_entries_model', 'client_groups_model', 'statement_model']);
     }
 
     /**
@@ -20,9 +21,9 @@ class Clients_model extends CRM_Model
      * @param  array  $where
      * @return mixed
      */
-    public function get($id = '', $where = array())
+    public function get($id = '', $where = [])
     {
-        $this->db->select(implode(',', prefixed_table_fields_array('tblclients')) . ','.get_sql_select_client_company());
+        $this->db->select(implode(',', prefixed_table_fields_array('tblclients')) . ',' . get_sql_select_client_company());
 
         $this->db->join('tblcountries', 'tblcountries.country_id = tblclients.country', 'left');
         $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
@@ -50,7 +51,7 @@ class Clients_model extends CRM_Model
      * @param  array  $where       perform where in query
      * @return array
      */
-    public function get_contacts($customer_id = '', $where = array('active' => 1))
+    public function get_contacts($customer_id = '', $where = ['active' => 1])
     {
         $this->db->where($where);
         if ($customer_id != '') {
@@ -81,7 +82,7 @@ class Clients_model extends CRM_Model
      */
     public function add($data, $client_or_lead_convert_request = false)
     {
-        $contact_data = array();
+        $contact_data = [];
         foreach ($this->contact_columns as $field) {
             if (isset($data[$field])) {
                 $contact_data[$field] = $data[$field];
@@ -116,8 +117,8 @@ class Clients_model extends CRM_Model
             $data['addedfrom'] = get_staff_user_id();
         }
 
-        $hook_data                = do_action('before_client_added', array('data'=>$data));
-        $data = $hook_data['data'];
+        $hook_data = do_action('before_client_added', ['data' => $data]);
+        $data      = $hook_data['data'];
 
         $this->db->insert('tblclients', $data);
 
@@ -146,14 +147,14 @@ class Clients_model extends CRM_Model
             }
             if (isset($groups_in)) {
                 foreach ($groups_in as $group) {
-                    $this->db->insert('tblcustomergroups_in', array(
+                    $this->db->insert('tblcustomergroups_in', [
                         'customer_id' => $userid,
-                        'groupid' => $group,
-                    ));
+                        'groupid'     => $group,
+                    ]);
                 }
             }
             do_action('after_client_added', $userid);
-            $log = $data['company'];
+            $log = 'ID: ' .$userid;
 
             if ($log == '' && isset($contact_id)) {
                 $log = get_contact_full_name($contact_id);
@@ -161,7 +162,7 @@ class Clients_model extends CRM_Model
 
             $isStaff = null;
             if (!is_client_logged_in() && is_staff_logged_in()) {
-                $log .= ' From Staff: ' . get_staff_user_id();
+                $log .= ', From Staff: ' . get_staff_user_id();
                 $isStaff = get_staff_user_id();
             }
 
@@ -205,12 +206,12 @@ class Clients_model extends CRM_Model
 
         $data = $this->check_zero_columns($data);
 
-        $_data = do_action('before_client_updated', array(
+        $_data = do_action('before_client_updated', [
             'userid' => $id,
-            'data' => $data,
-        ));
+            'data'   => $data,
+        ]);
 
-        $data  = $_data['data'];
+        $data = $_data['data'];
         $this->db->where('userid', $id);
         $this->db->update('tblclients', $data);
 
@@ -219,18 +220,18 @@ class Clients_model extends CRM_Model
         }
 
         if (isset($update_all_other_transactions) || isset($update_credit_notes)) {
-            $transactions_update = array(
-                    'billing_street' => $data['billing_street'],
-                    'billing_city' => $data['billing_city'],
-                    'billing_state' => $data['billing_state'],
-                    'billing_zip' => $data['billing_zip'],
-                    'billing_country' => $data['billing_country'],
-                    'shipping_street' => $data['shipping_street'],
-                    'shipping_city' => $data['shipping_city'],
-                    'shipping_state' => $data['shipping_state'],
-                    'shipping_zip' => $data['shipping_zip'],
+            $transactions_update = [
+                    'billing_street'   => $data['billing_street'],
+                    'billing_city'     => $data['billing_city'],
+                    'billing_state'    => $data['billing_state'],
+                    'billing_zip'      => $data['billing_zip'],
+                    'billing_country'  => $data['billing_country'],
+                    'shipping_street'  => $data['shipping_street'],
+                    'shipping_city'    => $data['shipping_city'],
+                    'shipping_state'   => $data['shipping_state'],
+                    'shipping_zip'     => $data['shipping_zip'],
                     'shipping_country' => $data['shipping_country'],
-                );
+                ];
             if (isset($update_all_other_transactions)) {
 
                 // Update all invoices except paid ones.
@@ -268,7 +269,7 @@ class Clients_model extends CRM_Model
 
         if ($affectedRows > 0) {
             do_action('after_client_updated', $id);
-            logActivity('Customer Info Updated [' . $data['company'] . ']');
+            logActivity('Customer Info Updated [ID: ' . $id . ']');
 
             return true;
         }
@@ -286,7 +287,7 @@ class Clients_model extends CRM_Model
     public function update_contact($data, $id, $client_request = false)
     {
         $affectedRows = 0;
-        $contact = $this->get_contact($id);
+        $contact      = $this->get_contact($id);
         if (empty($data['password'])) {
             unset($data['password']);
         } else {
@@ -299,15 +300,12 @@ class Clients_model extends CRM_Model
         $send_set_password_email = isset($data['send_set_password_email']) ? true : false;
         $set_password_email_sent = false;
 
-        $permissions = isset($data['permissions']) ? $data['permissions'] : array();
+        $permissions        = isset($data['permissions']) ? $data['permissions'] : [];
         $data['is_primary'] = isset($data['is_primary']) ? 1 : 0;
 
         // Contact cant change if is primary or not
         if ($client_request == true) {
             unset($data['is_primary']);
-            if (isset($data['email'])) {
-                unset($data['email']);
-            }
         }
 
         if (isset($data['custom_fields'])) {
@@ -319,16 +317,17 @@ class Clients_model extends CRM_Model
         }
 
         if ($client_request == false) {
-            $data['invoice_emails'] = isset($data['invoice_emails']) ? 1 :0;
-            $data['estimate_emails'] = isset($data['estimate_emails']) ? 1 :0;
+            $data['invoice_emails']     = isset($data['invoice_emails']) ? 1 :0;
+            $data['estimate_emails']    = isset($data['estimate_emails']) ? 1 :0;
             $data['credit_note_emails'] = isset($data['credit_note_emails']) ? 1 :0;
-            $data['contract_emails'] = isset($data['contract_emails']) ? 1 :0;
-            $data['task_emails'] = isset($data['task_emails']) ? 1 :0;
-            $data['project_emails'] = isset($data['project_emails']) ? 1 :0;
+            $data['contract_emails']    = isset($data['contract_emails']) ? 1 :0;
+            $data['task_emails']        = isset($data['task_emails']) ? 1 :0;
+            $data['project_emails']     = isset($data['project_emails']) ? 1 :0;
+            $data['ticket_emails']      = isset($data['ticket_emails']) ? 1 :0;
         }
 
-        $hook_data = do_action('before_update_contact', array('data'=>$data, 'id'=>$id));
-        $data = $hook_data['data'];
+        $hook_data = do_action('before_update_contact', ['data' => $data, 'id' => $id]);
+        $data      = $hook_data['data'];
 
         $this->db->where('id', $id);
         $this->db->update('tblcontacts', $data);
@@ -338,9 +337,9 @@ class Clients_model extends CRM_Model
             if (isset($data['is_primary']) && $data['is_primary'] == 1) {
                 $this->db->where('userid', $contact->userid);
                 $this->db->where('id !=', $id);
-                $this->db->update('tblcontacts', array(
+                $this->db->update('tblcontacts', [
                     'is_primary' => 0,
-                ));
+                ]);
             }
         }
 
@@ -362,10 +361,10 @@ class Clients_model extends CRM_Model
                     $this->db->where('permission_id', $permission);
                     $_exists = $this->db->get('tblcontactpermissions')->row();
                     if (!$_exists) {
-                        $this->db->insert('tblcontactpermissions', array(
-                            'userid' => $id,
+                        $this->db->insert('tblcontactpermissions', [
+                            'userid'        => $id,
                             'permission_id' => $permission,
-                        ));
+                        ]);
                         if ($this->db->affected_rows() > 0) {
                             $affectedRows++;
                         }
@@ -373,10 +372,10 @@ class Clients_model extends CRM_Model
                 }
             } else {
                 foreach ($permissions as $permission) {
-                    $this->db->insert('tblcontactpermissions', array(
-                        'userid' => $id,
+                    $this->db->insert('tblcontactpermissions', [
+                        'userid'        => $id,
                         'permission_id' => $permission,
-                    ));
+                    ]);
                     if ($this->db->affected_rows() > 0) {
                         $affectedRows++;
                     }
@@ -387,17 +386,17 @@ class Clients_model extends CRM_Model
             }
         }
         if ($affectedRows > 0 && !$set_password_email_sent) {
-            logActivity('Contact Updated [' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+            logActivity('Contact Updated [ID: ' . $id . ']');
 
             return true;
         } elseif ($affectedRows > 0 && $set_password_email_sent) {
-            return array(
+            return [
                 'set_password_email_sent_and_profile_updated' => true,
-            );
+            ];
         } elseif ($affectedRows == 0 && $set_password_email_sent) {
-            return array(
+            return [
                 'set_password_email_sent' => true,
-            );
+            ];
         }
 
         return false;
@@ -435,40 +434,41 @@ class Clients_model extends CRM_Model
         if (isset($data['is_primary'])) {
             $data['is_primary'] = 1;
             $this->db->where('userid', $customer_id);
-            $this->db->update('tblcontacts', array(
+            $this->db->update('tblcontacts', [
                 'is_primary' => 0,
-            ));
+            ]);
         } else {
             $data['is_primary'] = 0;
         }
 
-        $password_before_hash  = '';
-        $data['userid'] = $customer_id;
+        $password_before_hash = '';
+        $data['userid']       = $customer_id;
         if (isset($data['password'])) {
             $password_before_hash = $data['password'];
             $this->load->helper('phpass');
-            $hasher              = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-            $data['password']    = $hasher->HashPassword($data['password']);
+            $hasher           = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
+            $data['password'] = $hasher->HashPassword($data['password']);
         }
 
         $data['datecreated'] = date('Y-m-d H:i:s');
 
         if (!$not_manual_request) {
-            $data['invoice_emails'] = isset($data['invoice_emails']) ? 1 :0;
-            $data['estimate_emails'] = isset($data['estimate_emails']) ? 1 :0;
+            $data['invoice_emails']     = isset($data['invoice_emails']) ? 1 :0;
+            $data['estimate_emails']    = isset($data['estimate_emails']) ? 1 :0;
             $data['credit_note_emails'] = isset($data['credit_note_emails']) ? 1 :0;
-            $data['contract_emails'] = isset($data['contract_emails']) ? 1 :0;
-            $data['task_emails'] = isset($data['task_emails']) ? 1 :0;
-            $data['project_emails'] = isset($data['project_emails']) ? 1 :0;
+            $data['contract_emails']    = isset($data['contract_emails']) ? 1 :0;
+            $data['task_emails']        = isset($data['task_emails']) ? 1 :0;
+            $data['project_emails']     = isset($data['project_emails']) ? 1 :0;
+            $data['ticket_emails']      = isset($data['ticket_emails']) ? 1 :0;
         }
 
-        $hook_data = array(
-            'data' => $data,
+        $hook_data = [
+            'data'               => $data,
             'not_manual_request' => $not_manual_request,
-        );
+        ];
 
         $hook_data = do_action('before_create_contact', $hook_data);
-        $data  = $hook_data['data'];
+        $data      = $hook_data['data'];
 
         $data['email'] = trim($data['email']);
 
@@ -481,9 +481,9 @@ class Clients_model extends CRM_Model
             }
             // request from admin area
             if (!isset($permissions) && $not_manual_request == false) {
-                $permissions = array();
+                $permissions = [];
             } elseif ($not_manual_request == true) {
-                $permissions         = array();
+                $permissions         = [];
                 $_permissions        = get_contact_permissions();
                 $default_permissions = @unserialize(get_option('default_contact_permissions'));
                 if (is_array($default_permissions)) {
@@ -498,40 +498,44 @@ class Clients_model extends CRM_Model
             if ($not_manual_request == true) {
                 // update all email notifications to 0
                 $this->db->where('id', $contact_id);
-                $this->db->update('tblcontacts', array(
-                    'invoice_emails'=>0,
-                    'estimate_emails'=>0,
-                    'credit_note_emails'=>0,
-                    'contract_emails'=>0,
-                    'task_emails'=>0,
-                    'project_emails'=>0,
-                ));
+                $this->db->update('tblcontacts', [
+                    'invoice_emails'     => 0,
+                    'estimate_emails'    => 0,
+                    'credit_note_emails' => 0,
+                    'contract_emails'    => 0,
+                    'task_emails'        => 0,
+                    'project_emails'     => 0,
+                    'ticket_emails'      => 0,
+                ]);
             }
             foreach ($permissions as $permission) {
-                $this->db->insert('tblcontactpermissions', array(
-                    'userid' => $contact_id,
+                $this->db->insert('tblcontactpermissions', [
+                    'userid'        => $contact_id,
                     'permission_id' => $permission,
-                ));
+                ]);
 
                 // Auto set email notifications based on permissions
                 if ($not_manual_request == true) {
                     if ($permission == 6) {
                         $this->db->where('id', $contact_id);
-                        $this->db->update('tblcontacts', array('project_emails'=>1, 'task_emails'=>1));
+                        $this->db->update('tblcontacts', ['project_emails' => 1, 'task_emails' => 1]);
                     } elseif ($permission == 3) {
                         $this->db->where('id', $contact_id);
-                        $this->db->update('tblcontacts', array('contract_emails'=>1));
+                        $this->db->update('tblcontacts', ['contract_emails' => 1]);
                     } elseif ($permission == 2) {
                         $this->db->where('id', $contact_id);
-                        $this->db->update('tblcontacts', array('estimate_emails'=>1));
+                        $this->db->update('tblcontacts', ['estimate_emails' => 1]);
                     } elseif ($permission == 1) {
                         $this->db->where('id', $contact_id);
-                        $this->db->update('tblcontacts', array('invoice_emails'=>1, 'credit_note_emails'=>1));
+                        $this->db->update('tblcontacts', ['invoice_emails' => 1, 'credit_note_emails' => 1]);
+                    } elseif ($permission == 5) {
+                        $this->db->where('id', $contact_id);
+                        $this->db->update('tblcontacts', ['ticket_emails' => 1]);
                     }
                 }
             }
 
-            $lastAnnouncement = $this->db->query("SELECT announcementid FROM tblannouncements WHERE showtousers = 1 AND announcementid = (SELECT MAX(announcementid) FROM tblannouncements)")->row();
+            $lastAnnouncement = $this->db->query('SELECT announcementid FROM tblannouncements WHERE showtousers = 1 AND announcementid = (SELECT MAX(announcementid) FROM tblannouncements)')->row();
             if ($lastAnnouncement) {
                 // Get all announcements and set it to read.
                 $this->db->select('announcementid')
@@ -541,16 +545,16 @@ class Clients_model extends CRM_Model
 
                 $announcements = $this->db->get()->result_array();
                 foreach ($announcements as $announcement) {
-                    $this->db->insert('tbldismissedannouncements', array(
+                    $this->db->insert('tbldismissedannouncements', [
                         'announcementid' => $announcement['announcementid'],
-                        'staff' => 0,
-                        'userid' => $contact_id,
-                    ));
+                        'staff'          => 0,
+                        'userid'         => $contact_id,
+                    ]);
                 }
             }
             if ($send_welcome_email == true) {
                 $this->load->model('emails_model');
-                $merge_fields = array();
+                $merge_fields = [];
                 $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($data['userid'], $contact_id, $password_before_hash));
                 $this->emails_model->send_email_template('new-client-created', $data['email'], $merge_fields);
             }
@@ -559,7 +563,7 @@ class Clients_model extends CRM_Model
                 $this->authentication_model->set_password_email($data['email'], 0);
             }
 
-            logActivity('Contact Created [' . $data['firstname'] . ' ' . $data['lastname'] . ']');
+            logActivity('Contact Created [ID: ' . $contact_id . ']');
             do_action('contact_created', $contact_id);
 
             return $contact_id;
@@ -613,7 +617,7 @@ class Clients_model extends CRM_Model
         }
         if ($affectedRows > 0) {
             do_action('customer_updated_company_info', $id);
-            logActivity('Customer Info Updated From Clients Area [' . $data['company'] . ']');
+            logActivity('Customer Info Updated From Clients Area [ID: ' . $id . ']');
 
             return true;
         }
@@ -660,7 +664,7 @@ class Clients_model extends CRM_Model
             }
         } else {
             $current_admins     = $this->get_admins($id);
-            $current_admins_ids = array();
+            $current_admins_ids = [];
             foreach ($current_admins as $c_admin) {
                 array_push($current_admins_ids, $c_admin['staff_id']);
             }
@@ -675,15 +679,15 @@ class Clients_model extends CRM_Model
                 }
             }
             foreach ($data['customer_admins'] as $n_admin_id) {
-                if (total_rows('tblcustomeradmins', array(
+                if (total_rows('tblcustomeradmins', [
                     'customer_id' => $id,
                     'staff_id' => $n_admin_id,
-                )) == 0) {
-                    $this->db->insert('tblcustomeradmins', array(
-                        'customer_id' => $id,
-                        'staff_id' => $n_admin_id,
+                ]) == 0) {
+                    $this->db->insert('tblcustomeradmins', [
+                        'customer_id'   => $id,
+                        'staff_id'      => $n_admin_id,
                         'date_assigned' => date('Y-m-d H:i:s'),
-                    ));
+                    ]);
                     if ($this->db->affected_rows() > 0) {
                         $affectedRows++;
                     }
@@ -706,20 +710,39 @@ class Clients_model extends CRM_Model
     {
         $affectedRows = 0;
 
-        if (is_reference_in_table('clientid', 'tblinvoices', $id)
-            || is_reference_in_table('clientid', 'tblestimates', $id)
-            || is_reference_in_table('clientid', 'tblcreditnotes', $id)) {
-            return array(
+        if (!is_gdpr() && is_reference_in_table('clientid', 'tblinvoices', $id)) {
+            return [
                 'referenced' => true,
-            );
+            ];
+        }
+
+        if (!is_gdpr() && is_reference_in_table('clientid', 'tblestimates', $id)) {
+            return [
+                'referenced' => true,
+            ];
+        }
+
+        if (!is_gdpr() && is_reference_in_table('clientid', 'tblcreditnotes', $id)) {
+            return [
+                'referenced' => true,
+            ];
         }
 
         do_action('before_client_deleted', $id);
+
+        $last_activity = get_last_system_activity_id();
+        $company       = get_company_name($id);
 
         $this->db->where('userid', $id);
         $this->db->delete('tblclients');
         if ($this->db->affected_rows() > 0) {
             $affectedRows++;
+            // Delete all user contacts
+            $this->db->where('userid', $id);
+            $contacts = $this->db->get('tblcontacts')->result_array();
+            foreach ($contacts as $contact) {
+                $this->delete_contact($contact['id']);
+            }
 
             // Delete all tickets start here
             $this->db->where('userid', $id);
@@ -733,11 +756,73 @@ class Clients_model extends CRM_Model
             $this->db->where('rel_type', 'customer');
             $this->db->delete('tblnotes');
 
-            // Delete all user contacts
-            $this->db->where('userid', $id);
-            $contacts = $this->db->get('tblcontacts')->result_array();
-            foreach ($contacts as $contact) {
-                $this->delete_contact($contact['id']);
+            if (is_gdpr() && get_option('gdpr_on_forgotten_remove_invoices_credit_notes') == '1') {
+                $this->load->model('invoices_model');
+                $this->db->where('clientid', $id);
+                $invoices = $this->db->get('tblinvoices')->result_array();
+                foreach ($invoices as $invoice) {
+                    $this->invoices_model->delete($invoice['id'], true);
+                }
+
+                $this->load->model('credit_notes_model');
+                $this->db->where('clientid', $id);
+                $credit_notes = $this->db->get('tblcreditnotes')->result_array();
+                foreach ($credit_notes as $credit_note) {
+                    $this->credit_notes_model->delete($credit_note['id'], true);
+                }
+
+            } elseif (is_gdpr()) {
+                $this->db->where('clientid', $id);
+                $this->db->update('tblinvoices', ['deleted_customer_name' => $company]);
+
+                $this->db->where('clientid', $id);
+                $this->db->update('tblcreditnotes', ['deleted_customer_name' => $company]);
+            }
+
+            $this->db->where('clientid', $id);
+            $this->db->update('tblcreditnotes', [
+                'clientid'   => 0,
+                'project_id' => 0,
+            ]);
+
+            $this->db->where('clientid', $id);
+            $this->db->update('tblinvoices', [
+                'clientid'                 => 0,
+                'recurring'                => 0,
+                'recurring_type'           => null,
+                'custom_recurring'         => 0,
+                'cycles'                   => 0,
+                'last_recurring_date'      => null,
+                'project_id'               => 0,
+                'subscription_id'          => 0,
+                'cancel_overdue_reminders' => 1,
+                'last_overdue_reminder'    => null,
+            ]);
+
+            if (is_gdpr() && get_option('gdpr_on_forgotten_remove_estimates') == '1') {
+                $this->load->model('estimates_model');
+                $this->db->where('clientid', $id);
+                $estimates = $this->db->get('tblestimates')->result_array();
+                foreach ($estimates as $estimate) {
+                    $this->estimates_model->delete($estimate['id'], true);
+                }
+            } elseif (is_gdpr()) {
+                $this->db->where('clientid', $id);
+                $this->db->update('tblestimates', ['deleted_customer_name' => $company]);
+            }
+
+            $this->db->where('clientid', $id);
+            $this->db->update('tblestimates', [
+                'clientid'           => 0,
+                'project_id'         => 0,
+                'is_expiry_notified' => 1,
+            ]);
+
+            $this->load->model('subscriptions_model');
+            $this->db->where('clientid', $id);
+            $subscriptions = $this->db->get('tblsubscriptions')->result_array();
+            foreach ($subscriptions as $subscription) {
+                $this->subscriptions_model->delete($subscription['id'], true);
             }
             // Get all client contracts
             $this->load->model('contracts_model');
@@ -757,8 +842,9 @@ class Clients_model extends CRM_Model
             $tasks = $this->db->get('tblstafftasks')->result_array();
 
             foreach ($tasks as $task) {
-                $this->tasks_model->delete_task($task['id']);
+                $this->tasks_model->delete_task($task['id'], false);
             }
+
             $this->db->where('rel_type', 'customer');
             $this->db->where('rel_id', $id);
             $this->db->delete('tblreminders');
@@ -772,13 +858,6 @@ class Clients_model extends CRM_Model
             $this->db->where('customer_id', $id);
             $this->db->delete('tblcustomergroups_in');
 
-            // Delete all projects
-            $this->load->model('projects_model');
-            $this->db->where('clientid', $id);
-            $projects = $this->db->get('tblprojects')->result_array();
-            foreach ($projects as $project) {
-                $this->projects_model->delete($project['id']);
-            }
             $this->load->model('proposals_model');
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'customer');
@@ -798,12 +877,33 @@ class Clients_model extends CRM_Model
 
             $this->load->model('expenses_model');
             foreach ($expenses as $expense) {
-                $this->expenses_model->delete($expense['id']);
+                $this->expenses_model->delete($expense['id'], true);
+            }
+
+            $this->db->where('client_id', $id);
+            $this->db->delete('tblusermeta');
+
+            $this->db->where('client_id', $id);
+            $this->db->update('tblleads', ['client_id' => 0]);
+
+            // Delete all projects
+            $this->load->model('projects_model');
+            $this->db->where('clientid', $id);
+            $projects = $this->db->get('tblprojects')->result_array();
+            foreach ($projects as $project) {
+                $this->projects_model->delete($project['id']);
             }
         }
         if ($affectedRows > 0) {
             do_action('after_client_deleted', $id);
-            logActivity('Client Deleted [' . $id . ']');
+
+            // Delete activity log caused by delete customer function
+            if ($last_activity) {
+                $this->db->where('id >', $last_activity->id);
+                $this->db->delete('tblactivitylog');
+            }
+
+            logActivity('Client Deleted [ID: ' . $id . ']');
 
             return true;
         }
@@ -818,17 +918,24 @@ class Clients_model extends CRM_Model
      */
     public function delete_contact($id)
     {
-        $this->db->select('userid');
         $this->db->where('id', $id);
         $result      = $this->db->get('tblcontacts')->row();
         $customer_id = $result->userid;
+
         do_action('before_delete_contact', $id);
+
+        $last_activity = get_last_system_activity_id();
+
         $this->db->where('id', $id);
         $this->db->delete('tblcontacts');
+
         if ($this->db->affected_rows() > 0) {
             if (is_dir(get_upload_path_by_type('contact_profile_images') . $id)) {
                 delete_dir(get_upload_path_by_type('contact_profile_images') . $id);
             }
+
+            $this->db->where('contact_id', $id);
+            $this->db->delete('tblconsents');
 
             $this->db->where('contact_id', $id);
             $this->db->delete('tblcustomerfiles_shares');
@@ -844,7 +951,6 @@ class Clients_model extends CRM_Model
             $this->db->where('userid', $id);
             $this->db->delete('tblcontactpermissions');
 
-            // Delete autologin if found
             $this->db->where('user_id', $id);
             $this->db->where('staff', 0);
             $this->db->delete('tbluserautologin');
@@ -859,9 +965,111 @@ class Clients_model extends CRM_Model
                 $this->tickets_model->delete($ticket['ticketid']);
             }
 
-            $this->db->where('contactid', $id);
-            $this->db->where('userid', $customer_id);
-            $this->db->delete('tblticketreplies');
+            $this->load->model('tasks_model');
+
+            $this->db->where('addedfrom', $id);
+            $this->db->where('is_added_from_contact', 1);
+            $tasks = $this->db->get('tblstafftasks')->result_array();
+
+            foreach ($tasks as $task) {
+                $this->tasks_model->delete_task($task['id'], false);
+            }
+
+               // Added from contact in customer profile
+            $this->db->where('contact_id', $id);
+            $this->db->where('rel_type', 'customer');
+            $attachments = $this->db->get('tblfiles')->result_array();
+
+            foreach ($attachments as $attachment) {
+                $this->delete_attachment($attachment['id']);
+            }
+
+            // Remove contact files uploaded to tasks
+            $this->db->where('rel_type', 'task');
+            $this->db->where('contact_id', $id);
+            $filesUploadedFromContactToTasks = $this->db->get('tblfiles')->result_array();
+
+            foreach ($filesUploadedFromContactToTasks as $file) {
+                $this->tasks_model->remove_task_attachment($file['id']);
+            }
+
+            $this->db->where('contact_id', $id);
+            $tasksComments = $this->db->get('tblstafftaskcomments')->result_array();
+            foreach ($tasksComments as $comment) {
+                $this->tasks_model->remove_comment($comment['id'], true);
+            }
+
+            $this->load->model('projects_model');
+
+            $this->db->where('contact_id', $id);
+            $files = $this->db->get('tblprojectfiles')->result_array();
+            foreach ($files as $file) {
+                $this->projects_model->remove_file($file['id'], false);
+            }
+
+            $this->db->where('contact_id', $id);
+            $discussions = $this->db->get('tblprojectdiscussions')->result_array();
+            foreach ($discussions as $discussion) {
+                $this->projects_model->delete_discussion($discussion['id'], false);
+            }
+
+            $this->db->where('contact_id', $id);
+            $discussionsComments = $this->db->get('tblprojectdiscussioncomments')->result_array();
+            foreach ($discussionsComments as $comment) {
+                $this->projects_model->delete_discussion_comment($comment['id'], false);
+            }
+
+            $this->db->where('contact_id', $id);
+            $this->db->delete('tblusermeta');
+
+            $this->db->where('(email="'.$result->email.'" OR bcc LIKE "%'.$result->email.'%" OR cc LIKE "%'.$result->email.'%")');
+            $this->db->delete('tblemailqueue');
+
+            $this->db->where('email', $result->email);
+            $this->db->delete('tblsurveysemailsendcron');
+
+            if (is_gdpr()) {
+
+                $this->db->where('email', $result->email);
+                $this->db->delete('tbllistemails');
+
+                if(!empty($result->last_ip)){
+                    $this->db->where('ip', $result->last_ip);
+                    $this->db->delete('tblknowledgebasearticleanswers');
+
+                    $this->db->where('ip', $result->last_ip);
+                    $this->db->delete('tblsurveyresultsets');
+                }
+
+                $this->db->where('email', $result->email);
+                $this->db->delete('tblticketpipelog');
+
+                $this->db->where('email', $result->email);
+                $this->db->delete('tblemailstracking');
+
+                $this->db->where('contact_id', $id);
+                $this->db->delete('tblprojectactivity');
+
+                $this->db->where('(additional_data LIKE "%'.$result->email.'%" OR full_name LIKE "%'.$result->firstname . ' ' . $result->lastname.'%")');
+                $this->db->where('additional_data != "" AND additional_data IS NOT NULL');
+                $this->db->delete('tblsalesactivity');
+
+                $whereActivityLog = '(description LIKE "%'.$result->email.'%" OR description LIKE "%'.$result->firstname . ' ' . $result->lastname.'%" OR description LIKE "%'.$result->firstname.'%" OR description LIKE "%'.$result->lastname.'%" OR description LIKE "%'.$result->phonenumber.'%"';
+                if(!empty($result->last_ip)) {
+                    $whereActivityLog .= ' OR description LIKE "%'.$result->last_ip.'%"';
+                }
+                $whereActivityLog .= ')';
+                $this->db->where($whereActivityLog);
+                $this->db->delete('tblactivitylog');
+            }
+
+
+
+            // Delete activity log caused by delete contact function
+            if ($last_activity) {
+                $this->db->where('id >', $last_activity->id);
+                $this->db->delete('tblactivitylog');
+            }
 
             return true;
         }
@@ -899,7 +1107,7 @@ class Clients_model extends CRM_Model
 
         $result = $this->db->get()->result_array();
         if (count($result) > 0) {
-            $result[0]['billing_street'] = clear_textarea_breaks($result[0]['billing_street']);
+            $result[0]['billing_street']  = clear_textarea_breaks($result[0]['billing_street']);
             $result[0]['shipping_street'] = clear_textarea_breaks($result[0]['shipping_street']);
         }
 
@@ -912,7 +1120,7 @@ class Clients_model extends CRM_Model
      * @param  array  $where perform where
      * @return array
      */
-    public function get_customer_files($id, $where = array())
+    public function get_customer_files($id, $where = [])
     {
         $this->db->where($where);
         $this->db->where('rel_id', $id);
@@ -934,12 +1142,12 @@ class Clients_model extends CRM_Model
         $deleted    = false;
         if ($attachment) {
             if (empty($attachment->external)) {
-                $relPath = get_upload_path_by_type('customer') . $attachment->rel_id . '/';
-                $fullPath =$relPath.$attachment->file_name;
+                $relPath  = get_upload_path_by_type('customer') . $attachment->rel_id . '/';
+                $fullPath = $relPath . $attachment->file_name;
                 unlink($fullPath);
-                $fname = pathinfo($fullPath, PATHINFO_FILENAME);
-                $fext = pathinfo($fullPath, PATHINFO_EXTENSION);
-                $thumbPath = $relPath.$fname.'_thumb.'.$fext;
+                $fname     = pathinfo($fullPath, PATHINFO_FILENAME);
+                $fext      = pathinfo($fullPath, PATHINFO_EXTENSION);
+                $thumbPath = $relPath . $fname . '_thumb.' . $fext;
                 if (file_exists($thumbPath)) {
                     unlink($thumbPath);
                 }
@@ -951,7 +1159,7 @@ class Clients_model extends CRM_Model
                 $deleted = true;
                 $this->db->where('file_id', $id);
                 $this->db->delete('tblcustomerfiles_shares');
-                logActivity('Customer Attachment Deleted [CustomerID: ' . $attachment->rel_id . ']');
+                logActivity('Customer Attachment Deleted [ID: ' . $attachment->rel_id . ']');
             }
 
             if (is_dir(get_upload_path_by_type('customer') . $attachment->rel_id)) {
@@ -980,9 +1188,9 @@ class Clients_model extends CRM_Model
         $status              = $hook_data['status'];
         $id                  = $hook_data['id'];
         $this->db->where('id', $id);
-        $this->db->update('tblcontacts', array(
+        $this->db->update('tblcontacts', [
             'active' => $status,
-        ));
+        ]);
         if ($this->db->affected_rows() > 0) {
             logActivity('Contact Status Changed [ContactID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
 
@@ -1001,12 +1209,12 @@ class Clients_model extends CRM_Model
     public function change_client_status($id, $status)
     {
         $this->db->where('userid', $id);
-        $this->db->update('tblclients', array(
+        $this->db->update('tblclients', [
             'active' => $status,
-        ));
+        ]);
 
         if ($this->db->affected_rows() > 0) {
-            logActivity('Customer Status Changed [CustomerID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
+            logActivity('Customer Status Changed [ID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
 
             return true;
         }
@@ -1031,9 +1239,9 @@ class Clients_model extends CRM_Model
         $this->load->helper('phpass');
         $hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
         if (!$hasher->CheckPassword($data['oldpassword'], $client->password)) {
-            return array(
+            return [
                 'old_password_not_match' => true,
-            );
+            ];
         }
         $update_data['password']             = $hasher->HashPassword($data['newpasswordr']);
         $update_data['last_password_change'] = date('Y-m-d H:i:s');
@@ -1135,7 +1343,7 @@ class Clients_model extends CRM_Model
      * @param  array  $where       additional wher
      * @return array
      */
-    public function get_vault_entries($customer_id, $where = array())
+    public function get_vault_entries($customer_id, $where = [])
     {
         return $this->client_vault_entries_model->get_by_customer_id($customer_id, $where);
     }

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
@@ -9,7 +10,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function get_client_email_templates_slugs()
 {
-    $client_email_templates_slugs = array(
+    $client_email_templates_slugs = [
         'new-client-created',
         'client-statement',
         'invoice-send-to-client',
@@ -32,6 +33,7 @@ function get_client_email_templates_slugs()
         'proposal-comment-to-client',
         'estimate-thank-you-to-customer',
         'send-contract',
+        'contract-comment-to-client',
         'auto-close-ticket',
         'new-project-discussion-created-to-customer',
         'new-project-file-uploaded-to-customer',
@@ -42,7 +44,11 @@ function get_client_email_templates_slugs()
         'task-status-change-to-contacts',
         'task-added-attachment-to-contacts',
         'task-commented-to-contacts',
-    );
+        'send-subscription',
+        'subscription-payment-failed',
+        'subscription-payment-succeeded',
+        'subscription-canceled',
+    ];
 
     return do_action('client_email_templates', $client_email_templates_slugs);
 }
@@ -54,7 +60,7 @@ function get_client_email_templates_slugs()
  */
 function get_staff_email_templates_slugs()
 {
-    $staff_email_templates_slugs = array(
+    $staff_email_templates_slugs = [
         'reminder-email-staff',
         'new-ticket-created-staff',
         'two-factor-authentication',
@@ -63,6 +69,7 @@ function get_staff_email_templates_slugs()
         'task-assigned',
         'task-added-as-follower',
         'task-commented',
+        'contract-comment-to-admin',
         'staff-password-reseted',
         'staff-forgot-password',
         'task-status-change-to-staff',
@@ -81,7 +88,10 @@ function get_staff_email_templates_slugs()
         'new-staff-created',
         'new-client-registered-to-admin',
         'new-lead-assigned',
-    );
+        'contract-expiration-to-staff',
+        'gdpr-removal-request',
+        'gdpr-removal-request-lead',
+    ];
 
     return do_action('staff_email_templates', $staff_email_templates_slugs);
 }
@@ -93,12 +103,12 @@ function get_staff_email_templates_slugs()
  */
 function get_email_template_language($template_slug, $email)
 {
-    $CI =& get_instance();
+    $CI       = & get_instance();
     $language = get_option('active_language');
 
-    if (total_rows('tblcontacts', array(
+    if (total_rows('tblcontacts', [
         'email' => $email,
-    )) > 0 && in_array($template_slug, get_client_email_templates_slugs())) {
+    ]) > 0 && in_array($template_slug, get_client_email_templates_slugs())) {
         $CI->db->where('email', $email);
 
         $contact = $CI->db->get('tblcontacts')->row();
@@ -106,9 +116,9 @@ function get_email_template_language($template_slug, $email)
         if ($lang != '') {
             $language = $lang;
         }
-    } elseif (total_rows('tblstaff', array(
+    } elseif (total_rows('tblstaff', [
             'email' => $email,
-        )) > 0 && in_array($template_slug, get_staff_email_templates_slugs())) {
+        ]) > 0 && in_array($template_slug, get_staff_email_templates_slugs())) {
         $CI->db->where('email', $email);
         $staff = $CI->db->get('tblstaff')->row();
 
@@ -127,26 +137,30 @@ function get_email_template_language($template_slug, $email)
                 $CI->db->select('rel_type,rel_id')
             ->where('id', $CI->emails_model->get_rel_id());
                 $proposal = $CI->db->get('tblproposals')->row();
+            } else if ($CI->emails_model->get_rel_type() == 'lead') {
+                $CI->db->select('id, default_language')
+            ->where('id', $CI->emails_model->get_rel_id());
+                $lead = $CI->db->get('tblleads')->row();
             }
-            if (isset($proposal) && $proposal && $proposal->rel_type == 'lead') {
-                $CI->db->select('default_language')
+        }
+        if (isset($proposal) && $proposal && $proposal->rel_type == 'lead') {
+            $CI->db->select('default_language')
                 ->where('id', $proposal->rel_id);
 
-                $lead = $CI->db->get('tblleads')->row();
+            $lead = $CI->db->get('tblleads')->row();
+        }
 
-                if ($lead && !empty($lead->default_language)) {
-                    $language = $lead->default_language;
-                }
-            }
+        if (isset($lead) && $lead && !empty($lead->default_language)) {
+            $language = $lead->default_language;
         }
     }
 
-    $hook_data['language'] = $language;
+    $hook_data['language']      = $language;
     $hook_data['template_slug'] = $template_slug;
-    $hook_data['email'] = $email;
+    $hook_data['email']         = $email;
 
     $hook_data = do_action('email_template_language', $hook_data);
-    $language = $hook_data['language'];
+    $language  = $hook_data['language'];
 
     return $language;
 }
@@ -160,7 +174,7 @@ function get_email_template_language($template_slug, $email)
  */
 function get_email_template_for_sending($template_slug, $email)
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
 
     $language = get_email_template_language($template_slug, $email);
 
@@ -202,9 +216,9 @@ function get_email_template_for_sending($template_slug, $email)
  * @param  array  $merge_fields
  * @return object
  */
-function parse_email_template($template, $merge_fields = array())
+function parse_email_template($template, $merge_fields = [])
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
     if (!is_object($template) || $CI->input->post('template_name')) {
         $original_template = $template;
         if ($CI->input->post('template_name')) {
@@ -221,6 +235,8 @@ function parse_email_template($template, $merge_fields = array())
     }
     $template = _parse_email_template_merge_fields($template, $merge_fields);
 
+    // Used in hooks eq for emails tracking
+    $template->tmp_id = app_generate_hash();
 
     return do_action('email_template_parsed', $template);
 }

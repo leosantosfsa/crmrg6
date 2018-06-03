@@ -91,7 +91,7 @@ function render_dashboard_widgets($container)
         $widgetsContainers[$widget['container']][] = $widget;
     }
 
-    $staff_dashboard = $GLOBALS['current_user']->dashboard_widgets_order;
+    $staff_dashboard = get_staff_meta(get_staff_user_id(),'dashboard_widgets_order');
     $staff_dashboard = !$staff_dashboard ? array() : unserialize($staff_dashboard);
 
     $CI = &get_instance();
@@ -137,7 +137,7 @@ function render_dashboard_widgets($container)
         }
     }
 
-    $user_dashboard_visibility = $GLOBALS['current_user']->dashboard_widgets_visibility;
+    $user_dashboard_visibility = get_staff_meta(get_staff_user_id(),'dashboard_widgets_visibility');
 
     if (!$user_dashboard_visibility) {
         $user_dashboard_visibility = array();

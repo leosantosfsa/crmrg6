@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Taxes extends Admin_controller
 {
@@ -32,10 +33,10 @@ class Taxes extends Admin_controller
                 if ($success == true) {
                     $message = _l('added_successfully', _l('tax'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
-                    'message' => $message
-                ));
+                    'message' => $message,
+                ]);
             } else {
                 $success = $this->taxes_model->edit($data);
                 $message = '';
@@ -45,10 +46,10 @@ class Taxes extends Admin_controller
                 } elseif ($success == true) {
                     $message = _l('updated_successfully', _l('tax'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
-                    'message' => $message
-                ));
+                    'message' => $message,
+                ]);
             }
         }
     }

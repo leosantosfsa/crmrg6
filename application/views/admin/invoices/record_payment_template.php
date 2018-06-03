@@ -50,8 +50,11 @@
 
                 </div>
                 <div class="col-md-6">
-                    <label for="note" class="control-label"><?php echo _l('record_payment_leave_note'); ?></label>
-                    <textarea name="note" class="form-control" rows="8" placeholder="<?php echo _l('invoice_record_payment_note_placeholder'); ?>" id="note"></textarea>
+                    <?php echo render_input('transactionid','payment_transaction_id'); ?>
+                       <div class="form-gruoup">
+                            <label for="note" class="control-label"><?php echo _l('record_payment_leave_note'); ?></label>
+                            <textarea name="note" class="form-control" rows="8" placeholder="<?php echo _l('invoice_record_payment_note_placeholder'); ?>" id="note"></textarea>
+                        </div>
                 </div>
             </div>
             <div class="pull-right mtop15">

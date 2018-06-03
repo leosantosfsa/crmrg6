@@ -14,8 +14,10 @@
     </div>
     <?php } ?>
     <?php if(count($files) == 0){ ?>
-    <hr />
-    <p class="no-margin"><?php echo _l('no_files_found'); ?></p>
+    <hr class="hr-panel-heading" />
+    <div class="text-center">
+        <h4 class="no-margin"><?php echo _l('no_files_found'); ?></h4>
+    </div>
     <?php } else { ?>
         <table class="table dt-table mtop15" data-order-col="1" data-order-type="desc">
          <thead>

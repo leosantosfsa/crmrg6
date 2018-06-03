@@ -1,12 +1,15 @@
-<?php if (!defined('BASEPATH')) {
+<?php
+
+if (!defined('BASEPATH')) {
     exit('No direct script access allowed');
 }
 
 class CRM_Form_validation extends CI_Form_validation
 {
     protected $CI;
+
     // Custom
-    protected $cfk_hidden = array();
+    protected $cfk_hidden = [];
 
     public function __construct()
     {
@@ -27,10 +30,10 @@ class CRM_Form_validation extends CI_Form_validation
         $cf_found = false;
         if ($this->CI->input->post('custom_fields')) {
             foreach ($this->CI->input->post('custom_fields') as $_k => $_f) {
-                foreach ($_f as $k=>$v) {
+                foreach ($_f as $k => $v) {
                     if (is_array($v)) {
                         if (!isset($this->cfk_hidden[$_k])) {
-                            $this->cfk_hidden[$_k] = array();
+                            $this->cfk_hidden[$_k] = [];
                         }
                         $this->cfk_hidden[$_k][$k] = 0;
                         foreach ($v as $cf_key => $cf_value) {
@@ -49,7 +52,7 @@ class CRM_Form_validation extends CI_Form_validation
         }
 
         if ($cf_found == false) {
-            $this->cfk_hidden = array();
+            $this->cfk_hidden = [];
         }
 
         $validation_array = empty($this->validation_data)
@@ -66,8 +69,8 @@ class CRM_Form_validation extends CI_Form_validation
 
             if (empty($group)) {
                 // Is there a validation rule for the particular URI being accessed?
-                $group = trim($this->CI->uri->ruri_string(), '/');
-                isset($this->_config_rules[$group]) or $group = $this->CI->router->class.'/'.$this->CI->router->method;
+                $group                                        = trim($this->CI->uri->ruri_string(), '/');
+                isset($this->_config_rules[$group]) or $group = $this->CI->router->class . '/' . $this->CI->router->method;
             }
 
             $this->set_rules(isset($this->_config_rules[$group]) ? $this->_config_rules[$group] : $this->_config_rules);
@@ -117,14 +120,14 @@ class CRM_Form_validation extends CI_Form_validation
 
         // Custom
         foreach ($this->cfk_hidden as $type => $total) {
-            foreach ($total as $key =>$_total) {
+            foreach ($total as $key => $_total) {
                 if (!isset($_POST['custom_fields'][$type][$key])) {
-                    $_POST['custom_fields'][$type][$key] = array();
+                    $_POST['custom_fields'][$type][$key] = [];
                 }
                 for ($i = 0; $i < $_total; $i++) {
                     array_push($_POST['custom_fields'][$type][$key], 'cfk_hidden');
                 }
-                $_POST['custom_fields'][$type][$key] =  array_values($_POST['custom_fields'][$type][$key]);
+                $_POST['custom_fields'][$type][$key] = array_values($_POST['custom_fields'][$type][$key]);
             }
         }
 
@@ -137,15 +140,15 @@ class CRM_Form_validation extends CI_Form_validation
      * @param   string
      * @return  bool
      */
-  /*  public function valid_email($str)
-    {
-        if (function_exists('idn_to_ascii') && preg_match('#\A([^@]+)@(.+)\z#', $str, $matches))
-        {
-            $variant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : INTL_IDNA_VARIANT_2003;
-            $str = $matches[1].'@'.idn_to_ascii($matches[2], 0, $variant);
-        }
-        return (bool) filter_var($str, FILTER_VALIDATE_EMAIL);
-    }*/
+    /*  public function valid_email($str)
+      {
+          if (function_exists('idn_to_ascii') && preg_match('#\A([^@]+)@(.+)\z#', $str, $matches))
+          {
+              $variant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : INTL_IDNA_VARIANT_2003;
+              $str = $matches[1].'@'.idn_to_ascii($matches[2], 0, $variant);
+          }
+          return (bool) filter_var($str, FILTER_VALIDATE_EMAIL);
+      }*/
 
     /**
      * Custom method for error messages in array
@@ -155,9 +158,8 @@ class CRM_Form_validation extends CI_Form_validation
     {
         if (count($this->_error_array) === 0) {
             return false;
-        } else {
-            return $this->_error_array;
         }
-    }
 
+        return $this->_error_array;
+    }
 }

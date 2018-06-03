@@ -27,7 +27,6 @@
             foreach($cf as $custom_field) {
                 array_push($table_data,$custom_field['name']);
             }
-            array_push($table_data,_l('options'));
             render_datatable($table_data,'invoice-items'); ?>
           </div>
         </div>
@@ -50,7 +49,7 @@
         <div class="input-group">
           <input type="text" name="item_group_name" id="item_group_name" class="form-control" placeholder="<?php echo _l('item_group_name'); ?>">
           <span class="input-group-btn">
-            <button class="btn btn-info p9" type="button" id="new-item-group-insert"><?php echo _l('new_item_group'); ?></button>
+            <button class="btn btn-info p7" type="button" id="new-item-group-insert"><?php echo _l('new_item_group'); ?></button>
           </span>
         </div>
         <hr />
@@ -61,26 +60,35 @@
             <thead>
               <tr>
                 <th><?php echo _l('item_group_name'); ?></th>
-                <th><?php echo _l('options'); ?></th>
               </tr>
             </thead>
             <tbody>
               <?php foreach($items_groups as $group){ ?>
-              <tr data-group-row-id="<?php echo $group['id']; ?>">
+              <tr class="row-has-options" data-group-row-id="<?php echo $group['id']; ?>">
                 <td data-order="<?php echo $group['name']; ?>">
                   <span class="group_name_plain_text"><?php echo $group['name']; ?></span>
                   <div class="group_edit hide">
                    <div class="input-group">
                     <input type="text" class="form-control">
                     <span class="input-group-btn">
-                      <button class="btn btn-info p7 update-item-group" type="button"><?php echo _l('submit'); ?></button>
+                      <button class="btn btn-info p8 update-item-group" type="button"><?php echo _l('submit'); ?></button>
                     </span>
                   </div>
                 </div>
+                <div class="row-options">
+                  <?php if(has_permission('items','','edit')){ ?>
+                    <a href="#" class="edit-item-group">
+                      <?php echo _l('edit'); ?>
+                    </a>
+                    <?php } ?>
+                    <?php if(has_permission('items','','delete')){ ?>
+                      | <a href="<?php echo admin_url('invoice_items/delete_group/'.$group['id']); ?>" class="delete-item-group _delete text-danger">
+                        <?php echo _l('delete'); ?>
+                      </a>
+                      <?php } ?>
+                    </div>
               </td>
-              <td align="right">
-                <?php if(has_permission('items','','edit')){ ?><button type="button" class="btn btn-default btn-icon edit-item-group"><i class="fa fa-pencil-square-o"></i></button><?php } ?>
-                <?php if(has_permission('items','','delete')){ ?><a href="<?php echo admin_url('invoice_items/delete_group/'.$group['id']); ?>" class="btn btn-danger btn-icon delete-item-group _delete"><i class="fa fa-remove"></i></a><?php } ?></td>
+
               </tr>
               <?php } ?>
             </tbody>
@@ -97,9 +105,7 @@
 <?php init_tail(); ?>
 <script>
   $(function(){
-    var not_sortable_items;
-    not_sortable_items = [($('.table-invoice-items').find('th').length - 1)];
-    initDataTable('.table-invoice-items', admin_url+'invoice_items/table', not_sortable_items, not_sortable_items,'undefined',[0,'ASC']);
+    initDataTable('.table-invoice-items', admin_url+'invoice_items/table', undefined, undefined,'undefined',[0,'asc']);
     if(get_url_param('groups_modal')){
        // Set time out user to see the message
        setTimeout(function(){
@@ -116,7 +122,8 @@
       }
     });
 
-    $('body').on('click','.edit-item-group',function(){
+    $('body').on('click','.edit-item-group',function(e){
+      e.preventDefault();
       var tr = $(this).parents('tr'),
       group_id = tr.attr('data-group-row-id');
       tr.find('.group_name_plain_text').toggleClass('hide');

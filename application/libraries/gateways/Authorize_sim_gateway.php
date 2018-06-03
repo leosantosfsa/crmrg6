@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
@@ -29,53 +30,53 @@ class Authorize_sim_gateway extends App_gateway
         /**
          * Add gateway settings
         */
-        $this->setSettings(array(
+        $this->setSettings([
 
-            array(
-                'name' => 'api_login_id',
+            [
+                'name'      => 'api_login_id',
                 'encrypted' => true,
-                'label' => 'settings_paymentmethod_authorize_api_login_id'
-            ),
-            array(
-                'name' => 'api_transaction_key',
-                'label' => 'settings_paymentmethod_authorize_api_transaction_key',
-                'encrypted' => true
-            ),
-            array(
-                'name' => 'api_secret_key',
-                'label' => 'settings_paymentmethod_authorize_secret_key',
-                'encrypted' => true
-            ),
-            array(
-                'name' => 'description_dashboard',
-                'label' => 'settings_paymentmethod_description',
-                'type'=>'textarea',
-                'default_value'=>'Payment for Invoice {invoice_number}',
-            ),
-            array(
-                'name' => 'currencies',
-                'label' => 'currency',
-                'default_value' => 'USD'
-            ),
-            array(
-                'name' => 'test_mode_enabled',
-                'type' => 'yes_no',
+                'label'     => 'settings_paymentmethod_authorize_api_login_id',
+            ],
+            [
+                'name'      => 'api_transaction_key',
+                'label'     => 'settings_paymentmethod_authorize_api_transaction_key',
+                'encrypted' => true,
+            ],
+            [
+                'name'      => 'api_secret_key',
+                'label'     => 'settings_paymentmethod_authorize_secret_key',
+                'encrypted' => true,
+            ],
+            [
+                'name'          => 'description_dashboard',
+                'label'         => 'settings_paymentmethod_description',
+                'type'          => 'textarea',
+                'default_value' => 'Payment for Invoice {invoice_number}',
+            ],
+            [
+                'name'          => 'currencies',
+                'label'         => 'currency',
+                'default_value' => 'USD',
+            ],
+            [
+                'name'          => 'test_mode_enabled',
+                'type'          => 'yes_no',
                 'default_value' => 0,
-                'label' => 'settings_paymentmethod_testing_mode'
-            ),
-            array(
-                'name' => 'developer_mode_enabled',
-                'type' => 'yes_no',
+                'label'         => 'settings_paymentmethod_testing_mode',
+            ],
+            [
+                'name'          => 'developer_mode_enabled',
+                'type'          => 'yes_no',
                 'default_value' => 1,
-                'label' => 'settings_paymentmethod_developer_mode'
-            )
-        ));
+                'label'         => 'settings_paymentmethod_developer_mode',
+            ],
+        ]);
 
         /**
         * REQUIRED
         * Hook gateway with other online payment modes
         */
-        add_action('before_add_online_payment_modes', array( $this, 'initMode' ));
+        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
         add_action('before_render_payment_gateway_settings', 'authorize_sim_notice');
     }
 
@@ -96,30 +97,30 @@ class Authorize_sim_gateway extends App_gateway
         $billing_data['billingPostcode'] = $data['invoice']->billing_zip;
 
         $_country = '';
-        $country = get_country($data['invoice']->billing_country);
+        $country  = get_country($data['invoice']->billing_country);
 
         if ($country) {
             $_country = $country->short_name;
         }
 
-        $billing_data['billingCountry']  = $_country;
-        $trans_id = time();
+        $billing_data['billingCountry'] = $_country;
+        $trans_id                       = time();
 
-        $requestData = array(
-                'amount' => number_format($data['amount'], 2, '.', ''),
-                'currency' => $data['invoice']->currency_name,
-                'returnUrl'=>site_url('gateways/authorize_sim/complete_purchase'),
-                'description' => str_replace('{invoice_number}', format_invoice_number($data['invoice']->id) , $this->getSetting('description_dashboard')),
+        $requestData = [
+                'amount'        => number_format($data['amount'], 2, '.', ''),
+                'currency'      => $data['invoice']->currency_name,
+                'returnUrl'     => site_url('gateways/authorize_sim/complete_purchase'),
+                'description'   => str_replace('{invoice_number}', format_invoice_number($data['invoice']->id), $this->getSetting('description_dashboard')),
                 'transactionId' => $trans_id,
-                'invoiceNumber'=>format_invoice_number($data['invoice']->id),
-                'card' => $billing_data
-            );
+                'invoiceNumber' => format_invoice_number($data['invoice']->id),
+                'card'          => $billing_data,
+            ];
 
 
         $oResponse = $gateway->purchase($requestData)->send();
         if ($oResponse->isRedirect()) {
             $this->ci->db->where('id', $data['invoice']->id);
-            $this->ci->db->update('tblinvoices', array('token'=>$trans_id));
+            $this->ci->db->update('tblinvoices', ['token' => $trans_id]);
             // redirect to offsite payment gateway
             $oResponse->redirect();
         } else {

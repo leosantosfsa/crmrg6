@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Authentication extends CRM_Controller
@@ -36,9 +37,8 @@ class Authentication extends CRM_Controller
         }
         if ($this->input->post()) {
             if ($this->form_validation->run() !== false) {
-
-                $email = $this->input->post('email');
-                $password = $this->input->post('password',false);
+                $email    = $this->input->post('email');
+                $password = $this->input->post('password', false);
                 $remember = $this->input->post('remember');
 
                 $data = $this->Authentication_model->login($email, $password, $remember, true);
@@ -46,8 +46,7 @@ class Authentication extends CRM_Controller
                 if (is_array($data) && isset($data['memberinactive'])) {
                     set_alert('danger', _l('admin_auth_inactive_account'));
                     redirect(site_url('authentication/admin'));
-                } elseif(is_array($data) && isset($data['two_factor_auth'])){
-
+                } elseif (is_array($data) && isset($data['two_factor_auth'])) {
                     $this->Authentication_model->set_two_factor_auth_code($data['user']->staffid);
 
                     $this->load->model('emails_model');
@@ -55,16 +54,16 @@ class Authentication extends CRM_Controller
                     $sent = $this->emails_model->send_email_template(
                         'two-factor-authentication',
                         $email,
-                        get_staff_merge_fields($data['user']->staffid));
+                        get_staff_merge_fields($data['user']->staffid)
+                    );
 
-                    if(!$sent){
-                        set_alert('danger',_l('two_factor_auth_failed_to_send_code'));
+                    if (!$sent) {
+                        set_alert('danger', _l('two_factor_auth_failed_to_send_code'));
                         redirect(site_url('authentication/admin'));
                     } else {
-                        set_alert('success',_l('two_factor_auth_code_sent_successfully',$email));
+                        set_alert('success', _l('two_factor_auth_code_sent_successfully', $email));
                     }
                     redirect(site_url('authentication/two_factor'));
-
                 } elseif ($data == false) {
                     set_alert('danger', _l('admin_auth_invalid_email_or_password'));
                     redirect(site_url('authentication/admin'));
@@ -81,15 +80,15 @@ class Authentication extends CRM_Controller
         $this->load->view('authentication/login_admin', $data);
     }
 
-    public function two_factor(){
-
+    public function two_factor()
+    {
         $this->form_validation->set_rules('code', _l('two_factor_authentication_code'), 'required');
 
-        if($this->input->post()) {
+        if ($this->input->post()) {
             if ($this->form_validation->run() !== false) {
                 $code = $this->input->post('code');
                 $code = trim($code);
-                if($this->Authentication_model->is_two_factor_code_valid($code)){
+                if ($this->Authentication_model->is_two_factor_code_valid($code)) {
                     $user = $this->Authentication_model->get_user_by_two_factor_auth_code($code);
                     $this->Authentication_model->clear_two_factor_auth_code($user->staffid);
                     $this->Authentication_model->two_factor_auth_login($user);
@@ -144,18 +143,18 @@ class Authentication extends CRM_Controller
         $this->form_validation->set_rules('passwordr', _l('admin_auth_reset_password_repeat'), 'required|matches[password]');
         if ($this->input->post()) {
             if ($this->form_validation->run() !== false) {
-                do_action('before_user_reset_password', array(
-                    'staff' => $staff,
-                    'userid' => $userid
-                ));
-                $success = $this->Authentication_model->reset_password($staff, $userid, $new_pass_key, $this->input->post('passwordr',false));
+                do_action('before_user_reset_password', [
+                    'staff'  => $staff,
+                    'userid' => $userid,
+                ]);
+                $success = $this->Authentication_model->reset_password($staff, $userid, $new_pass_key, $this->input->post('passwordr', false));
                 if (is_array($success) && $success['expired'] == true) {
                     set_alert('danger', _l('password_reset_key_expired'));
                 } elseif ($success == true) {
-                    do_action('after_user_reset_password', array(
-                        'staff' => $staff,
-                        'userid' => $userid
-                    ));
+                    do_action('after_user_reset_password', [
+                        'staff'  => $staff,
+                        'userid' => $userid,
+                    ]);
                     set_alert('success', _l('password_reset_message'));
                 } else {
                     set_alert('danger', _l('password_reset_message_fail'));
@@ -181,7 +180,7 @@ class Authentication extends CRM_Controller
         $this->form_validation->set_rules('passwordr', _l('admin_auth_set_password_repeat'), 'required|matches[password]');
         if ($this->input->post()) {
             if ($this->form_validation->run() !== false) {
-                $success = $this->Authentication_model->set_password($staff, $userid, $new_pass_key, $this->input->post('passwordr',false));
+                $success = $this->Authentication_model->set_password($staff, $userid, $new_pass_key, $this->input->post('passwordr', false));
                 if (is_array($success) && $success['expired'] == true) {
                     set_alert('danger', _l('password_reset_key_expired'));
                 } elseif ($success == true) {
@@ -199,8 +198,6 @@ class Authentication extends CRM_Controller
         $this->load->view('authentication/set_password');
     }
 
-
-
     public function logout()
     {
         $this->Authentication_model->logout();
@@ -210,9 +207,9 @@ class Authentication extends CRM_Controller
 
     public function email_exists($email)
     {
-        $total_rows = total_rows('tblstaff', array(
-            'email' => $email
-        ));
+        $total_rows = total_rows('tblstaff', [
+            'email' => $email,
+        ]);
         if ($total_rows == 0) {
             $this->form_validation->set_message('email_exists', _l('auth_reset_pass_email_not_found'));
 

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 add_action('before_invoice_updated', '_format_data_sales_feature');
@@ -69,7 +70,7 @@ function _format_data_sales_feature($data)
         $data['data']['discount_type'] = '';
     }
 
-    foreach (array('country', 'billing_country', 'shipping_country', 'project_id', 'sale_agent') as $should_be_zero) {
+    foreach (['country', 'billing_country', 'shipping_country', 'project_id', 'sale_agent'] as $should_be_zero) {
         if (isset($data['data'][$should_be_zero]) && $data['data'][$should_be_zero] == '') {
             $data['data'][$should_be_zero] = 0;
         }
@@ -81,10 +82,9 @@ function _format_data_sales_feature($data)
 function _format_data_client($data)
 {
     foreach (_get_client_unused_names() as $u) {
-
         if (isset($data['data'][$u])) {
             unset($data['data'][$u]);
-        } else if(isset($data[$u])) {
+        } elseif (isset($data[$u])) {
             unset($data[$u]);
         }
     }
@@ -113,7 +113,7 @@ function _format_data_client($data)
  */
 function _get_sales_feature_unused_names()
 {
-    return array(
+    return [
         'taxname', 'description',
         'currency_symbol', 'price',
         'isedit', 'taxid',
@@ -126,16 +126,16 @@ function _get_sales_feature_unused_names()
         'repeat_type_custom', 'bill_expenses',
         'save_and_send', 'merge_current_invoice',
         'cancel_merged_invoices', 'invoices_to_merge',
-        'tags','s_prefix',
-    );
+        'tags', 's_prefix',
+    ];
 }
 
 function _get_client_unused_names()
 {
-    return array(
+    return [
         'fakeusernameremembered', 'fakepasswordremembered',
         'DataTables_Table_0_length', 'DataTables_Table_1_length',
-        'onoffswitch','passwordr','permissions','send_set_password_email',
+        'onoffswitch', 'passwordr', 'permissions', 'send_set_password_email',
         'donotsendwelcomeemail',
-    );
+    ];
 }

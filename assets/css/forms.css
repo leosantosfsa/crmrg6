@@ -1,7 +1,6 @@
 @import url(bs-overides.min.css);
 body {
     font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    background: #fff !important;
     padding: 15px;
 }
 

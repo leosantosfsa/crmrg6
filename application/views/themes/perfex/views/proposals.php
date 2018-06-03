@@ -5,7 +5,7 @@
     </div>
     <div class="panel_s">
       <div class="panel-body">
-          <table class="table dt-table" data-order-col="3" data-order-type="desc">
+          <table class="table dt-table table-proposals" data-order-col="3" data-order-type="desc">
             <thead>
               <tr>
                 <th><?php echo _l('proposal') . ' #'; ?></th>
@@ -25,16 +25,23 @@
               <?php foreach($proposals as $proposal){ ?>
               <tr>
                 <td>
-                  <a href="<?php echo site_url('viewproposal/'.$proposal['id'].'/'.$proposal['hash']); ?>"><?php echo format_proposal_number($proposal['id']); ?></a>
+                  <a href="<?php echo site_url('proposal/'.$proposal['id'].'/'.$proposal['hash']); ?>">
+                    <?php echo format_proposal_number($proposal['id']); ?>
+                    <?php
+                        if ($proposal['invoice_id']) {
+                          echo '<br /><span class="text-success">' . _l('estimate_invoiced') . '</span>';
+                        }
+                    ?>
+                  </a>
                   <td>
-                    <a href="<?php echo site_url('viewproposal/'.$proposal['id'].'/'.$proposal['hash']); ?>"><?php echo $proposal['subject']; ?></a>
+                    <a href="<?php echo site_url('proposal/'.$proposal['id'].'/'.$proposal['hash']); ?>"><?php echo $proposal['subject']; ?></a>
                     <?php
                     if ($proposal['invoice_id'] != NULL) {
                       $invoice = $this->invoices_model->get($proposal['invoice_id']);
-                      echo '<br /><a href="' . site_url('viewinvoice/' . $invoice->id . '/' . $invoice->hash) . '" target="_blank">' . format_invoice_number($invoice->id) . '</a>';
+                      echo '<br /><a href="' . site_url('invoice/' . $invoice->id . '/' . $invoice->hash) . '" target="_blank">' . format_invoice_number($invoice->id) . '</a>';
                     } else if ($proposal['estimate_id'] != NULL) {
                       $estimate = $this->estimates_model->get($proposal['estimate_id']);
-                      echo '<br /><a href="' . site_url('viewestimate/' . $estimate->id . '/' . $estimate->hash) . '" target="_blank">' . format_estimate_number($estimate->id) . '</a>';
+                      echo '<br /><a href="' . site_url('estimate/' . $estimate->id . '/' . $estimate->hash) . '" target="_blank">' . format_estimate_number($estimate->id) . '</a>';
                     }
                     ?>
                   </td>

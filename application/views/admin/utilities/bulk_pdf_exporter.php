@@ -12,10 +12,10 @@
                             <label for="export_type"><?php echo _l('bulk_pdf_export_select_type'); ?></label>
                             <select name="export_type" id="export_type" class="selectpicker" data-width="100%" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                 <option value=""></option>
-                                <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own')){ ?>
+                                <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own') || get_option('allow_staff_view_invoices_assigned') == '1'){ ?>
                                 <option value="invoices"><?php echo _l('bulk_export_pdf_invoices'); ?></option>
                                 <?php } ?>
-                                <?php if(has_permission('estimates','','view') || has_permission('estimates','','view_own')){ ?>
+                                 <?php if(has_permission('estimates','','view') || has_permission('estimates','','view_own') || get_option('allow_staff_view_estimates_assigned') == '1'){ ?>
                                 <option value="estimates"><?php echo _l('bulk_export_pdf_estimates'); ?></option>
                                 <?php } ?>
                                 <?php if(has_permission('payments','','view') || has_permission('invoices','','view_own')){ ?>
@@ -24,7 +24,7 @@
                                 <?php if(has_permission('credit_notes','','view') || has_permission('credit_notes','','view_own')){ ?>
                                 <option value="credit_notes"><?php echo _l('credit_notes'); ?></option>
                                 <?php } ?>
-                                <?php if(has_permission('proposals','','view') || has_permission('proposals','','view_own')){ ?>
+                                <?php if(has_permission('proposals','','view') || has_permission('proposals','','view_own') || get_option('allow_staff_view_proposals_assigned') == '1'){ ?>
                                 <option value="proposals"><?php echo _l('bulk_export_pdf_proposals'); ?></option>
                                 <?php } ?>
                             </select>

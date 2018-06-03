@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Tickets extends Admin_controller
 {
@@ -21,16 +22,16 @@ class Tickets extends Admin_controller
 
         if ($this->input->is_ajax_request()) {
             if (!$this->input->post('filters_ticket_id')) {
-                $tableParams = array(
+                $tableParams = [
                     'status' => $status,
                     'userid' => $userid,
-                );
+                ];
             } else {
                 // request for othes tickets when single ticket is opened
-                $tableParams = array(
-                'userid' => $this->input->post('filters_userid'),
+                $tableParams = [
+                'userid'              => $this->input->post('filters_userid'),
                 'where_not_ticket_id' => $this->input->post('filters_ticket_id'),
-            );
+            ];
                 if ($tableParams['userid'] == 0) {
                     unset($tableParams['userid']);
                     $tableParams['by_email'] = $this->input->post('filters_email');
@@ -50,9 +51,9 @@ class Tickets extends Admin_controller
         $data['priorities']           = $this->tickets_model->get_priority();
         $data['services']             = $this->tickets_model->get_service();
         $data['ticket_assignees']     = $this->tickets_model->get_tickets_assignes_disctinct();
-        $data['bodyclass']            = 'tickets_page';
+        $data['bodyclass']            = 'tickets-page';
 
-        $data['default_tickets_list_statuses'] = do_action('default_tickets_list_statuses', array(1, 2, 4));
+        $data['default_tickets_list_statuses'] = do_action('default_tickets_list_statuses', [1, 2, 4]);
         $this->load->view('admin/tickets/list', $data);
     }
 
@@ -79,7 +80,11 @@ class Tickets extends Admin_controller
         $data['predefined_replies'] = $this->tickets_model->get_predefined_reply();
         $data['priorities']         = $this->tickets_model->get_priority();
         $data['services']           = $this->tickets_model->get_service();
-        $data['staff']              = $this->staff_model->get();
+        $whereStaff = array();
+        if(get_option('access_tickets_to_none_staff_members') == 0) {
+            $whereStaff['is_not_staff'] = 0;
+        }
+        $data['staff']              = $this->staff_model->get('', $whereStaff);
         $data['articles']           = $this->knowledge_base_model->get();
         $data['bodyclass']          = 'ticket';
         $data['title']              = _l('new_ticket');
@@ -87,8 +92,8 @@ class Tickets extends Admin_controller
         if ($this->input->get('project_id') && $this->input->get('project_id') > 0) {
             // request from project area to create new ticket
             $data['project_id'] = $this->input->get('project_id');
-            $data['userid'] = get_client_id_by_project_id($data['project_id']);
-            if (total_rows('tblcontacts', array('active'=>1, 'userid'=>$data['userid'])) == 1) {
+            $data['userid']     = get_client_id_by_project_id($data['project_id']);
+            if (total_rows('tblcontacts', ['active' => 1, 'userid' => $data['userid']]) == 1) {
                 $contact = $this->clients_model->get_contacts($data['userid']);
                 if (isset($contact[0])) {
                     $data['contact'] = $contact[0];
@@ -96,9 +101,9 @@ class Tickets extends Admin_controller
             }
         } elseif ($this->input->get('contact_id') && $this->input->get('contact_id') > 0 && $this->input->get('userid')) {
             $contact_id = $this->input->get('contact_id');
-            if (total_rows('tblcontacts', array('active'=>1, 'id'=>$contact_id)) == 1) {
+            if (total_rows('tblcontacts', ['active' => 1, 'id' => $contact_id]) == 1) {
                 $contact = $this->clients_model->get_contact($contact_id);
-                if($contact){
+                if ($contact) {
                     $data['contact'] = (array) $contact;
                 }
             }
@@ -152,7 +157,7 @@ class Tickets extends Admin_controller
 
         if ($this->input->post()) {
             $returnToTicketList = false;
-            $data            = $this->input->post();
+            $data               = $this->input->post();
 
             if (isset($data['ticket_add_response_and_back_to_list'])) {
                 $returnToTicketList = true;
@@ -168,6 +173,7 @@ class Tickets extends Admin_controller
             if (!$returnToTicketList) {
                 redirect(admin_url('tickets/ticket/' . $id));
             } else {
+                set_ticket_open(0, $id);
                 redirect(admin_url('tickets'));
             }
         }
@@ -182,7 +188,11 @@ class Tickets extends Admin_controller
         $data['predefined_replies']   = $this->tickets_model->get_predefined_reply();
         $data['priorities']           = $this->tickets_model->get_priority();
         $data['services']             = $this->tickets_model->get_service();
-        $data['staff']                = $this->staff_model->get();
+        $whereStaff = array();
+        if(get_option('access_tickets_to_none_staff_members') == 0) {
+            $whereStaff['is_not_staff'] = 0;
+        }
+        $data['staff']              = $this->staff_model->get('', $whereStaff);
         $data['articles']             = $this->knowledge_base_model->get();
         $data['ticket_replies']       = $this->tickets_model->get_ticket_replies($id);
         $data['bodyclass']            = 'top-tabs ticket single-ticket';
@@ -199,14 +209,14 @@ class Tickets extends Admin_controller
 
             if ($data['type'] == 'reply') {
                 $this->db->where('id', $data['id']);
-                $this->db->update('tblticketreplies', array(
+                $this->db->update('tblticketreplies', [
                     'message' => $data['data'],
-                ));
+                ]);
             } elseif ($data['type'] == 'ticket') {
                 $this->db->where('ticketid', $data['id']);
-                $this->db->update('tbltickets', array(
+                $this->db->update('tbltickets', [
                     'message' => $data['data'],
-                ));
+                ]);
             }
             if ($this->db->affected_rows() > 0) {
                 set_alert('success', _l('ticket_message_updated_successfully'));
@@ -251,18 +261,18 @@ class Tickets extends Admin_controller
                     $staff_departments = $this->departments_model->get_staff_departments(get_staff_user_id(), true);
                     if (!in_array($ticket->department, $staff_departments) && !is_admin()) {
                         set_alert('success', _l('ticket_settings_updated_successfully_and_reassigned', $ticket->department_name));
-                        echo json_encode(array(
-                            'success' => $success,
+                        echo json_encode([
+                            'success'               => $success,
                             'department_reassigned' => true,
-                        ));
+                        ]);
                         die();
                     }
                 }
                 set_alert('success', _l('ticket_settings_updated_successfully'));
             }
-            echo json_encode(array(
+            echo json_encode([
                 'success' => $success,
-            ));
+            ]);
             die();
         }
     }
@@ -331,18 +341,18 @@ class Tickets extends Admin_controller
             access_denied('Predefined Replies');
         }
         if ($this->input->is_ajax_request()) {
-            $aColumns     = array(
+            $aColumns = [
                 'name',
-            );
-            $sIndexColumn = "id";
+            ];
+            $sIndexColumn = 'id';
             $sTable       = 'tblpredefinedreplies';
-            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, array(), array(), array(
+            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
                 'id',
-            ));
-            $output       = $result['output'];
-            $rResult      = $result['rResult'];
+            ]);
+            $output  = $result['output'];
+            $rResult = $result['rResult'];
             foreach ($rResult as $aRow) {
-                $row = array();
+                $row = [];
                 for ($i = 0; $i < count($aColumns); $i++) {
                     $_data = $aRow[$aColumns[$i]];
                     if ($aColumns[$i] == 'name') {
@@ -370,10 +380,10 @@ class Tickets extends Admin_controller
     {
         if ($this->input->is_ajax_request()) {
             $contact_id = $this->input->post('contact_id');
-            echo json_encode(array(
-                'contact_data' => $this->clients_model->get_contact($contact_id),
+            echo json_encode([
+                'contact_data'          => $this->clients_model->get_contact($contact_id),
                 'customer_has_projects' => customer_has_projects(get_user_id_by_contact_id($contact_id)),
-            ));
+            ]);
         }
     }
 
@@ -384,23 +394,23 @@ class Tickets extends Admin_controller
             access_denied('Predefined Reply');
         }
         if ($this->input->post()) {
-            $data            = $this->input->post();
-            $data['message'] = $this->input->post('message', false);
+            $data              = $this->input->post();
+            $data['message']   = $this->input->post('message', false);
             $ticketAreaRequest = isset($data['ticket_area']);
 
-            if(isset($data['ticket_area'])) {
+            if (isset($data['ticket_area'])) {
                 unset($data['ticket_area']);
             }
 
             if ($id == '') {
                 $id = $this->tickets_model->add_predefined_reply($data);
-                if(!$ticketAreaRequest){
+                if (!$ticketAreaRequest) {
                     if ($id) {
                         set_alert('success', _l('added_successfully', _l('predefined_reply')));
                         redirect(admin_url('tickets/predefined_reply/' . $id));
                     }
                 } else {
-                    echo json_encode(array('success'=>$id ? true : false, 'id'=>$id));
+                    echo json_encode(['success' => $id ? true : false, 'id' => $id]);
                     die;
                 }
             } else {
@@ -506,18 +516,18 @@ class Tickets extends Admin_controller
             access_denied('Ticket Services');
         }
         if ($this->input->is_ajax_request()) {
-            $aColumns     = array(
+            $aColumns = [
                 'name',
-            );
-            $sIndexColumn = "serviceid";
+            ];
+            $sIndexColumn = 'serviceid';
             $sTable       = 'tblservices';
-            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, array(), array(), array(
+            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
                 'serviceid',
-            ));
-            $output       = $result['output'];
-            $rResult      = $result['rResult'];
+            ]);
+            $output  = $result['output'];
+            $rResult = $result['rResult'];
             foreach ($rResult as $aRow) {
-                $row = array();
+                $row = [];
                 for ($i = 0; $i < count($aColumns); $i++) {
                     $_data = $aRow[$aColumns[$i]];
                     if ($aColumns[$i] == 'name') {
@@ -525,10 +535,10 @@ class Tickets extends Admin_controller
                     }
                     $row[] = $_data;
                 }
-                $options            = icon_btn('#', 'pencil-square-o', 'btn-default', array(
+                $options = icon_btn('#', 'pencil-square-o', 'btn-default', [
                     'data-name' => $aRow['name'],
-                    'onclick' => 'edit_service(this,' . $aRow['serviceid'] . '); return false;',
-                ));
+                    'onclick'   => 'edit_service(this,' . $aRow['serviceid'] . '); return false;',
+                ]);
                 $row[]              = $options .= icon_btn('tickets/delete_service/' . $aRow['serviceid'], 'remove', 'btn-danger _delete');
                 $output['aaData'][] = $row;
             }
@@ -559,10 +569,10 @@ class Tickets extends Admin_controller
                         set_alert('success', _l('added_successfully', _l('service')));
                     }
                 } else {
-                    echo json_encode(array('success'=>$id ? true : false, 'id'=>$id, 'name'=>$post_data['name']));
+                    echo json_encode(['success' => $id ? true : false, 'id' => $id, 'name' => $post_data['name']]);
                 }
             } else {
-                $id   = $post_data['id'];
+                $id = $post_data['id'];
                 unset($post_data['id']);
                 $success = $this->tickets_model->update_service($post_data, $id);
                 if ($success) {
@@ -599,29 +609,29 @@ class Tickets extends Admin_controller
             access_denied('Tickets Spam Filters');
         }
         if ($this->input->is_ajax_request()) {
-            $aColumns     = array(
+            $aColumns = [
                 'value',
-            );
-            $sIndexColumn = "id";
+            ];
+            $sIndexColumn = 'id';
             $sTable       = 'tblticketsspamcontrol';
-            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, array(), array(
+            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [
                 'AND type ="' . $type . '"',
-            ), array(
+            ], [
                 'id',
-            ));
-            $output       = $result['output'];
-            $rResult      = $result['rResult'];
+            ]);
+            $output  = $result['output'];
+            $rResult = $result['rResult'];
             foreach ($rResult as $aRow) {
-                $row = array();
+                $row = [];
                 for ($i = 0; $i < count($aColumns); $i++) {
                     $_data = $aRow[$aColumns[$i]];
                     $row[] = $_data;
                 }
-                $options            = icon_btn('#', 'pencil-square-o', 'btn-default', array(
-                    'onclick' => 'edit_spam_filter(this,' . $aRow['id'] . '); return false;',
+                $options = icon_btn('#', 'pencil-square-o', 'btn-default', [
+                    'onclick'    => 'edit_spam_filter(this,' . $aRow['id'] . '); return false;',
                     'data-value' => $aRow['value'],
-                    'data-type' => $type,
-                ));
+                    'data-type'  => $type,
+                ]);
                 $row[]              = $options .= icon_btn('tickets/delete_spam_filter/' . $aRow['id'], 'remove', 'btn-danger _delete');
                 $output['aaData'][] = $row;
             }
@@ -644,20 +654,20 @@ class Tickets extends Admin_controller
                 if ($success == true) {
                     $message = _l('updated_successfully', _l('spam_filter'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
                     'message' => $message,
-                ));
+                ]);
             } else {
                 $success = $this->tickets_model->add_spam_filter($this->input->post());
                 $message = '';
                 if ($success == true) {
                     $message = _l('added_successfully', _l('spam_filter'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
                     'message' => $message,
-                ));
+                ]);
             }
         }
     }
@@ -677,10 +687,10 @@ class Tickets extends Admin_controller
     public function block_sender()
     {
         if ($this->input->post()) {
-            $this->db->insert('tblticketsspamcontrol', array(
-                'type' => 'sender',
+            $this->db->insert('tblticketsspamcontrol', [
+                'type'  => 'sender',
                 'value' => $this->input->post('sender'),
-            ));
+            ]);
             $insert_id = $this->db->insert_id();
             if ($insert_id) {
                 set_alert('success', _l('sender_blocked_successfully'));
@@ -698,7 +708,7 @@ class Tickets extends Admin_controller
             $department    = $this->input->post('department');
             $service       = $this->input->post('service');
             $priority      = $this->input->post('priority');
-            $tags      = $this->input->post('tags');
+            $tags          = $this->input->post('tags');
             $is_admin      = is_admin();
             if (is_array($ids)) {
                 foreach ($ids as $id) {
@@ -711,28 +721,28 @@ class Tickets extends Admin_controller
                     } else {
                         if ($status) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', array(
+                            $this->db->update('tbltickets', [
                                 'status' => $status,
-                            ));
+                            ]);
                         }
                         if ($department) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', array(
+                            $this->db->update('tbltickets', [
                                 'department' => $department,
-                            ));
+                            ]);
                         }
                         if ($priority) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', array(
+                            $this->db->update('tbltickets', [
                                 'priority' => $priority,
-                            ));
+                            ]);
                         }
 
                         if ($service) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', array(
+                            $this->db->update('tbltickets', [
                                 'service' => $service,
-                            ));
+                            ]);
                         }
                         if ($tags) {
                             handle_tags_save($tags, $id, 'ticket');

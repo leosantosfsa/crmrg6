@@ -1,13 +1,20 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 define('EMAIL_TEMPLATE_SEND', true);
 class Emails_model extends CRM_Model
 {
-    private $attachment = array();
+    private $attachment = [];
+
     private $client_email_templates;
+
     private $staff_email_templates;
+
     private $rel_id;
+
     private $rel_type;
+
+    private $staff_id;
 
     public function __construct()
     {
@@ -22,7 +29,7 @@ class Emails_model extends CRM_Model
      * @return array
      * Get email template by type
      */
-    public function get($where = array())
+    public function get($where = [])
     {
         $this->db->where($where);
 
@@ -84,7 +91,7 @@ class Emails_model extends CRM_Model
                 $main_id = $id;
             }
 
-            $_data              = array();
+            $_data              = [];
             $_data['subject']   = $val;
             $_data['fromname']  = $data['fromname'];
             $_data['fromemail'] = $data['fromemail'];
@@ -120,7 +127,7 @@ class Emails_model extends CRM_Model
     public function mark_as($slug, $enabled)
     {
         $this->db->where('slug', $slug);
-        $this->db->update('tblemailtemplates', array('active'=>$enabled));
+        $this->db->update('tblemailtemplates', ['active' => $enabled]);
 
         return $this->db->affected_rows() > 0 ? true : false;
     }
@@ -131,9 +138,10 @@ class Emails_model extends CRM_Model
      * @param  mixed $enabled enabled or disabled / 1 or 0
      * @return boolean
      */
-    public function mark_as_by_type($type,$enabled){
+    public function mark_as_by_type($type, $enabled)
+    {
         $this->db->where('type', $type);
-        $this->db->update('tblemailtemplates', array('active'=>$enabled));
+        $this->db->update('tblemailtemplates', ['active' => $enabled]);
 
         return $this->db->affected_rows() > 0 ? true : false;
     }
@@ -148,36 +156,38 @@ class Emails_model extends CRM_Model
      */
     public function send_simple_email($email, $subject, $message)
     {
-        $cnf = array(
+        $cnf = [
             'from_email' => get_option('smtp_email'),
-            'from_name' => get_option('companyname'),
-            'email' => $email,
-            'subject' => $subject,
-            'message' => $message
-        );
+            'from_name'  => get_option('companyname'),
+            'email'      => $email,
+            'subject'    => $subject,
+            'message'    => $message,
+        ];
 
         // Simulate fake template to be parsed
-        $template = new StdClass();
-        $template->message = get_option('email_header').$cnf['message'].get_option('email_footer');
+        $template           = new StdClass();
+        $template->message  = get_option('email_header') . $cnf['message'] . get_option('email_footer');
         $template->fromname = $cnf['from_name'];
-        $template->subject =  $cnf['subject'];
+        $template->subject  = $cnf['subject'];
 
         $template = parse_email_template($template);
 
-        $cnf['message'] = $template->message;
+        $cnf['message']   = $template->message;
         $cnf['from_name'] = $template->fromname;
-        $cnf['subject'] = $template->subject;
+        $cnf['subject']   = $template->subject;
 
         $cnf['message'] = check_for_links($cnf['message']);
 
         $cnf = do_action('before_send_simple_email', $cnf);
 
-        if(isset($cnf['prevent_sending']) && $cnf['prevent_sending'] == true) {
+        if (isset($cnf['prevent_sending']) && $cnf['prevent_sending'] == true) {
+            $this->clear_attachments();
+
             return false;
         }
-
+        $this->load->config('email');
         $this->email->clear(true);
-        $this->email->set_newline("\r\n");
+        $this->email->set_newline(config_item('newline'));
         $this->email->from($cnf['from_email'], $cnf['from_name']);
         $this->email->to($cnf['email']);
 
@@ -185,20 +195,20 @@ class Emails_model extends CRM_Model
         // Used for action hooks
         if (isset($cnf['bcc'])) {
             $bcc = $cnf['bcc'];
-            if(is_array($bcc)) {
-                $bcc = implode(', ',$bcc);
+            if (is_array($bcc)) {
+                $bcc = implode(', ', $bcc);
             }
         }
 
         $systemBCC = get_option('bcc_emails');
-        if($systemBCC != ""){
-            if($bcc != ""){
-                $bcc .= ', '.$systemBCC;
+        if ($systemBCC != '') {
+            if ($bcc != '') {
+                $bcc .= ', ' . $systemBCC;
             } else {
                 $bcc .= $systemBCC;
             }
         }
-        if($bcc != ''){
+        if ($bcc != '') {
             $this->email->bcc($bcc);
         }
 
@@ -213,8 +223,7 @@ class Emails_model extends CRM_Model
         $this->email->subject($cnf['subject']);
         $this->email->message($cnf['message']);
 
-        $alt_message = strip_html_tags($cnf['message']);
-        $this->email->set_alt_message(trim($alt_message));
+        $this->email->set_alt_message(strip_html_tags($cnf['message'], '<br/>, <br>, <br />'));
 
         if (count($this->attachment) > 0) {
             foreach ($this->attachment as $attach) {
@@ -275,6 +284,9 @@ class Emails_model extends CRM_Model
             $this->db->select('active')->where('email', $email);
             $user = $this->db->get($inactive_user_table_check)->row();
             if ($user && $user->active == 0) {
+                $this->clear_attachments();
+                $this->set_staff_id(null);
+
                 return false;
             }
         }
@@ -284,6 +296,8 @@ class Emails_model extends CRM_Model
          */
         if (!$template) {
             logActivity('Failed to send email template [Template not found]');
+            $this->clear_attachments();
+            $this->set_staff_id(null);
 
             return false;
         }
@@ -300,14 +314,18 @@ class Emails_model extends CRM_Model
             $tmpTemplate = $this->db->get('tblemailtemplates')->row();
 
             if (!$tmpTemplate) {
-                logActivity('Failed to send email template [<a href="'.admin_url('emails/email_template/'.$tmpTemplate->emailtemplateid).'">'.$template->name.'</a>] [Reason: Email template is disabled.]');
+                logActivity('Failed to send email template [<a href="' . admin_url('emails/email_template/' . $tmpTemplate->emailtemplateid) . '">' . $template->name . '</a>] [Reason: Email template is disabled.]');
             }
 
             return false;
         }
 
+        $template = do_action('before_parse_email_template_message', $template);
 
         $template = parse_email_template($template, $merge_fields);
+
+        $template = do_action('after_parse_email_template_message', $template);
+
         $template->message = get_option('email_header') . $template->message . get_option('email_footer');
 
         // Parse merge fields again in case there is merge fields found in email_header and email_footer option.
@@ -319,10 +337,7 @@ class Emails_model extends CRM_Model
          */
         if ($template->plaintext == 1) {
             $this->config->set_item('mailtype', 'text');
-            $template->message = strip_html_tags($template->message, '<br/>, <br>');
-            // Replace <br /> with \n
-            $template->message = clear_textarea_breaks($template->message);
-            $template->message = trim($template->message);
+            $template->message = strip_html_tags($template->message, '<br/>, <br>, <br />');
         }
 
         $fromemail = $template->fromemail;
@@ -338,56 +353,58 @@ class Emails_model extends CRM_Model
         /**
          * Ticket variables
         */
-        $reply_to = false;
+        $reply_to               = false;
         $from_header_dept_email = false;
         /**
          * Tickets template
          * For tickets there is different config
          */
         if (is_numeric($ticketid) && $template->type == 'ticket') {
-
-            if(!class_exists('tickets_model')){
+            if (!class_exists('tickets_model')) {
                 $this->load->model('tickets_model');
             }
 
             $this->db->select('tbldepartments.email as department_email, email_from_header as dept_email_from_header')
-            ->where('ticketid',$ticketid)
-            ->join('tbldepartments','tbldepartments.departmentid=tbltickets.department','left');
+            ->where('ticketid', $ticketid)
+            ->join('tbldepartments', 'tbldepartments.departmentid=tbltickets.department', 'left');
 
             $ticket = $this->db->get('tbltickets')->row();
 
             if (!empty($ticket->department_email) && filter_var($ticket->department_email, FILTER_VALIDATE_EMAIL)) {
-                $reply_to = $ticket->department_email;
+                $reply_to               = $ticket->department_email;
                 $from_header_dept_email = $ticket->dept_email_from_header == 1;
             }
             /**
              * IMPORTANT
              * Do not change/remove this line, this is used for email piping so the software can recognize the ticket id.
              */
-            if (substr($template->subject, 0, 10) != "[Ticket ID") {
+            if (substr($template->subject, 0, 10) != '[Ticket ID') {
                 $template->subject = '[Ticket ID: ' . $ticketid . '] ' . $template->subject;
             }
         }
 
-        $hook_data['template'] = $template;
-        $hook_data['email']    = $email;
+        $hook_data['template']    = $template;
+        $hook_data['email']       = $email;
         $hook_data['attachments'] = $this->attachment;
 
         $hook_data['template']->message = check_for_links($hook_data['template']->message);
 
         $hook_data = do_action('before_email_template_send', $hook_data);
 
-        $template = $hook_data['template'];
-        $email    = $hook_data['email'];
-        $attachments    = $hook_data['attachments'];
+        $template    = $hook_data['template'];
+        $email       = $hook_data['email'];
+        $attachments = $hook_data['attachments'];
 
         if (isset($template->prevent_sending) && $template->prevent_sending == true) {
             $this->clear_attachments();
+            $this->set_staff_id(null);
+
             return false;
         }
 
+        $this->load->config('email');
         $this->email->clear(true);
-        $this->email->set_newline("\r\n");
+        $this->email->set_newline(config_item('newline'));
         $this->email->from(($from_header_dept_email ? $ticket->department_email : $fromemail), $fromname);
         $this->email->subject($template->subject);
 
@@ -398,22 +415,22 @@ class Emails_model extends CRM_Model
         // Used for action hooks
         if (isset($template->bcc)) {
             $bcc = $template->bcc;
-            if(is_array($bcc)) {
-                $bcc = implode(', ',$bcc);
+            if (is_array($bcc)) {
+                $bcc = implode(', ', $bcc);
             }
         }
 
         $systemBCC = get_option('bcc_emails');
-        if($systemBCC != ""){
-            if($bcc != ""){
-                $bcc .= ', '.$systemBCC;
+        if ($systemBCC != '') {
+            if ($bcc != '') {
+                $bcc .= ', ' . $systemBCC;
             } else {
                 $bcc .= $systemBCC;
             }
         }
 
-        if($bcc != ''){
-            $bcc = array_map('trim',explode(',',$bcc));
+        if ($bcc != '') {
+            $bcc = array_map('trim', explode(',', $bcc));
             $bcc = array_unique($bcc);
             $bcc = implode(', ', $bcc);
             $this->email->bcc($bcc);
@@ -426,10 +443,10 @@ class Emails_model extends CRM_Model
         }
 
         if ($template->plaintext == 0) {
-            $alt_message = strip_html_tags($template->message, '<br/>, <br>');
+            $alt_message = strip_html_tags($template->message, '<br/>, <br>, <br />');
             // Replace <br /> with \n
-            $alt_message = clear_textarea_breaks($alt_message);
-            $this->email->set_alt_message(trim($alt_message));
+            $alt_message = clear_textarea_breaks($alt_message, "\r\n");
+            $this->email->set_alt_message($alt_message);
         }
 
         if (is_array($cc) || !empty($cc)) {
@@ -447,16 +464,18 @@ class Emails_model extends CRM_Model
         }
 
         $this->clear_attachments();
+        $this->set_staff_id(null);
 
         if ($this->email->send()) {
             logActivity('Email Send To [Email: ' . $email . ', Template: ' . $template->name . ']');
+            do_action('email_template_sent', ['template' => $template, 'email' => $email]);
 
             return true;
-        } else {
-            if (ENVIRONMENT !== 'production') {
-                logActivity('Failed to send email template - ' . $this->email->print_debugger());
-            }
         }
+        if (ENVIRONMENT !== 'production') {
+            logActivity('Failed to send email template - ' . $this->email->print_debugger());
+        }
+
 
         return false;
     }
@@ -479,7 +498,7 @@ class Emails_model extends CRM_Model
      */
     private function clear_attachments()
     {
-        $this->attachment = array();
+        $this->attachment = [];
     }
 
     public function set_rel_id($rel_id)
@@ -500,5 +519,15 @@ class Emails_model extends CRM_Model
     public function get_rel_type()
     {
         return $this->rel_type;
+    }
+
+    public function set_staff_id($id)
+    {
+        $this->staff_id = $id;
+    }
+
+    public function get_staff_id()
+    {
+        return $this->staff_id;
     }
 }

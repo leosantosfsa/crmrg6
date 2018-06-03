@@ -49,13 +49,11 @@
       <div class="col-md-7">
          <table class="table no-margin project-overview-table">
             <tbody>
-               <?php if(has_permission('customers','','view') || is_customer_admin($project->clientid)){ ?>
-               <tr class="project-overview-customer">
+              <tr class="project-overview-customer">
                   <td class="bold"><?php echo _l('project_customer'); ?></td>
                   <td><a href="<?php echo admin_url(); ?>clients/client/<?php echo $project->clientid; ?>"><?php echo $project->client_data->company; ?></a>
                   </td>
-               </tr>
-               <?php } ?>
+              </tr>
                <?php if(has_permission('projects','','create') || has_permission('projects','','edit')){ ?>
                <tr class="project-overview-billing">
                   <td class="bold"><?php echo _l('project_billing_type'); ?></td>
@@ -213,7 +211,7 @@
             </div>
             <div class="col-md-12 mtop5">
                <div class="progress no-margin progress-bar-mini">
-                  <div class="progress-bar light-green-bg no-percent-text not-dynamic" role="progressbar" aria-valuenow="<?php echo $tasks_not_completed_progress; ?>" aria-valuemin="0" aria-valuemax="100" style="width: 0%" data-percent="<?php echo $tasks_not_completed_progress; ?>">
+                  <div class="progress-bar progress-bar-success no-percent-text not-dynamic" role="progressbar" aria-valuenow="<?php echo $tasks_not_completed_progress; ?>" aria-valuemin="0" aria-valuemax="100" style="width: 0%" data-percent="<?php echo $tasks_not_completed_progress; ?>">
                   </div>
                </div>
             </div>

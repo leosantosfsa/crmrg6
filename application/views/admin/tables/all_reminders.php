@@ -1,7 +1,8 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
 
-$aColumns     = array(
+defined('BASEPATH') or exit('No direct script access allowed');
+
+$aColumns = [
     'CASE tblreminders.rel_type
         WHEN \'customer\' THEN tblclients.company
         WHEN \'lead\' THEN tblleads.name
@@ -16,16 +17,16 @@ $aColumns     = array(
     'CONCAT(firstname, " ", lastname) as full_name',
     'isnotified',
 
-    );
+    ];
 
-$sIndexColumn = "id";
+$sIndexColumn = 'id';
 
-$sTable       = 'tblreminders';
-$where = array();
-if(!is_admin()){
-    $where        = array('AND (staff = '.get_staff_user_id() . ' OR creator='.get_staff_user_id().')');
+$sTable = 'tblreminders';
+$where  = [];
+if (!is_admin()) {
+    $where = ['AND (staff = ' . get_staff_user_id() . ' OR creator=' . get_staff_user_id() . ')'];
 }
-$join = array(
+$join = [
     'JOIN tblstaff ON tblstaff.staffid = tblreminders.staff',
     'LEFT JOIN tblclients ON tblclients.userid = tblreminders.rel_id AND tblreminders.rel_type="customer"',
     'LEFT JOIN tblleads ON tblleads.id = tblreminders.rel_id AND tblreminders.rel_type="lead"',
@@ -34,20 +35,19 @@ $join = array(
     'LEFT JOIN tblproposals ON tblproposals.id = tblreminders.rel_id AND tblreminders.rel_type="proposal"',
     'LEFT JOIN tblexpenses ON tblexpenses.id = tblreminders.rel_id AND tblreminders.rel_type="expense"',
     'LEFT JOIN tblcreditnotes ON tblcreditnotes.id = tblreminders.rel_id AND tblreminders.rel_type="credit_note"',
-    );
+    ];
 
-$result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, array(
+$result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'tblreminders.id',
     'tblreminders.creator',
     'tblreminders.rel_type',
-    'tblreminders.rel_id'
-    ));
+    'tblreminders.rel_id',
+    ]);
 
-$output       = $result['output'];
-$rResult      = $result['rResult'];
+$output  = $result['output'];
+$rResult = $result['rResult'];
 foreach ($rResult as $aRow) {
-
-    $row = array();
+    $row = [];
     for ($i = 0; $i < count($aColumns); $i++) {
         if (strpos($aColumns[$i], 'as') !== false && !isset($aRow[$aColumns[$i]])) {
             $_data = $aRow[strafter($aColumns[$i], 'as ')];
@@ -55,13 +55,23 @@ foreach ($rResult as $aRow) {
             $_data = $aRow[$aColumns[$i]];
         }
 
-        if($aColumns[$i] == 'tblreminders.date'){
+        if ($aColumns[$i] == 'tblreminders.date') {
             $_data = _dt($_data);
-        } else if($i == 0){
+        } elseif ($i == 0) {
             // rel type name
             $rel_data   = get_relation_data($aRow['rel_type'], $aRow['rel_id']);
             $rel_values = get_relation_values($rel_data, $aRow['rel_type']);
-            $_data = '<a href="' . $rel_values['link'] . '">' . $rel_values['name'] . '</a>';
+            $_data      = '<a href="' . $rel_values['link'] . '">' . $rel_values['name'] . '</a>';
+
+
+            if ($aRow['creator'] == get_staff_user_id() || is_admin()) {
+                $_data .= '<div class="row-options">';
+                if ($aRow['isnotified'] == 0) {
+                    $_data .= '<a href="#" onclick="edit_reminder(' . $aRow['id'] . ',this); return false;" class="edit-reminder">' . _l('edit') . '</a> | ';
+                }
+                $_data .= '<a href="' . admin_url('misc/delete_reminder/' . $aRow['rel_id'] . '/' . $aRow['id'] . '/' . $aRow['rel_type']) . '" class="text-danger delete-reminder">' . _l('delete') . '</a>';
+                $_data .= '</div>';
+            }
         } elseif ($aColumns[$i] == 'isnotified') {
             if ($_data == 1) {
                 $_data = _l('reminder_is_notified_boolean_yes');
@@ -73,16 +83,7 @@ foreach ($rResult as $aRow) {
         $row[] = $_data;
     }
 
-    if ($aRow['creator'] == get_staff_user_id() || is_admin()) {
-        $opts = '';
-        if($aRow['isnotified'] == 0){
-            $opts .= icon_btn('#', 'pencil-square-o', 'btn-default edit-reminder',array('onclick'=>'edit_reminder('.$aRow['id'].',this)'));
-        }
-        $opts .= icon_btn('misc/delete_reminder/' . $aRow['rel_id'] . '/' . $aRow['id'] . '/' . $aRow['rel_type'], 'remove', 'btn-danger delete-reminder');
-        $row[] = $opts;
-    } else {
-        $row[] = '';
-    }
 
+    $row['DT_RowClass'] = 'has-row-options';
     $output['aaData'][] = $row;
 }

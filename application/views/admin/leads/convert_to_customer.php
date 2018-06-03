@@ -166,6 +166,12 @@
       <label for="transfer_notes"><?php echo _l('transfer_lead_notes_to_customer'); ?></label>
    </div>
    <?php } ?>
+   <?php if(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1' && count($purposes) > 0) { ?>
+    <div class="checkbox checkbox-primary">
+      <input type="checkbox" name="transfer_consent" id="transfer_consent">
+      <label for="transfer_consent"><?php echo _l('transfer_consent'); ?></label>
+   </div>
+   <?php } ?>
 </div>
 <div class="modal-footer">
    <button type="button" class="btn btn-default" onclick="init_lead(<?php echo $lead->id; ?>); return false;" data-dismiss="modal"><?php echo _l('back_to_lead'); ?></button>

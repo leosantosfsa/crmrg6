@@ -9,11 +9,11 @@
 						<div class="row">
 							<div class="col-md-6">
 								<?php if(!isset($project_id) && !isset($contact)){ ?>
-								<a href="#" class="pull-right" id="ticket_no_contact"><span class="label label-default">
+								<a href="#" id="ticket_no_contact"><span class="label label-default">
 									<i class="fa fa-envelope"></i> <?php echo _l('ticket_create_no_contact'); ?>
 								</span>
 							</a>
-							<a href="#" class="hide pull-right" id="ticket_to_contact"><span class="label label-default">
+							<a href="#" class="hide" id="ticket_to_contact"><span class="label label-default">
 								<i class="fa fa-user-o"></i> <?php echo _l('ticket_create_to_contact'); ?>
 							</span>
 						</a>

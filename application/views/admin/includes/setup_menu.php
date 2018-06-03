@@ -51,7 +51,7 @@
             }
             ?>
             <li>
-                <a href="<?php echo $url; ?>"><?php if(!empty($item->icon)){ ?><i class="<?php echo $item->icon; ?> menu-icon"></i><?php } ?><?php echo _l($item->name); ?>
+                <a href="<?php echo $url; ?>"><?php if(!empty($item->icon)){ ?><i class="<?php echo $item->icon; ?> menu-icon"></i><?php } ?><?php echo _l($item->name,'', false); ?>
                     <?php if($submenu == true){ ?>
                     <span class="fa arrow"></span>
                     <?php } ?>
@@ -74,7 +74,7 @@
                             <?php if(!empty($submenu->icon)){ ?>
                             <i class="<?php echo $submenu->icon; ?> menu-icon"></i>
                             <?php } ?>
-                            <?php echo _l($submenu->name); ?>
+                            <?php echo _l($submenu->name,'', false); ?>
                         </a>
                     </li>
                     <?php } ?>

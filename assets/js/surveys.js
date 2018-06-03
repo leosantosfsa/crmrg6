@@ -1,22 +1,34 @@
-$(function(){
+$(function() {
 
-    $('input[name="send_survey_to[leads]"]').on('change',function(){
+    $('input[name="send_survey_to[leads]"]').on('change', function() {
         $('.leads-statuses').slideToggle();
     });
 
-    $('input[name="send_survey_to[clients]"]').on('change',function(){
+    $('input[name="send_survey_to[clients]"]').on('change', function() {
         $('.customer-groups').slideToggle();
     });
 
-    $('.survey-customer-groups input').on('change',function(){
-        if($('.survey-customer-groups input:checked').length > 0){
-            $('#ml_customers_all').prop('checked',false);
+    $('.survey-customer-groups input').on('change', function() {
+        if ($('.survey-customer-groups input:checked').length > 0) {
+            $('#ml_customers_all').prop('checked', false);
         }
     });
 
-    $('#ml_customers_all').on('change',function(){
-        if($(this).prop('checked') !== false){
-            $('.survey-customer-groups input').prop('checked',false);
+    $('.survey-lead-status input').on('change', function() {
+        if ($('.survey-lead-status input:checked').length > 0) {
+            $('#ml_leads_all').prop('checked', false);
+        }
+    });
+
+    $('#ml_customers_all').on('change', function() {
+        if ($(this).prop('checked') !== false) {
+            $('.survey-customer-groups input').prop('checked', false);
+        }
+    });
+
+    $('#ml_leads_all').on('change', function() {
+        if ($(this).prop('checked') !== false) {
+            $('.survey-lead-status input').prop('checked', false);
         }
     });
 
@@ -41,7 +53,8 @@ $(function(){
     });
 
 });
-function survey_toggle_full_view(){
+
+function survey_toggle_full_view() {
     $('#survey-add-edit-wrapper').toggleClass('hide');
     $('#survey_questions_wrapper').toggleClass('col-md-12');
     $('#survey_questions_wrapper').toggleClass('col-md-7');
@@ -61,7 +74,7 @@ function add_survey_question(type, surveyid) {
         question_area += '</div>';
         question_area += hidden_input('order[]', '');
         // used only to identify input key no saved in database
-        question_area += '<label for="' + response.data.questionid + '" class="control-label display-block">'+response.survey_question_string+' <a href="#" onclick="update_question(this,\'' + type + '\',' + response.data.questionid + '); return false;" class="pull-right update-question-button"><i class="fa fa-refresh text-success question_update"></i></a><a href="#" class="pull-right"><i class="fa fa-remove text-danger" onclick="remove_question_from_database(this,' + response.data.questionid + '); return false;"></i></a></label>';
+        question_area += '<label for="' + response.data.questionid + '" class="control-label display-block">' + response.survey_question_string + ' <a href="#" onclick="update_question(this,\'' + type + '\',' + response.data.questionid + '); return false;" class="pull-right update-question-button"><i class="fa fa-refresh text-success question_update"></i></a><a href="#" class="pull-right"><i class="fa fa-remove text-danger" onclick="remove_question_from_database(this,' + response.data.questionid + '); return false;"></i></a></label>';
         question_area += '<input type="text" onblur="update_question(this,\'' + type + '\',' + response.data.questionid + ');" data-questionid="' + response.data.questionid + '" class="form-control questionid">';
         if (type == 'textarea') {
             question_area += '<textarea class="form-control mtop20" disabled="disabled" rows="6">' + response.survey_question_only_for_preview + '</textarea>';
@@ -88,7 +101,8 @@ function add_survey_question(type, surveyid) {
         $('#survey_questions').append(question_area);
         $("#survey_questions").sortable('refresh');
         $('html,body').animate({
-            scrollTop: $("#survey_questions li:last-child").offset().top},
+                scrollTop: $("#survey_questions li:last-child").offset().top
+            },
             'slow');
         update_questions_order();
     });

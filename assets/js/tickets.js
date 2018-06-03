@@ -193,6 +193,11 @@ $(function() {
                     $('input[name="name"]').val(response.contact_data.firstname + ' ' + response.contact_data.lastname);
                     $('input[name="email"]').val(response.contact_data.email);
                     $('input[name="userid"]').val(response.contact_data.userid);
+                    if(response.contact_data.ticket_emails == '0') {
+                        show_ticket_no_contact_email_warning(response.contact_data.userid,response.contact_data.id);
+                    } else {
+                        clear_ticket_no_contact_email_warning();
+                    }
                 }
                 if (!projectAutoSelected) {
                     if (response.customer_has_projects) {
@@ -213,6 +218,7 @@ $(function() {
             } else {
                 projectsWrapper.removeClass('hide');
             }
+            clear_ticket_no_contact_email_warning();
         }
     });
 });
@@ -260,4 +266,14 @@ function tickets_bulk_action(event) {
             });
         }, 50);
     }
+}
+
+function show_ticket_no_contact_email_warning(userid, contactid){
+    if($('#contact_email_notifications_warning').length == 0){
+        $('#new_ticket_form, #single-ticket-form').prepend('<div class="alert alert-warning" id="contact_email_notifications_warning">Email notifications for tickets is disabled for this contact, if you want the contact to receive ticket emails you must enable by clicking <a href="'+admin_url+'clients/client/'+userid+'?contactid='+contactid+'" target="_blank">here</a>.</div>');
+    }
+}
+
+function clear_ticket_no_contact_email_warning(){
+    $('#contact_email_notifications_warning').remove();
 }

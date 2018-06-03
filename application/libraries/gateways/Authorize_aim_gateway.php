@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
@@ -29,56 +30,56 @@ class Authorize_aim_gateway extends App_gateway
         /**
          * Add gateway settings
         */
-        $this->setSettings(array(
-            array(
-                'name' => 'api_login_id',
+        $this->setSettings([
+            [
+                'name'      => 'api_login_id',
                 'encrypted' => true,
-                'label' => 'settings_paymentmethod_authorize_api_login_id'
-            ),
-            array(
-                'name' => 'api_transaction_key',
-                'label' => 'settings_paymentmethod_authorize_api_transaction_key',
-                'encrypted' => true
-            ),
-            array(
-                'name' => 'description_dashboard',
-                'label' => 'settings_paymentmethod_description',
-                'type'=>'textarea',
-                'default_value'=>'Payment for Invoice {invoice_number}',
-            ),
-            array(
-                'name' => 'currencies',
-                'label' => 'currency',
-                'default_value' => 'USD'
-            ),
-            array(
-                'name' => 'test_mode_enabled',
-                'type' => 'yes_no',
+                'label'     => 'settings_paymentmethod_authorize_api_login_id',
+            ],
+            [
+                'name'      => 'api_transaction_key',
+                'label'     => 'settings_paymentmethod_authorize_api_transaction_key',
+                'encrypted' => true,
+            ],
+            [
+                'name'          => 'description_dashboard',
+                'label'         => 'settings_paymentmethod_description',
+                'type'          => 'textarea',
+                'default_value' => 'Payment for Invoice {invoice_number}',
+            ],
+            [
+                'name'          => 'currencies',
+                'label'         => 'currency',
+                'default_value' => 'USD',
+            ],
+            [
+                'name'          => 'test_mode_enabled',
+                'type'          => 'yes_no',
                 'default_value' => 0,
-                'label' => 'settings_paymentmethod_testing_mode'
-            ),
-            array(
-                'name' => 'developer_mode_enabled',
-                'type' => 'yes_no',
+                'label'         => 'settings_paymentmethod_testing_mode',
+            ],
+            [
+                'name'          => 'developer_mode_enabled',
+                'type'          => 'yes_no',
                 'default_value' => 1,
-                'label' => 'settings_paymentmethod_developer_mode'
-            )
-        ));
+                'label'         => 'settings_paymentmethod_developer_mode',
+            ],
+        ]);
 
         /**
          * REQUIRED
          * Hook gateway with other online payment modes
          */
-        add_action('before_add_online_payment_modes', array( $this, 'initMode' ));
+        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
 
         add_action('before_render_payment_gateway_settings', 'authorize_aim_notice');
     }
 
     public function process_payment($data)
     {
-        $this->ci->session->set_userdata(array(
-            'total_authorize' => $data['amount']
-        ));
+        $this->ci->session->set_userdata([
+            'total_authorize' => $data['amount'],
+        ]);
 
         redirect(site_url('gateways/authorize_aim/make_payment?invoiceid=' . $data['invoiceid'] . '&total=' . $data['amount'] . '&hash=' . $data['invoice']->hash));
     }
@@ -92,7 +93,7 @@ class Authorize_aim_gateway extends App_gateway
         $gateway->setTestMode($this->getSetting('test_mode_enabled'));
         $gateway->setDeveloperMode($this->getSetting('developer_mode_enabled'));
 
-        $billing_data = array();
+        $billing_data = [];
 
         $billing_data['billingCompany']  = $data['invoice']->client->company;
         $billing_data['billingAddress1'] = $this->ci->input->post('billingAddress1');
@@ -107,14 +108,14 @@ class Authorize_aim_gateway extends App_gateway
         $billing_data['expiryYear']  = $this->ci->input->post('expYear');
         $billing_data['cvv']         = $this->ci->input->post('cvv');
 
-        $requestData = array(
-            'amount' => number_format($data['amount'], 2, '.', ''),
-            'currency' => $data['invoice']->currency_name,
-            'description' => str_replace('{invoice_number}', format_invoice_number($data['invoice']->id) , $this->getSetting('description_dashboard')),
+        $requestData = [
+            'amount'        => number_format($data['amount'], 2, '.', ''),
+            'currency'      => $data['invoice']->currency_name,
+            'description'   => str_replace('{invoice_number}', format_invoice_number($data['invoice']->id), $this->getSetting('description_dashboard')),
             'transactionId' => $data['invoice']->id,
-            'invoiceNumber'=>format_invoice_number($data['invoice']->id),
-            'card' => $billing_data
-        );
+            'invoiceNumber' => format_invoice_number($data['invoice']->id),
+            'card'          => $billing_data,
+        ];
 
         $oResponse = $gateway->purchase($requestData)->send();
 

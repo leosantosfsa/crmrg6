@@ -1,9 +1,10 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Object_cache
 {
-    private $cache = array();
+    private $cache = [];
 
     public $cache_hits = 0;
 
@@ -84,7 +85,7 @@ class Object_cache
 
     public function flush()
     {
-        $this->cache = array();
+        $this->cache = [];
 
         return true;
     }
@@ -100,9 +101,9 @@ class Object_cache
             $this->cache_hits += 1;
             if (is_object($this->cache[$group][$key])) {
                 return clone $this->cache[$group][$key];
-            } else {
-                return $this->cache[$group][$key];
             }
+
+            return $this->cache[$group][$key];
         }
 
         $found = false;
@@ -166,10 +167,10 @@ class Object_cache
 
     public function stats()
     {
-        echo "<p>";
+        echo '<p>';
         echo "<strong>Cache Hits:</strong> {$this->cache_hits}<br />";
         echo "<strong>Cache Misses:</strong> {$this->cache_misses}<br />";
-        echo "</p>";
+        echo '</p>';
     }
 
     protected function _exists($key, $group)

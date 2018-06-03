@@ -277,7 +277,7 @@
                                   ?>
                               <tr data-id="<?php echo $permission['permissionid']; ?>" data-name="<?php echo $permission['shortname']; ?>">
                                  <td>
-                                    <?php echo $permission['name']; ?>
+                                    <?php echo _l($permission['shortname']); ?>
                                  </td>
                                  <td class="text-center">
                                     <?php if($permission_condition['view'] == true){

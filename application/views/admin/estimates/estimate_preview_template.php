@@ -3,59 +3,78 @@
 <div class="col-md-12 no-padding">
    <div class="panel_s">
       <div class="panel-body">
-         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active">
-               <a href="#tab_estimate" aria-controls="tab_estimate" role="tab" data-toggle="tab">
-               <?php echo _l('estimate'); ?>
-               </a>
-            </li>
-            <li role="presentation">
-               <a href="#tab_tasks" onclick="init_rel_tasks_table(<?php echo $estimate->id; ?>,'estimate'); return false;" aria-controls="tab_tasks" role="tab" data-toggle="tab">
-               <?php echo _l('tasks'); ?>
-               </a>
-            </li>
-            <li role="presentation">
-               <a href="#tab_activity" aria-controls="tab_activity" role="tab" data-toggle="tab">
-               <?php echo _l('estimate_view_activity_tooltip'); ?>
-               </a>
-            </li>
-            <li role="presentation">
-               <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $estimate->id ;?> + '/' + 'estimate', [4], [4],undefined,[1,'ASC']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
-               <?php echo _l('estimate_reminders'); ?>
-               <?php
-                  $total_reminders = total_rows('tblreminders',
-                    array(
-                     'isnotified'=>0,
-                     'staff'=>get_staff_user_id(),
-                     'rel_type'=>'estimate',
-                     'rel_id'=>$estimate->id
-                     )
-                    );
-                  if($total_reminders > 0){
-                    echo '<span class="badge">'.$total_reminders.'</span>';
-                  }
-                  ?>
-               </a>
-            </li>
-            <li role="presentation" class="tab-separator">
-               <a href="#tab_notes" onclick="get_sales_notes(<?php echo $estimate->id; ?>,'estimates'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
-               </span><?php echo _l('estimate_notes'); ?> <span class="notes-total">
-               <?php if($totalNotes > 0){ ?>
-               <span class="badge"><?php echo $totalNotes; ?><span>
-               <?php } ?>
-               </span>
-               </a>
-            </li>
-            <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('view_tracking'); ?>" class="tab-separator">
-               <a href="#tab_views" aria-controls="tab_views" role="tab" data-toggle="tab">
-               <i class="fa fa-eye"></i>
-               </a>
-            </li>
-            <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="tab-separator">
-               <a href="#" onclick="small_table_full_view(); return false;" class="toggle_view">
-               <i class="fa fa-expand"></i></a>
-            </li>
-         </ul>
+         <div class="horizontal-scrollable-tabs preview-tabs-top">
+            <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
+            <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>
+            <div class="horizontal-tabs">
+               <ul class="nav nav-tabs nav-tabs-horizontal mbot15" role="tablist">
+                  <li role="presentation" class="active">
+                     <a href="#tab_estimate" aria-controls="tab_estimate" role="tab" data-toggle="tab">
+                     <?php echo _l('estimate'); ?>
+                     </a>
+                  </li>
+                  <li role="presentation">
+                     <a href="#tab_tasks" onclick="init_rel_tasks_table(<?php echo $estimate->id; ?>,'estimate'); return false;" aria-controls="tab_tasks" role="tab" data-toggle="tab">
+                     <?php echo _l('tasks'); ?>
+                     </a>
+                  </li>
+                  <li role="presentation">
+                     <a href="#tab_activity" aria-controls="tab_activity" role="tab" data-toggle="tab">
+                     <?php echo _l('estimate_view_activity_tooltip'); ?>
+                     </a>
+                  </li>
+                  <li role="presentation">
+                     <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $estimate->id ;?> + '/' + 'estimate', undefined, undefined, undefined,[1,'asc']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
+                     <?php echo _l('estimate_reminders'); ?>
+                     <?php
+                        $total_reminders = total_rows('tblreminders',
+                          array(
+                           'isnotified'=>0,
+                           'staff'=>get_staff_user_id(),
+                           'rel_type'=>'estimate',
+                           'rel_id'=>$estimate->id
+                           )
+                          );
+                        if($total_reminders > 0){
+                          echo '<span class="badge">'.$total_reminders.'</span>';
+                        }
+                        ?>
+                     </a>
+                  </li>
+                  <li role="presentation" class="tab-separator">
+                     <a href="#tab_notes" onclick="get_sales_notes(<?php echo $estimate->id; ?>,'estimates'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
+                     </span><?php echo _l('estimate_notes'); ?> <span class="notes-total">
+                     <?php if($totalNotes > 0){ ?>
+                     <span class="badge"><?php echo $totalNotes; ?><span>
+                     <?php } ?>
+                     </span>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" title="<?php echo _l('emails_tracking'); ?>" class="tab-separator">
+                     <a href="#tab_emails_tracking" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab">
+                     <?php if(!is_mobile()){ ?>
+                     <i class="fa fa-envelope-open-o" aria-hidden="true"></i>
+                     <?php } else { ?>
+                     <?php echo _l('emails_tracking'); ?>
+                     <?php } ?>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('view_tracking'); ?>" class="tab-separator">
+                     <a href="#tab_views" aria-controls="tab_views" role="tab" data-toggle="tab">
+                     <?php if(!is_mobile()){ ?>
+                     <i class="fa fa-eye"></i>
+                     <?php } else { ?>
+                     <?php echo _l('view_tracking'); ?>
+                     <?php } ?>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="tab-separator toggle_view">
+                     <a href="#" onclick="small_table_full_view(); return false;">
+                     <i class="fa fa-expand"></i></a>
+                  </li>
+               </ul>
+            </div>
+         </div>
          <div class="row">
             <div class="col-md-3">
                <?php echo format_estimate_status($estimate->status,'mtop5');  ?>
@@ -68,8 +87,19 @@
                   <?php if(has_permission('estimates','','edit')){ ?>
                   <a href="<?php echo admin_url('estimates/estimate/'.$estimate->id); ?>" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('edit_estimate_tooltip'); ?>" data-placement="bottom"><i class="fa fa-pencil-square-o"></i></a>
                   <?php } ?>
-                  <a href="<?php echo admin_url('estimates/pdf/'.$estimate->id.'?print=true'); ?>" target="_blank" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('print'); ?>" data-placement="bottom"><i class="fa fa-print"></i></a>
-                  <a href="<?php echo admin_url('estimates/pdf/'.$estimate->id); ?>" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('view_pdf'); ?>" data-placement="bottom"><i class="fa fa-file-pdf-o"></i></a>
+                  <div class="btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-file-pdf-o"></i><?php if(is_mobile()){echo ' PDF';} ?> <span class="caret"></span></a>
+                     <ul class="dropdown-menu dropdown-menu-right">
+                        <li class="hidden-xs"><a href="<?php echo admin_url('estimates/pdf/'.$estimate->id.'?output_type=I'); ?>"><?php echo _l('view_pdf'); ?></a></li>
+                        <li class="hidden-xs"><a href="<?php echo admin_url('estimates/pdf/'.$estimate->id.'?output_type=I'); ?>" target="_blank"><?php echo _l('view_pdf_in_new_window'); ?></a></li>
+                        <li><a href="<?php echo admin_url('estimates/pdf/'.$estimate->id); ?>"><?php echo _l('download'); ?></a></li>
+                        <li>
+                           <a href="<?php echo admin_url('estimates/pdf/'.$estimate->id.'?print=true'); ?>" target="_blank">
+                           <?php echo _l('print'); ?>
+                           </a>
+                        </li>
+                     </ul>
+                  </div>
                   <?php
                      $_tooltip = _l('estimate_sent_to_email_tooltip');
                      $_tooltip_already_send = '';
@@ -77,14 +107,16 @@
                         $_tooltip_already_send = _l('estimate_already_send_to_client_tooltip',time_ago($estimate->datesend));
                      }
                      ?>
+                  <?php if(!empty($estimate->clientid)){ ?>
                   <a href="#" class="estimate-send-to-client btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo $_tooltip; ?>" data-placement="bottom"><span data-toggle="tooltip" data-title="<?php echo $_tooltip_already_send; ?>"><i class="fa fa-envelope"></i></span></a>
+                  <?php } ?>
                   <div class="btn-group">
                      <button type="button" class="btn btn-default pull-left dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                      <?php echo _l('more'); ?> <span class="caret"></span>
                      </button>
                      <ul class="dropdown-menu dropdown-menu-right">
                         <li>
-                           <a href="<?php echo site_url('viewestimate/' . $estimate->id . '/' .  $estimate->hash) ?>" target="_blank">
+                           <a href="<?php echo site_url('estimate/' . $estimate->id . '/' .  $estimate->hash) ?>" target="_blank">
                            <?php echo _l('view_estimate_as_client'); ?>
                            </a>
                         </li>
@@ -118,6 +150,13 @@
                            </a>
                         </li>
                         <?php } ?>
+                        <?php if(!empty($estimate->signature) && has_permission('estimates','','delete')){ ?>
+                        <li>
+                           <a href="<?php echo admin_url('estimates/clear_signature/'.$estimate->id); ?>" class="_delete">
+                           <?php echo _l('clear_signature'); ?>
+                           </a>
+                        </li>
+                        <?php } ?>
                         <?php if(has_permission('estimates','','delete')){ ?>
                         <?php
                            if((get_option('delete_only_on_last_estimate') == 1 && is_last_estimate($estimate->id)) || (get_option('delete_only_on_last_estimate') == 0)){ ?>
@@ -131,7 +170,7 @@
                      </ul>
                   </div>
                   <?php if($estimate->invoiceid == NULL){ ?>
-                  <?php if(has_permission('invoices','','create')){ ?>
+                  <?php if(has_permission('invoices','','create') && !empty($estimate->clientid)){ ?>
                   <div class="btn-group pull-right mleft5">
                      <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                      <?php echo _l('estimate_convert_to_invoice'); ?> <span class="caret"></span>
@@ -177,7 +216,7 @@
                            )); ?></h4>
                      </div>
                      <?php } ?>
-                     <div class="col-md-6">
+                     <div class="col-md-6 col-sm-6">
                         <h4 class="bold">
                            <?php
                               $tags = get_tags_in($estimate->id,'estimate');
@@ -255,12 +294,12 @@
                                  <tr>
                                     <th align="left">#</th>
                                     <th class="description" width="50%" align="left"><?php echo _l('estimate_table_item_heading'); ?></th>
-                                     <?php
+                                    <?php
                                        $custom_fields = get_items_custom_fields_for_table_html($estimate->id,'estimate');
                                        foreach($custom_fields as $cf){
                                          echo '<th class="custom_field" align="left">' . $cf['name'] . '</th>';
                                        }
-                                    ?>
+                                       ?>
                                     <?php
                                        $qty_heading = _l('estimate_table_quantity_heading');
                                        if($estimate->show_quantity_as == 2){
@@ -298,12 +337,12 @@
                                  </td>
                               </tr>
                               <?php if(is_sale_discount_applied($estimate)){ ?>
-                               <tr>
+                              <tr>
                                  <td>
                                     <span class="bold"><?php echo _l('estimate_discount'); ?>
-                                       <?php if(is_sale_discount($estimate,'percent')){ ?>
-                                       (<?php echo _format_number($estimate->discount_percent,true); ?>%)
-                                       <?php } ?></span>
+                                    <?php if(is_sale_discount($estimate,'percent')){ ?>
+                                    (<?php echo _format_number($estimate->discount_percent,true); ?>%)
+                                    <?php } ?></span>
                                  </td>
                                  <td class="discount">
                                     <?php echo '-' . format_money($estimate->discount_total,$estimate->symbol); ?>
@@ -311,10 +350,10 @@
                               </tr>
                               <?php } ?>
                               <?php
-                              foreach($taxes as $tax){
-                                  echo '<tr class="tax-area"><td class="bold">'.$tax['taxname'].' ('._format_number($tax['taxrate']).'%)</td><td>'.format_money($tax['total_tax'], $estimate->symbol).'</td></tr>';
-                              }
-                              ?>
+                                 foreach($taxes as $tax){
+                                     echo '<tr class="tax-area"><td class="bold">'.$tax['taxname'].' ('._format_number($tax['taxrate']).'%)</td><td>'.format_money($tax['total_tax'], $estimate->symbol).'</td></tr>';
+                                 }
+                                 ?>
                               <?php if((int)$estimate->adjustment != 0){ ?>
                               <tr>
                                  <td>
@@ -392,8 +431,16 @@
             <div role="tabpanel" class="tab-pane" id="tab_reminders">
                <a href="#" data-toggle="modal" class="btn btn-info" data-target=".reminder-modal-estimate-<?php echo $estimate->id; ?>"><i class="fa fa-bell-o"></i> <?php echo _l('estimate_set_reminder_title'); ?></a>
                <hr />
-               <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified'), _l( 'options'), ), 'reminders'); ?>
+               <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified')), 'reminders'); ?>
                <?php $this->load->view('admin/includes/modals/reminder',array('id'=>$estimate->id,'name'=>'estimate','members'=>$members,'reminder_title'=>_l('estimate_set_reminder_title'))); ?>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="tab_emails_tracking">
+               <?php
+                  $this->load->view('admin/includes/emails_tracking',array(
+                     'tracked_emails'=>
+                     get_tracked_emails($estimate->id, 'estimate'))
+                  );
+                  ?>
             </div>
             <div role="tabpanel" class="tab-pane" id="tab_notes">
                <?php echo form_open(admin_url('estimates/add_note/'.$estimate->id),array('id'=>'sales-notes','class'=>'estimate-notes-form')); ?>
@@ -403,7 +450,7 @@
                </div>
                <?php echo form_close(); ?>
                <hr />
-            <div class="panel_s mtop20 no-shadow" id="sales_notes_area">
+               <div class="panel_s mtop20 no-shadow" id="sales_notes_area">
                </div>
             </div>
             <div role="tabpanel" class="tab-pane" id="tab_activity">
@@ -418,7 +465,7 @@
                               <span class="text-has-action" data-toggle="tooltip" data-title="<?php echo _dt($activity['date']); ?>">
                               <?php echo time_ago($activity['date']); ?>
                               </span>
-                              </div>
+                           </div>
                            <div class="text">
                               <?php if(is_numeric($activity['staffid']) && $activity['staffid'] != 0){ ?>
                               <a href="<?php echo admin_url('profile/'.$activity["staffid"]); ?>">
@@ -467,9 +514,12 @@
                   </div>
                </div>
             </div>
-            <div role="tabpanel" class="tab-pane ptop10" id="tab_views">
+            <div role="tabpanel" class="tab-pane" id="tab_views">
                <?php
                   $views_activity = get_views_tracking('estimate',$estimate->id);
+                  if(count($views_activity) === 0) {
+                     echo '<h4 class="no-mbot">'._l('not_viewed_yet',_l('estimate_lowercase')).'</h4>';
+                  }
                   foreach($views_activity as $activity){ ?>
                <p class="text-success no-margin">
                   <?php echo _l('view_date') . ': ' . _dt($activity['date']); ?>
@@ -490,5 +540,6 @@
    init_datepicker();
    init_selectpicker();
    init_form_reminder();
+   init_tabs_scrollable();
 </script>
 <?php $this->load->view('admin/estimates/estimate_send_to_client'); ?>

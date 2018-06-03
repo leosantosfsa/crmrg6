@@ -173,6 +173,7 @@ $config['composer_autoload'] = true;
 */
 $config['permitted_uri_chars'] = (defined('APP_PERMITTED_URI_CHARS') ? APP_PERMITTED_URI_CHARS : 'a-z 0-9~%.:_\-@');
 
+
 /*
 |--------------------------------------------------------------------------
 | Enable Query Strings

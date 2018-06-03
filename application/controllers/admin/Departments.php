@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Departments extends Admin_controller
 {
@@ -6,6 +7,7 @@ class Departments extends Admin_controller
     {
         parent::__construct();
         $this->load->model('departments_model');
+
         if (!is_admin()) {
             access_denied('Departments');
         }
@@ -18,7 +20,7 @@ class Departments extends Admin_controller
             $this->app->get_table_data('departments');
         }
         $data['email_exist_as_staff'] = $this->email_exist_as_staff();
-        $data['title'] = _l('departments');
+        $data['title']                = _l('departments');
         $this->load->view('admin/departments/manage', $data);
     }
 
@@ -26,9 +28,9 @@ class Departments extends Admin_controller
     public function department($id = '')
     {
         if ($this->input->post()) {
-            $message = '';
-            $data = $this->input->post();
-            $data = $this->input->post();
+            $message          = '';
+            $data             = $this->input->post();
+            $data             = $this->input->post();
             $data['password'] = $this->input->post('password', false);
 
             if (isset($data['fakeusernameremembered']) || isset($data['fakepasswordremembered'])) {
@@ -42,23 +44,23 @@ class Departments extends Admin_controller
                     $success = true;
                     $message = _l('added_successfully', _l('department'));
                 }
-                echo json_encode(array(
-                    'success' => $success,
-                    'message' => $message,
-                    'email_exist_as_staff'=>$this->email_exist_as_staff(),
-                ));
+                echo json_encode([
+                    'success'              => $success,
+                    'message'              => $message,
+                    'email_exist_as_staff' => $this->email_exist_as_staff(),
+                ]);
             } else {
-                $id   = $data['id'];
+                $id = $data['id'];
                 unset($data['id']);
                 $success = $this->departments_model->update($data, $id);
                 if ($success) {
                     $message = _l('updated_successfully', _l('department'));
                 }
-                echo json_encode(array(
-                    'success' => $success,
-                    'message' => $message,
-                    'email_exist_as_staff'=>$this->email_exist_as_staff(),
-                ));
+                echo json_encode([
+                    'success'              => $success,
+                    'message'              => $message,
+                    'email_exist_as_staff' => $this->email_exist_as_staff(),
+                ]);
             }
             die;
         }
@@ -93,9 +95,9 @@ class Departments extends Admin_controller
                 die();
             }
         }
-        $exists = total_rows('tbldepartments', array(
+        $exists = total_rows('tbldepartments', [
             'email' => $this->input->post('email'),
-        ));
+        ]);
         if ($exists > 0) {
             echo 'false';
         } else {
@@ -128,21 +130,22 @@ class Departments extends Admin_controller
         $password   = $password;
         $encryption = $encryption;
         // open connection
-        $imap       = new Imap($mailbox, $username, $password, $encryption);
+        $imap = new Imap($mailbox, $username, $password, $encryption);
         if ($imap->isConnected() === true) {
-            echo json_encode(array(
+            echo json_encode([
                 'alert_type' => 'success',
-                'message' => _l('lead_email_connection_ok'),
-            ));
+                'message'    => _l('lead_email_connection_ok'),
+            ]);
         } else {
-            echo json_encode(array(
+            echo json_encode([
                 'alert_type' => 'warning',
-                'message' => $imap->getError(),
-            ));
+                'message'    => $imap->getError(),
+            ]);
         }
     }
 
-    private function email_exist_as_staff() {
-        return total_rows('tbldepartments','email IN (SELECT email FROM tblstaff)') > 0;
+    private function email_exist_as_staff()
+    {
+        return total_rows('tbldepartments', 'email IN (SELECT email FROM tblstaff)') > 0;
     }
 }

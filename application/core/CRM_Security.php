@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class CRM_Security extends CI_Security
@@ -61,19 +62,19 @@ class CRM_Security extends CI_Security
          */
         if (stripos($str, '%') !== false) {
             // CUSTOM CODE
-            $search = array('/\s%/i', '/%\s/i');
-            $replace = array('<p-tmp1></p-tmp1>', '<p-tmp2></p-tmp2>');
-            $str = preg_replace($search, $replace, $str);
+            $search  = ['/\s%/i', '/%\s/i'];
+            $replace = ['<p-tmp1></p-tmp1>', '<p-tmp2></p-tmp2>'];
+            $str     = preg_replace($search, $replace, $str);
 
             do {
                 $oldstr = $str;
-                $str = rawurldecode($str);
-                $str = preg_replace_callback('#%(?:\s*[0-9a-f]){2,}#i', array($this, '_urldecodespaces'), $str);
+                $str    = rawurldecode($str);
+                $str    = preg_replace_callback('#%(?:\s*[0-9a-f]){2,}#i', [$this, '_urldecodespaces'], $str);
             } while ($oldstr !== $str);
 
             unset($oldstr);
 
-             // CUSTOM CODE
+            // CUSTOM CODE
             $str = str_replace('<p-tmp1></p-tmp1>', ' %', $str);
             $str = str_replace('<p-tmp2></p-tmp2>', '% ', $str);
         }
@@ -85,8 +86,8 @@ class CRM_Security extends CI_Security
          * We only convert entities that are within tags since
          * these are the ones that will pose security problems.
          */
-        $str = preg_replace_callback("/[^a-z0-9>]+[a-z0-9]+=([\'\"]).*?\\1/si", array($this, '_convert_attribute'), $str);
-        $str = preg_replace_callback('/<\w+.*/si', array($this, '_decode_entity'), $str);
+        $str = preg_replace_callback("/[^a-z0-9>]+[a-z0-9]+=([\'\"]).*?\\1/si", [$this, '_convert_attribute'], $str);
+        $str = preg_replace_callback('/<\w+.*/si', [$this, '_decode_entity'], $str);
 
         // Remove Invisible Characters Again!
         $str = remove_invisible_characters($str);
@@ -122,7 +123,7 @@ class CRM_Security extends CI_Security
             // do the long opening tags.
             $str = preg_replace('/<\?(php)/i', '&lt;?\\1', $str);
         } else {
-            $str = str_replace(array('<?', '?'.'>'), array('&lt;?', '?&gt;'), $str);
+            $str = str_replace(['<?', '?' . '>'], ['&lt;?', '?&gt;'], $str);
         }
 
         /*
@@ -131,18 +132,18 @@ class CRM_Security extends CI_Security
          * This corrects words like:  j a v a s c r i p t
          * These words are compacted back to their correct state.
          */
-        $words = array(
+        $words = [
             'javascript', 'expression', 'vbscript', 'jscript', 'wscript',
             'vbs', 'script', 'base64', 'applet', 'alert', 'document',
             'write', 'cookie', 'window', 'confirm', 'prompt', 'eval',
-        );
+        ];
 
         foreach ($words as $word) {
-            $word = implode('\s*', str_split($word)).'\s*';
+            $word = implode('\s*', str_split($word)) . '\s*';
 
             // We only want to do this when it is followed by a non-word character
             // That way valid stuff like "dealer to" does not become "dealerto"
-            $str = preg_replace_callback('#('.substr($word, 0, -3).')(\W)#is', array($this, '_compact_exploded_words'), $str);
+            $str = preg_replace_callback('#(' . substr($word, 0, -3) . ')(\W)#is', [$this, '_compact_exploded_words'], $str);
         }
 
         /*
@@ -161,11 +162,11 @@ class CRM_Security extends CI_Security
             $original = $str;
 
             if (preg_match('/<a/i', $str)) {
-                $str = preg_replace_callback('#<a(?:rea)?[^a-z0-9>]+([^>]*?)(?:>|$)#si', array($this, '_js_link_removal'), $str);
+                $str = preg_replace_callback('#<a(?:rea)?[^a-z0-9>]+([^>]*?)(?:>|$)#si', [$this, '_js_link_removal'], $str);
             }
 
             if (preg_match('/<img/i', $str)) {
-                $str = preg_replace_callback('#<img[^a-z0-9]+([^>]*?)(?:\s?/?>|$)#si', array($this, '_js_img_removal'), $str);
+                $str = preg_replace_callback('#<img[^a-z0-9]+([^>]*?)(?:\s?/?>|$)#si', [$this, '_js_img_removal'], $str);
             }
 
             if (preg_match('/script|xss/i', $str)) {
@@ -184,24 +185,24 @@ class CRM_Security extends CI_Security
          * Becomes: &lt;blink&gt;
          */
         $pattern = '#'
-            .'<((?<slash>/*\s*)((?<tagName>[a-z0-9]+)(?=[^a-z0-9]|$)|.+)' // tag start and name, followed by a non-tag character
-            .'[^\s\042\047a-z0-9>/=]*' // a valid attribute character immediately after the tag would count as a separator
+            . '<((?<slash>/*\s*)((?<tagName>[a-z0-9]+)(?=[^a-z0-9]|$)|.+)' // tag start and name, followed by a non-tag character
+            . '[^\s\042\047a-z0-9>/=]*' // a valid attribute character immediately after the tag would count as a separator
             // optional attributes
-            .'(?<attributes>(?:[\s\042\047/=]*' // non-attribute characters, excluding > (tag close) for obvious reasons
-            .'[^\s\042\047>/=]+' // attribute characters
+            . '(?<attributes>(?:[\s\042\047/=]*' // non-attribute characters, excluding > (tag close) for obvious reasons
+            . '[^\s\042\047>/=]+' // attribute characters
             // optional attribute-value
-                .'(?:\s*=' // attribute-value separator
-                    .'(?:[^\s\042\047=><`]+|\s*\042[^\042]*\042|\s*\047[^\047]*\047|\s*(?U:[^\s\042\047=><`]*))' // single, double or non-quoted value
-                .')?' // end optional attribute-value group
-            .')*)' // end optional attributes group
-            .'[^>]*)(?<closeTag>\>)?#isS';
+                . '(?:\s*=' // attribute-value separator
+                    . '(?:[^\s\042\047=><`]+|\s*\042[^\042]*\042|\s*\047[^\047]*\047|\s*(?U:[^\s\042\047=><`]*))' // single, double or non-quoted value
+                . ')?' // end optional attribute-value group
+            . ')*)' // end optional attributes group
+            . '[^>]*)(?<closeTag>\>)?#isS';
 
         // Note: It would be nice to optimize this for speed, BUT
         //       only matching the naughty elements here results in
         //       false positives and in turn - vulnerabilities!
         do {
             $old_str = $str;
-            $str = preg_replace_callback($pattern, array($this, '_sanitize_naughty_html'), $str);
+            $str     = preg_replace_callback($pattern, [$this, '_sanitize_naughty_html'], $str);
         } while ($old_str !== $str);
         unset($old_str);
 

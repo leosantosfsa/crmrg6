@@ -58,11 +58,10 @@ foreach($categories as $category){
             </a>
         </li>
         <?php if(count($years) > 0){ ?>
-            <li class="divider"></li>
+            <li class="divider years-divider"></li>
             <?php foreach($years as $year){ ?>
-                <li class="active">
-                    <a href="#" data-cview="year_<?php echo $year['year']; ?>" onclick="dt_custom_view(<?php echo $year['year']; ?>,'<?php echo $filter_table_name; ?>','year_<?php echo $year['year']; ?>'); return false;"><?php echo $year['year']; ?>
-                    </a>
+                <li class="active expenses-filter-year">
+                    <a href="#" data-cview="year_<?php echo $year['year']; ?>" onclick="dt_custom_view(<?php echo $year['year']; ?>,'<?php echo $filter_table_name; ?>','year_<?php echo $year['year']; ?>'); return false;"><?php echo $year['year']; ?></a>
                 </li>
                 <?php } ?>
                 <?php } ?>
@@ -81,12 +80,12 @@ foreach($categories as $category){
                     </li>
                     <?php } ?>
                     <div class="clearfix"></div>
-                    <li class="divider"></li>
-                    <li class="dropdown-submenu pull-left">
+                    <li class="divider months-divider"></li>
+                    <li class="dropdown-submenu pull-left expenses-filter-month-wrapper">
                       <a href="#" tabindex="-1"><?php echo _l('months'); ?></a>
                       <ul class="dropdown-menu dropdown-menu-left">
                         <?php for ($m = 1; $m <= 12; $m++) { ?>
-                          <li><a href="#" data-cview="expenses_by_month_<?php echo $m; ?>" onclick="dt_custom_view(<?php echo $m; ?>,'<?php echo $filter_table_name; ?>','expenses_by_month_<?php echo $m; ?>'); return false;"><?php echo _l(date('F', mktime(0, 0, 0, $m, 1))); ?></a></li>
+                          <li class="expenses-filter-month"><a href="#" data-cview="expenses_by_month_<?php echo $m; ?>" onclick="dt_custom_view(<?php echo $m; ?>,'<?php echo $filter_table_name; ?>','expenses_by_month_<?php echo $m; ?>'); return false;"><?php echo _l(date('F', mktime(0, 0, 0, $m, 1))); ?></a></li>
                           <?php } ?>
                       </ul>
                   </li>

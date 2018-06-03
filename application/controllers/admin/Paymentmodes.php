@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Paymentmodes extends Admin_controller
 {
@@ -32,20 +33,20 @@ class Paymentmodes extends Admin_controller
                 if ($success) {
                     $message = _l('added_successfully', _l('payment_mode'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
-                    'message' => $message
-                ));
+                    'message' => $message,
+                ]);
             } else {
                 $message = '';
                 $success = $this->payment_modes_model->edit($data);
                 if ($success) {
                     $message = _l('updated_successfully', _l('payment_mode'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
-                    'message' => $message
-                ));
+                    'message' => $message,
+                ]);
             }
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Goals extends Admin_controller
@@ -55,11 +56,11 @@ class Goals extends Admin_controller
             $data['goal']        = $this->goals_model->get($id);
             $data['achievement'] = $this->goals_model->calculate_goal_achievement($id);
 
-            $title               = _l('edit', _l('goal_lowercase'));
+            $title = _l('edit', _l('goal_lowercase'));
         }
 
         $this->load->model('staff_model');
-        $data['members'] = $this->staff_model->get('', 1, array('is_not_staff' => 0));
+        $data['members'] = $this->staff_model->get('', ['is_not_staff' => 0, 'active'=>1]);
 
         $this->load->model('contracts_model');
         $data['contract_types']        = $this->contracts_model->get_contract_types();

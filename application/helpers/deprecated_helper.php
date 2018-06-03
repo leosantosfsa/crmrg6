@@ -41,12 +41,12 @@ function project_status_color_class($id, $replace_default_by_muted = false)
         $class = 'success';
     }
 
-    $hook_data = do_action('project_status_color_class', array(
-        'id' => $id,
+    $hook_data = do_action('project_status_color_class', [
+        'id'    => $id,
         'class' => $class,
-    ));
+    ]);
 
-    $class     = $hook_data['class'];
+    $class = $hook_data['class'];
 
     return $class;
 }
@@ -77,9 +77,9 @@ function get_task_priority_class($id)
  */
 function project_status_by_id($id)
 {
-    $label = _l('project_status_'.$id);
-    $hook_data = do_action('project_status_label', array('id'=>$id, 'label'=>$label));
-    $label = $hook_data['label'];
+    $label     = _l('project_status_' . $id);
+    $hook_data = do_action('project_status_label', ['id' => $id, 'label' => $label]);
+    $label     = $hook_data['label'];
 
     return $label;
 }
@@ -95,9 +95,9 @@ function format_seconds($seconds)
         return round($hours, 2) . ' ' . _l('hours');
     } elseif ($seconds > 60) {
         return round($minutes, 2) . ' ' . _l('minutes');
-    } else {
-        return $seconds . ' ' . _l('seconds');
     }
+
+    return $seconds . ' ' . _l('seconds');
 }
 
 /**
@@ -105,7 +105,7 @@ function format_seconds($seconds)
  */
 function add_encryption_key_old()
 {
-    $CI =& get_instance();
+    $CI          = & get_instance();
     $key         = generate_encryption_key();
     $config_path = APPPATH . 'config/config.php';
     $CI->load->helper('file');
@@ -192,26 +192,27 @@ function app_admin_ajax_search_function()
 /**
  * @deprecated
  */
-function slug_it_old($str, $options = array()){
+function slug_it_old($str, $options = [])
+{
 
     // Make sure string is in UTF-8 and strip invalid UTF-8 characters
     $str      = mb_convert_encoding((string) $str, 'UTF-8', mb_list_encodings());
-    $defaults = array(
-        'separator' => '-',
-        'limit' => null,
-        'lowercase' => true,
-        'replacements' => array(
+    $defaults = [
+        'separator'    => '-',
+        'limit'        => null,
+        'lowercase'    => true,
+        'replacements' => [
             '
-            /\b(ѓ)\b/i' => 'gj',
+            /\b(ѓ)\b/i'  => 'gj',
             '/\b(ч)\b/i' => 'ch',
             '/\b(ш)\b/i' => 'sh',
-            '/\b(љ)\b/i' => 'lj'
-        ),
-        'transliterate' => true
-    );
+            '/\b(љ)\b/i' => 'lj',
+        ],
+        'transliterate' => true,
+    ];
     // Merge options
     $options  = array_merge($defaults, $options);
-    $char_map = array(
+    $char_map = [
         // Latin
         'À' => 'A',
         'Á' => 'A',
@@ -500,10 +501,10 @@ function slug_it_old($str, $options = array()){
         'ņ' => 'n',
         'š' => 's',
         'ū' => 'u',
-        'ž' => 'z'
-    );
+        'ž' => 'z',
+    ];
     // Make custom replacements
-    $str      = preg_replace(array_keys($options['replacements']), $options['replacements'], $str);
+    $str = preg_replace(array_keys($options['replacements']), $options['replacements'], $str);
     // Transliterate characters to ASCII
     if ($options['transliterate']) {
         $str = str_replace(array_keys($char_map), $char_map, $str);
@@ -518,4 +519,29 @@ function slug_it_old($str, $options = array()){
     $str = trim($str, $options['separator']);
 
     return $options['lowercase'] ? mb_strtolower($str, 'UTF-8') : $str;
+}
+
+/**
+ * @deprecated
+ */
+function number_unformat($number, $force_number = true)
+{
+    if ($force_number) {
+        $number = preg_replace('/^[^\d]+/', '', $number);
+    } elseif (preg_match('/^[^\d]+/', $number)) {
+        return false;
+    }
+    $dec_point     = get_option('decimal_separator');
+    $thousands_sep = get_option('thousand_separator');
+    $type          = (strpos($number, $dec_point) === false) ? 'int' : 'float';
+    $number        = str_replace([
+        $dec_point,
+        $thousands_sep,
+    ], [
+        '.',
+        '',
+    ], $number);
+    settype($number, $type);
+
+    return $number;
 }

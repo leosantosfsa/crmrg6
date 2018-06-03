@@ -11,7 +11,7 @@
          }
          echo '#'.$lead->id . ' - ' .  $name;
          } else {
-         echo _l('add_new',_l('lead'));
+         echo _l('add_new',_l('lead_lowercase'));
          }
          ?>
    </h4>
@@ -37,7 +37,12 @@
              echo form_hidden('leadid',$lead->id);
          } ?>
    <div class="top-lead-menu">
-      <ul class="nav nav-tabs<?php if(!isset($lead)){echo ' lead-new';} ?>" role="tablist">
+      <div class="horizontal-scrollable-tabs preview-tabs-top">
+         <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
+         <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>
+         <div class="horizontal-tabs">
+
+      <ul class="nav-tabs-horizontal nav nav-tabs<?php if(!isset($lead)){echo ' lead-new';} ?>" role="tablist">
          <li role="presentation" class="active" >
             <a href="#tab_lead_profile" aria-controls="tab_lead_profile" role="tab" data-toggle="tab">
             <?php echo _l('lead_profile'); ?>
@@ -52,7 +57,7 @@
          </li>
          <?php } ?>
          <li role="presentation">
-            <a href="#tab_proposals_leads" onclick="initDataTable('.table-proposals-lead', admin_url + 'proposals/proposal_relations/' + <?php echo $lead->id; ?> + '/lead','undefined', 'undefined','undefined',[6,'DESC']);" aria-controls="tab_proposals_leads" role="tab" data-toggle="tab">
+            <a href="#tab_proposals_leads" onclick="initDataTable('.table-proposals-lead', admin_url + 'proposals/proposal_relations/' + <?php echo $lead->id; ?> + '/lead','undefined', 'undefined','undefined',[6,'desc']);" aria-controls="tab_proposals_leads" role="tab" data-toggle="tab">
             <?php echo _l('proposals'); ?>
             </a>
          </li>
@@ -67,7 +72,7 @@
             </a>
          </li>
          <li role="presentation">
-            <a href="#lead_reminders" onclick="initDataTable('.table-reminders-leads', admin_url + 'misc/get_reminders/' + <?php echo $lead->id; ?> + '/' + 'lead', [4], [4],undefined,[1,'ASC']);" aria-controls="lead_reminders" role="tab" data-toggle="tab">
+            <a href="#lead_reminders" onclick="initDataTable('.table-reminders-leads', admin_url + 'misc/get_reminders/' + <?php echo $lead->id; ?> + '/' + 'lead', undefined, undefined,undefined,[1, 'asc']);" aria-controls="lead_reminders" role="tab" data-toggle="tab">
             <?php echo _l('leads_reminders_tab'); ?>
             <?php
                $total_reminders = total_rows('tblreminders',
@@ -94,8 +99,17 @@
             <?php echo _l('lead_add_edit_activity'); ?>
             </a>
          </li>
+         <?php if(is_gdpr() && (get_option('gdpr_enable_lead_public_form') == '1' || get_option('gdpr_enable_consent_for_leads') == '1')) { ?>
+            <li role="presentation">
+              <a href="#gdpr" aria-controls="gdpr" role="tab" data-toggle="tab">
+              GDPR
+              </a>
+           </li>
+         <?php } ?>
          <?php } ?>
       </ul>
+    </div>
+  </div>
    </div>
    <!-- Tab panes -->
    <div class="tab-content">
@@ -128,6 +142,36 @@
          <div class="clearfix"></div>
          <?php } ?>
          <?php do_action('after_lead_email_activity',array('lead_id'=>$lead->id,'emails'=>$mail_activity)); ?>
+      </div>
+      <?php } ?>
+      <?php if(is_gdpr() && (get_option('gdpr_enable_lead_public_form') == '1' || get_option('gdpr_enable_consent_for_leads') == '1' || (get_option('gdpr_data_portability_leads') == '1') && is_admin())) { ?>
+      <div role="tabpanel" class="tab-pane" id="gdpr">
+
+          <?php if(get_option('gdpr_enable_lead_public_form') == '1') { ?>
+            <a href="<?php echo $lead->public_url; ?>" target="_blank" class="mtop5">
+                <?php echo _l('view_public_form'); ?>
+            </a>
+          <?php } ?>
+           <?php if(get_option('gdpr_data_portability_leads') == '1' && is_admin()){ ?>
+               <?php
+               if(get_option('gdpr_enable_lead_public_form') == '1') {
+                  echo ' | ';
+               }
+               ?>
+              <a href="<?php echo admin_url('leads/export/'.$lead->id); ?>">
+                 <?php echo _l('dt_button_export'); ?>
+              </a>
+            <?php } ?>
+             <?php if(get_option('gdpr_enable_lead_public_form') == '1' || (get_option('gdpr_data_portability_leads') == '1' && is_admin())) { ?>
+              <hr class="hr-margin-n-15" />
+            <?php } ?>
+          <?php if(get_option('gdpr_enable_consent_for_leads') == '1') { ?>
+            <h4 class="no-mbot">
+                <?php echo _l('gdpr_consent'); ?>
+            </h4>
+          <?php $this->load->view('admin/gdpr/lead_consent'); ?>
+          <hr />
+          <?php } ?>
       </div>
       <?php } ?>
       <div role="tabpanel" class="tab-pane" id="lead_activity">
@@ -197,7 +241,11 @@
              array_push($table_data,$field['name']);
             }
             $table_data = do_action('proposals_relation_table_columns',$table_data);
-            render_datatable($table_data,'proposals-lead'); ?>
+            render_datatable($table_data,'proposals-lead',[], [
+                'data-last-order-identifier' => 'proposals-relation',
+                'data-default-order'         => get_table_last_order('proposals-relation'),
+            ]);
+            ?>
       </div>
       <div role="tabpanel" class="tab-pane" id="tab_tasks_leads">
          <?php init_relation_tasks_table(array('data-new-rel-id'=>$lead->id,'data-new-rel-type'=>'lead')); ?>
@@ -205,7 +253,7 @@
       <div role="tabpanel" class="tab-pane" id="lead_reminders">
          <a href="#" data-toggle="modal" class="btn btn-info" data-target=".reminder-modal-lead-<?php echo $lead->id; ?>"><i class="fa fa-bell-o"></i> <?php echo _l('lead_set_reminder_title'); ?></a>
          <hr />
-         <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified'), _l( 'options'), ), 'reminders-leads'); ?>
+         <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified')), 'reminders-leads'); ?>
       </div>
       <div role="tabpanel" class="tab-pane" id="attachments">
          <?php echo form_open('admin/leads/add_lead_attachment',array('class'=>'dropzone mtop15 mbot15','id'=>'lead-attachment-upload')); ?>

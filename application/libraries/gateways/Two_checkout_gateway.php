@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
@@ -35,38 +36,38 @@ class Two_checkout_gateway extends App_gateway
         /**
          * Add gateway settings
         */
-        $this->setSettings(array(
-            array(
-                'name' => 'account_number',
-                'label' => 'paymentmethod_two_checkout_account_number'
-            ),
-            array(
-                'name' => 'private_key',
-                'label' => 'paymentmethod_two_checkout_private_key',
-                'encrypted' => true
-            ),
-            array(
-                'name' => 'publishable_key',
-                'label' => 'paymentmethod_two_checkout_publishable_key'
-            ),
-            array(
-                'name' => 'currencies',
-                'label' => 'settings_paymentmethod_currencies',
-                'default_value' => 'USD,EUR'
-            ),
-            array(
-                'name' => 'test_mode_enabled',
-                'type' => 'yes_no',
-                'label' => 'settings_paymentmethod_testing_mode',
-                'default_value' => 1
-            )
-        ));
+        $this->setSettings([
+            [
+                'name'  => 'account_number',
+                'label' => 'paymentmethod_two_checkout_account_number',
+            ],
+            [
+                'name'      => 'private_key',
+                'label'     => 'paymentmethod_two_checkout_private_key',
+                'encrypted' => true,
+            ],
+            [
+                'name'  => 'publishable_key',
+                'label' => 'paymentmethod_two_checkout_publishable_key',
+            ],
+            [
+                'name'          => 'currencies',
+                'label'         => 'settings_paymentmethod_currencies',
+                'default_value' => 'USD,EUR',
+            ],
+            [
+                'name'          => 'test_mode_enabled',
+                'type'          => 'yes_no',
+                'label'         => 'settings_paymentmethod_testing_mode',
+                'default_value' => 1,
+            ],
+        ]);
 
         /**
         * REQUIRED
         * Hook gateway with other online payment modes
         */
-        add_action('before_add_online_payment_modes', array( $this, 'initMode' ));
+        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
 
         /**
          * Add ssl notice
@@ -74,17 +75,17 @@ class Two_checkout_gateway extends App_gateway
         add_action('before_render_payment_gateway_settings', 'two_checkout_ssl_notice');
 
         $line_address_2_required                     = $this->required_address_line_2_country_codes;
-        $this->required_address_line_2_country_codes = array();
+        $this->required_address_line_2_country_codes = [];
         foreach (explode(', ', $line_address_2_required) as $cn_code) {
             array_push($this->required_address_line_2_country_codes, $cn_code);
         }
         $state_country_codes_required       = $this->required_state_country_codes;
-        $this->required_state_country_codes = array();
+        $this->required_state_country_codes = [];
         foreach (explode(', ', $state_country_codes_required) as $cn_code) {
             array_push($this->required_state_country_codes, $cn_code);
         }
         $zip_code_country_codes_required       = $this->required_zip_code_country_codes;
-        $this->required_zip_code_country_codes = array();
+        $this->required_zip_code_country_codes = [];
         foreach (explode(', ', $zip_code_country_codes_required) as $cn_code) {
             array_push($this->required_zip_code_country_codes, $cn_code);
         }
@@ -92,9 +93,9 @@ class Two_checkout_gateway extends App_gateway
 
     public function process_payment($data)
     {
-        $this->ci->session->set_userdata(array(
-            'total_2checkout' => $data['amount']
-        ));
+        $this->ci->session->set_userdata([
+            'total_2checkout' => $data['amount'],
+        ]);
         redirect(site_url('gateways/two_checkout/make_payment?invoiceid=' . $data['invoiceid'] . '&hash=' . $data['invoice']->hash));
     }
 
@@ -105,7 +106,7 @@ class Two_checkout_gateway extends App_gateway
         $gateway->setPrivateKey($this->decryptSetting('private_key'));
         $gateway->setTestMode($this->getSetting('test_mode_enabled'));
 
-        $billing_data                    = array();
+        $billing_data                    = [];
         $billing_data['billingName']     = $this->ci->input->post('billingName');
         $billing_data['billingAddress1'] = $this->ci->input->post('billingAddress1');
 
@@ -123,13 +124,13 @@ class Two_checkout_gateway extends App_gateway
         $billing_data['billingCountry'] = $this->ci->input->post('billingCountry');
         $billing_data['email']          = $this->ci->input->post('email');
 
-        $oResponse = $gateway->purchase(array(
-            'amount' => number_format($data['amount'], 2, '.', ''),
-            'currency' => $data['currency'],
-            'token' => $this->ci->input->post('token'),
+        $oResponse = $gateway->purchase([
+            'amount'        => number_format($data['amount'], 2, '.', ''),
+            'currency'      => $data['currency'],
+            'token'         => $this->ci->input->post('token'),
             'transactionId' => $data['invoice']->id,
-            'card' => $billing_data
-        ))->send();
+            'card'          => $billing_data,
+        ])->send();
 
         return $oResponse;
     }

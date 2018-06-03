@@ -12,7 +12,7 @@ if($use_navigation == true){
 			</div>
 		</div>
 		<?php if(isset($knowledge_base_search)){ ?>
-		<?php get_template_part('knowledge_base_search'); ?>
+		<?php get_template_part('knowledge_base/search'); ?>
 		<?php } ?>
 		<div class="container">
 			<div class="row">

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Migration extends CRM_Controller
@@ -23,164 +24,164 @@ class Migration extends CRM_Controller
                 $old_url = $old_url . '/';
             }
 
-            $tables       = array(
-                array(
+            $tables = [
+                [
                     'table' => 'tblnotifications',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblnotifications',
-                    'field' => 'additional_data'
-                ),
-                array(
+                    'field' => 'additional_data',
+                ],
+                [
                     'table' => 'tblnotes',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblemailtemplates',
-                    'field' => 'message'
-                ),
-                array(
+                    'field' => 'message',
+                ],
+                [
                     'table' => 'tblposts',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tblpostcomments',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tbloptions',
-                    'field' => 'value'
-                ),
-                array(
+                    'field' => 'value',
+                ],
+                [
                     'table' => 'tblstaff',
-                    'field' => 'email_signature'
-                ),
-                array(
+                    'field' => 'email_signature',
+                ],
+                [
                     'table' => 'tblpredefinedreplies',
-                    'field' => 'message'
-                ),
-                array(
+                    'field' => 'message',
+                ],
+                [
                     'table' => 'tblprojectdiscussioncomments',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tblprojectdiscussions',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblprojectnotes',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tblprojects',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblreminders',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblstafftasks',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblstafftaskcomments',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tblsurveys',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblsurveys',
-                    'field' => 'viewdescription'
-                ),
-                array(
+                    'field' => 'viewdescription',
+                ],
+                [
                     'table' => 'tblticketreplies',
-                    'field' => 'message'
-                ),
-                array(
+                    'field' => 'message',
+                ],
+                [
                     'table' => 'tbltickets',
-                    'field' => 'message'
-                ),
-                array(
+                    'field' => 'message',
+                ],
+                [
                     'table' => 'tbltodoitems',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblproposalcomments',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tblproposals',
-                    'field' => 'content'
-                ),
-                array(
+                    'field' => 'content',
+                ],
+                [
                     'table' => 'tblleadactivitylog',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblknowledgebasegroups',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblknowledgebase',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblinvoices',
-                    'field' => 'terms'
-                ),
-                array(
+                    'field' => 'terms',
+                ],
+                [
                     'table' => 'tblinvoices',
-                    'field' => 'clientnote'
-                ),
-                array(
+                    'field' => 'clientnote',
+                ],
+                [
                     'table' => 'tblinvoices',
-                    'field' => 'adminnote'
-                ),
-                array(
+                    'field' => 'adminnote',
+                ],
+                [
                     'table' => 'tblsalesactivity',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblsalesactivity',
-                    'field' => 'additional_data'
-                ),
-                array(
+                    'field' => 'additional_data',
+                ],
+                [
                     'table' => 'tblestimates',
-                    'field' => 'terms'
-                ),
-                array(
+                    'field' => 'terms',
+                ],
+                [
                     'table' => 'tblestimates',
-                    'field' => 'clientnote'
-                ),
-                array(
+                    'field' => 'clientnote',
+                ],
+                [
                     'table' => 'tblestimates',
-                    'field' => 'adminnote'
-                ),
-                array(
+                    'field' => 'adminnote',
+                ],
+                [
                     'table' => 'tblgoals',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblcontracts',
-                    'field' => 'description'
-                ),
-                array(
+                    'field' => 'description',
+                ],
+                [
                     'table' => 'tblcontracts',
-                    'field' => 'content'
-                )
-            );
+                    'field' => 'content',
+                ],
+            ];
             $affectedRows = 0;
             foreach ($tables as $t) {
-                $this->db->query('UPDATE `'.$t['table'].'` SET `'.$t['field'].'` = replace('.$t['field'].', "' . $old_url . '", "' . $new_url . '")');
+                $this->db->query('UPDATE `' . $t['table'] . '` SET `' . $t['field'] . '` = replace(' . $t['field'] . ', "' . $old_url . '", "' . $new_url . '")');
                 $affectedRows += $this->db->affected_rows();
             }
             echo '<h1>Total links replaced: ' . $affectedRows . '</h1>';
         } else {
-            echo '<h1>Set migration_enabled to TRUE in application/config/migration.php</h1>';
+            echo '<h1>Set config item <b>migration_enabled</b> to TRUE in <b>application/config/migration.php</b></h1>';
         }
     }
 }

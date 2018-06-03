@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Payments extends Admin_controller
 {
@@ -17,7 +18,7 @@ class Payments extends Admin_controller
     /* List all invoice paments */
     public function list_payments()
     {
-        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own')) {
+        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && get_option('allow_staff_view_invoices_assigned') == '0') {
             access_denied('payments');
         }
 
@@ -27,19 +28,19 @@ class Payments extends Admin_controller
 
     public function table($clientid = '')
     {
-        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own')) {
+        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && get_option('allow_staff_view_invoices_assigned') == '0') {
             ajax_access_denied();
         }
 
-        $this->app->get_table_data('payments', array(
-            'clientid' => $clientid
-        ));
+        $this->app->get_table_data('payments', [
+            'clientid' => $clientid,
+        ]);
     }
 
     /* Update payment data */
     public function payment($id = '')
     {
-        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own')) {
+        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && get_option('allow_staff_view_invoices_assigned') == '0') {
             access_denied('payments');
         }
 
@@ -63,7 +64,7 @@ class Payments extends Admin_controller
         $this->load->model('invoices_model');
         $data['invoice'] = $this->invoices_model->get($data['payment']->invoiceid);
         $this->load->model('payment_modes_model');
-        $data['payment_modes'] = $this->payment_modes_model->get('', array(), true, true);
+        $data['payment_modes'] = $this->payment_modes_model->get('', [], true, true);
         $i                     = 0;
         foreach ($data['payment_modes'] as $mode) {
             if ($mode['active'] == 0 && $data['payment']->paymentmode != $mode['id']) {
@@ -82,15 +83,20 @@ class Payments extends Admin_controller
      */
     public function pdf($id)
     {
-        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own')) {
+        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && get_option('allow_staff_view_invoices_assigned') == '0') {
             access_denied('View Payment');
         }
         $payment = $this->payments_model->get($id);
+
+        if(!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && !user_can_view_invoice($payment->invoiceid)) {
+            access_denied('View Payment');
+        }
+
         $this->load->model('invoices_model');
         $payment->invoice_data = $this->invoices_model->get($payment->invoiceid);
 
         try {
-            $paymentpdf            = payment_pdf($payment);
+            $paymentpdf = payment_pdf($payment);
         } catch (Exception $e) {
             $message = $e->getMessage();
             echo $message;
@@ -100,7 +106,7 @@ class Payments extends Admin_controller
             die;
         }
 
-        $type                  = 'D';
+        $type = 'D';
         if ($this->input->get('print')) {
             $type = 'I';
         }

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Departments_model extends CRM_Model
 {
@@ -27,9 +28,9 @@ class Departments_model extends CRM_Model
 
         $departments = $this->object_cache->get('departments');
 
-        if(!$departments && !is_array($departments)) {
+        if (!$departments && !is_array($departments)) {
             $departments = $this->db->get('tbldepartments')->result_array();
-            $this->object_cache->add('departments',$departments);
+            $this->object_cache->add('departments', $departments);
         }
 
         return $departments;
@@ -145,9 +146,9 @@ class Departments_model extends CRM_Model
         $id      = do_action('before_delete_department', $id);
         $current = $this->get($id);
         if (is_reference_in_table('department', 'tbltickets', $id)) {
-            return array(
-                'referenced' => true
-            );
+            return [
+                'referenced' => true,
+            ];
         }
         do_action('before_department_deleted', $id);
         $this->db->where('departmentid', $id);
@@ -183,7 +184,7 @@ class Departments_model extends CRM_Model
         $this->db->where('staffid', $userid);
         $departments = $this->db->get()->result_array();
         if ($onlyids == true) {
-            $departmentsid = array();
+            $departmentsid = [];
             foreach ($departments as $department) {
                 array_push($departmentsid, $department['departmentid']);
             }

@@ -1,10 +1,4 @@
 <?php init_head(); ?>
-<style>
-#ribbon_project_<?php echo $project->id; ?> span::before {
-  border-top: 3px solid <?php echo $project_status['color']; ?>;
-  border-left: 3px solid <?php echo $project_status['color']; ?>;
-}
-</style>
 <div id="wrapper">
   <?php echo form_hidden('project_id',$project->id) ?>
   <div class="content">
@@ -13,9 +7,9 @@
         <div class="panel_s project-top-panel panel-full">
           <div class="panel-body _buttons">
             <div class="row">
-              <div class="col-md-8 project-heading">
+              <div class="col-md-7 project-heading">
                 <h3 class="hide project-name"><?php echo $project->name; ?></h3>
-                <div id="project_view_name">
+                <div id="project_view_name" class="pull-left">
                  <select class="selectpicker" id="project_top" data-width="fit"<?php if(count($other_projects) > 4){ ?> data-live-search="true" <?php } ?>>
                    <option value="<?php echo $project->id; ?>" selected><?php echo $project->name; ?></option>
                    <?php foreach($other_projects as $op){ ?>
@@ -23,8 +17,12 @@
                    <?php } ?>
                  </select>
                </div>
+               <div class="visible-xs">
+                 <div class="clearfix"></div>
+               </div>
+               <?php echo '<div class="label pull-left mleft15 mtop5 p8 project-status-label-'.$project->status.'" style="background:'.$project_status['color'].'">'.$project_status['name'].'</div>'; ?>
              </div>
-             <div class="col-md-4 text-right">
+             <div class="col-md-5 text-right">
               <?php if(has_permission('tasks','','create')){ ?>
               <a href="#" onclick="new_task_from_relation(undefined,'project',<?php echo $project->id; ?>); return false;" class="btn btn-info"><?php echo _l('new_task'); ?></a>
               <?php } ?>
@@ -102,7 +100,6 @@
     <div class="panel_s project-menu-panel">
       <div class="panel-body">
         <?php do_action('before_render_project_view',$project->id); ?>
-        <?php echo '<div class="ribbon project-status-ribbon-'.$project->status.'" id="ribbon_project_'.$project->id.'"><span style="background:'.$project_status['color'].'">'.$project_status['name'].'</span></div>'; ?>
         <?php $this->load->view('admin/projects/project_tabs'); ?>
       </div>
     </div>

@@ -40,7 +40,7 @@
 						<div class="clearfix"></div>
 						<hr class="hr-panel-heading" />
 						<div class="row">
-							<div class="col-md-6">
+							<div class="col-md-6 col-sm-6">
 								<address>
 									<?php echo format_organization_info(); ?>
 								</address>

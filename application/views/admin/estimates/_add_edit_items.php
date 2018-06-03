@@ -1,22 +1,7 @@
 <div class="panel-body mtop10">
    <div class="row">
       <div class="col-md-4">
-         <div class="form-group no-mbot items-wrapper select-placeholder">
-            <select name="item_select" class="selectpicker no-margin<?php if($ajaxItems == true){echo ' ajax-search';} ?>" data-width="100%" id="item_select" data-none-selected-text="<?php echo _l('add_item'); ?>" data-live-search="true">
-               <option value=""></option>
-               <?php foreach($items as $group_id=>$_items){ ?>
-               <optgroup data-group-id="<?php echo $group_id; ?>" label="<?php echo $_items[0]['group_name']; ?>">
-                  <?php foreach($_items as $item){ ?>
-                  <option value="<?php echo $item['id']; ?>" data-subtext="<?php echo strip_tags(mb_substr($item['long_description'],0,200)).'...'; ?>">(<?php echo _format_number($item['rate']); ; ?>) <?php echo $item['description']; ?></option>
-                  <?php } ?>
-               </optgroup>
-               <?php } ?>
-               <?php if(has_permission('items','','create')){ ?>
-               <option data-divider="true" class="newitem-divider"></option>
-               <option value="newitem" class="newitem" data-content="<span class='text-info'><?php echo _l('new_invoice_item'); ?></span>"></option>
-               <?php } ?>
-            </select>
-         </div>
+          <?php $this->load->view('admin/invoice_items/item_select'); ?>
       </div>
       <div class="col-md-8 text-right show_quantity_as_wrapper">
          <div class="mtop10">
@@ -36,8 +21,8 @@
          </div>
       </div>
    </div>
-   <div class="table-responsive s_table mtop10">
-      <table class="table estimate-items-table items table-main-estimate-edit">
+   <div class="table-responsive s_table">
+      <table class="table estimate-items-table items table-main-estimate-edit no-mtop">
          <thead>
             <tr>
                <th></th>

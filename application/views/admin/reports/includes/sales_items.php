@@ -10,8 +10,7 @@
      <div class="col-md-4">
       <div class="form-group">
        <label for="sale_agent_items"><?php echo _l('sale_agent_string'); ?></label>
-       <select name="sale_agent_items" class="selectpicker" multiple data-width="100%">
-        <option value="" selected><?php echo _l('invoice_status_report_all'); ?></option>
+       <select name="sale_agent_items" class="selectpicker" multiple data-width="100%" data-none-selected-text="<?php echo _l('invoice_status_report_all'); ?>">
         <?php foreach($invoices_sale_agents as $agent){ ?>
         <option value="<?php echo $agent['sale_agent']; ?>"><?php echo get_staff_full_name($agent['sale_agent']); ?></option>
         <?php } ?>

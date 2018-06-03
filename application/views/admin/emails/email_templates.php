@@ -144,6 +144,41 @@
                                     </table>
                                 </div>
                             </div>
+                                <div class="clearfix"></div>
+                             <div class="col-md-12">
+                                <h4 class="bold well email-template-heading">
+                                    <?php echo _l('subscriptions'); ?>
+                                      <?php if($hasPermissionEdit){ ?>
+                                      <a href="<?php echo admin_url('emails/disable_by_type/subscriptions'); ?>" class="pull-right mleft5 mright25"><small><?php echo _l('disable_all'); ?></small></a>
+                                      <a href="<?php echo admin_url('emails/enable_by_type/subscriptions'); ?>" class="pull-right"><small><?php echo _l('enable_all'); ?></small></a>
+                                     <?php } ?>
+
+                                    </h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th><?php echo _l('email_templates_table_heading_name'); ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach($subscriptions as $subscription_template){ ?>
+                                            <tr>
+                                                <td class="<?php if($subscription_template['active'] == 0){echo 'text-throught';} ?>">
+                                                    <a href="<?php echo admin_url('emails/email_template/'.$subscription_template['emailtemplateid']); ?>"><?php echo $subscription_template['name']; ?></a>
+                                                    <?php if(ENVIRONMENT !== 'production'){ ?>
+                                                    <br/><small><?php echo $subscription_template['slug']; ?></small>
+                                                    <?php } ?>
+                                                    <?php if($hasPermissionEdit){ ?>
+                                                    <a href="<?php echo admin_url('emails/'.($subscription_template['active'] == '1' ? 'disable/' : 'enable/').$subscription_template['emailtemplateid']); ?>" class="pull-right"><small><?php echo _l($subscription_template['active'] == 1 ? 'disable' : 'enable'); ?></small></a>
+                                                    <?php } ?>
+                                                </td>
+                                            </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                             <div class="clearfix"></div>
                               <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
@@ -376,6 +411,40 @@
                                                     <?php } ?>
                                                     <?php if($hasPermissionEdit){ ?>
                                                     <a href="<?php echo admin_url('emails/'.($lead_template['active'] == '1' ? 'disable/' : 'enable/').$lead_template['emailtemplateid']); ?>" class="pull-right"><small><?php echo _l($lead_template['active'] == 1 ? 'disable' : 'enable'); ?></small></a>
+                                                    <?php } ?>
+                                                </td>
+                                            </tr>
+                                            <?php } ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-12<?php if(!is_gdpr()){echo ' hide';} ?>">
+                                <h4 class="bold well email-template-heading">
+                                    <?php echo _l('gdpr'); ?>
+                                       <?php if($hasPermissionEdit){ ?>
+                                      <a href="<?php echo admin_url('emails/disable_by_type/gdpr'); ?>" class="pull-right mleft5 mright25"><small><?php echo _l('disable_all'); ?></small></a>
+                                      <a href="<?php echo admin_url('emails/enable_by_type/gdpr'); ?>" class="pull-right"><small><?php echo _l('enable_all'); ?></small></a>
+                                     <?php } ?>
+
+                                    </h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th><?php echo _l('email_templates_table_heading_name'); ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach($gdpr as $gdpr_template){ ?>
+                                            <tr>
+                                                <td class="<?php if($gdpr_template['active'] == 0){echo 'text-throught';} ?>">
+                                                    <a href="<?php echo admin_url('emails/email_template/'.$gdpr_template['emailtemplateid']); ?>"><?php echo $gdpr_template['name']; ?></a>
+                                                    <?php if(ENVIRONMENT !== 'production'){ ?>
+                                                    <br/><small><?php echo $gdpr_template['slug']; ?></small>
+                                                    <?php } ?>
+                                                    <?php if($hasPermissionEdit){ ?>
+                                                    <a href="<?php echo admin_url('emails/'.($gdpr_template['active'] == '1' ? 'disable/' : 'enable/').$gdpr_template['emailtemplateid']); ?>" class="pull-right"><small><?php echo _l($gdpr_template['active'] == 1 ? 'disable' : 'enable'); ?></small></a>
                                                     <?php } ?>
                                                 </td>
                                             </tr>

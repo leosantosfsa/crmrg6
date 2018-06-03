@@ -5,19 +5,19 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @param  string $text
  * @return string formatted text
  */
-function clear_textarea_breaks($text)
+function clear_textarea_breaks($text, $replace = '')
 {
-    $_text  = '';
-    $_text  = $text;
+    $_text = '';
+    $_text = $text;
 
-    $breaks = array(
-        "<br />",
-        "<br>",
-        "<br/>",
-    );
+    $breaks = [
+        '<br />',
+        '<br>',
+        '<br/>',
+    ];
 
-    $_text  = str_ireplace($breaks, "", $_text);
-    $_text  = trim($_text);
+    $_text = str_ireplace($breaks, $replace, $_text);
+    $_text = trim($_text);
 
     return $_text;
 }
@@ -28,17 +28,17 @@ function clear_textarea_breaks($text)
  */
 function nl2br_save_html($string)
 {
-    if (! preg_match("#</.*>#", $string)) { // avoid looping if no tags in the string.
+    if (! preg_match('#</.*>#', $string)) { // avoid looping if no tags in the string.
         return nl2br($string);
     }
 
-    $string = str_replace(array("\r\n", "\r", "\n"), "\n", $string);
+    $string = str_replace(["\r\n", "\r", "\n"], "\n", $string);
 
-    $lines=explode("\n", $string);
-    $output='';
+    $lines  = explode("\n", $string);
+    $output = '';
     foreach ($lines as $line) {
         $line = rtrim($line);
-        if (! preg_match("#</?[^/<>]*>$#", $line)) { // See if the line finished with has an html opening or closing tag
+        if (! preg_match('#</?[^/<>]*>$#', $line)) { // See if the line finished with has an html opening or closing tag
             $line .= '<br />';
         }
         $output .= $line . "\n";
@@ -62,29 +62,29 @@ function app_stylesheet($path, $filename)
 {
     $CI = &get_instance();
 
-    if (file_exists(FCPATH.$path.'/my_'.$filename)) {
-        $filename = 'my_'.$filename;
+    if (file_exists(FCPATH . $path . '/my_' . $filename)) {
+        $filename = 'my_' . $filename;
     }
 
     if (get_option('use_minified_files') == 1) {
         $original_file_name = $filename;
-        $_temp = explode('.', $filename);
-        $last = count($_temp) -1;
-        $extension = $_temp[$last];
+        $_temp              = explode('.', $filename);
+        $last               = count($_temp) - 1;
+        $extension          = $_temp[$last];
         unset($_temp[$last]);
         $filename = '';
         foreach ($_temp as $t) {
-            $filename .= $t.'.';
+            $filename .= $t . '.';
         }
-        $filename.= 'min.'.$extension;
+        $filename .= 'min.' . $extension;
 
-        if (!file_exists(FCPATH.$path.'/'.$filename)) {
+        if (!file_exists(FCPATH . $path . '/' . $filename)) {
             $filename = $original_file_name;
         }
     }
 
-    if (file_exists(FCPATH.$path.'my_'.$filename)) {
-        $filename = 'my_'.$filename;
+    if (file_exists(FCPATH . $path . 'my_' . $filename)) {
+        $filename = 'my_' . $filename;
     }
 
     if (ENVIRONMENT == 'development') {
@@ -93,7 +93,7 @@ function app_stylesheet($path, $filename)
         $latest_version = get_app_version();
     }
 
-    return '<link href="'.base_url($path.'/'.$filename.'?v='.$latest_version).'" rel="stylesheet">'.PHP_EOL;
+    return '<link href="' . base_url($path . '/' . $filename . '?v=' . $latest_version) . '" rel="stylesheet">' . PHP_EOL;
 }
 /**
  * Load app script based on option
@@ -113,16 +113,16 @@ function app_script($path, $filename)
 
     if (get_option('use_minified_files') == 1) {
         $original_file_name = $filename;
-        $_temp = explode('.', $filename);
-        $last = count($_temp) -1;
-        $extension = $_temp[$last];
+        $_temp              = explode('.', $filename);
+        $last               = count($_temp) - 1;
+        $extension          = $_temp[$last];
         unset($_temp[$last]);
         $filename = '';
         foreach ($_temp as $t) {
-            $filename .= $t.'.';
+            $filename .= $t . '.';
         }
-        $filename.= 'min.'.$extension;
-        if (!file_exists($path.'/'.$filename)) {
+        $filename .= 'min.' . $extension;
+        if (!file_exists($path . '/' . $filename)) {
             $filename = $original_file_name;
         }
     }
@@ -133,7 +133,7 @@ function app_script($path, $filename)
         $latest_version = get_app_version();
     }
 
-    return '<script src="'.base_url($path.'/'.$filename.'?v='.$latest_version).'"></script>'.PHP_EOL;
+    return '<script src="' . base_url($path . '/' . $filename . '?v=' . $latest_version) . '"></script>' . PHP_EOL;
 }
 
 /**
@@ -142,21 +142,21 @@ function app_script($path, $filename)
  */
 function app_js_alerts()
 {
-    $CI = &get_instance();
+    $CI         = &get_instance();
     $alertclass = get_alert_class();
     if ($alertclass != '') {
         $alert_message = '';
-        $alert = $CI->session->flashdata('message-'.$alertclass);
+        $alert         = $CI->session->flashdata('message-' . $alertclass);
         if (is_array($alert)) {
             foreach ($alert as $alert_data) {
-                $alert_message.= '<span>'.$alert_data . '</span><br />';
+                $alert_message .= '<span>' . $alert_data . '</span><br />';
             }
         } else {
             $alert_message .= $alert;
         }
         echo '<script>';
         echo '$(function(){
-            alert_float("'.$alertclass.'","'.$alert_message.'");
+            alert_float("' . $alertclass . '","' . $alert_message . '");
         });';
         echo '</script>';
     }
@@ -165,7 +165,7 @@ function app_js_alerts()
         echo '<script>';
         echo '$(function(){
             var popupData = {};
-            popupData.message = '.json_encode(app_happy_text($CI->session->userdata('system-popup'))).';
+            popupData.message = ' . json_encode(app_happy_text($CI->session->userdata('system-popup'))) . ';
             system_popup(popupData);
         });';
         echo '</script>';
@@ -194,21 +194,21 @@ function app_external_form_footer($form)
     $date_format = get_option('dateformat');
     $date_format = explode('|', $date_format);
     $date_format = $date_format[0];
-    $locale_key = get_locale_key($form->language);
-    echo '<script src="'.base_url('assets/plugins/jquery/jquery.min.js').'"></script>'.PHP_EOL;
-    echo '<script src="'.base_url('assets/plugins/bootstrap/js/bootstrap.min.js').'"></script>'.PHP_EOL;
-    echo '<script src="'.base_url('assets/plugins/jquery-validation/jquery.validate.min.js').'"></script>'.PHP_EOL;
-    echo '<script src="'.base_url('assets/plugins/app-build/moment.min.js').'"></script>'.PHP_EOL;
+    $locale_key  = get_locale_key($form->language);
+    echo '<script src="' . base_url('assets/plugins/jquery/jquery.min.js') . '"></script>' . PHP_EOL;
+    echo '<script src="' . base_url('assets/plugins/bootstrap/js/bootstrap.min.js') . '"></script>' . PHP_EOL;
+    echo '<script src="' . base_url('assets/plugins/jquery-validation/jquery.validate.min.js') . '"></script>' . PHP_EOL;
+    echo '<script src="' . base_url('assets/plugins/app-build/moment.min.js') . '"></script>' . PHP_EOL;
     app_select_plugin_js($locale_key);
     if ($locale_key != 'en') {
-        if (file_exists(FCPATH.'assets/plugins/jquery-validation/localization/messages_'.$locale_key.'.min.js')) {
-            echo '<script src="'.base_url('assets/plugins/jquery-validation/localization/messages_'.$locale_key.'.min.js').'"></script>'.PHP_EOL;
-        } elseif (file_exists(FCPATH.'assets/plugins/jquery-validation/localization/messages_'.$locale_key.'_'.strtoupper($locale_key).'.min.js')) {
-            echo '<script src="'.base_url('assets/plugins/jquery-validation/localization/messages_'.$locale_key.'_'.strtoupper($locale_key).'.min.js').'"></script>'.PHP_EOL;
+        if (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale_key . '.min.js')) {
+            echo '<script src="' . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale_key . '.min.js') . '"></script>' . PHP_EOL;
+        } elseif (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale_key . '_' . strtoupper($locale_key) . '.min.js')) {
+            echo '<script src="' . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale_key . '_' . strtoupper($locale_key) . '.min.js') . '"></script>' . PHP_EOL;
         }
     }
-    echo '<script src="'.base_url('assets/plugins/datetimepicker/jquery.datetimepicker.full.min.js').'"></script>'.PHP_EOL;
-    echo '<script src="'.base_url('assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js').'"></script>'.PHP_EOL; ?>
+    echo '<script src="' . base_url('assets/plugins/datetimepicker/jquery.datetimepicker.full.min.js') . '"></script>' . PHP_EOL;
+    echo '<script src="' . base_url('assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js') . '"></script>' . PHP_EOL; ?>
     <script>
     $(function(){
      var time_format = '<?php echo get_option('time_format'); ?>';
@@ -267,16 +267,18 @@ function app_external_form_footer($form)
      errorElement: 'p',
      errorClass: 'text-danger',
      errorPlacement: function(error, element) {
-       if (element.parent('.input-group').length || element.parents('.chk').length) {
-         if (!element.parents('.chk').length) {
-           error.insertAfter(element.parent());
-         } else {
-           error.insertAfter(element.parents('.chk'));
-         }
-       } else {
-         error.insertAfter(element);
-       }
-     }
+        if (element.parent('.input-group').length || element.parents('.chk').length) {
+            if (!element.parents('.chk').length) {
+                error.insertAfter(element.parent());
+            } else {
+                error.insertAfter(element.parents('.chk'));
+            }
+        } else if (element.is('select') && (element.hasClass('selectpicker') || element.hasClass('ajax-search'))) {
+           error.insertAfter(element.parents('.form-group *').last());
+        } else {
+            error.insertAfter(element);
+        }
+    }
    });
     });
  </script>
@@ -292,25 +294,25 @@ function app_external_form_header($form)
 {
     echo app_stylesheet('assets/css', 'reset.css');
     if (get_option('favicon') != '') {
-        echo '<link href="'.base_url('uploads/company/'.get_option('favicon')).'" rel="shortcut icon">'.PHP_EOL;
+        echo '<link href="' . base_url('uploads/company/' . get_option('favicon')) . '" rel="shortcut icon">' . PHP_EOL;
     }
-    echo '<link href="'.base_url('assets/plugins/roboto/roboto.css').'" rel="stylesheet">'.PHP_EOL;
-    echo '<link href="'.base_url('assets/plugins/bootstrap/css/bootstrap.min.css').'" rel="stylesheet">'.PHP_EOL;
+    echo '<link href="' . base_url('assets/plugins/roboto/roboto.css') . '" rel="stylesheet">' . PHP_EOL;
+    echo '<link href="' . base_url('assets/plugins/bootstrap/css/bootstrap.min.css') . '" rel="stylesheet">' . PHP_EOL;
     if (is_rtl(true)) {
-        echo '<link href="'.base_url('assets/plugins/bootstrap-arabic/css/bootstrap-arabic.min.css').'" rel="stylesheet">'.PHP_EOL;
+        echo '<link href="' . base_url('assets/plugins/bootstrap-arabic/css/bootstrap-arabic.min.css') . '" rel="stylesheet">' . PHP_EOL;
     }
-    echo '<link href="'.base_url('assets/plugins/datetimepicker/jquery.datetimepicker.min.css').'" rel="stylesheet">'.PHP_EOL;
-    echo '<link href="'.base_url('assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css').'" rel="stylesheet">'.PHP_EOL;
-    echo '<link href="'.base_url('assets/plugins/font-awesome/css/font-awesome.min.css').'" rel="stylesheet">'.PHP_EOL;
-    echo '<link href="'.base_url('assets/plugins/bootstrap-select/css/bootstrap-select.min.css').'" rel="stylesheet">'.PHP_EOL;
+    echo '<link href="' . base_url('assets/plugins/datetimepicker/jquery.datetimepicker.min.css') . '" rel="stylesheet">' . PHP_EOL;
+    echo '<link href="' . base_url('assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css') . '" rel="stylesheet">' . PHP_EOL;
+    echo '<link href="' . base_url('assets/plugins/font-awesome/css/font-awesome.min.css') . '" rel="stylesheet">' . PHP_EOL;
+    echo '<link href="' . base_url('assets/plugins/bootstrap-select/css/bootstrap-select.min.css') . '" rel="stylesheet">' . PHP_EOL;
     echo app_stylesheet('assets/css', 'forms.css');
     if (get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '' && $form->recaptcha == 1) {
-        echo "<script src='https://www.google.com/recaptcha/api.js'></script>".PHP_EOL;
+        echo "<script src='https://www.google.com/recaptcha/api.js'></script>" . PHP_EOL;
     }
-    if (file_exists(FCPATH.'assets/css/custom.css')) {
-        echo '<link href="'.base_url('assets/css/custom.css').'" rel="stylesheet">'.PHP_EOL;
+    if (file_exists(FCPATH . 'assets/css/custom.css')) {
+        echo '<link href="' . base_url('assets/css/custom.css') . '" rel="stylesheet">' . PHP_EOL;
     }
-    render_custom_styles(array('general', 'buttons'));
+    render_custom_styles(['general', 'buttons']);
     do_action('app_external_form_head');
 }
 
@@ -320,9 +322,9 @@ function app_external_form_header($form)
  */
 function init_head($aside = true)
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->load->view('admin/includes/head');
-    $CI->load->view('admin/includes/header', array('startedTimers'=>$CI->misc_model->get_staff_started_timers()));
+    $CI->load->view('admin/includes/header', ['startedTimers' => $CI->misc_model->get_staff_started_timers()]);
     $CI->load->view('admin/includes/setup_menu');
     if ($aside == true) {
         $CI->load->view('admin/includes/aside');
@@ -333,7 +335,7 @@ function init_head($aside = true)
  */
 function init_tail()
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->load->view('admin/includes/scripts');
 }
 
@@ -370,11 +372,11 @@ function get_company_logo($uri = '', $href_class = '')
  */
 function payment_gateway_logo()
 {
-    $url = do_action('payment_gateway_logo_url', base_url('uploads/company/' . get_option('company_logo')));
-    $width = do_action('payment_gateway_logo_width', 'auto');
+    $url    = do_action('payment_gateway_logo_url', base_url('uploads/company/' . get_option('company_logo')));
+    $width  = do_action('payment_gateway_logo_width', 'auto');
     $height = do_action('payment_gateway_logo_height', '34px');
 
-    return '<img src="'.$url.'" width="'.$width.'" height="'.$height.'">';
+    return '<img src="' . $url . '" width="' . $width . '" height="' . $height . '">';
 }
 
 /**
@@ -384,30 +386,30 @@ function payment_gateway_logo()
  */
 function payment_gateway_head($title = 'Payment for Invoice')
 {
-    $html = '<!DOCTYPE html>'.PHP_EOL;
-    $html .= '<html lang="en">'.PHP_EOL;
-    $html .= '<head>'.PHP_EOL;
-    $html .= '<meta charset="utf-8">'.PHP_EOL;
-    $html .= '<meta http-equiv="X-UA-Compatible" content="IE=edge">'.PHP_EOL;
-    $html .= '<meta name="viewport" content="width=device-width, initial-scale=1">'.PHP_EOL;
-    $html .= '<title>'.PHP_EOL;
+    $html = '<!DOCTYPE html>' . PHP_EOL;
+    $html .= '<html lang="en">' . PHP_EOL;
+    $html .= '<head>' . PHP_EOL;
+    $html .= '<meta charset="utf-8">' . PHP_EOL;
+    $html .= '<meta http-equiv="X-UA-Compatible" content="IE=edge">' . PHP_EOL;
+    $html .= '<meta name="viewport" content="width=device-width, initial-scale=1">' . PHP_EOL;
+    $html .= '<title>' . PHP_EOL;
     $html .= $title;
-    $html .= '</title>'.PHP_EOL;
+    $html .= '</title>' . PHP_EOL;
     if (get_option('favicon') != '') {
-        $html .= '<link href="'.base_url('uploads/company/'.get_option('favicon')).'" rel="shortcut icon">'.PHP_EOL;
+        $html .= '<link href="' . base_url('uploads/company/' . get_option('favicon')) . '" rel="shortcut icon">' . PHP_EOL;
     }
     $html .= app_stylesheet('assets/css', 'reset.css');
-    $html .= '<link href="'.base_url().'assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">'.PHP_EOL;
-    $html .= '<link href="'.base_url().'assets/plugins/roboto/roboto.css" rel="stylesheet">'.PHP_EOL;
+    $html .= '<link href="' . base_url() . 'assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">' . PHP_EOL;
+    $html .= '<link href="' . base_url() . 'assets/plugins/roboto/roboto.css" rel="stylesheet">' . PHP_EOL;
     $html .= app_stylesheet('assets/css', 'bs-overides.css');
-    $html .= app_stylesheet(template_assets_path().'/css', 'style.css');
-    $html .= '<style>'.PHP_EOL;
+    $html .= app_stylesheet(template_assets_path() . '/css', 'style.css');
+    $html .= '<style>' . PHP_EOL;
     $html .= '.text-danger {
                     color: #fc2d42;
-                 }'.PHP_EOL;
-    $html .= '</style>'.PHP_EOL;
+                 }' . PHP_EOL;
+    $html .= '</style>' . PHP_EOL;
     $html .= do_action('payment_gateway_head');
-    $html .= '</head>'.PHP_EOL;
+    $html .= '</head>' . PHP_EOL;
 
     return $html;
 }
@@ -418,17 +420,17 @@ function payment_gateway_head($title = 'Payment for Invoice')
  */
 function payment_gateway_scripts()
 {
-    $html = '<script src="'.base_url().'assets/plugins/jquery/jquery.min.js"></script>'.PHP_EOL;
-    $html .= '<script src="'.base_url().'assets/plugins/bootstrap/js/bootstrap.min.js"></script>'.PHP_EOL;
-    $html .= '<script src="'.base_url().'assets/plugins/jquery-validation/jquery.validate.min.js"></script>'.PHP_EOL;
+    $html = '<script src="' . base_url() . 'assets/plugins/jquery/jquery.min.js"></script>' . PHP_EOL;
+    $html .= '<script src="' . base_url() . 'assets/plugins/bootstrap/js/bootstrap.min.js"></script>' . PHP_EOL;
+    $html .= '<script src="' . base_url() . 'assets/plugins/jquery-validation/jquery.validate.min.js"></script>' . PHP_EOL;
     $html .= '<script>
            $.validator.setDefaults({
                errorElement: \'span\',
                errorClass: \'text-danger\',
            });
-        </script>'.PHP_EOL;
+        </script>' . PHP_EOL;
 
-    $html .= do_action('payment_gateway_scripts').PHP_EOL;
+    $html .= do_action('payment_gateway_scripts') . PHP_EOL;
 
     return $html;
 }
@@ -438,9 +440,9 @@ function payment_gateway_scripts()
  */
 function payment_gateway_footer()
 {
-    $html = do_action('payment_gateway_footer').PHP_EOL;
-    $html .= '</body>'.PHP_EOL;
-    $html .= '</html>'.PHP_EOL;
+    $html = do_action('payment_gateway_footer') . PHP_EOL;
+    $html .= '</body>' . PHP_EOL;
+    $html .= '</html>' . PHP_EOL;
 
     return $html;
 }
@@ -452,13 +454,13 @@ function payment_gateway_footer()
  */
 function app_select_plugin_js($locale = 'en')
 {
-    echo "<script src='".base_url('assets/plugins/app-build/bootstrap-select.min.js?v='.get_app_version())."'></script>".PHP_EOL;
+    echo "<script src='" . base_url('assets/plugins/app-build/bootstrap-select.min.js?v=' . get_app_version()) . "'></script>" . PHP_EOL;
 
     if ($locale != 'en') {
-        if (file_exists(FCPATH.'assets/plugins/bootstrap-select/js/i18n/defaults-'.$locale.'.min.js')) {
-            echo "<script src='".base_url('assets/plugins/bootstrap-select/js/i18n/defaults-'.$locale.'.min.js')."'></script>".PHP_EOL;
-        } elseif (file_exists(FCPATH.'assets/plugins/bootstrap-select/js/i18n/defaults-'.$locale.'_'.strtoupper($locale).'.min.js')) {
-            echo "<script src='".base_url('assets/plugins/bootstrap-select/js/i18n/defaults-'.$locale.'_'.strtoupper($locale).'.min.js')."'></script>".PHP_EOL;
+        if (file_exists(FCPATH . 'assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '.min.js') . "'></script>" . PHP_EOL;
+        } elseif (file_exists(FCPATH . 'assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '_' . strtoupper($locale) . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '_' . strtoupper($locale) . '.min.js') . "'></script>" . PHP_EOL;
         }
     }
 }
@@ -470,12 +472,12 @@ function app_select_plugin_js($locale = 'en')
  */
 function app_jquery_validation_plugin_js($locale = 'en')
 {
-    echo "<script src='".base_url('assets/plugins/jquery-validation/jquery.validate.min.js?v='.get_app_version())."'></script>".PHP_EOL;
+    echo "<script src='" . base_url('assets/plugins/jquery-validation/jquery.validate.min.js?v=' . get_app_version()) . "'></script>" . PHP_EOL;
     if ($locale != 'en') {
-        if (file_exists(FCPATH.'assets/plugins/jquery-validation/localization/messages_'.$locale.'.min.js')) {
-            echo "<script src='".base_url('assets/plugins/jquery-validation/localization/messages_'.$locale.'.min.js')."'></script>".PHP_EOL;
-        } elseif (file_exists(FCPATH.'assets/plugins/jquery-validation/localization/messages_'.$locale.'_'.strtoupper($locale).'.min.js')) {
-            echo "<script src='".base_url('assets/plugins/jquery-validation/localization/messages_'.$locale.'_'.strtoupper($locale).'.min.js')."'></script>".PHP_EOL;
+        if (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale . '.min.js') . "'></script>" . PHP_EOL;
+        } elseif (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale . '_' . strtoupper($locale) . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale . '_' . strtoupper($locale) . '.min.js') . "'></script>" . PHP_EOL;
         }
     }
 }
@@ -493,7 +495,7 @@ function staff_profile_image_url($staff_id, $type = 'small')
     if ((string) $staff_id === (string) get_staff_user_id() && isset($GLOBALS['current_user'])) {
         $staff = $GLOBALS['current_user'];
     } else {
-        $CI =& get_instance();
+        $CI = & get_instance();
         $CI->db->select('profile_image')
         ->where('staffid', $staff_id);
 
@@ -520,7 +522,7 @@ function staff_profile_image_url($staff_id, $type = 'small')
  * @param  array   $img_attrs additional <img /> attributes
  * @return string
  */
-function staff_profile_image($id, $classes = array('staff-profile-image'), $type = 'small', $img_attrs = array())
+function staff_profile_image($id, $classes = ['staff-profile-image'], $type = 'small', $img_attrs = [])
 {
     $url = base_url('assets/images/user-placeholder.jpg');
 
@@ -535,16 +537,15 @@ function staff_profile_image($id, $classes = array('staff-profile-image'), $type
 
     if ((string) $id === (string) get_staff_user_id() && isset($GLOBALS['current_user'])) {
         $result = $GLOBALS['current_user'];
-
     } else {
-        $CI =& get_instance();
-        $result =  $CI->object_cache->get('staff-profile-image-data-'.$id);
+        $CI     = & get_instance();
+        $result = $CI->object_cache->get('staff-profile-image-data-' . $id);
 
-        if(!$result) {
+        if (!$result) {
             $CI->db->select('profile_image,firstname,lastname');
             $CI->db->where('staffid', $id);
             $result = $CI->db->get('tblstaff')->row();
-            $CI->object_cache->add('staff-profile-image-data-'.$id, $result);
+            $CI->object_cache->add('staff-profile-image-data-' . $id, $result);
         }
     }
 
@@ -574,7 +575,7 @@ function staff_profile_image($id, $classes = array('staff-profile-image'), $type
  * @param  array  $attributes additional attributes
  * @return string
  */
-function icon_btn($url = '', $type = '', $class = 'btn-default', $attributes = array())
+function icon_btn($url = '', $type = '', $class = 'btn-default', $attributes = [])
 {
     $_attributes = '';
     foreach ($attributes as $key => $val) {
@@ -600,14 +601,14 @@ function _strip_tags($html)
     return strip_tags($html, '<br>,<em>,<p>,<ul>,<ol>,<li>,<h4><h3><h2><h1>,<pre>,<code>,<a>,<img>,<strong>,<b>,<blockquote>,<table>,<thead>,<th>,<tr>,<td>,<tbody>,<tfoot>');
 }
 
-add_action('new_ticket_admin_page_loaded','ticket_message_save_as_predefined_reply_javascript');
-add_action('ticket_admin_single_page_loaded','ticket_message_save_as_predefined_reply_javascript');
+add_action('new_ticket_admin_page_loaded', 'ticket_message_save_as_predefined_reply_javascript');
+add_action('ticket_admin_single_page_loaded', 'ticket_message_save_as_predefined_reply_javascript');
 
-function ticket_message_save_as_predefined_reply_javascript(){
-    if(!is_admin() && get_option('staff_members_save_tickets_predefined_replies') == '0') {
+function ticket_message_save_as_predefined_reply_javascript()
+{
+    if (!is_admin() && get_option('staff_members_save_tickets_predefined_replies') == '0') {
         return false;
-    }
-    ?>
+    } ?>
     <div class="modal fade" id="savePredefinedReplyFromMessageModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -616,7 +617,7 @@ function ticket_message_save_as_predefined_reply_javascript(){
         <h4 class="modal-title"><?php echo _l('predefined_replies_dt_name'); ?></h4>
       </div>
       <div class="modal-body">
-        <?php echo render_input('name','predefined_reply_add_edit_name'); ?>
+        <?php echo render_input('name', 'predefined_reply_add_edit_name'); ?>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo _l('close'); ?></button>
@@ -634,8 +635,18 @@ function ticket_message_save_as_predefined_reply_javascript(){
                         if($('#savePredefinedReplyFromMessage').length == 0){
                             $('[app-field-wrapper="message"] [role="menubar"] .mce-container-body:first').append("<a id=\"savePredefinedReplyFromMessage\" data-toggle=\"modal\" data-target=\"#savePredefinedReplyFromMessageModal\" class=\"save_predefined_reply_from_message pointer\" href=\"#\"><?php echo _l('save_message_as_predefined_reply'); ?></a>");
                             }
+                            // For open is handled on contact select
+                            if($('#single-ticket-form').length > 0) {
+                                var contactIDSelect = $('#contactid');
+                                if(contactIDSelect.data('no-contact') == undefined && contactIDSelect.data('ticket-emails') == '0') {
+                                   show_ticket_no_contact_email_warning($('input[name="userid"]').val(), contactIDSelect.val());
+                                } else {
+                                   clear_ticket_no_contact_email_warning();
+                                }
+                            }
                     } else {
                         $('#savePredefinedReplyFromMessage').remove();
+                        clear_ticket_no_contact_email_warning();
                     }
                 });
             }
@@ -658,4 +669,64 @@ function ticket_message_save_as_predefined_reply_javascript(){
         });
     </script>
     <?php
+}
+
+function no_index_customers_area()
+{
+    add_action('app_customers_head', '_inject_no_index');
+}
+
+function _inject_no_index()
+{
+    echo '<meta name="robots" content="noindex">' . PHP_EOL;
+}
+
+function admin_body_class($class = '')
+{
+    echo 'class="' . join(' ', get_admin_body_class($class)) . '"';
+}
+
+function get_admin_body_class($class = '')
+{
+    $classes   = [];
+    $classes[] = 'app';
+    $classes[] = 'admin';
+    $classes[] = $class;
+
+    $ci = &get_instance();
+
+    $first_segment  = $ci->uri->segment(1);
+    $second_segment = $ci->uri->segment(2);
+    $third_segment  = $ci->uri->segment(3);
+
+    $classes[] = $first_segment;
+
+    // Not valid eq users/1 - ID
+    if ($second_segment != '' && !is_numeric($second_segment)) {
+        $classes[] = $second_segment;
+    }
+
+    // Not valid eq users/edit/1 - ID
+    if ($third_segment != '' && !is_numeric($third_segment)) {
+        $classes[] = $third_segment;
+    }
+
+    if (is_staff_logged_in()) {
+        $classes[] = 'user-id-' . get_staff_user_id();
+    }
+
+    $classes[] = strtolower($ci->agent->browser());
+
+    if (is_mobile()) {
+        $classes[] = 'mobile';
+        $classes[] = 'hide-sidebar';
+    }
+
+    if (is_rtl()) {
+        $classes[] = 'rtl';
+    }
+
+    $classes = do_action('body_class', $classes);
+
+    return array_unique($classes);
 }

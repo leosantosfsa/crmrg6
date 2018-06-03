@@ -45,7 +45,8 @@
 						</div>
 						<div class="form-group">
 							<label for="email"><?php echo _l('clients_email'); ?></label>
-							<input type="text" class="form-control" disabled="true" id="email" value="<?php echo $contact->email; ?>">
+							<input type="email" name="email" class="form-control" id="email" value="<?php echo $contact->email; ?>">
+							<?php echo form_error('email'); ?>
 						</div>
 						<div class="form-group">
 							<label for="phonenumber"><?php echo _l('clients_phone'); ?></label>
@@ -77,6 +78,12 @@
 							<div class="checkbox checkbox-info email-notifications-estimates">
 								<input type="checkbox" value="1" id="estimate_emails" name="estimate_emails"<?php if($contact->estimate_emails == 1){echo ' checked';} ?>>
 						       <label for="estimate_emails"><?php echo _l('estimate'); ?></label>
+							</div>
+						<?php } ?>
+						<?php if(has_contact_permission('support')){ ?>
+							<div class="checkbox checkbox-info email-notifications-tickets">
+								<input type="checkbox" value="1" id="ticket_emails" name="ticket_emails"<?php if($contact->ticket_emails == 1){echo ' checked';} ?>>
+						       <label for="ticket_emails"><?php echo _l('tickets'); ?></label>
 							</div>
 						<?php } ?>
 						<?php if(has_contact_permission('contracts')){ ?>

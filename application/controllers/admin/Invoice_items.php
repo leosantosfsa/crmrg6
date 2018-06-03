@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Invoice_items extends Admin_controller
 {
@@ -28,12 +29,14 @@ class Invoice_items extends Admin_controller
         $this->load->view('admin/invoice_items/manage', $data);
     }
 
-    public function table(){
+    public function table()
+    {
         if (!has_permission('items', '', 'view')) {
             ajax_access_denied();
         }
         $this->app->get_table_data('invoice_items');
     }
+
     /* Edit or update items / ajax request /*/
     public function manage()
     {
@@ -53,11 +56,11 @@ class Invoice_items extends Admin_controller
                         $success = true;
                         $message = _l('added_successfully', _l('invoice_item'));
                     }
-                    echo json_encode(array(
+                    echo json_encode([
                         'success' => $success,
                         'message' => $message,
-                        'item' => $this->invoice_items_model->get($id)
-                    ));
+                        'item'    => $this->invoice_items_model->get($id),
+                    ]);
                 } else {
                     if (!has_permission('items', '', 'edit')) {
                         header('HTTP/1.0 400 Bad error');
@@ -69,10 +72,10 @@ class Invoice_items extends Admin_controller
                     if ($success) {
                         $message = _l('updated_successfully', _l('invoice_item'));
                     }
-                    echo json_encode(array(
+                    echo json_encode([
                         'success' => $success,
-                        'message' => $message
-                    ));
+                        'message' => $message,
+                    ]);
                 }
             }
         }
@@ -126,8 +129,9 @@ class Invoice_items extends Admin_controller
         redirect(admin_url('invoice_items'));
     }
 
-    public function search(){
-        if($this->input->post() && $this->input->is_ajax_request()){
+    public function search()
+    {
+        if ($this->input->post() && $this->input->is_ajax_request()) {
             echo json_encode($this->invoice_items_model->search($this->input->post('q')));
         }
     }
@@ -136,16 +140,16 @@ class Invoice_items extends Admin_controller
     public function get_item_by_id($id)
     {
         if ($this->input->is_ajax_request()) {
-            $item                   = $this->invoice_items_model->get($id);
-            $item->long_description = nl2br($item->long_description);
-            $item->custom_fields_html = render_custom_fields('items',$id,array(),array('items_pr'=>true));
-            $item->custom_fields = array();
+            $item                     = $this->invoice_items_model->get($id);
+            $item->long_description   = nl2br($item->long_description);
+            $item->custom_fields_html = render_custom_fields('items', $id, [], ['items_pr' => true]);
+            $item->custom_fields      = [];
 
             $cf = get_custom_fields('items');
 
-            foreach($cf as $custom_field) {
-                $val = get_custom_field_value($id,$custom_field['id'],'items_pr');
-                if($custom_field['type'] == 'textarea') {
+            foreach ($cf as $custom_field) {
+                $val = get_custom_field_value($id, $custom_field['id'], 'items_pr');
+                if ($custom_field['type'] == 'textarea') {
                     $val = clear_textarea_breaks($val);
                 }
                 $custom_field['value'] = $val;

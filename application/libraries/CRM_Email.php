@@ -1,6 +1,10 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');
+<?php
 
-class CRM_Email extends CI_Email
+defined('BASEPATH') or exit('No direct script access allowed');
+
+include_once(APPPATH . 'libraries/App_mailer.php');
+
+class CRM_Email extends App_mailer
 {
     // Email Queue Table
     private $email_queue_table = 'tblemailqueue';
@@ -11,11 +15,9 @@ class CRM_Email extends CI_Email
     /**
      * Constructor
      */
-    public function __construct($config = array())
+    public function __construct($config = [])
     {
         parent::__construct($config);
-        log_message('debug', 'Email Queue Class Initialized');
-        $this->CI = & get_instance();
     }
 
     public function set_status($status)
@@ -49,9 +51,9 @@ class CRM_Email extends CI_Email
      */
     public function send($skip_job = false)
     {
-        $attachments = $this->_attachments;
+        $attachments = $this->mailer_engine == 'codeigniter' ? $this->_attachments : $this->phpmailer->getAttachments();
 
-        $emailQueue = get_option('email_queue_enabled');
+        $emailQueue          = get_option('email_queue_enabled');
         $queueSkipAttachment = get_option('email_queue_skip_with_attachments');
 
         if ($skip_job === true
@@ -61,22 +63,70 @@ class CRM_Email extends CI_Email
             return parent::send();
         }
 
-        $date = date("Y-m-d H:i:s");
-        $to = is_array($this->_recipients) ? implode(", ", $this->_recipients) : $this->_recipients;
-        $cc = implode(", ", $this->_cc_array);
-        $bcc = implode(", ", $this->_bcc_array);
+        $date = date('Y-m-d H:i:s');
 
-        $dbdata = array(
-            'email' => $to,
-            'cc' => $cc,
-            'bcc' => $bcc,
-            'message' => $this->_body,
+        if ($this->mailer_engine == 'codeigniter') {
+            $to      = is_array($this->_recipients) ? implode(', ', $this->_recipients) : $this->_recipients;
+            $cc      = implode(', ', $this->_cc_array);
+            $bcc     = implode(', ', $this->_bcc_array);
+            $headers = serialize($this->_headers);
+        } else {
+            $to = $this->phpmailer->getToAddresses();
+            $to = array_filter($to[0]);
+            $to = is_array($to) ? implode(', ', $to) : $to;
+
+            $ccMailer = $this->phpmailer->getCcAddresses();
+            $cc       = '';
+            foreach ($ccMailer as $ccAddress) {
+                $cc .= $ccAddress[0] . ', ';
+            }
+            if ($cc != '') {
+                $cc = rtrim($cc, ', ');
+            }
+
+            $bccMailer = $this->phpmailer->getBccAddresses();
+            $bcc       = '';
+            foreach ($bccMailer as $ccAddress) {
+                $bcc .= $ccAddress[0] . ', ';
+            }
+            if ($bcc != '') {
+                $bcc = rtrim($bcc, ', ');
+            }
+
+            $ReplyTo       = $this->phpmailer->getReplyToAddresses();
+            $ReplyToString = '';
+            foreach ($ReplyTo as $replyToEmail => $array) {
+                $ReplyToString .= $replyToEmail . ', ';
+            }
+
+            $headers = $this->_headers;
+            if ($ReplyToString != '') {
+                $ReplyToString = rtrim($ReplyToString, ', ');
+
+                $headers['replyTo'] = $ReplyToString;
+            }
+
+            $headers['from']     = $this->phpmailer->From;
+            $headers['fromName'] = $this->phpmailer->FromName;
+            $headers['subject']  = $this->phpmailer->Subject;
+
+            $headers = serialize($headers);
+        }
+
+        $attachments = base64_encode(serialize($attachments));
+
+        $dbdata = [
+            'engine'      => $this->mailer_engine,
+            'email'       => $to,
+            'cc'          => $cc,
+            'bcc'         => $bcc,
+            'message'     => $this->_body,
             'alt_message' => $this->_get_alt_message(),
-            'headers' => serialize($this->_headers),
-            'attachments'=>base64_encode(serialize($attachments)),
-            'status' => 'pending',
-            'date' => $date
-        );
+            'headers'     => $headers,
+            'attachments' => $attachments,
+            'status'      => 'pending',
+            'date'        => $date,
+        ];
 
         return $this->CI->db->insert($this->email_queue_table, $dbdata);
     }
@@ -89,6 +139,8 @@ class CRM_Email extends CI_Email
      */
     public function send_queue()
     {
+        $this->CI->load->config('email');
+
         $this->clean_up_old_queue();
 
         $this->set_status('pending');
@@ -96,32 +148,51 @@ class CRM_Email extends CI_Email
 
         $this->CI->db->where('status', 'pending');
         $this->CI->db->set('status', 'sending');
-        $this->CI->db->set('date', date("Y-m-d H:i:s"));
+        $this->CI->db->set('date', date('Y-m-d H:i:s'));
 
         $this->CI->db->update($this->email_queue_table);
 
         foreach ($emails as $email) {
-            $attachments = array();
+            $this->set_mailer_engine($email->engine);
 
-            if ($email->attachments) {
-                $attachments = unserialize(base64_decode($email->attachments));
-                foreach ($attachments as $attachment) {
-                    $this->_attachments[] = $attachment;
+            $recipients = explode(', ', $email->email);
+            $cc         = !empty($email->cc) ? explode(', ', $email->cc) : [];
+
+            $bcc     = !empty($email->bcc) ? explode(', ', $email->bcc) : [];
+            $headers = unserialize($email->headers);
+
+            if ($email->engine == 'codeigniter') {
+                if ($email->attachments) {
+                    $attachments = unserialize(base64_decode($email->attachments));
+                    foreach ($attachments as $attachment) {
+                        $this->_attachments[] = $attachment;
+                    }
+                }
+                $this->_headers = $headers;
+
+                if (array_key_exists('Reply-To', $this->_headers) && !empty($this->_headers['Reply-To'])) {
+                    $this->_replyto_flag = true;
+                }
+            } else {
+                if ($email->attachments) {
+                    $attachments = unserialize(base64_decode($email->attachments));
+                    foreach ($attachments as $attachment) {
+                        $this->phpmailer->addStringAttachment($attachment[0], $attachment[1], 'base64', $attachment[4], $attachment[6]);
+                    }
+                }
+                $this->from($headers['from'], $headers['fromName']);
+                $this->subject($headers['subject']);
+                if (isset($headers['replyTo'])) {
+                    $replyTo = !empty($headers['replyTo']) ? explode(', ', $headers['replyTo']) : [];
+
+                    foreach ($replyTo as $replyToEmail) {
+                        $this->reply_to($replyToEmail);
+                    }
                 }
             }
 
-            $recipients = explode(", ", $email->email);
-            $cc = !empty($email->cc) ? explode(", ", $email->cc) : array();
-            $bcc = !empty($email->bcc) ? explode(", ", $email->bcc) : array();
-
-            $this->_headers = unserialize($email->headers);
-
-            if (array_key_exists('Reply-To', $this->_headers) && !empty($this->_headers['Reply-To'])) {
-                $this->_replyto_flag = true;
-            }
-
-            $this->set_newline("\r\n");
-            $this->set_crlf("\r\n");
+            $this->set_newline(config_item('newline'));
+            $this->set_crlf(config_item('crlf'));
 
             $this->to($recipients);
             $this->cc($cc);
@@ -132,9 +203,15 @@ class CRM_Email extends CI_Email
 
             $status = ($this->send(true) ? 'sent' : 'failed');
 
+            if ($email->engine == 'codeigniter') {
+                $this->_attachments = [];
+            } else {
+                $this->phpmailer->clearAttachments();
+            }
+
             $this->CI->db->where('id', $email->id);
             $this->CI->db->set('status', $status);
-            $this->CI->db->set('date', date("Y-m-d H:i:s"));
+            $this->CI->db->set('date', date('Y-m-d H:i:s'));
             $this->CI->db->update($this->email_queue_table);
         }
     }
@@ -147,8 +224,8 @@ class CRM_Email extends CI_Email
      */
     public function retry_queue()
     {
-        $expire = (time() - (60*5));
-        $date_expire = date("Y-m-d H:i:s", $expire);
+        $expire      = (time() - (60 * 5));
+        $date_expire = date('Y-m-d H:i:s', $expire);
         $this->CI->db->set('status', 'pending');
         $this->CI->db->where("(date < '{$date_expire}' AND status = 'sending')");
         $this->CI->db->or_where("status = 'failed'");
@@ -166,12 +243,13 @@ class CRM_Email extends CI_Email
         $this->CI->db->where('date < ', date('Y-m-d H:i:s', strtotime('-1 week')));
         $this->CI->db->delete($this->email_queue_table);
     }
-   /**
-     * Email Validation
-     *
-     * @param   string
-     * @return  bool
-     */
+
+    /**
+      * Email Validation
+      *
+      * @param   string
+      * @return  bool
+      */
  /*   public function valid_email($email)
     {
         if (function_exists('idn_to_ascii') && $atpos = strpos($email, '@'))

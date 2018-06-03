@@ -26,11 +26,22 @@
            <div id="recaptcha_response_field" class="text-danger"></div></div>
          </div>
          <?php } ?>
+         <?php if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_lead_form') == 1) { ?>
+         <div class="col-md-12">
+          <div class="checkbox chk">
+            <input type="checkbox" name="accept_terms_and_conditions" required="true" id="accept_terms_and_conditions" <?php echo set_checkbox('accept_terms_and_conditions', 'on'); ?>>
+            <label for="accept_terms_and_conditions">
+              <?php echo _l('gdpr_terms_agree', terms_url()); ?>
+            </label>
+          </div>
+        </div>
+        <?php } ?>
          <div class="clearfix"></div>
          <div class="text-left col-md-12">
           <button class="btn btn-success" id="form_submit" type="submit"><?php echo $form->submit_btn_name; ?></button>
         </div>
       </div>
+
       <?php do_action('web_to_lead_form_end'); ?>
       <?php echo form_close(); ?>
     </div>
@@ -46,6 +57,12 @@
 
      var formURL = $(form).attr("action");
      var formData = new FormData($(form)[0]);
+
+      $("input[type=file]").each(function() {
+          if($(this).val() === "") {
+              formData.delete($(this).attr("name"));
+          }
+      });
 
      $('#form_submit').prop('disabled', true);
 

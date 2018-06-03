@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Invoice_items_model extends CRM_Model
 {
@@ -14,14 +15,14 @@ class Invoice_items_model extends CRM_Model
      */
     public function get($id = '')
     {
-        $columns = $this->db->list_fields('tblitems');
+        $columns             = $this->db->list_fields('tblitems');
         $rateCurrencyColumns = '';
-        foreach($columns as $column){
-            if(strpos($column,'rate_currency_') !== FALSE){
-                $rateCurrencyColumns .= $column.',';
+        foreach ($columns as $column) {
+            if (strpos($column, 'rate_currency_') !== false) {
+                $rateCurrencyColumns .= $column . ',';
             }
         }
-        $this->db->select($rateCurrencyColumns.'tblitems.id as itemid,rate,
+        $this->db->select($rateCurrencyColumns . 'tblitems.id as itemid,rate,
             t1.taxrate as taxrate,t1.id as taxid,t1.name as taxname,
             t2.taxrate as taxrate_2,t2.id as taxid_2,t2.name as taxname_2,
             description,long_description,group_id,tblitems_groups.name as group_name,unit');
@@ -41,14 +42,14 @@ class Invoice_items_model extends CRM_Model
 
     public function get_grouped()
     {
-        $items = array();
+        $items = [];
         $this->db->order_by('name', 'asc');
         $groups = $this->db->get('tblitems_groups')->result_array();
 
-        array_unshift($groups, array(
-            'id' => 0,
-            'name' => ''
-        ));
+        array_unshift($groups, [
+            'id'   => 0,
+            'name' => '',
+        ]);
 
         foreach ($groups as $group) {
             $this->db->select('*,tblitems_groups.name as group_name,tblitems.id as id');
@@ -57,7 +58,7 @@ class Invoice_items_model extends CRM_Model
             $this->db->order_by('description', 'asc');
             $_items = $this->db->get('tblitems')->result_array();
             if (count($_items) > 0) {
-                $items[$group['id']] = array();
+                $items[$group['id']] = [];
                 foreach ($_items as $i) {
                     array_push($items[$group['id']], $i);
                 }
@@ -95,14 +96,14 @@ class Invoice_items_model extends CRM_Model
         $columns = $this->db->list_fields('tblitems');
         $this->load->dbforge();
 
-        foreach($data as $column => $itemData){
-            if(!in_array($column,$columns) && strpos($column,'rate_currency_') !== FALSE){
-                $field = array(
-                        $column => array(
-                            'type' =>'decimal(15,'.get_decimal_places().')',
-                            'null'=>true,
-                        )
-                );
+        foreach ($data as $column => $itemData) {
+            if (!in_array($column, $columns) && strpos($column, 'rate_currency_') !== false) {
+                $field = [
+                        $column => [
+                            'type' => 'decimal(15,' . get_decimal_places() . ')',
+                            'null' => true,
+                        ],
+                ];
                 $this->dbforge->add_column('tblitems', $field);
             }
         }
@@ -136,11 +137,11 @@ class Invoice_items_model extends CRM_Model
         }
 
         if (isset($data['tax']) && $data['tax'] == '') {
-            $data['tax'] = NULL;
+            $data['tax'] = null;
         }
 
         if (isset($data['tax2']) && $data['tax2'] == '') {
-             $data['tax2'] = NULL;
+            $data['tax2'] = null;
         }
 
         if (isset($data['custom_fields'])) {
@@ -151,14 +152,14 @@ class Invoice_items_model extends CRM_Model
         $columns = $this->db->list_fields('tblitems');
         $this->load->dbforge();
 
-        foreach($data as $column => $itemData){
-            if(!in_array($column,$columns) && strpos($column,'rate_currency_') !== FALSE){
-                $field = array(
-                        $column => array(
-                            'type' =>'decimal(15,'.get_decimal_places().')',
-                            'null'=>true,
-                        )
-                );
+        foreach ($data as $column => $itemData) {
+            if (!in_array($column, $columns) && strpos($column, 'rate_currency_') !== false) {
+                $field = [
+                        $column => [
+                            'type' => 'decimal(15,' . get_decimal_places() . ')',
+                            'null' => true,
+                        ],
+                ];
                 $this->dbforge->add_column('tblitems', $field);
             }
         }
@@ -171,25 +172,26 @@ class Invoice_items_model extends CRM_Model
             $affectedRows++;
         }
 
-        if(isset($custom_fields)) {
-            if(handle_custom_fields_post($itemid, $custom_fields, true)) {
+        if (isset($custom_fields)) {
+            if (handle_custom_fields_post($itemid, $custom_fields, true)) {
                 $affectedRows++;
             }
         }
+
         return $affectedRows > 0 ? true : false;
     }
 
-    public function search($q){
-
+    public function search($q)
+    {
         $this->db->select('rate, id, description as name, long_description as subtext');
-        $this->db->like('description',$q);
-        $this->db->or_like('long_description',$q);
+        $this->db->like('description', $q);
+        $this->db->or_like('long_description', $q);
 
         $items = $this->db->get('tblitems')->result_array();
 
-        foreach($items as $key=>$item){
-            $items[$key]['subtext'] = strip_tags(mb_substr($item['subtext'],0,200)).'...';
-            $items[$key]['name'] = '('._format_number($item['rate']).') ' . $item['name'];
+        foreach ($items as $key => $item) {
+            $items[$key]['subtext'] = strip_tags(mb_substr($item['subtext'], 0, 200)) . '...';
+            $items[$key]['name']    = '(' . _format_number($item['rate']) . ') ' . $item['name'];
         }
 
         return $items;
@@ -205,9 +207,8 @@ class Invoice_items_model extends CRM_Model
         $this->db->where('id', $id);
         $this->db->delete('tblitems');
         if ($this->db->affected_rows() > 0) {
-
-            $this->db->where('relid',$id);
-            $this->db->where('fieldto','items_pr');
+            $this->db->where('relid', $id);
+            $this->db->where('fieldto', 'items_pr');
             $this->db->delete('tblcustomfieldsvalues');
 
             logActivity('Invoice Item Deleted [ID: ' . $id . ']');
@@ -253,9 +254,9 @@ class Invoice_items_model extends CRM_Model
 
         if ($group) {
             $this->db->where('group_id', $id);
-            $this->db->update('tblitems', array(
-                'group_id' => 0
-            ));
+            $this->db->update('tblitems', [
+                'group_id' => 0,
+            ]);
 
             $this->db->where('id', $id);
             $this->db->delete('tblitems_groups');

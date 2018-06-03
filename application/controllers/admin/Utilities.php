@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 @ini_set('memory_limit', '256M');
@@ -74,17 +75,17 @@ class Utilities extends Admin_controller
                     $message = _l('utility_calendar_event_added_successfully');
                 }
             }
-            echo json_encode(array(
+            echo json_encode([
                 'success' => $success,
                 'message' => $message,
-            ));
+            ]);
             die();
         }
         $data['google_ids_calendars'] = $this->misc_model->get_google_calendar_ids();
         $data['google_calendar_api']  = get_option('google_calendar_api_key');
         $data['title']                = _l('calendar');
         // To load js files
-        $data['calendar_assets']      = true;
+        $data['calendar_assets'] = true;
         $this->load->view('admin/utilities/calendar', $data);
     }
 
@@ -113,9 +114,9 @@ class Utilities extends Admin_controller
         if ($this->input->is_ajax_request()) {
             $event = $this->utilities_model->get_event_by_id($id);
             if ($event->userid != get_staff_user_id() && !is_admin()) {
-                echo json_encode(array(
+                echo json_encode([
                     'success' => false,
-                ));
+                ]);
                 die;
             }
             $success = $this->utilities_model->delete_event($id);
@@ -123,10 +124,10 @@ class Utilities extends Admin_controller
             if ($success) {
                 $message = _l('utility_calendar_event_deleted_successfully');
             }
-            echo json_encode(array(
+            echo json_encode([
                 'success' => $success,
                 'message' => $message,
-            ));
+            ]);
             die();
         }
     }
@@ -136,7 +137,7 @@ class Utilities extends Admin_controller
     {
         $this->load->helper('url');
         $data['title']        = _l('media_files');
-        $data['connector'] = admin_url() . '/utilities/media_connector';
+        $data['connector']    = admin_url() . '/utilities/media_connector';
         $data['media_assets'] = true;
         $this->load->view('admin/utilities/media', $data);
     }
@@ -144,7 +145,7 @@ class Utilities extends Admin_controller
     public function media_connector()
     {
         $media_folder = $this->app->get_media_folder();
-        $mediaPath = FCPATH . $media_folder;
+        $mediaPath    = FCPATH . $media_folder;
 
         if (!is_dir($mediaPath)) {
             mkdir($mediaPath);
@@ -156,14 +157,14 @@ class Utilities extends Admin_controller
 
         $this->load->helper('path');
 
-        $root_options = array(
+        $root_options = [
             'driver' => 'LocalFileSystem',
-            'path' => set_realpath($media_folder),
-            'URL' => site_url($media_folder) . '/',
+            'path'   => set_realpath($media_folder),
+            'URL'    => site_url($media_folder) . '/',
             //'debug'=>true,
             'uploadMaxSize' => get_option('media_max_file_size_upload') . 'M',
             'accessControl' => 'access_control_media',
-            'uploadDeny'=>array(
+            'uploadDeny'    => [
                 'application/x-httpd-php',
                 'application/php',
                 'application/x-php',
@@ -178,27 +179,27 @@ class Utilities extends Admin_controller
                 'application/x-python-bytecode',
                 'application/x-python-code',
                 'wwwserver/shellcgi', // CGI
-            ),
-            'uploadAllow'=>array(),
-            'uploadOrder' => array(
+            ],
+            'uploadAllow' => [],
+            'uploadOrder' => [
                 'deny',
                 'allow',
-            ),
-            'attributes' => array(
-                array(
+            ],
+            'attributes' => [
+                [
                     'pattern' => '/.tmb/',
-                    'hidden' => true,
-                ),
-                array(
+                    'hidden'  => true,
+                ],
+                [
                     'pattern' => '/.quarantine/',
-                    'hidden' => true,
-                ),
-                array(
+                    'hidden'  => true,
+                ],
+                [
                     'pattern' => '/public/',
-                    'hidden' => true,
-                ),
-            ),
-        );
+                    'hidden'  => true,
+                ],
+            ],
+        ];
         if (!is_admin()) {
             $this->db->select('media_path_slug,staffid,firstname,lastname')
             ->from('tblstaff')
@@ -208,9 +209,9 @@ class Utilities extends Admin_controller
             if (empty($user->media_path_slug)) {
                 $this->db->where('staffid', $user->staffid);
                 $slug = slug_it($user->firstname . ' ' . $user->lastname);
-                $this->db->update('tblstaff', array(
+                $this->db->update('tblstaff', [
                     'media_path_slug' => $slug,
-                ));
+                ]);
                 $user->media_path_slug = $slug;
                 $path                  = set_realpath($media_folder . '/' . $user->media_path_slug);
             }
@@ -220,18 +221,18 @@ class Utilities extends Admin_controller
             if (!file_exists($path . '/index.html')) {
                 fopen($path . '/index.html', 'w');
             }
-            array_push($root_options['attributes'], array(
+            array_push($root_options['attributes'], [
                 'pattern' => '/.(' . $user->media_path_slug . '+)/', // Prevent deleting/renaming folder
-                'read' => true,
-                'write' => true,
-                'locked' => true,
-            ));
+                'read'    => true,
+                'write'   => true,
+                'locked'  => true,
+            ]);
             $root_options['path'] = $path;
             $root_options['URL']  = site_url($media_folder . '/' . $user->media_path_slug) . '/';
         }
 
-        $publicRootPath = $media_folder.'/public';
-        $public_root = $root_options;
+        $publicRootPath      = $media_folder . '/public';
+        $public_root         = $root_options;
         $public_root['path'] = set_realpath($publicRootPath);
 
         $public_root['URL'] = site_url($media_folder) . '/public';
@@ -245,14 +246,14 @@ class Utilities extends Admin_controller
             fopen($publicRootPath . '/index.html', 'w');
         }
 
-        $opts = array(
-            'roots' => array(
+        $opts = [
+            'roots' => [
                 $root_options,
                 $public_root,
-            ),
-        );
+            ],
+        ];
 
-        $opts = do_action('before_init_media', $opts);
+        $opts      = do_action('before_init_media', $opts);
         $connector = new elFinderConnector(new elFinder($opts));
         $connector->run();
     }
@@ -263,11 +264,11 @@ class Utilities extends Admin_controller
             access_denied('bulk_pdf_exporter');
         }
 
-        $has_permission_estimates_view = has_permission('estimates', '', 'view');
-        $has_permission_invoices_view  = has_permission('invoices', '', 'view');
-        $has_permission_proposals_view = has_permission('proposals', '', 'view');
-        $has_permission_payments_view  = has_permission('payments', '', 'view');
-        $has_permission_credit_notes_view  = has_permission('credit_notes', '', 'view');
+        $has_permission_estimates_view    = has_permission('estimates', '', 'view');
+        $has_permission_invoices_view     = has_permission('invoices', '', 'view');
+        $has_permission_proposals_view    = has_permission('proposals', '', 'view');
+        $has_permission_payments_view     = has_permission('payments', '', 'view');
+        $has_permission_credit_notes_view = has_permission('credit_notes', '', 'view');
 
         if ($this->input->post()) {
             if (!is_really_writable(TEMP_FOLDER)) {
@@ -283,7 +284,7 @@ class Utilities extends Admin_controller
                 }
 
                 if (!$has_permission_invoices_view) {
-                    $this->db->where('addedfrom', get_staff_user_id());
+                    $this->db->where(get_invoices_where_sql_for_staff(get_staff_user_id()));
                 }
 
                 $this->db->order_by('date', 'desc');
@@ -294,9 +295,8 @@ class Utilities extends Admin_controller
                 if ($status != 'estimates_all') {
                     $this->db->where('status', $status);
                 }
-
                 if (!$has_permission_estimates_view) {
-                    $this->db->where('addedfrom', get_staff_user_id());
+                    $this->db->where(get_estimates_where_sql_for_staff(get_staff_user_id()));
                 }
                 $this->db->order_by('date', 'desc');
             } elseif ($type == 'credit_notes') {
@@ -320,7 +320,13 @@ class Utilities extends Admin_controller
                 $this->db->join('tblclients', 'tblclients.userid = tblinvoices.clientid', 'left');
 
                 if (!$has_permission_payments_view) {
-                    $this->db->where('invoiceid IN (SELECT id FROM tblinvoices WHERE addedfrom=' . get_staff_user_id() . ')');
+                    $whereUser = '';
+                    $whereUser .= '(invoiceid IN (SELECT id FROM tblinvoices WHERE addedfrom=' . get_staff_user_id() . ')';
+                    if (get_option('allow_staff_view_invoices_assigned') == 1) {
+                        $whereUser .= ' OR invoiceid IN (SELECT id FROM tblinvoices WHERE sale_agent=' . get_staff_user_id() . ')';
+                    }
+                    $whereUser .= ')';
+                    $this->db->where($whereUser);
                 }
                 if ($this->input->post('paymentmode')) {
                     $this->db->where('paymentmode', $this->input->post('paymentmode'));
@@ -334,7 +340,7 @@ class Utilities extends Admin_controller
                 }
 
                 if (!$has_permission_proposals_view) {
-                    $this->db->where('addedfrom', get_staff_user_id());
+                    $this->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
                 }
 
                 $this->db->order_by('date', 'desc');
@@ -379,10 +385,10 @@ class Utilities extends Admin_controller
             } elseif ($type == 'credit_notes') {
                 $this->load->model('credit_notes_model');
                 foreach ($data as $credit_note) {
-                    $credit_note_data    = $this->credit_notes_model->get($credit_note['id']);
-                    $this->pdf_zip   = credit_note_pdf($credit_note_data, $this->input->post('tag'));
-                    $_temp_file_name = slug_it(format_credit_note_number($credit_note_data->id));
-                    $file_name       = $dir . '/' . strtoupper($_temp_file_name);
+                    $credit_note_data = $this->credit_notes_model->get($credit_note['id']);
+                    $this->pdf_zip    = credit_note_pdf($credit_note_data, $this->input->post('tag'));
+                    $_temp_file_name  = slug_it(format_credit_note_number($credit_note_data->id));
+                    $file_name        = $dir . '/' . strtoupper($_temp_file_name);
                     $this->pdf_zip->Output($file_name . '.pdf', 'F');
                 }
             } elseif ($type == 'estimates') {
@@ -411,7 +417,7 @@ class Utilities extends Admin_controller
                 foreach ($data as $proposal) {
                     $proposal        = $this->proposals_model->get($proposal['id']);
                     $this->pdf_zip   = proposal_pdf($proposal, $this->input->post('tag'));
-                    $_temp_file_name = slug_it($proposal->subject);
+                    $_temp_file_name = format_proposal_number($proposal->id);
                     $file_name       = $dir . '/' . strtoupper($_temp_file_name);
                     $this->pdf_zip->Output($file_name . '.pdf', 'F');
                 }
@@ -510,7 +516,7 @@ class Utilities extends Admin_controller
         do_action('before_save_theme_style');
         $data = $this->input->post();
         if ($data == null) {
-            $data = array();
+            $data = [];
         } else {
             $data = $data['data'];
         }
@@ -524,16 +530,16 @@ class Utilities extends Admin_controller
             access_denied('Edit Main Menu');
         }
         $data['permissions']   = $this->roles_model->get_permissions();
-        $data['permissions'][] = array(
+        $data['permissions'][] = [
             'shortname' => 'is_admin',
-            'name' => 'Admin',
-        );
-        $data['permissions'][] = array(
+            'name'      => 'Admin',
+        ];
+        $data['permissions'][] = [
             'shortname' => 'is_not_staff',
-            'name' => _l('is_not_staff_member'),
-        );
+            'name'      => _l('is_not_staff_member'),
+        ];
 
-        $data['title']                 = _l('main_menu');
+        $data['title'] = _l('main_menu');
         $this->load->view('admin/utilities/main_menu', $data);
     }
 
@@ -545,18 +551,18 @@ class Utilities extends Admin_controller
         }
         $data_inactive = $this->input->post('inactive');
         if ($data_inactive == null) {
-            $data_inactive = array();
+            $data_inactive = [];
         }
         $data_active = $this->input->post('active');
         if ($data_active == null) {
-            $data_active = array();
+            $data_active = [];
         }
-        update_option('aside_menu_active', json_encode(array(
+        update_option('aside_menu_active', json_encode([
             'aside_menu_active' => $data_active,
-        )));
-        update_option('aside_menu_inactive', json_encode(array(
+        ]));
+        update_option('aside_menu_inactive', json_encode([
             'aside_menu_inactive' => $data_inactive,
-        )));
+        ]));
     }
 
     public function reset_aside_menu()
@@ -573,16 +579,16 @@ class Utilities extends Admin_controller
         if (!is_admin()) {
             access_denied('Edit Setup Menu');
         }
-        $data['permissions']           = $this->roles_model->get_permissions();
-        $data['permissions'][]         = array(
+        $data['permissions']   = $this->roles_model->get_permissions();
+        $data['permissions'][] = [
             'shortname' => 'is_admin',
-            'name' => 'Admin',
-        );
-        $data['permissions'][]         = array(
+            'name'      => 'Admin',
+        ];
+        $data['permissions'][] = [
             'shortname' => 'is_not_staff',
-            'name' => _l('is_not_staff_member'),
-        );
-        $data['title']                 = _l('setup_menu');
+            'name'      => _l('is_not_staff_member'),
+        ];
+        $data['title'] = _l('setup_menu');
         $this->load->view('admin/utilities/setup_menu', $data);
     }
 
@@ -594,18 +600,18 @@ class Utilities extends Admin_controller
         }
         $data_inactive = $this->input->post('inactive');
         if ($data_inactive == null) {
-            $data_inactive = array();
+            $data_inactive = [];
         }
         $data_active = $this->input->post('active');
         if ($data_active == null) {
-            $data_active = array();
+            $data_active = [];
         }
-        update_option('setup_menu_active', json_encode(array(
+        update_option('setup_menu_active', json_encode([
             'setup_menu_active' => $data_active,
-        )));
-        update_option('setup_menu_inactive', json_encode(array(
+        ]));
+        update_option('setup_menu_inactive', json_encode([
             'setup_menu_inactive' => $data_inactive,
-        )));
+        ]));
     }
 
     public function reset_setup_menu()

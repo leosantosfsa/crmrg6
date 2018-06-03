@@ -20,7 +20,6 @@
                         _l('goal_end_date'),
                         _l('goal_type'),
                         _l('goal_progress'),
-                        _l('options')
                         ),'goals'); ?>
                     </div>
                 </div>
@@ -31,7 +30,7 @@
 <?php init_tail(); ?>
 <script>
     $(function(){
-        initDataTable('.table-goals', window.location.href, [6, 7], [6, 7]);
+        initDataTable('.table-goals', window.location.href, [6], [6]);
         $('.table-goals').DataTable().on('draw', function() {
             var rows = $('.table-goals').find('tr');
             $.each(rows, function() {
@@ -47,7 +46,7 @@
                 })
             })
         })
-    })
+    });
 </script>
 </body>
 </html>

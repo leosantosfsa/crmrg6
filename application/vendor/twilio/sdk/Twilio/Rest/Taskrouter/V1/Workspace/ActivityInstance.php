@@ -32,7 +32,8 @@ class ActivityInstance extends InstanceResource {
      * 
      * @param \Twilio\Version $version Version that contains the resource
      * @param mixed[] $payload The response payload
-     * @param string $workspaceSid The workspace_sid
+     * @param string $workspaceSid The unique ID of the Workspace that this
+     *                             Activity belongs to.
      * @param string $sid The sid
      * @return \Twilio\Rest\Taskrouter\V1\Workspace\ActivityInstance 
      */
@@ -51,7 +52,7 @@ class ActivityInstance extends InstanceResource {
             'url' => Values::array_get($payload, 'url'),
         );
 
-        $this->solution = array('workspaceSid' => $workspaceSid, 'sid' => $sid ?: $this->properties['sid']);
+        $this->solution = array('workspaceSid' => $workspaceSid, 'sid' => $sid ?: $this->properties['sid'], );
     }
 
     /**

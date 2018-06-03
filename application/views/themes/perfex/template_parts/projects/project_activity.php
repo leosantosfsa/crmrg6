@@ -20,7 +20,7 @@
                     <p class="text-muted mtop5"><?php echo $activity['additional_data']; ?></p>
                 </div>
             </div>
-            <hr />
+            <hr class="hr-10" />
         </div>
         <?php } ?>
         <?php } ?>

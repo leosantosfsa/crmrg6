@@ -42,19 +42,22 @@
                <ul class="dropdown-menu animated fadeIn started-timers-top width300" id="started-timers-top">
                   <?php $this->load->view('admin/tasks/started_timers',array('startedTimers'=>$startedTimers)); ?>
                </ul>
-               <?php if(is_staff_member()){ ?>
-            <li class="header-newsfeed">
-               <a href="#" class="open_newsfeed"><i class="fa fa-share fa-fw fa-lg" aria-hidden="true"></i></a>
-            </li>
-            <?php } ?>
             </li>
             <?php } ?>
          </ul>
          <div class="mobile-navbar collapse" id="mobile-collapse" aria-expanded="false" style="height: 0px;" role="navigation" >
             <ul class="nav navbar-nav">
                <li class="header-my-profile"><a href="<?php echo admin_url('profile'); ?>"><?php echo _l('nav_my_profile'); ?></a></li>
+                <li class="header-my-profile"><a href="<?php echo admin_url('profile'); ?>"><?php echo _l('nav_my_profile'); ?></a></li>
                <li class="header-my-timesheets"><a href="<?php echo admin_url('staff/timesheets'); ?>"><?php echo _l('my_timesheets'); ?></a></li>
                <li class="header-edit-profile"><a href="<?php echo admin_url('staff/edit_profile'); ?>"><?php echo _l('nav_edit_profile'); ?></a></li>
+              <?php if(is_staff_member()){ ?>
+               <li class="header-newsfeed">
+                    <a href="#" class="open_newsfeed">
+                        <?php echo _l('whats_on_your_mind'); ?>
+                    </a>
+                 </li>
+               <?php } ?>
                <li class="header-logout"><a href="#" onclick="logout(); return false;"><?php echo _l('nav_logout'); ?></a></li>
             </ul>
          </div>

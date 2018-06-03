@@ -1,9 +1,9 @@
 <div class="col-md-12 page-pdf-html-logo">
     <?php get_company_logo('','pull-left'); ?>
-    <?php if(is_staff_logged_in()){ ?>
-    <a href="<?php echo admin_url(); ?>invoices/list_invoices/<?php echo $invoice->id; ?>" class="btn btn-info pull-right"><?php echo _l('goto_admin_area'); ?></a>
-    <?php } else if(is_client_logged_in() && has_contact_permission('invoices')){ ?>
-    <a href="<?php echo site_url('clients/invoices/'); ?>" class="btn btn-info pull-right"><?php echo _l('client_go_to_dashboard'); ?></a>
+    <?php if(is_client_logged_in() && has_contact_permission('invoices')){ ?>
+        <a href="<?php echo site_url('clients/invoices/'); ?>" class="btn btn-default pull-right">
+            <?php echo _l('client_go_to_dashboard'); ?>
+        </a>
     <?php } ?>
 </div>
 <div class="clearfix"></div>
@@ -22,12 +22,12 @@
                     </div>
                     <a href="#" style="display:none;" class="btn btn-success pull-right mleft5<?php if (($invoice->status != 2 && $invoice->status != 5 && $invoice->total > 0) && found_invoice_mode($payment_modes,$invoice->id,false)){ echo ' pay-now-top'; } ?>"><?php echo _l('invoice_html_online_payment_button_text'); ?></a>
                     <?php echo form_open($this->uri->uri_string()); ?>
-                    <button type="submit" name="invoicepdf" value="invoicepdf" class="btn btn-info"><i class='fa fa-file-pdf-o'></i> <?php echo _l('clients_invoice_html_btn_download'); ?></button>
+                    <button type="submit" name="invoicepdf" value="invoicepdf" class="btn btn-default"><i class='fa fa-file-pdf-o'></i> <?php echo _l('clients_invoice_html_btn_download'); ?></button>
                     <?php echo form_close(); ?>
                 </div>
             </div>
             <div class="row mtop40">
-                <div class="col-md-6">
+                <div class="col-md-6 col-sm-6">
                     <h4 class="bold"><?php echo format_invoice_number($invoice->id); ?></h4>
                     <address>
                         <?php echo format_organization_info(); ?>
@@ -238,7 +238,7 @@
                 $total_payments = count($invoice->payments);
                 if($total_payments > 0){ ?>
                 <p class="bold mbot15 font-medium"><?php echo _l('invoice_received_payments'); ?></p>
-                <table class="table table-hover">
+                <table class="table table-hover invoice-payments-table">
                     <thead>
                         <tr>
                             <th><?php echo _l('invoice_payments_table_number_heading'); ?></th>

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
@@ -10,7 +11,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function handle_tags_save($tags, $rel_id, $rel_type)
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
 
     $affectedRows = 0;
     if ($tags == '') {
@@ -21,7 +22,7 @@ function handle_tags_save($tags, $rel_id, $rel_type)
             $affectedRows++;
         }
     } else {
-        $tags_array = array();
+        $tags_array = [];
         if (!is_array($tags)) {
             $tags = explode(',', $tags);
         }
@@ -61,20 +62,20 @@ function handle_tags_save($tags, $rel_id, $rel_type)
             if ($tag_row) {
                 $tag_id = $tag_row->id;
             } else {
-                $CI->db->insert('tbltags', array('name'=>$tag));
+                $CI->db->insert('tbltags', ['name' => $tag]);
                 $tag_id = $CI->db->insert_id();
                 do_action('new_tag_created', $tag_id);
             }
 
-            if (total_rows('tbltags_in', array('tag_id'=>$tag_id, 'rel_id'=>$rel_id, 'rel_type'=>$rel_type)) == 0) {
+            if (total_rows('tbltags_in', ['tag_id' => $tag_id, 'rel_id' => $rel_id, 'rel_type' => $rel_type]) == 0) {
                 $CI->db->insert(
                     'tbltags_in',
-                    array(
-                        'tag_id'=>$tag_id,
-                        'rel_id'=>$rel_id,
-                        'rel_type'=>$rel_type,
-                        'tag_order'=>$order,
-                        )
+                    [
+                        'tag_id'    => $tag_id,
+                        'rel_id'    => $rel_id,
+                        'rel_type'  => $rel_type,
+                        'tag_order' => $order,
+                        ]
                 );
 
                 if ($CI->db->affected_rows() > 0) {
@@ -94,7 +95,7 @@ function handle_tags_save($tags, $rel_id, $rel_type)
  */
 function get_tag_by_name($name)
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->db->where('name', $name);
 
     return $CI->db->get('tbltags')->row();
@@ -109,10 +110,10 @@ function get_tags()
 
     $tags = $CI->object_cache->get('db-tags-array');
 
-    if(!$tags && !is_array($tags)){
+    if (!$tags && !is_array($tags)) {
         $CI->db->order_by('name', 'ASC');
         $tags = $CI->db->get('tbltags')->result_array();
-        $CI->object_cache->add('db-tags-array',$tags);
+        $CI->object_cache->add('db-tags-array', $tags);
     }
 
     return $tags;
@@ -123,8 +124,8 @@ function get_tags()
  */
 function get_tags_clean()
 {
-    $tmp_tags = array();
-    $tags = get_tags();
+    $tmp_tags = [];
+    $tags     = get_tags();
     foreach ($tags as $tag) {
         array_push($tmp_tags, $tag['name']);
     }
@@ -138,8 +139,8 @@ function get_tags_clean()
  */
 function get_tags_ids()
 {
-    $tmp_tags = array();
-    $tags = get_tags();
+    $tmp_tags = [];
+    $tags     = get_tags();
     foreach ($tags as $tag) {
         array_push($tmp_tags, $tag['id']);
     }
@@ -155,13 +156,13 @@ function get_tags_ids()
  */
 function get_tags_in($rel_id, $rel_type)
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->db->where('rel_id', $rel_id);
     $CI->db->where('rel_type', $rel_type);
     $CI->db->order_by('tag_order', 'ASC');
     $tags = $CI->db->get('tbltags_in')->result_array();
 
-    $tag_names = array();
+    $tag_names = [];
     foreach ($tags as $tag) {
         $CI->db->where('id', $tag['tag_id']);
         $tag_row = $CI->db->get('tbltags')->row();
@@ -203,16 +204,16 @@ function render_tags($tags)
     if (count($tags) > 0) {
         $CI = &get_instance();
         $tags_html .= '<div class="tags-labels">';
-        $i = 0;
+        $i   = 0;
         $len = count($tags);
         foreach ($tags as $tag) {
-            $tag_id = 0;
-            $tag_row = $CI->object_cache->get('tag-id-by-name-'.$tag);
-            if(!$tag_row){
+            $tag_id  = 0;
+            $tag_row = $CI->object_cache->get('tag-id-by-name-' . $tag);
+            if (!$tag_row) {
                 $CI->db->select('id')->where('name', $tag);
                 $tag_row = $CI->db->get('tbltags')->row();
-                if($tag_row){
-                    $CI->object_cache->add('tag-id-by-name-'.$tag,$tag_row->id);
+                if ($tag_row) {
+                    $CI->object_cache->add('tag-id-by-name-' . $tag, $tag_row->id);
                 }
             }
 
@@ -220,7 +221,7 @@ function render_tags($tags)
                 $tag_id = is_object($tag_row) ? $tag_row->id : $tag_row;
             }
 
-            $tags_html .= '<span class="label label-tag tag-id-'.$tag_id.'"><span class="tag">'.$tag.'</span><span class="hide">'.($i != $len - 1 ? ', ' : '') .'</span></span>';
+            $tags_html .= '<span class="label label-tag tag-id-' . $tag_id . '"><span class="tag">' . $tag . '</span><span class="hide">' . ($i != $len - 1 ? ', ' : '') . '</span></span>';
             $i++;
         }
         $tags_html .= '</div>';

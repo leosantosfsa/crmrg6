@@ -112,95 +112,95 @@
         getDefaultOptions: function() {
             return {
 
-                // User        
-                profilePictureURL: '',        
-                currentUserIsAdmin: false,        
-                currentUserId: null,        
-                
-                // Font awesome icon overrides        
-                spinnerIconURL: '',       
-                upvoteIconURL: '',        
-                replyIconURL: '',     
-                uploadIconURL: '',        
-                attachmentIconURL: '',        
-                fileIconURL: '',      
-                noCommentsIconURL: '',        
-                
-                // Strings to be formatted (for example localization)     
-                textareaPlaceholderText: 'Add a comment',     
-                newestText: 'Newest',     
-                oldestText: 'Oldest',     
-                popularText: 'Popular',       
-                attachmentsText: 'Attachments',       
-                sendText: 'Send',     
-                replyText: 'Reply',       
-                editText: 'Edit',     
-                editedText: 'Edited',     
-                youText: 'You',       
-                saveText: 'Save',     
-                deleteText: 'Delete',     
-                viewAllRepliesText: 'View all __replyCount__ replies',        
-                hideRepliesText: 'Hide replies',      
-                noCommentsText: 'No comments',        
-                noAttachmentsText: 'No attachments',      
-                attachmentDropText: 'Drop files here',        
-                textFormatter: function(text) {return text},        
-                
-                // Functionalities        
-                enableReplying: true,     
-                enableEditing: true,      
-                enableUpvoting: true,     
-                enableDeleting: true,     
-                enableAttachments: false,     
-                enableHashtags: false,     
-                enablePinging: false,     
-                enableDeletingCommentWithReplies: false,      
-                enableNavigation: true,       
-                postCommentOnEnter: false,        
-                forceResponsive: false,       
-                readOnly: false,      
-                defaultNavigationSortKey: 'newest',       
-                
-                // Colors     
-                highlightColor: '#2793e6',        
-                deleteButtonColor: '#C9302C',     
-                
-                roundProfilePictures: false,      
-                textareaRows: 2,      
-                textareaRowsOnFocus: 2,       
-                textareaMaxRows: 5,       
-                maxRepliesVisible: 2,     
-                
-                fieldMappings: {      
-                    id: 'id',     
-                    parent: 'parent',     
-                    created: 'created',       
-                    modified: 'modified',     
-                    content: 'content',       
-                    file: 'file',     
-                    fileURL: 'file_url',      
+                // User
+                profilePictureURL: '',
+                currentUserIsAdmin: false,
+                currentUserId: null,
+
+                // Font awesome icon overrides
+                spinnerIconURL: '',
+                upvoteIconURL: '',
+                replyIconURL: '',
+                uploadIconURL: '',
+                attachmentIconURL: '',
+                fileIconURL: '',
+                noCommentsIconURL: '',
+
+                // Strings to be formatted (for example localization)
+                textareaPlaceholderText: 'Add a comment',
+                newestText: 'Newest',
+                oldestText: 'Oldest',
+                popularText: 'Popular',
+                attachmentsText: 'Attachments',
+                sendText: 'Send',
+                replyText: 'Reply',
+                editText: 'Edit',
+                editedText: 'Edited',
+                youText: 'You',
+                saveText: 'Save',
+                deleteText: 'Delete',
+                viewAllRepliesText: 'View all __replyCount__ replies',
+                hideRepliesText: 'Hide replies',
+                noCommentsText: 'No comments',
+                noAttachmentsText: 'No attachments',
+                attachmentDropText: 'Drop files here',
+                textFormatter: function(text) {return text},
+
+                // Functionalities
+                enableReplying: true,
+                enableEditing: true,
+                enableUpvoting: true,
+                enableDeleting: true,
+                enableAttachments: false,
+                enableHashtags: false,
+                enablePinging: false,
+                enableDeletingCommentWithReplies: false,
+                enableNavigation: true,
+                postCommentOnEnter: false,
+                forceResponsive: false,
+                readOnly: false,
+                defaultNavigationSortKey: 'newest',
+
+                // Colors
+                highlightColor: '#2793e6',
+                deleteButtonColor: '#C9302C',
+
+                roundProfilePictures: false,
+                textareaRows: 2,
+                textareaRowsOnFocus: 2,
+                textareaMaxRows: 5,
+                maxRepliesVisible: 2,
+
+                fieldMappings: {
+                    id: 'id',
+                    parent: 'parent',
+                    created: 'created',
+                    modified: 'modified',
+                    content: 'content',
+                    file: 'file',
+                    fileURL: 'file_url',
                     fileMimeType: 'file_mime_type',
-                    pings: 'pings',       
-                    creator: 'creator',     
-                    fullname: 'fullname',     
-                    profileURL: 'profile_url',        
-                    profilePictureURL: 'profile_picture_url',     
-                    createdByAdmin: 'created_by_admin',       
-                    createdByCurrentUser: 'created_by_current_user',      
-                    upvoteCount: 'upvote_count',      
-                    userHasUpvoted: 'user_has_upvoted'        
-                },        
-                
+                    pings: 'pings',
+                    creator: 'creator',
+                    fullname: 'fullname',
+                    profileURL: 'profile_url',
+                    profilePictureURL: 'profile_picture_url',
+                    createdByAdmin: 'created_by_admin',
+                    createdByCurrentUser: 'created_by_current_user',
+                    upvoteCount: 'upvote_count',
+                    userHasUpvoted: 'user_has_upvoted'
+                },
+
                 getUsers: function(success, error) {success([])},
-                getComments: function(success, error) {success([])},      
-                postComment: function(commentJSON, success, error) {success(commentJSON)},        
-                putComment: function(commentJSON, success, error) {success(commentJSON)},     
-                deleteComment: function(commentJSON, success, error) {success()},     
-                upvoteComment: function(commentJSON, success, error) {success(commentJSON)},      
-                hashtagClicked: function(hashtag) {},      
-                pingClicked: function(userId) {},      
-                uploadAttachments: function(commentArray, success, error) {success(commentArray)},        
-                refresh: function() {},       
+                getComments: function(success, error) {success([])},
+                postComment: function(commentJSON, success, error) {success(commentJSON)},
+                putComment: function(commentJSON, success, error) {success(commentJSON)},
+                deleteComment: function(commentJSON, success, error) {success()},
+                upvoteComment: function(commentJSON, success, error) {success(commentJSON)},
+                hashtagClicked: function(hashtag) {},
+                pingClicked: function(userId) {},
+                uploadAttachments: function(commentArray, success, error) {success(commentArray)},
+                refresh: function() {},
                 timeFormatter: function(time) {return new Date(time).toLocaleDateString()}
             }
         },
@@ -378,7 +378,7 @@
             this.createComments();
 
             // Create attachments if enabled
-            if(this.options.enableAttachments) this.createAttachments(); 
+            if(this.options.enableAttachments) this.createAttachments();
 
             // Remove spinner
             this.$el.find('> .spinner').remove();
@@ -716,7 +716,7 @@
              } else {
                 var defaultDropdownEl = this.$el.find('.navigation ul.dropdown').children().first();
                 titleEl.find('header').html(defaultDropdownEl.html());
-             } 
+             }
 
             // Show active container
             this.showActiveContainer();
@@ -737,7 +737,7 @@
             // Save comment on cmd/ctrl + enter
             if(ev.keyCode == 13) {
                 var metaKey = ev.metaKey || ev.ctrlKey;
-                if(this.options.postCommentOnEnter || metaKey) {                
+                if(this.options.postCommentOnEnter || metaKey) {
                     var el = $(ev.currentTarget);
                     el.siblings('.control-row').find('.save').trigger('click');
                     ev.stopPropagation();
@@ -1103,7 +1103,7 @@
             count--;
             $(ev.currentTarget).data('dnd-count', count);
 
-            if(count == 0) {            
+            if(count == 0) {
                 $(ev.currentTarget).removeClass('drag-over');
                 if(callback) callback();
             }
@@ -1192,7 +1192,7 @@
                 noCommentsIcon.css('background-image', 'url("'+this.options.noCommentsIconURL+'")');
                 noCommentsIcon.addClass('image');
             }
-            noComments.prepend($('<br/>')).prepend(noCommentsIcon);            
+            noComments.prepend($('<br/>')).prepend(noCommentsIcon);
             commentsContainer.append(noComments);
 
             // Attachments
@@ -1697,7 +1697,7 @@
                     // Icon
                     var availableIcons = ['archive', 'audio', 'code', 'excel', 'image', 'movie', 'pdf', 'photo',
                         'picture', 'powerpoint', 'sound', 'video', 'word', 'zip'];
-                    
+
                     var iconClass = 'fa fa-file-o';
                     if(availableIcons.indexOf(format) > 0) {
                         iconClass = 'fa fa-file-' + format + '-o';

@@ -27,7 +27,7 @@
                         <?php } ?>
                      </select>
                    <?php } ?>
-                   <canvas height="130" id="weekly-payment-statistics"></canvas>
+                   <canvas height="130" class="weekly-payments-chart-dashboard" id="weekly-payment-statistics"></canvas>
                    <div class="clearfix"></div>
                 </div>
              </div>

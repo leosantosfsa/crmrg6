@@ -70,20 +70,52 @@ $route['admin/items/search'] = 'admin/invoice_items/search';
 /* Clients links and routes */
 // // In case if client access directly to url without the arguments redirect to clients url
 $route['/']  = "clients";
-$route['viewinvoice']  = "clients/viewinvoice";
-$route['viewinvoice/(:num)/(:any)']  = "clients/viewinvoice/$1/$2";
 
-$route['viewestimate/(:num)/(:any)']  = "clients/viewestimate/$1/$2";
-$route['viewestimate']  = "clients/viewestimate";
+// Deprecated
+$route['viewinvoice/(:num)/(:any)']  = "invoice/index/$1/$2";
 
-$route['viewproposal/(:num)/(:any)']  = "clients/viewproposal/$1/$2";
+// New url from version 2.0.
+$route['invoice/(:num)/(:any)']  = "invoice/index/$1/$2";
 
-$route['survey/(:num)/(:any)']  = "clients/survey/$1/$2";
-$route['knowledge_base']  = "clients/knowledge_base";
-$route['knowledge_base/(:any)']  = "clients/knowledge_base/$1";
+// Deprecated
+$route['viewestimate/(:num)/(:any)']  = "estimate/index/$1/$2";
 
-$route['knowledge-base']  = "clients/knowledge_base";
-$route['knowledge-base/(:any)']  = "clients/knowledge_base/$1";
+// New url from version 2.0
+$route['estimate/(:num)/(:any)']  = "estimate/index/$1/$2";
+
+$route['subscription/(:any)']  = "subscription/index/$1";
+
+// Deprecated
+$route['viewproposal/(:num)/(:any)']  = "proposal/index/$1/$2";
+// New url from version 2.0
+$route['proposal/(:num)/(:any)']  = "proposal/index/$1/$2";
+
+// Available from version 2.0
+$route['contract/(:num)/(:any)']  = "contract/index/$1/$2";
+$route['survey/(:num)/(:any)']  = "survey/index/$1/$2";
+
+// Deprecated
+//$route['knowledge_base']  = "knowledge_base/index";
+//$route['knowledge_base/(:any)']  = "knowledge_base/index/$1";
+
+// Available from version 2.0
+$route['knowledge-base']  = "knowledge_base/index";
+$route['knowledge-base/search']  = "knowledge_base/search";
+$route['knowledge-base/article']  = "knowledge_base/index";
+$route['knowledge-base/article/(:any)']  = "knowledge_base/article/$1";
+$route['knowledge-base/category']  = "knowledge_base/index";
+$route['knowledge-base/category/(:any)']  = "knowledge_base/category/$1";
+
+// Deprecated
+if(strpos($_SERVER['REQUEST_URI'],'add_kb_answer') === false) {
+    $route['knowledge-base/(:any)']  = "knowledge_base/article/$1";
+    $route['knowledge_base/(:any)']  = "knowledge_base/article/$1";
+    $route['clients/knowledge_base/(:any)']  = "knowledge_base/article/$1";
+    $route['clients/knowledge-base/(:any)']  = "knowledge_base/article/$1";
+}
+// $route['knowledge-base/(:any)']  = "knowledge_base/index/$1";
+$route['terms-and-conditions']  = "clients/terms_and_conditions";
+$route['privacy-policy']  = "clients/privacy_policy";
 
 if(file_exists(APPPATH.'config/my_routes.php')){
     include_once(APPPATH.'config/my_routes.php');

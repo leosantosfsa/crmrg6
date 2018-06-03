@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * String starts with
@@ -10,7 +11,7 @@ if (!function_exists('_startsWith')) {
     function _startsWith($haystack, $needle)
     {
         // search backwards starting from haystack length characters from the end
-        return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== false;
+        return $needle === '' || strrpos($haystack, $needle, -strlen($haystack)) !== false;
     }
 }
 /**
@@ -23,7 +24,7 @@ if (!function_exists('endsWith')) {
     function endsWith($haystack, $needle)
     {
         // search forward starting from end minus needle length characters
-        return $needle === "" || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== false);
+        return $needle === '' || (($temp = strlen($haystack) - strlen($needle)) >= 0 && strpos($haystack, $needle, $temp) !== false);
     }
 }
 /**
@@ -32,7 +33,7 @@ if (!function_exists('endsWith')) {
 if (!function_exists('is_html')) {
     function is_html($string)
     {
-        return preg_match("/<[^<]+>/", $string, $m) != 0;
+        return preg_match('/<[^<]+>/', $string, $m) != 0;
     }
 }
 /**
@@ -46,9 +47,9 @@ function strafter($string, $substring)
     $pos = strpos($string, $substring);
     if ($pos === false) {
         return $string;
-    } else {
-        return (substr($string, $pos + strlen($substring)));
     }
+
+    return (substr($string, $pos + strlen($substring)));
 }
 /**
  * Get string before specific charcter/word
@@ -61,9 +62,9 @@ function strbefore($string, $substring)
     $pos = strpos($string, $substring);
     if ($pos === false) {
         return $string;
-    } else {
-        return (substr($string, 0, $pos));
     }
+
+    return (substr($string, 0, $pos));
 }
 /**
  * Is internet connection open
@@ -83,6 +84,23 @@ function is_connected($domain = 'www.perfexcrm.com')
 
     return $is_conn;
 }
+
+if (!function_exists('array_to_object')) {
+    /**
+     * Convert array to oobject
+     * @param  array $array array to convert
+     * @return object
+     */
+    function array_to_object($array)
+    {
+        if (!is_array($array) && !is_object($array)) {
+            return new stdClass();
+        }
+
+        return json_decode(json_encode((object) $array));
+    }
+}
+
 /**
  * Replace Last Occurence of a String in a String
  * @since  Version 1.0.1
@@ -125,22 +143,22 @@ function get_string_between($string, $start, $end)
  * @param  string $from      Optional
  * @return mixed
  */
-function time_ago_specific($date, $from = "now")
+function time_ago_specific($date, $from = 'now')
 {
     $datetime   = strtotime($from);
-    $date2      = strtotime("" . $date);
+    $date2      = strtotime('' . $date);
     $holdtotsec = $datetime - $date2;
     $holdtotmin = ($datetime - $date2) / 60;
     $holdtothr  = ($datetime - $date2) / 3600;
     $holdtotday = intval(($datetime - $date2) / 86400);
     $str        = '';
     if (0 < $holdtotday) {
-        $str .= $holdtotday . "d ";
+        $str .= $holdtotday . 'd ';
     }
     $holdhr = intval($holdtothr - $holdtotday * 24);
-    $str .= $holdhr . "h ";
+    $str .= $holdhr . 'h ';
     $holdmr = intval($holdtotmin - ($holdhr * 60 + $holdtotday * 1440));
-    $str .= $holdmr . "m";
+    $str .= $holdmr . 'm';
 
     return $str;
 }
@@ -156,7 +174,7 @@ function sec2qty($sec)
 
     $qty = round($seconds, 2);
 
-    $hookData = do_action('sec2qty_formatted', array('seconds'=>$sec, 'qty'=>$qty));
+    $hookData = do_action('sec2qty_formatted', ['seconds' => $sec, 'qty' => $qty]);
 
     return $hookData['qty'];
 }
@@ -170,12 +188,12 @@ function sec2qty($sec)
 function seconds_to_time_format($seconds = 0, $include_seconds = false)
 {
     $hours = floor($seconds / 3600);
-    $mins = floor(($seconds - ($hours * 3600)) / 60);
-    $secs = floor($seconds % 60);
+    $mins  = floor(($seconds - ($hours * 3600)) / 60);
+    $secs  = floor($seconds % 60);
 
-    $hours = ($hours < 10) ? "0" . $hours : $hours;
-    $mins = ($mins < 10) ? "0" . $mins : $mins;
-    $secs = ($secs < 10) ? "0" . $secs : $secs;
+    $hours   = ($hours < 10) ? '0' . $hours : $hours;
+    $mins    = ($mins < 10) ? '0' . $mins : $mins;
+    $secs    = ($secs < 10) ? '0' . $secs : $secs;
     $sprintF = $include_seconds == true ? '%02d:%02d:%02d' : '%02d:%02d';
 
     return sprintf($sprintF, $hours, $mins, $secs);
@@ -190,11 +208,11 @@ function hours_to_seconds_format($hours)
     if (strpos($hours, '.') !== false) {
         $hours = str_replace('.', ':', $hours);
     }
-    $tmp = explode(':', $hours);
-    $hours = $tmp[0];
+    $tmp             = explode(':', $hours);
+    $hours           = $tmp[0];
     $minutesFromHour = isset($tmp[1]) ? $tmp[1] : 0;
 
-    return $hours*3600 + $minutesFromHour*60;
+    return $hours * 3600 + $minutesFromHour * 60;
 }
 
 /*
@@ -241,53 +259,51 @@ function ip_in_range($ip, $range)
         list($range, $netmask) = explode('/', $range, 2);
         if (strpos($netmask, '.') !== false) {
             // $netmask is a 255.255.0.0 format
-            $netmask = str_replace('*', '0', $netmask);
+            $netmask     = str_replace('*', '0', $netmask);
             $netmask_dec = ip2long($netmask);
 
             return ((ip2long($ip) & $netmask_dec) == (ip2long($range) & $netmask_dec));
-        } else {
-            // $netmask is a CIDR size block
-            // fix the range argument
-            $x = explode('.', $range);
-            while (count($x)<4) {
-                $x[] = '0';
-            }
-            list($a, $b, $c, $d) = $x;
-            $range = sprintf("%u.%u.%u.%u", empty($a)?'0':$a, empty($b)?'0':$b, empty($c)?'0':$c, empty($d)?'0':$d);
-            $range_dec = ip2long($range);
-            $ip_dec = ip2long($ip);
-
-            # Strategy 1 - Create the netmask with 'netmask' 1s and then fill it to 32 with 0s
-            #$netmask_dec = bindec(str_pad('', $netmask, '1') . str_pad('', 32-$netmask, '0'));
-
-            # Strategy 2 - Use math to create it
-            $wildcard_dec = pow(2, (32-$netmask)) - 1;
-            $netmask_dec = ~ $wildcard_dec;
-
-            return (($ip_dec & $netmask_dec) == ($range_dec & $netmask_dec));
         }
-    } else {
-        // range might be 255.255.*.* or 1.2.3.0-1.2.3.255
-    if (strpos($range, '*') !==false) { // a.b.*.* format
+        // $netmask is a CIDR size block
+        // fix the range argument
+        $x = explode('.', $range);
+        while (count($x) < 4) {
+            $x[] = '0';
+        }
+        list($a, $b, $c, $d) = $x;
+        $range               = sprintf('%u.%u.%u.%u', empty($a)?'0':$a, empty($b)?'0':$b, empty($c)?'0':$c, empty($d)?'0':$d);
+        $range_dec           = ip2long($range);
+        $ip_dec              = ip2long($ip);
+
+        # Strategy 1 - Create the netmask with 'netmask' 1s and then fill it to 32 with 0s
+        #$netmask_dec = bindec(str_pad('', $netmask, '1') . str_pad('', 32-$netmask, '0'));
+
+        # Strategy 2 - Use math to create it
+        $wildcard_dec = pow(2, (32 - $netmask)) - 1;
+        $netmask_dec  = ~ $wildcard_dec;
+
+        return (($ip_dec & $netmask_dec) == ($range_dec & $netmask_dec));
+    }
+    // range might be 255.255.*.* or 1.2.3.0-1.2.3.255
+    if (strpos($range, '*') !== false) { // a.b.*.* format
       // Just convert to A-B format by setting * to 0 for A and 255 for B
-      $lower = str_replace('*', '0', $range);
+      $lower   = str_replace('*', '0', $range);
         $upper = str_replace('*', '255', $range);
         $range = "$lower-$upper";
     }
 
-        if (strpos($range, '-')!==false) { // A-B format
-            list($lower, $upper) = explode('-', $range, 2);
-            $lower_dec = (float) sprintf("%u", ip2long($lower));
-            $upper_dec = (float) sprintf("%u", ip2long($upper));
-            $ip_dec = (float) sprintf("%u", ip2long($ip));
+    if (strpos($range, '-') !== false) { // A-B format
+        list($lower, $upper) = explode('-', $range, 2);
+        $lower_dec           = (float) sprintf('%u', ip2long($lower));
+        $upper_dec           = (float) sprintf('%u', ip2long($upper));
+        $ip_dec              = (float) sprintf('%u', ip2long($ip));
 
-            return (($ip_dec>=$lower_dec) && ($ip_dec<=$upper_dec));
-        }
-
-        echo 'Range argument is not in 1.2.3.4/24 or 1.2.3.4/255.255.255.0 format';
-
-        return false;
+        return (($ip_dec >= $lower_dec) && ($ip_dec <= $upper_dec));
     }
+
+    echo 'Range argument is not in 1.2.3.4/24 or 1.2.3.4/255.255.255.0 format';
+
+    return false;
 }
 /**
  * Flatten multidimensional array
@@ -296,7 +312,7 @@ function ip_in_range($ip, $range)
  */
 function array_flatten(array $array)
 {
-    $return = array();
+    $return = [];
     array_walk_recursive($array, function ($a) use (&$return) {
         $return[] = $a;
     });
@@ -373,7 +389,7 @@ function adjust_color_brightness($hex, $steps)
     // Steps should be between -255 and 255. Negative = darker, positive = lighter
     $steps = max(-255, min(255, $steps));
     // Normalize into a six character long hex string
-    $hex   = str_replace('#', '', $hex);
+    $hex = str_replace('#', '', $hex);
     if (strlen($hex) == 3) {
         $hex = str_repeat(substr($hex, 0, 1), 2) . str_repeat(substr($hex, 1, 1), 2) . str_repeat(substr($hex, 2, 1), 2);
     }
@@ -397,13 +413,13 @@ function hex2rgb($color)
 {
     $color = str_replace('#', '', $color);
     if (strlen($color) != 6) {
-        return array(
+        return [
             0,
             0,
             0,
-        );
+        ];
     }
-    $rgb = array();
+    $rgb = [];
     for ($x = 0; $x < 3; $x++) {
         $rgb[$x] = hexdec(substr($color, (2 * $x), 2));
     }
@@ -419,7 +435,7 @@ function hex2rgb($color)
 function strip_html_tags($str, $allowed = '')
 {
     $str = preg_replace('/(<|>)\1{2}/is', '', $str);
-    $str = preg_replace(array(
+    $str = preg_replace([
         // Remove invisible content
         '@<head[^>]*?>.*?</head>@siu',
         '@<style[^>]*?>.*?</style>@siu',
@@ -438,7 +454,7 @@ function strip_html_tags($str, $allowed = '')
         '@</?((form)|(button)|(fieldset)|(legend)|(input))@iu',
         '@</?((label)|(select)|(optgroup)|(option)|(textarea))@iu',
         '@</?((frameset)|(frame)|(iframe))@iu',
-    ), array(
+    ], [
         ' ',
         ' ',
         ' ',
@@ -456,13 +472,17 @@ function strip_html_tags($str, $allowed = '')
         "\n\$0",
         "\n\$0",
         "\n\$0",
-    ), $str);
+    ], $str);
 
     $str = strip_tags($str, $allowed);
 
     // Remove on events from attributes
-    $re = '/\bon[a-z]+\s*=\s*(?:([\'"]).+?\1|(?:\S+?\(.*?\)(?=[\s>])))/i';
+    $re  = '/\bon[a-z]+\s*=\s*(?:([\'"]).+?\1|(?:\S+?\(.*?\)(?=[\s>])))/i';
     $str = preg_replace($re, '', $str);
+
+    $str = trim($str);
+    $str = trim($str,'&nbsp;');
+    $str = trim($str);
 
     return $str;
 }
@@ -479,12 +499,12 @@ function _make_url_clickable_cb($matches)
         return $matches[0];
     }
     // removed trailing [.,;:] from URL
-    if (in_array(substr($url, -1), array(
+    if (in_array(substr($url, -1), [
         '.',
         ',',
         ';',
         ':',
-    )) === true) {
+    ]) === true) {
         $ret = substr($url, -1);
         $url = substr($url, 0, strlen($url) - 1);
     }
@@ -503,12 +523,12 @@ function _make_web_ftp_clickable_cb($matches)
         return $matches[0];
     }
     // removed trailing [,;:] from URL
-    if (in_array(substr($dest, -1), array(
+    if (in_array(substr($dest, -1), [
         '.',
         ',',
         ';',
         ':',
-    )) === true) {
+    ]) === true) {
         $ret  = substr($dest, -1);
         $dest = substr($dest, 0, strlen($dest) - 1);
     }
@@ -537,7 +557,7 @@ function check_for_links($ret)
     $ret = preg_replace_callback('#([\s>])((www|ftp)\.[\w\\x80-\\xff\#$%&~/.\-;:=,?@\[\]+]*)#is', '_make_web_ftp_clickable_cb', $ret);
     $ret = preg_replace_callback('#([\s>])([.0-9a-z_+-]+)@(([0-9a-z-]+\.)+[0-9a-z]{2,})#i', '_make_email_clickable_cb', $ret);
     // this one is not in an array because we need it to run last, for cleanup of accidental links within links
-    $ret = preg_replace("#(<a( [^>]+?>|>))<a [^>]+?>([^>]+?)</a></a>#i", "$1$3</a>", $ret);
+    $ret = preg_replace('#(<a( [^>]+?>|>))<a [^>]+?>([^>]+?)</a></a>#i', '$1$3</a>', $ret);
     $ret = trim($ret);
 
     return $ret;
@@ -568,50 +588,49 @@ function time_ago($time_ago)
     elseif ($minutes <= 60) {
         if ($minutes == 1) {
             return _l('time_ago_minute');
-        } else {
-            return _l('time_ago_minutes', $minutes);
         }
+
+        return _l('time_ago_minutes', $minutes);
     }
     //Hours
     elseif ($hours <= 24) {
         if ($hours == 1) {
             return _l('time_ago_hour');
-        } else {
-            return _l('time_ago_hours', $hours);
         }
+
+        return _l('time_ago_hours', $hours);
     }
     //Days
     elseif ($days <= 7) {
         if ($days == 1) {
             return _l('time_ago_yesterday');
-        } else {
-            return _l('time_ago_days', $days);
         }
+
+        return _l('time_ago_days', $days);
     }
     //Weeks
     elseif ($weeks <= 4.3) {
         if ($weeks == 1) {
             return _l('time_ago_week');
-        } else {
-            return _l('time_ago_weeks', $weeks);
         }
+
+        return _l('time_ago_weeks', $weeks);
     }
     //Months
     elseif ($months <= 12) {
         if ($months == 1) {
             return _l('time_ago_month');
-        } else {
-            return _l('time_ago_months', $months);
         }
+
+        return _l('time_ago_months', $months);
     }
     //Years
-    else {
-        if ($years == 1) {
-            return _l('time_ago_year');
-        } else {
-            return _l('time_ago_years', $years);
-        }
+
+    if ($years == 1) {
+        return _l('time_ago_year');
     }
+
+    return _l('time_ago_years', $years);
 }
 
 /**
@@ -620,13 +639,13 @@ function time_ago($time_ago)
  * @param  array  $options Additional Options
  * @return mixed
  */
-function slug_it($str, $options = array())
+function slug_it($str, $options = [])
 {
     if (version_compare(phpversion(), '5.5.9', '<')) {
         return slug_it_old($str, $options);
     }
 
-    $defaults = array();
+    $defaults = [];
 
     // Deprecated
     if (isset($options['delimiter'])) {
@@ -645,9 +664,9 @@ function slug_it($str, $options = array())
     $m = new Cocur\Slugify\RuleProvider\DefaultRuleProvider();
 
     $lang = get_option('active_language');
-    $set = $lang == 'english' ? 'default' : $lang;
+    $set  = $lang == 'english' ? 'default' : $lang;
 
-    $default_active_rule_sets = array(
+    $default_active_rule_sets = [
             'default',
             'azerbaijani',
             'burmese',
@@ -665,8 +684,8 @@ function slug_it($str, $options = array())
             'polish',
             'german',
             'russian',
-            'romanian'
-    );
+            'romanian',
+    ];
 
     // Set for portuguese in Slugify is named portuguese-brazil
     if ($set == 'portuguese_br' || $set == 'portuguese') {
@@ -677,7 +696,7 @@ function slug_it($str, $options = array())
         $r = @$m->getRules($set);
         // Check if set exist
         if ($r) {
-            $defaults['rulesets'] = array($set);
+            $defaults['rulesets'] = [$set];
         }
     }
 
@@ -686,4 +705,31 @@ function slug_it($str, $options = array())
     $slugify = new Cocur\Slugify\Slugify($options);
 
     return $slugify->slugify($str);
+}
+
+function similarity($str1, $str2) {
+    $len1 = strlen($str1);
+    $len2 = strlen($str2);
+
+    $max = max($len1, $len2);
+    $similarity = $i = $j = 0;
+
+    while (($i < $len1) && isset($str2[$j])) {
+        if ($str1[$i] == $str2[$j]) {
+            $similarity++;
+            $i++;
+            $j++;
+        } elseif ($len1 < $len2) {
+            $len1++;
+            $j++;
+        } elseif ($len1 > $len2) {
+            $i++;
+            $len1--;
+        } else {
+            $i++;
+            $j++;
+        }
+    }
+
+    return round($similarity / $max, 2);
 }

@@ -43,7 +43,11 @@
     <?php } ?>
     $('select[name="discount_type"]').selectpicker('val','<?php echo $proposal->discount_type; ?>');
     $('input[name="discount_percent"]').val('<?php echo $proposal->discount_percent; ?>');
+    $('input[name="discount_total"]').val('<?php echo $proposal->discount_total; ?>');
+    <?php if(is_sale_discount($proposal,'fixed')) { ?>
+        $('.discount-total-type.discount-type-fixed').click();
+    <?php } ?>
     $('input[name="adjustment"]').val('<?php echo $proposal->adjustment; ?>');
-    $('input[name="show_quantity_as"]').val('<?php echo $proposal->show_quantity_as; ?>').prop('checked',true).change();
+    $('input[name="show_quantity_as"][value="<?php echo $proposal->show_quantity_as; ?>"]').prop('checked',true).change();
     $('#convert_to_invoice #clientid').change();
 </script>

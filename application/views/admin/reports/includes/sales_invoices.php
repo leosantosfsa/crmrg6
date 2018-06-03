@@ -3,8 +3,7 @@
          <div class="col-md-4">
             <div class="form-group">
                <label for="invoice_status"><?php echo _l('report_invoice_status'); ?></label>
-               <select name="invoice_status" class="selectpicker" multiple data-width="100%">
-                  <option value="" selected><?php echo _l('invoice_status_report_all'); ?></option>
+               <select name="invoice_status" class="selectpicker" multiple data-width="100%" data-none-selected-text="<?php echo _l('invoice_status_report_all'); ?>">
                   <?php foreach($invoice_statuses as $status){ if($status ==5){continue;} ?>
                   <option value="<?php echo $status; ?>"><?php echo format_invoice_status($status,'',false) ?></option>
                   <?php } ?>
@@ -15,8 +14,7 @@
          <div class="col-md-4">
             <div class="form-group">
                <label for="sale_agent_invoices"><?php echo _l('sale_agent_string'); ?></label>
-               <select name="sale_agent_invoices" class="selectpicker" multiple data-width="100%">
-                  <option value="" selected><?php echo _l('invoice_status_report_all'); ?></option>
+               <select name="sale_agent_invoices" class="selectpicker" multiple data-width="100%" data-none-selected-text="<?php echo _l('invoice_status_report_all'); ?>">
                   <?php foreach($invoices_sale_agents as $agent){ ?>
                   <option value="<?php echo $agent['sale_agent']; ?>"><?php echo get_staff_full_name($agent['sale_agent']); ?></option>
                   <?php } ?>

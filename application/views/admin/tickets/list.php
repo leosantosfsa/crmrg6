@@ -48,8 +48,9 @@
             </ul>
           </div>
         </div>
-        <div class="panel_s weekly-ticket-opening" style="display:none;">
+        <div class="panel_s weekly-ticket-opening no-shadow" style="display:none;">
           <hr class="hr-panel-heading" />
+          <div class="clearfix"></div>
           <div class="panel-heading-bg">
             <?php echo _l('home_weekend_ticket_opening_statistics'); ?>
           </div>
@@ -64,7 +65,7 @@
         <?php $this->load->view('admin/tickets/summary'); ?>
         <a href="#" data-toggle="modal" data-target="#tickets_bulk_actions" class="bulk-actions-btn table-btn hide" data-table=".table-tickets"><?php echo _l('bulk_actions'); ?></a>
         <div class="clearfix"></div>
-        <?php echo AdminTicketsTableStructure('',true); ?>
+        <?php echo AdminTicketsTableStructure('', true); ?>
       </div>
     </div>
   </div>

@@ -44,7 +44,7 @@
                                 }
                             }
                             ?>
-                          <div class="select-placeholder">
+                          <div class="select-placeholder form-group">
                                 <label for="fieldto"><?php echo _l('custom_field_add_edit_belongs_top'); ?></label>
                             <select name="fieldto" id="fieldto" class="selectpicker" data-width="100%" <?php echo $disable; ?> data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                 <option value=""></option>
@@ -65,10 +65,10 @@
                                 <option value="tickets" <?php if(isset($custom_field) && $custom_field->fieldto == 'tickets'){echo 'selected';} ?>><?php echo _l('tickets'); ?></option>
                             </select>
                           </div>
-                            <div class="clearfix mbot15"></div>
+                            <div class="clearfix"></div>
                             <?php $value = (isset($custom_field) ? $custom_field->name : ''); ?>
                             <?php echo render_input('name','custom_field_name',$value); ?>
-                           <div class="select-placeholder">
+                           <div class="select-placeholder form-group">
                                 <label for="type"><?php echo _l('custom_field_add_edit_type'); ?></label>
                             <select name="type" id="type" class="selectpicker"<?php if(isset($custom_field) && total_rows('tblcustomfieldsvalues',array('fieldid'=>$custom_field->id,'fieldto'=>$custom_field->fieldto)) > 0){echo ' disabled';} ?> data-width="100%" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" data-hide-disabled="true">
                                 <option value=""></option>
@@ -84,7 +84,7 @@
                                 <option value="link" <?php if(isset($custom_field) && $custom_field->type == 'link'){echo 'selected';} ?><?php if(isset($custom_field) && $custom_field->fieldto == 'items'){echo 'disabled';} ?>>Hyperlink</option>
                             </select>
                            </div>
-                            <div class="clearfix mbot15"></div>
+                            <div class="clearfix"></div>
                             <div id="options_wrapper" class="<?php if(!isset($custom_field) || isset($custom_field) && $custom_field->type != 'select' && $custom_field->type != 'checkbox' && $custom_field->type != 'multiselect'){echo 'hide';} ?>">
                                 <span class="pull-left fa fa-question-circle" data-toggle="tooltip" title="<?php echo _l('custom_field_add_edit_options_tooltip'); ?>"></span>
                                 <?php $value = (isset($custom_field) ? $custom_field->options : ''); ?>
@@ -119,7 +119,7 @@
                                 <input type="checkbox" name="required" id="required" <?php if(isset($custom_field) && $custom_field->required == 1){echo 'checked';} ?> <?php if(isset($custom_field) && $custom_field->fieldto == 'company'){echo 'disabled';} ?>>
                                 <label for="required"><?php echo _l('custom_field_required'); ?></label>
                             </div>
-                            <p class="bold text-info"><?php echo _l('custom_field_visibility'); ?></p>
+                            <p class="bold"><?php echo _l('custom_field_visibility'); ?></p>
                             <div class="checkbox checkbox-primary">
                                 <input type="checkbox" name="show_on_table" id="show_on_table" <?php if(isset($custom_field) && $custom_field->show_on_table == 1){echo 'checked';} ?> <?php if(isset($custom_field) && ($custom_field->fieldto == 'company' || $custom_field->fieldto == 'items')){echo 'disabled';} ?>>
                                 <label for="show_on_table"><?php echo _l('custom_field_show_on_table'); ?></label>
@@ -166,7 +166,7 @@ $(function () {
         }
     });
     $('form').on('submit', function () {
-        $('#fieldto,#type').removeAttr('disabled');
+        $('#fieldto,#type').prop('disabled', false);
         return true;
     });
     $('select[name="fieldto"]').on('change', function () {

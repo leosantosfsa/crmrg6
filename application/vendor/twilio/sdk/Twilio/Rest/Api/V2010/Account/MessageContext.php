@@ -37,7 +37,7 @@ class MessageContext extends InstanceContext {
         parent::__construct($version);
 
         // Path Solution
-        $this->solution = array('accountSid' => $accountSid, 'sid' => $sid);
+        $this->solution = array('accountSid' => $accountSid, 'sid' => $sid, );
 
         $this->uri = '/Accounts/' . rawurlencode($accountSid) . '/Messages/' . rawurlencode($sid) . '.json';
     }
@@ -76,11 +76,12 @@ class MessageContext extends InstanceContext {
     /**
      * Update the MessageInstance
      * 
-     * @param string $body The body
+     * @param string $body The text of the message you want to send, limited to
+     *                     1600 characters.
      * @return MessageInstance Updated MessageInstance
      */
     public function update($body) {
-        $data = Values::of(array('Body' => $body));
+        $data = Values::of(array('Body' => $body, ));
 
         $payload = $this->version->update(
             'POST',
@@ -104,7 +105,11 @@ class MessageContext extends InstanceContext {
      */
     protected function getMedia() {
         if (!$this->_media) {
-            $this->_media = new MediaList($this->version, $this->solution['accountSid'], $this->solution['sid']);
+            $this->_media = new MediaList(
+                $this->version,
+                $this->solution['accountSid'],
+                $this->solution['sid']
+            );
         }
 
         return $this->_media;

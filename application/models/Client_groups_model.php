@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Client_groups_model extends CRM_Model
@@ -62,9 +63,9 @@ class Client_groups_model extends CRM_Model
     public function edit($data)
     {
         $this->db->where('id', $data['id']);
-        $this->db->update('tblcustomersgroups', array(
+        $this->db->update('tblcustomersgroups', [
             'name' => $data['name'],
-        ));
+        ]);
         if ($this->db->affected_rows() > 0) {
             logActivity('Customer Group Updated [ID:' . $data['id'] . ']');
 
@@ -135,10 +136,10 @@ class Client_groups_model extends CRM_Model
                         if (empty($group)) {
                             continue;
                         }
-                        $this->db->insert('tblcustomergroups_in', array(
+                        $this->db->insert('tblcustomergroups_in', [
                             'customer_id' => $id,
-                            'groupid' => $group,
-                        ));
+                            'groupid'     => $group,
+                        ]);
                         if ($this->db->affected_rows() > 0) {
                             $affectedRows++;
                         }
@@ -151,10 +152,10 @@ class Client_groups_model extends CRM_Model
                     if (empty($group)) {
                         continue;
                     }
-                    $this->db->insert('tblcustomergroups_in', array(
+                    $this->db->insert('tblcustomergroups_in', [
                         'customer_id' => $id,
-                        'groupid' => $group,
-                    ));
+                        'groupid'     => $group,
+                    ]);
                     if ($this->db->affected_rows() > 0) {
                         $affectedRows++;
                     }

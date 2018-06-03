@@ -10,213 +10,213 @@
 class Imap
 {
     private static $charsetAliases = [
-        '5601' => 'EUC-KR',
-        '646' => 'us-ascii',
-        '850' => 'IBM850',
-        '852' => 'IBM852',
-        '855' => 'IBM855',
-        '857' => 'IBM857',
-        '862' => 'IBM862',
-        '864' => 'IBM864',
-        '864i' => 'IBM864i',
-        '866' => 'IBM866',
-        'ansi-1251' => 'windows-1251',
-        'ansi_x3.4-1968' => 'us-ascii',
-        'arabic' => 'ISO-8859-6',
-        'ascii' => 'us-ascii',
-        'asmo-708' => 'ISO-8859-6',
-        'chinese' => 'GB2312',
-        'cns11643' => 'x-euc-tw',
-        'cp-866' => 'IBM866',
-        'cp1250' => 'windows-1250',
-        'cp1251' => 'windows-1251',
-        'cp1252' => 'windows-1252',
-        'cp1253' => 'windows-1253',
-        'cp1254' => 'windows-1254',
-        'cp1255' => 'windows-1255',
-        'cp1256' => 'windows-1256',
-        'cp1257' => 'windows-1257',
-        'cp1258' => 'windows-1258',
-        'cp819' => 'ISO-8859-1',
-        'cp850' => 'IBM850',
-        'cp852' => 'IBM852',
-        'cp855' => 'IBM855',
-        'cp857' => 'IBM857',
-        'cp862' => 'IBM862',
-        'cp864' => 'IBM864',
-        'cp864i' => 'IBM864i',
-        'cp866' => 'IBM866',
-        'cp932' => 'Shift_JIS',
-        'csIBM850' => 'IBM850',
-        'csIBM852' => 'IBM852',
-        'csIBM855' => 'IBM855',
-        'csIBM857' => 'IBM857',
-        'csIBM862' => 'IBM862',
-        'csIBM864' => 'IBM864',
-        'csIBM866' => 'IBM866',
-        'csMacintosh' => 'x-mac-roman',
-        'csbig5' => 'Big5',
-        'cseucjpkdfmtjapanese' => 'EUC-JP',
-        'csgb2312' => 'GB2312',
-        'csibm864i' => 'IBM864i',
-        'csiso103t618bit' => 'T.61-8bit',
-        'csiso111ecmacyrillic' => 'ISO-IR-111',
-        'csiso2022jp' => 'ISO-2022-JP',
-        'csiso2022jp2' => 'ISO-2022-JP',
-        'csiso2022kr' => 'ISO-2022-KR',
-        'csiso58gb231280' => 'GB2312',
-        'csiso88596e' => 'ISO-8859-6-E',
-        'csiso88596i' => 'ISO-8859-6-I',
-        'csiso88598e' => 'ISO-8859-8-E',
-        'csiso88598i' => 'ISO-8859-8-I',
-        'csisolatin1' => 'ISO-8859-1',
-        'csisolatin2' => 'ISO-8859-2',
-        'csisolatin3' => 'ISO-8859-3',
-        'csisolatin4' => 'ISO-8859-4',
-        'csisolatin5' => 'ISO-8859-9',
-        'csisolatin6' => 'ISO-8859-10',
-        'csisolatinarabic' => 'ISO-8859-6',
-        'csisolatincyrillic' => 'ISO-8859-5',
-        'csisolatingreek' => 'ISO-8859-7',
-        'csisolatinhebrew' => 'ISO-8859-8',
-        'csksc56011987' => 'EUC-KR',
-        'csshiftjis' => 'Shift_JIS',
-        'csueckr' => 'EUC-KR',
-        'csunicode' => 'UTF-16BE',
-        'csunicode11' => 'UTF-16BE',
-        'csunicode11utf7' => 'UTF-7',
-        'csunicodeascii' => 'UTF-16BE',
-        'csunicodelatin1' => 'UTF-16BE',
-        'csviqr' => 'VIQR',
-        'csviscii' => 'VISCII',
-        'cyrillic' => 'ISO-8859-5',
-        'ecma-114' => 'ISO-8859-6',
-        'ecma-118' => 'ISO-8859-7',
-        'ecma-cyrillic' => 'ISO-IR-111',
-        'elot_928' => 'ISO-8859-7',
-        'gb_2312' => 'GB2312',
-        'gb_2312-80' => 'GB2312',
-        'gbk' => 'x-gbk',
-        'greek' => 'ISO-8859-7',
-        'greek8' => 'ISO-8859-7',
-        'hebrew' => 'ISO-8859-8',
-        'ibm-864' => 'IBM864',
-        'ibm-864i' => 'IBM864i',
-        'ibm819' => 'ISO-8859-1',
-        'ibm874' => 'windows-874',
-        'iso-10646' => 'UTF-16BE',
-        'iso-10646-j-1' => 'UTF-16BE',
-        'iso-10646-ucs-2' => 'UTF-16BE',
-        'iso-10646-ucs-4' => 'UTF-32BE',
-        'iso-10646-ucs-basic' => 'UTF-16BE',
+        '5601'                     => 'EUC-KR',
+        '646'                      => 'us-ascii',
+        '850'                      => 'IBM850',
+        '852'                      => 'IBM852',
+        '855'                      => 'IBM855',
+        '857'                      => 'IBM857',
+        '862'                      => 'IBM862',
+        '864'                      => 'IBM864',
+        '864i'                     => 'IBM864i',
+        '866'                      => 'IBM866',
+        'ansi-1251'                => 'windows-1251',
+        'ansi_x3.4-1968'           => 'us-ascii',
+        'arabic'                   => 'ISO-8859-6',
+        'ascii'                    => 'us-ascii',
+        'asmo-708'                 => 'ISO-8859-6',
+        'chinese'                  => 'GB2312',
+        'cns11643'                 => 'x-euc-tw',
+        'cp-866'                   => 'IBM866',
+        'cp1250'                   => 'windows-1250',
+        'cp1251'                   => 'windows-1251',
+        'cp1252'                   => 'windows-1252',
+        'cp1253'                   => 'windows-1253',
+        'cp1254'                   => 'windows-1254',
+        'cp1255'                   => 'windows-1255',
+        'cp1256'                   => 'windows-1256',
+        'cp1257'                   => 'windows-1257',
+        'cp1258'                   => 'windows-1258',
+        'cp819'                    => 'ISO-8859-1',
+        'cp850'                    => 'IBM850',
+        'cp852'                    => 'IBM852',
+        'cp855'                    => 'IBM855',
+        'cp857'                    => 'IBM857',
+        'cp862'                    => 'IBM862',
+        'cp864'                    => 'IBM864',
+        'cp864i'                   => 'IBM864i',
+        'cp866'                    => 'IBM866',
+        'cp932'                    => 'Shift_JIS',
+        'csIBM850'                 => 'IBM850',
+        'csIBM852'                 => 'IBM852',
+        'csIBM855'                 => 'IBM855',
+        'csIBM857'                 => 'IBM857',
+        'csIBM862'                 => 'IBM862',
+        'csIBM864'                 => 'IBM864',
+        'csIBM866'                 => 'IBM866',
+        'csMacintosh'              => 'x-mac-roman',
+        'csbig5'                   => 'Big5',
+        'cseucjpkdfmtjapanese'     => 'EUC-JP',
+        'csgb2312'                 => 'GB2312',
+        'csibm864i'                => 'IBM864i',
+        'csiso103t618bit'          => 'T.61-8bit',
+        'csiso111ecmacyrillic'     => 'ISO-IR-111',
+        'csiso2022jp'              => 'ISO-2022-JP',
+        'csiso2022jp2'             => 'ISO-2022-JP',
+        'csiso2022kr'              => 'ISO-2022-KR',
+        'csiso58gb231280'          => 'GB2312',
+        'csiso88596e'              => 'ISO-8859-6-E',
+        'csiso88596i'              => 'ISO-8859-6-I',
+        'csiso88598e'              => 'ISO-8859-8-E',
+        'csiso88598i'              => 'ISO-8859-8-I',
+        'csisolatin1'              => 'ISO-8859-1',
+        'csisolatin2'              => 'ISO-8859-2',
+        'csisolatin3'              => 'ISO-8859-3',
+        'csisolatin4'              => 'ISO-8859-4',
+        'csisolatin5'              => 'ISO-8859-9',
+        'csisolatin6'              => 'ISO-8859-10',
+        'csisolatinarabic'         => 'ISO-8859-6',
+        'csisolatincyrillic'       => 'ISO-8859-5',
+        'csisolatingreek'          => 'ISO-8859-7',
+        'csisolatinhebrew'         => 'ISO-8859-8',
+        'csksc56011987'            => 'EUC-KR',
+        'csshiftjis'               => 'Shift_JIS',
+        'csueckr'                  => 'EUC-KR',
+        'csunicode'                => 'UTF-16BE',
+        'csunicode11'              => 'UTF-16BE',
+        'csunicode11utf7'          => 'UTF-7',
+        'csunicodeascii'           => 'UTF-16BE',
+        'csunicodelatin1'          => 'UTF-16BE',
+        'csviqr'                   => 'VIQR',
+        'csviscii'                 => 'VISCII',
+        'cyrillic'                 => 'ISO-8859-5',
+        'ecma-114'                 => 'ISO-8859-6',
+        'ecma-118'                 => 'ISO-8859-7',
+        'ecma-cyrillic'            => 'ISO-IR-111',
+        'elot_928'                 => 'ISO-8859-7',
+        'gb_2312'                  => 'GB2312',
+        'gb_2312-80'               => 'GB2312',
+        'gbk'                      => 'x-gbk',
+        'greek'                    => 'ISO-8859-7',
+        'greek8'                   => 'ISO-8859-7',
+        'hebrew'                   => 'ISO-8859-8',
+        'ibm-864'                  => 'IBM864',
+        'ibm-864i'                 => 'IBM864i',
+        'ibm819'                   => 'ISO-8859-1',
+        'ibm874'                   => 'windows-874',
+        'iso-10646'                => 'UTF-16BE',
+        'iso-10646-j-1'            => 'UTF-16BE',
+        'iso-10646-ucs-2'          => 'UTF-16BE',
+        'iso-10646-ucs-4'          => 'UTF-32BE',
+        'iso-10646-ucs-basic'      => 'UTF-16BE',
         'iso-10646-unicode-latin1' => 'UTF-16BE',
-        'iso-2022-cn-ext' => 'ISO-2022-CN',
-        'iso-2022-jp-2' => 'ISO-2022-JP',
-        'iso-8859-8i' => 'ISO-8859-8-I',
-        'iso-ir-100' => 'ISO-8859-1',
-        'iso-ir-101' => 'ISO-8859-2',
-        'iso-ir-103' => 'T.61-8bit',
-        'iso-ir-109' => 'ISO-8859-3',
-        'iso-ir-110' => 'ISO-8859-4',
-        'iso-ir-126' => 'ISO-8859-7',
-        'iso-ir-127' => 'ISO-8859-6',
-        'iso-ir-138' => 'ISO-8859-8',
-        'iso-ir-144' => 'ISO-8859-5',
-        'iso-ir-148' => 'ISO-8859-9',
-        'iso-ir-149' => 'EUC-KR',
-        'iso-ir-157' => 'ISO-8859-10',
-        'iso-ir-58' => 'GB2312',
-        'iso8859-1' => 'ISO-8859-1',
-        'iso8859-10' => 'ISO-8859-10',
-        'iso8859-11' => 'ISO-8859-11',
-        'iso8859-13' => 'ISO-8859-13',
-        'iso8859-14' => 'ISO-8859-14',
-        'iso8859-15' => 'ISO-8859-15',
-        'iso8859-2' => 'ISO-8859-2',
-        'iso8859-3' => 'ISO-8859-3',
-        'iso8859-4' => 'ISO-8859-4',
-        'iso8859-5' => 'ISO-8859-5',
-        'iso8859-6' => 'ISO-8859-6',
-        'iso8859-7' => 'ISO-8859-7',
-        'iso8859-8' => 'ISO-8859-8',
-        'iso8859-9' => 'ISO-8859-9',
-        'iso88591' => 'ISO-8859-1',
-        'iso885910' => 'ISO-8859-10',
-        'iso885911' => 'ISO-8859-11',
-        'iso885912' => 'ISO-8859-12',
-        'iso885913' => 'ISO-8859-13',
-        'iso885914' => 'ISO-8859-14',
-        'iso885915' => 'ISO-8859-15',
-        'iso88592' => 'ISO-8859-2',
-        'iso88593' => 'ISO-8859-3',
-        'iso88594' => 'ISO-8859-4',
-        'iso88595' => 'ISO-8859-5',
-        'iso88596' => 'ISO-8859-6',
-        'iso88597' => 'ISO-8859-7',
-        'iso88598' => 'ISO-8859-8',
-        'iso88599' => 'ISO-8859-9',
-        'iso_8859-1' => 'ISO-8859-1',
-        'iso_8859-15' => 'ISO-8859-15',
-        'iso_8859-2' => 'ISO-8859-2',
-        'iso_8859-3' => 'ISO-8859-3',
-        'iso_8859-4' => 'ISO-8859-4',
-        'iso_8859-5' => 'ISO-8859-5',
-        'iso_8859-6' => 'ISO-8859-6',
-        'iso_8859-7' => 'ISO-8859-7',
-        'iso_8859-8' => 'ISO-8859-8',
-        'iso_8859-9' => 'ISO-8859-9',
-        'korean' => 'EUC-KR',
-        'ks_c_5601-1987' => 'EUC-KR',
-        'ks_c_5601-1989' => 'EUC-KR',
-        'ksc5601' => 'EUC-KR',
-        'ksc_5601' => 'EUC-KR',
-        'l1' => 'ISO-8859-1',
-        'l2' => 'ISO-8859-2',
-        'l3' => 'ISO-8859-3',
-        'l4' => 'ISO-8859-4',
-        'l5' => 'ISO-8859-9',
-        'l6' => 'ISO-8859-10',
-        'latin1' => 'ISO-8859-1',
-        'latin2' => 'ISO-8859-2',
-        'latin3' => 'ISO-8859-3',
-        'latin4' => 'ISO-8859-4',
-        'latin5' => 'ISO-8859-9',
-        'latin6' => 'ISO-8859-10',
-        'mac' => 'x-mac-roman',
-        'macintosh' => 'x-mac-roman',
-        'ms_kanji' => 'Shift_JIS',
-        'shift-jis' => 'Shift_JIS',
-        'sun_eu_greek' => 'ISO-8859-7',
-        't.61' => 'T.61-8bit',
-        'tis620' => 'TIS-620',
-        'unicode-1-1-utf-7' => 'UTF-7',
-        'unicode-1-1-utf-8' => 'UTF-8',
-        'unicode-2-0-utf-7' => 'UTF-7',
-        'visual' => 'ISO-8859-8',
-        'windows-31j' => 'Shift_JIS',
-        'x-cp1250' => 'windows-1250',
-        'x-cp1251' => 'windows-1251',
-        'x-cp1252' => 'windows-1252',
-        'x-cp1253' => 'windows-1253',
-        'x-cp1254' => 'windows-1254',
-        'x-cp1255' => 'windows-1255',
-        'x-cp1256' => 'windows-1256',
-        'x-cp1257' => 'windows-1257',
-        'x-cp1258' => 'windows-1258',
-        'x-euc-jp' => 'EUC-JP',
-        'x-iso-10646-ucs-2-be' => 'UTF-16BE',
-        'x-iso-10646-ucs-2-le' => 'UTF-16LE',
-        'x-iso-10646-ucs-4-be' => 'UTF-32BE',
-        'x-iso-10646-ucs-4-le' => 'UTF-32LE',
-        'x-sjis' => 'Shift_JIS',
-        'x-unicode-2-0-utf-7' => 'UTF-7',
-        'x-x-big5' => 'Big5',
-        'zh_cn.euc' => 'GB2312',
-        'zh_tw-big5' => 'Big5',
-        'zh_tw-euc' => 'x-euc-tw',
+        'iso-2022-cn-ext'          => 'ISO-2022-CN',
+        'iso-2022-jp-2'            => 'ISO-2022-JP',
+        'iso-8859-8i'              => 'ISO-8859-8-I',
+        'iso-ir-100'               => 'ISO-8859-1',
+        'iso-ir-101'               => 'ISO-8859-2',
+        'iso-ir-103'               => 'T.61-8bit',
+        'iso-ir-109'               => 'ISO-8859-3',
+        'iso-ir-110'               => 'ISO-8859-4',
+        'iso-ir-126'               => 'ISO-8859-7',
+        'iso-ir-127'               => 'ISO-8859-6',
+        'iso-ir-138'               => 'ISO-8859-8',
+        'iso-ir-144'               => 'ISO-8859-5',
+        'iso-ir-148'               => 'ISO-8859-9',
+        'iso-ir-149'               => 'EUC-KR',
+        'iso-ir-157'               => 'ISO-8859-10',
+        'iso-ir-58'                => 'GB2312',
+        'iso8859-1'                => 'ISO-8859-1',
+        'iso8859-10'               => 'ISO-8859-10',
+        'iso8859-11'               => 'ISO-8859-11',
+        'iso8859-13'               => 'ISO-8859-13',
+        'iso8859-14'               => 'ISO-8859-14',
+        'iso8859-15'               => 'ISO-8859-15',
+        'iso8859-2'                => 'ISO-8859-2',
+        'iso8859-3'                => 'ISO-8859-3',
+        'iso8859-4'                => 'ISO-8859-4',
+        'iso8859-5'                => 'ISO-8859-5',
+        'iso8859-6'                => 'ISO-8859-6',
+        'iso8859-7'                => 'ISO-8859-7',
+        'iso8859-8'                => 'ISO-8859-8',
+        'iso8859-9'                => 'ISO-8859-9',
+        'iso88591'                 => 'ISO-8859-1',
+        'iso885910'                => 'ISO-8859-10',
+        'iso885911'                => 'ISO-8859-11',
+        'iso885912'                => 'ISO-8859-12',
+        'iso885913'                => 'ISO-8859-13',
+        'iso885914'                => 'ISO-8859-14',
+        'iso885915'                => 'ISO-8859-15',
+        'iso88592'                 => 'ISO-8859-2',
+        'iso88593'                 => 'ISO-8859-3',
+        'iso88594'                 => 'ISO-8859-4',
+        'iso88595'                 => 'ISO-8859-5',
+        'iso88596'                 => 'ISO-8859-6',
+        'iso88597'                 => 'ISO-8859-7',
+        'iso88598'                 => 'ISO-8859-8',
+        'iso88599'                 => 'ISO-8859-9',
+        'iso_8859-1'               => 'ISO-8859-1',
+        'iso_8859-15'              => 'ISO-8859-15',
+        'iso_8859-2'               => 'ISO-8859-2',
+        'iso_8859-3'               => 'ISO-8859-3',
+        'iso_8859-4'               => 'ISO-8859-4',
+        'iso_8859-5'               => 'ISO-8859-5',
+        'iso_8859-6'               => 'ISO-8859-6',
+        'iso_8859-7'               => 'ISO-8859-7',
+        'iso_8859-8'               => 'ISO-8859-8',
+        'iso_8859-9'               => 'ISO-8859-9',
+        'korean'                   => 'EUC-KR',
+        'ks_c_5601-1987'           => 'EUC-KR',
+        'ks_c_5601-1989'           => 'EUC-KR',
+        'ksc5601'                  => 'EUC-KR',
+        'ksc_5601'                 => 'EUC-KR',
+        'l1'                       => 'ISO-8859-1',
+        'l2'                       => 'ISO-8859-2',
+        'l3'                       => 'ISO-8859-3',
+        'l4'                       => 'ISO-8859-4',
+        'l5'                       => 'ISO-8859-9',
+        'l6'                       => 'ISO-8859-10',
+        'latin1'                   => 'ISO-8859-1',
+        'latin2'                   => 'ISO-8859-2',
+        'latin3'                   => 'ISO-8859-3',
+        'latin4'                   => 'ISO-8859-4',
+        'latin5'                   => 'ISO-8859-9',
+        'latin6'                   => 'ISO-8859-10',
+        'mac'                      => 'x-mac-roman',
+        'macintosh'                => 'x-mac-roman',
+        'ms_kanji'                 => 'Shift_JIS',
+        'shift-jis'                => 'Shift_JIS',
+        'sun_eu_greek'             => 'ISO-8859-7',
+        't.61'                     => 'T.61-8bit',
+        'tis620'                   => 'TIS-620',
+        'unicode-1-1-utf-7'        => 'UTF-7',
+        'unicode-1-1-utf-8'        => 'UTF-8',
+        'unicode-2-0-utf-7'        => 'UTF-7',
+        'visual'                   => 'ISO-8859-8',
+        'windows-31j'              => 'Shift_JIS',
+        'x-cp1250'                 => 'windows-1250',
+        'x-cp1251'                 => 'windows-1251',
+        'x-cp1252'                 => 'windows-1252',
+        'x-cp1253'                 => 'windows-1253',
+        'x-cp1254'                 => 'windows-1254',
+        'x-cp1255'                 => 'windows-1255',
+        'x-cp1256'                 => 'windows-1256',
+        'x-cp1257'                 => 'windows-1257',
+        'x-cp1258'                 => 'windows-1258',
+        'x-euc-jp'                 => 'EUC-JP',
+        'x-iso-10646-ucs-2-be'     => 'UTF-16BE',
+        'x-iso-10646-ucs-2-le'     => 'UTF-16LE',
+        'x-iso-10646-ucs-4-be'     => 'UTF-32BE',
+        'x-iso-10646-ucs-4-le'     => 'UTF-32LE',
+        'x-sjis'                   => 'Shift_JIS',
+        'x-unicode-2-0-utf-7'      => 'UTF-7',
+        'x-x-big5'                 => 'Big5',
+        'zh_cn.euc'                => 'GB2312',
+        'zh_tw-big5'               => 'Big5',
+        'zh_tw-euc'                => 'x-euc-tw',
     ];
 
-    private $attachments = array();
+    private $attachments = [];
 
     /**
      * imap connection
@@ -226,12 +226,12 @@ class Imap
     /**
      * mailbox url string
      */
-    protected $mailbox = "";
+    protected $mailbox = '';
 
     /**
      * currentfolder
      */
-    protected $folder = "Inbox";
+    protected $folder = 'Inbox';
 
     /**
      * initialize imap helper
@@ -245,13 +245,13 @@ class Imap
     public function __construct($mailbox, $username, $password, $encryption = false)
     {
         $enc = '';
-        if ($encryption!=null && isset($encryption) && $encryption=='ssl') {
+        if ($encryption != null && isset($encryption) && $encryption == 'ssl') {
             $enc = '/imap/ssl/novalidate-cert';
-        } elseif ($encryption!=null && isset($encryption) && $encryption=='tls') {
+        } elseif ($encryption != null && isset($encryption) && $encryption == 'tls') {
             $enc = '/imap/tls/novalidate-cert';
         }
-        $this->mailbox = "{" . $mailbox . $enc . "}";
-        $this->imap = @imap_open($this->mailbox, $username, $password);
+        $this->mailbox = '{' . $mailbox . $enc . '}';
+        $this->imap    = @imap_open($this->mailbox, $username, $password);
     }
 
     /**
@@ -259,7 +259,7 @@ class Imap
      */
     public function __destruct()
     {
-        if ($this->imap!==false) {
+        if ($this->imap !== false) {
             imap_close($this->imap);
         }
     }
@@ -307,9 +307,9 @@ class Imap
      */
     public function getFolders()
     {
-        $folders = imap_list($this->imap, $this->mailbox, "*");
+        $folders = imap_list($this->imap, $this->mailbox, '*');
 
-        return str_replace($this->mailbox, "", $folders);
+        return str_replace($this->mailbox, '', $folders);
     }
 
     /**
@@ -330,7 +330,7 @@ class Imap
     public function countUnreadMessages()
     {
         $result = imap_search($this->imap, 'UNSEEN');
-        if ($result===false) {
+        if ($result === false) {
             return 0;
         }
 
@@ -343,13 +343,13 @@ class Imap
      * @return array messages
      * @param $withbody without body
      */
-    public function getUnreadMessages($withbody=true)
+    public function getUnreadMessages($withbody = true)
     {
-        $emails = array();
+        $emails = [];
         $result = imap_search($this->imap, 'UNSEEN');
         if ($result) {
-            foreach ($result as $k=>$i) {
-                $emails[]= $this->formatMessage($i, $withbody);
+            foreach ($result as $k => $i) {
+                $emails[] = $this->formatMessage($i, $withbody);
             }
         }
 
@@ -364,10 +364,10 @@ class Imap
      */
     public function getMessages($withbody = true)
     {
-        $count = $this->countMessages();
-        $emails = array();
-        for ($i=1; $i<=$count; $i++) {
-            $emails[]= $this->formatMessage($i, $withbody);
+        $count  = $this->countMessages();
+        $emails = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $emails[] = $this->formatMessage($i, $withbody);
         }
         // sort emails descending by date
         // usort($emails, function($a, $b) {
@@ -401,7 +401,7 @@ class Imap
      * @param bool $withbody
      * @return array
      */
-    protected function formatMessage($id, $withbody=true)
+    protected function formatMessage($id, $withbody = true)
     {
         $header = imap_headerinfo($this->imap, $id);
         // fetch unique uid
@@ -417,37 +417,37 @@ class Imap
             }
         }
         $subject = $this->convertToUtf8($subject, $charset);
-        $email = array(
+        $email   = [
         'to'       => isset($header->to) ? $this->arrayToAddress($header->to) : '',
         'from'     => $this->toAddress($header->from[0]),
         'date'     => $header->date,
         'subject'  => $subject,
-        'uid'       => $uid,
-        'unread'   => strlen(trim($header->Unseen))>0,
-        'answered' => strlen(trim($header->Answered))>0,
-        'deleted' => strlen(trim($header->Deleted))>0,
-    );
+        'uid'      => $uid,
+        'unread'   => strlen(trim($header->Unseen)) > 0,
+        'answered' => strlen(trim($header->Answered)) > 0,
+        'deleted'  => strlen(trim($header->Deleted)) > 0,
+    ];
         if (isset($header->cc)) {
             $email['cc'] = $this->arrayToAddress($header->cc);
         }
         // get email body
-        if ($withbody===true) {
-            $body = $this->getBody($uid);
+        if ($withbody === true) {
+            $body          = $this->getBody($uid);
             $email['body'] = $body['body'];
             $email['html'] = $body['html'];
         }
         // get attachments
         $mailStruct = imap_fetchstructure($this->imap, $id);
 
-        $this->getAttachments($this->imap, $id, $uid, $mailStruct, "");
-        $attachments = isset($this->attachments[$uid]) ? $this->attachments2name($this->attachments[$uid]) : array();
+        $this->getAttachments($this->imap, $id, $uid, $mailStruct, '');
+        $attachments = isset($this->attachments[$uid]) ? $this->attachments2name($this->attachments[$uid]) : [];
 
-        if (count($attachments)>0) {
+        if (count($attachments) > 0) {
             foreach ($attachments as $val) {
-                foreach ($val as $k=>$t) {
+                foreach ($val as $k => $t) {
                     if ($k == 'name') {
                         $decodedName = imap_mime_header_decode($t);
-                        $t = $this->convertToUtf8($decodedName[0]->text, $decodedName[0]->charset);
+                        $t           = $this->convertToUtf8($decodedName[0]->text, $decodedName[0]->charset);
                     }
                     $arr[$k] = $t;
                 }
@@ -466,7 +466,7 @@ class Imap
      */
     public function deleteMessage($id)
     {
-        return $this->deleteMessages(array($id));
+        return $this->deleteMessages([$id]);
     }
 
     /**
@@ -477,7 +477,7 @@ class Imap
      */
     public function deleteMessages($ids)
     {
-        if (imap_mail_move($this->imap, implode(",", $ids), $this->getTrash(), CP_UID) == false) {
+        if (imap_mail_move($this->imap, implode(',', $ids), $this->getTrash(), CP_UID) == false) {
             return false;
         }
 
@@ -493,7 +493,7 @@ class Imap
      */
     public function moveMessage($id, $target)
     {
-        return $this->moveMessages(array($id), $target);
+        return $this->moveMessages([$id], $target);
     }
 
     /**
@@ -505,7 +505,7 @@ class Imap
      */
     public function moveMessages($ids, $target)
     {
-        if (imap_mail_move($this->imap, implode(",", $ids), $target, CP_UID)===false) {
+        if (imap_mail_move($this->imap, implode(',', $ids), $target, CP_UID) === false) {
             return false;
         }
 
@@ -522,15 +522,15 @@ class Imap
     public function setUnseenMessage($id, $seen = true)
     {
         $header = $this->getMessageHeader($id);
-        if ($header==false) {
+        if ($header == false) {
             return false;
         }
 
-        $flags = "";
-        $flags .= (strlen(trim($header->Answered))>0 ? "\\Answered " : '');
-        $flags .= (strlen(trim($header->Flagged))>0 ? "\\Flagged " : '');
-        $flags .= (strlen(trim($header->Deleted))>0 ? "\\Deleted " : '');
-        $flags .= (strlen(trim($header->Draft))>0 ? "\\Draft " : '');
+        $flags = '';
+        $flags .= (strlen(trim($header->Answered)) > 0 ? '\\Answered ' : '');
+        $flags .= (strlen(trim($header->Flagged)) > 0 ? '\\Flagged ' : '');
+        $flags .= (strlen(trim($header->Deleted)) > 0 ? '\\Deleted ' : '');
+        $flags .= (strlen(trim($header->Draft)) > 0 ? '\\Draft ' : '');
 
         $flags .= (($seen == true) ? '\\Seen ' : ' ');
         //echo "\n<br />".$id.": ".$flags;
@@ -549,7 +549,7 @@ class Imap
     public function getAttachment($uid, $index = 0)
     {
         // find message
-        $attachments = isset($this->attachments[$uid]) ? $this->attachments[$uid] : array();
+        $attachments = isset($this->attachments[$uid]) ? $this->attachments[$uid] : [];
 
         // find attachment
         if ($index > count($attachments)) {
@@ -567,22 +567,26 @@ class Imap
             case 0:
             case 1:
                 $message = imap_8bit($message);
+
                 break;
             case 2:
                 $message = imap_binary($message);
+
                 break;
             case 3:
                 $message = imap_base64($message);
+
                 break;
             case 4:
                 $message = quoted_printable_decode($message);
+
                 break;
         }
 
-        return array(
-                "name" => $attachment['name'],
-                "size" => $attachment['size'],
-                "content" => $message, );
+        return [
+                'name'    => $attachment['name'],
+                'size'    => $attachment['size'],
+                'content' => $message, ];
     }
 
     /**
@@ -633,21 +637,20 @@ class Imap
     public function purge()
     {
         // delete trash and spam
-        if ($this->folder==$this->getTrash() || strtolower($this->folder)=="spam") {
-            if (imap_delete($this->imap, '1:*')===false) {
+        if ($this->folder == $this->getTrash() || strtolower($this->folder) == 'spam') {
+            if (imap_delete($this->imap, '1:*') === false) {
                 return false;
             }
 
             return imap_expunge($this->imap);
 
             // move others to trash
-        } else {
-            if (imap_mail_move($this->imap, '1:*', $this->getTrash()) == false) {
-                return false;
-            }
-
-            return imap_expunge($this->imap);
         }
+        if (imap_mail_move($this->imap, '1:*', $this->getTrash()) == false) {
+            return false;
+        }
+
+        return imap_expunge($this->imap);
     }
 
     /**
@@ -658,12 +661,12 @@ class Imap
     public function getAllEmailAddresses()
     {
         $saveCurrentFolder = $this->folder;
-        $emails = array();
+        $emails            = [];
         foreach ($this->getFolders() as $folder) {
             $this->selectFolder($folder);
             foreach ($this->getMessages(false) as $message) {
                 $emails[] = $message['from'];
-                $emails = array_merge($emails, $message['to']);
+                $emails   = array_merge($emails, $message['to']);
                 if (isset($message['cc'])) {
                     $emails = array_merge($emails, $message['cc']);
                 }
@@ -683,7 +686,7 @@ class Imap
      */
     public function saveMessageInSent($header, $body)
     {
-        return imap_append($this->imap, $this->mailbox . $this->getSent(), $header . "\r\n" . $body . "\r\n", "\\Seen");
+        return imap_append($this->imap, $this->mailbox . $this->getSent(), $header . "\r\n" . $body . "\r\n", '\\Seen');
     }
 
     /**
@@ -691,7 +694,7 @@ class Imap
      */
     public function close()
     {
-        if ($this->imap!==false) {
+        if ($this->imap !== false) {
             imap_close($this->imap);
         }
     }
@@ -706,7 +709,7 @@ class Imap
     protected function getTrash()
     {
         foreach ($this->getFolders() as $folder) {
-            if (strtolower($folder)==="trash" || strtolower($folder)==="papierkorb" || strtolower($folder) === 'inbox.trash') {
+            if (strtolower($folder) === 'trash' || strtolower($folder) === 'papierkorb' || strtolower($folder) === 'inbox.trash') {
                 return $folder;
             }
         }
@@ -728,7 +731,7 @@ class Imap
     protected function getSent()
     {
         foreach ($this->getFolders() as $folder) {
-            if (strtolower($folder)==="sent" || strtolower($folder)==="gesendet") {
+            if (strtolower($folder) === 'sent' || strtolower($folder) === 'gesendet') {
                 return $folder;
             }
         }
@@ -748,9 +751,9 @@ class Imap
     protected function getMessageHeader($id)
     {
         $count = $this->countMessages();
-        for ($i=1; $i<=$count; $i++) {
+        for ($i = 1; $i <= $count; $i++) {
             $uid = imap_uid($this->imap, $i);
-            if ($uid==$id) {
+            if ($uid == $id) {
                 $header = imap_headerinfo($this->imap, $i);
 
                 return $header;
@@ -768,12 +771,12 @@ class Imap
      */
     protected function attachments2name($attachments)
     {
-        $names = array();
+        $names = [];
         foreach ($attachments as $attachment) {
-            $names[] = array(
+            $names[] = [
                 'name' => $attachment['name'],
                 'size' => $attachment['size'],
-            );
+            ];
         }
 
         return $names;
@@ -787,23 +790,23 @@ class Imap
      */
     protected function toAddress($headerinfos)
     {
-        $email = "";
-        $name = "";
-        $charset = "";
+        $email   = '';
+        $name    = '';
+        $charset = '';
         if (isset($headerinfos->mailbox) && isset($headerinfos->host)) {
-            $email = $headerinfos->mailbox . "@" . $headerinfos->host;
+            $email = $headerinfos->mailbox . '@' . $headerinfos->host;
         }
         if (!empty($headerinfos->personal)) {
-            $name = imap_mime_header_decode($headerinfos->personal);
+            $name    = imap_mime_header_decode($headerinfos->personal);
             $charset = $name[0]->charset;
-            $name = $name[0]->text;
+            $name    = $name[0]->text;
         } else {
             $name = $email;
         }
 
         $name = $this->convertToUtf8($name, $charset);
 
-        return $name . " <" . $email . ">";
+        return $name . ' <' . $email . '>';
     }
 
     /**
@@ -814,7 +817,7 @@ class Imap
      */
     protected function arrayToAddress($addresses)
     {
-        $addressesAsString = array();
+        $addressesAsString = [];
         foreach ($addresses as $address) {
             $addressesAsString[] = $this->toAddress($address);
         }
@@ -830,17 +833,17 @@ class Imap
      */
     protected function getBody($uid)
     {
-        $body = '';
-        list($body, $charset) = $this->get_part($this->imap, $uid, "TEXT/HTML");
-        $html = true;
+        $body                 = '';
+        list($body, $charset) = $this->get_part($this->imap, $uid, 'TEXT/HTML');
+        $html                 = true;
         // if HTML body is empty, try getting text body
-        if ($body == "") {
-            list($body, $charset) = $this->get_part($this->imap, $uid, "TEXT/PLAIN");
-            $html = false;
+        if ($body == '') {
+            list($body, $charset) = $this->get_part($this->imap, $uid, 'TEXT/PLAIN');
+            $html                 = false;
         }
         $body = $this->convertToUtf8($body, $charset);
 
-        return array( 'body' => $body, 'html' => $html);
+        return [ 'body' => $body, 'html' => $html];
     }
 
     /**
@@ -851,20 +854,20 @@ class Imap
      */
     public function convertToUtf8($text, $fromCharset)
     {
-        $utf8Aliases = array(
-            'utf8' => true,
-            'utf-8' => true,
-            'UTF8' => true,
-            'UTF-8' => true,
+        $utf8Aliases = [
+            'utf8'       => true,
+            'utf-8'      => true,
+            'UTF8'       => true,
+            'UTF-8'      => true,
             'utf-8utf-8' => true,
-            'default'=>true,
-        );
+            'default'    => true,
+        ];
 
         if (isset($utf8Aliases[$fromCharset])) {
             return $text;
         }
 
-        $originalFromCharset = $fromCharset;
+        $originalFromCharset  = $fromCharset;
         $lowercaseFromCharset = strtolower($fromCharset);
         if (isset(self::$charsetAliases[$lowercaseFromCharset])) {
             $fromCharset = self::$charsetAliases[$lowercaseFromCharset];
@@ -917,23 +920,23 @@ class Imap
                 }
                 $text = imap_fetchbody($imap, $uid, $partNumber, FT_UID | FT_PEEK);
                 switch ($structure->encoding) {
-                case 3: return array(imap_base64($text), $charset);
-                case 4: return array(imap_qprint($text), $charset);
-                default: return array($text, $charset);
+                case 3: return [imap_base64($text), $charset];
+                case 4: return [imap_qprint($text), $charset];
+                default: return [$text, $charset];
            }
             }
 
             // multipart
             if ($structure->type == 1) {
                 foreach ($structure->parts as $index => $subStruct) {
-                    $prefix = "";
+                    $prefix = '';
                     if ($partNumber) {
-                        $prefix = $partNumber . ".";
+                        $prefix = $partNumber . '.';
                     }
                     list($data, $charset2) = $this->get_part($imap, $uid, $mimetype, $subStruct, $prefix . ($index + 1));
-                    $charset = ($charset) ? $charset : $charset2;
+                    $charset               = ($charset) ? $charset : $charset2;
                     if ($data) {
-                        return array($data, $charset);
+                        return [$data, $charset];
                     }
                 }
             }
@@ -951,13 +954,13 @@ class Imap
      */
     protected function get_mime_type($structure)
     {
-        $primaryMimetype = array("TEXT", "MULTIPART", "MESSAGE", "APPLICATION", "AUDIO", "IMAGE", "VIDEO", "OTHER");
+        $primaryMimetype = ['TEXT', 'MULTIPART', 'MESSAGE', 'APPLICATION', 'AUDIO', 'IMAGE', 'VIDEO', 'OTHER'];
 
         if ($structure->subtype) {
-            return $primaryMimetype[(int) $structure->type] . "/" . $structure->subtype;
+            return $primaryMimetype[(int) $structure->type] . '/' . $structure->subtype;
         }
 
-        return "TEXT/PLAIN";
+        return 'TEXT/PLAIN';
     }
 
     /**
@@ -972,14 +975,14 @@ class Imap
      */
     protected function getAttachments($imap, $mailNum, $uID, $part, $partNum)
     {
-        $attachments = array();
+        $attachments = [];
 
         if (isset($part->parts)) {
             foreach ($part->parts as $key => $subpart) {
-                if ($partNum != "") {
-                    $newPartNum = $partNum . "." . ($key + 1);
+                if ($partNum != '') {
+                    $newPartNum = $partNum . '.' . ($key + 1);
                 } else {
-                    $newPartNum = ($key+1);
+                    $newPartNum = ($key + 1);
                 }
                 $result = $this->getAttachments(
                     $imap,
@@ -993,22 +996,21 @@ class Imap
                 }
             }
         } elseif (isset($part->disposition)) {
-            if (strtolower($part->disposition) == "attachment" || strtolower($part->disposition) == "inline") {
-
+            if (strtolower($part->disposition) == 'attachment' || strtolower($part->disposition) == 'inline') {
                 $partStruct = imap_bodystruct(
                     $imap,
                     $mailNum,
                     $partNum
                 );
 
-                $attachmentDetails = array(
-                    "name"    => $part->dparameters[0]->value,
-                    "partNum" => $partNum,
-                    "enc"     => $partStruct->encoding,
-                    "size"    => $part->bytes,
-                    "mailNum"    => $mailNum,
-                    "uid"    => $uID,
-                );
+                $attachmentDetails = [
+                    'name'    => $part->dparameters[0]->value,
+                    'partNum' => $partNum,
+                    'enc'     => $partStruct->encoding,
+                    'size'    => $part->bytes,
+                    'mailNum' => $mailNum,
+                    'uid'     => $uID,
+                ];
 
                 return $attachmentDetails;
             }

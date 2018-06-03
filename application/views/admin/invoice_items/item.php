@@ -80,8 +80,13 @@
     if(typeof(jQuery) != 'undefined'){
         init_item_js();
     } else {
-      window.addEventListener('load', function () {
-        init_item_js();
+     window.addEventListener('load', function () {
+       var initItemsJsInterval = setInterval(function(){
+            if(typeof(jQuery) != 'undefined') {
+                init_item_js();
+                clearInterval(initItemsJsInterval);
+            }
+         }, 1000);
      });
   }
 // Items add/edit
@@ -94,18 +99,17 @@ function manage_invoice_items(form) {
         if (response.success == true) {
             var item_select = $('#item_select');
             if ($("body").find('.accounting-template').length > 0) {
-                var group = item_select.find('[data-group-id="' + response.item.group_id + '"]');
-                var _option = '<option data-subtext="' + response.item.long_description + '" value="' + response.item.itemid + '">(' + accounting.formatNumber(response.item.rate) + ') ' + response.item.description + '</option>';
                 if (!item_select.hasClass('ajax-search')) {
+                    var group = item_select.find('[data-group-id="' + response.item.group_id + '"]');
                     if (group.length == 0) {
-                        _option = '<optgroup label="' + (response.item.group_name == null ? '' : response.item.group_name) + '" data-group-id="' + response.item.group_id + '">' + _option + '</optgroup>';
+                        var _option = '<optgroup label="' + (response.item.group_name == null ? '' : response.item.group_name) + '" data-group-id="' + response.item.group_id + '">' + _option + '</optgroup>';
                         if (item_select.find('[data-group-id="0"]').length == 0) {
                             item_select.find('option:first-child').after(_option);
                         } else {
                             item_select.find('[data-group-id="0"]').after(_option);
                         }
                     } else {
-                        group.prepend(_option);
+                        group.prepend('<option data-subtext="' + response.item.long_description + '" value="' + response.item.itemid + '">(' + accounting.formatNumber(response.item.rate) + ') ' + response.item.description + '</option>');
                     }
                 }
                 if (!item_select.hasClass('ajax-search')) {
@@ -113,13 +117,12 @@ function manage_invoice_items(form) {
                 } else {
 
                     item_select.contents().filter(function () {
-                        return !$(this).is('.newitem') && $(this).is('.newitem-divider');
+                        return !$(this).is('.newitem') && !$(this).is('.newitem-divider');
                     }).remove();
 
                     var clonedItemsAjaxSearchSelect = item_select.clone();
                     item_select.selectpicker('destroy').remove();
-                    item_select = clonedItemsAjaxSearchSelect;
-                    $("body").find('.items-wrapper').append(clonedItemsAjaxSearchSelect);
+                    $("body").find('.items-select-wrapper').append(clonedItemsAjaxSearchSelect);
                     init_ajax_search('items', '#item_select.ajax-search', undefined, admin_url + 'items/search');
                 }
 
@@ -140,11 +143,8 @@ function init_item_js() {
      // Add item to preview from the dropdown for invoices estimates
     $("body").on('change', 'select[name="item_select"]', function () {
         var itemid = $(this).selectpicker('val');
-        if (itemid != '' && itemid !== 'newitem') {
+        if (itemid != '') {
             add_item_to_preview(itemid);
-        } else if (itemid == 'newitem') {
-            // New item
-            $('#sales_item_modal').modal('show');
         }
     });
 

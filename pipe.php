@@ -97,9 +97,7 @@ interpret_structure($structure);
 if ($email_output["body"]["text/plain"]) {
     $body = $email_output["body"]["text/plain"];
 } else {
-    if ($email_output["body"]["text/html"]) {
-        $body = strip_tags($email_output["body"]["text/html"]);
-    } else {
+    if (!$email_output["body"]["text/html"]) {
         $body = "No message found.";
     }
 }
@@ -108,6 +106,7 @@ $from        = $email_output["headers"]["from"];
 $to          = $email_output["headers"]["to"];
 $cc          = $email_output["headers"]["cc"];
 $bcc         = $email_output["headers"]["bcc"];
+
 if (!$to) {
     $to = $email_output["headers"]["resent-to"];
 }
@@ -150,6 +149,7 @@ foreach ($to as $toemail) {
 
 $to = implode(",", $toemails);
 $instance->load->model('tickets_model');
+$instance->load->helper('func');
 
 $pattern = '#\bhttps?://drive.google.com[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#';
 
@@ -158,10 +158,23 @@ preg_match_all($pattern, $body, $matchGoogleDriveLinks);
 if(isset($matchGoogleDriveLinks[0]) && is_array($matchGoogleDriveLinks[0])){
     foreach($matchGoogleDriveLinks[0] as $driveLink){
         $link = '<a href="'.$driveLink.'">'.$driveLink.'</a>';
-        $body = str_replace($driveLink, $link,$body);
-        $body = str_replace('<'.$link.'>', $link ,$body);
+        $body = str_replace($driveLink, $link, $body);
+        $body = str_replace('<'.$link.'>', $link, $body);
     }
 }
+
+// Trim message
+$body = trim($body);
+$body = str_replace("&nbsp;", " ", $body);
+// Remove html tags - strips inline styles also
+$body = trim(strip_html_tags($body, "<br/>, <br>, <a>"));
+// Once again do security
+$body = $instance->security->xss_clean($body);
+// Remove duplicate new lines
+$body = preg_replace("/[\r\n]+/", "\n", $body);
+// new lines with <br />
+$body = preg_replace('/\n(\s*\n)+/', '<br />', $body);
+$body = preg_replace('/\n/', '<br>', $body);
 
 $instance->tickets_model->insert_piped_ticket(array(
     'to'=>$to,

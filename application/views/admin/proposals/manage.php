@@ -122,7 +122,10 @@
                              }
 
                              $table_data = do_action('proposals_table_columns',$table_data);
-                             render_datatable($table_data,'proposals');
+                             render_datatable($table_data,'proposals',[],[
+                                 'data-last-order-identifier' => 'proposals',
+                                 'data-default-order'         => get_table_last_order('proposals'),
+                             ]);
                            ?>
                      </div>
                   </div>
@@ -147,11 +150,10 @@
      $.each($('._hidden_inputs._filters input'),function(){
        Proposals_ServerParams[$(this).attr('name')] = '[name="'+$(this).attr('name')+'"]';
      });
-     initDataTable('.table-proposals', admin_url+'proposals/table', ['undefined'], ['undefined'], Proposals_ServerParams, [7, 'DESC']);
+     initDataTable('.table-proposals', admin_url+'proposals/table', ['undefined'], ['undefined'], Proposals_ServerParams, [7, 'desc']);
      init_proposal();
    });
 </script>
-<?php echo app_stylesheet('assets/css','proposals.css'); ?>
 <?php echo app_script('assets/js','proposals.js'); ?>
 </body>
 </html>

@@ -1,18 +1,3 @@
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: #C3C3C3;
-    outline: 1px solid #7D838B;
-    border-radius: 20px;
-}
-
 rt.display-block {
     display: block;
 }
@@ -107,6 +92,10 @@ label,
     text-decoration: line-through
 }
 
+.full-width {
+    width: 100%;
+}
+
 .no-margin {
     margin: 0px !important;
 }
@@ -114,12 +103,15 @@ label,
 .no-mtop {
     margin-top: 0px !important;
 }
+
 .no-p-left {
-    padding-left:0px !important;
+    padding-left: 0px !important;
 }
+
 .no-p-right {
-    padding-right:0px;
+    padding-right: 0px;
 }
+
 .relative {
     position: relative;
 }
@@ -218,6 +210,7 @@ input[type="color"] {
 
 textarea.form-control {
     height: initial;
+    padding-top: 10px;
 }
 
 select.form-control:focus,
@@ -612,7 +605,15 @@ a:visited {
 }
 
 .navbar-default {
-    background-color: #415165;
+    background: #415165;
+    /* Old browsers */
+    /* FF3.6-15 */
+    /* Chrome10-25,Safari5.1-6 */
+    background: -webkit-gradient(linear, left top, right top, from(#415165), color-stop(26%, #51647c), color-stop(73%, #51647c), to(#4f5d7a));
+    background: linear-gradient(to right, #415165 0%, #51647c 26%, #51647c 73%, #4f5d7a 100%);
+    /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#415165', endColorstr='#4f5d7a', GradientType=1);
+    /* IE6-9 */
 }
 
 .navbar-default .navbar-nav>li>a {
@@ -623,7 +624,7 @@ a:visited {
 
 @media (min-width: 768px) {
     .navbar-nav>li>a {
-        padding: 15px 13px;
+        padding: 15px 10px;
     }
 }
 
@@ -710,6 +711,29 @@ a:visited {
     font-weight: 400;
 }
 
+.nav-tabs-flat {
+    border-bottom: 0px;
+    border-color: #e0e0e0;
+}
+
+.nav-tabs-flat li a {
+    font-weight: 500;
+    border-bottom-color: transparent !important;
+}
+
+.nav-tabs-flat li:first-child a {
+    padding-left: 0px;
+}
+
+@media(max-width:767px) {
+    .nav-tabs-flat li:first-child a {
+        padding-left: 13px;
+    }
+    .nav-tabs-flat+.tab-content .tab-pane {
+        padding-left: 15px;
+    }
+}
+
 .btn.btn-input-group {
     padding: 7px 16px;
     border: 1px transparent;
@@ -723,6 +747,10 @@ a:visited {
     margin-top: 22px;
     padding: 6px 12px;
 }
+
+
+
+
 
 
 
@@ -818,7 +846,7 @@ footer {
 .logo-text:hover,
 .logo-text:focus,
 .logo-text:active {
-    color:#fff;
+    color: #fff;
 }
 
 @media (max-width: 767px) {
@@ -829,22 +857,24 @@ footer {
         padding-left: 15px;
     }
     .navbar-default .navbar-brand.logo-text {
-        margin-left:15px;
-        margin-top:15px;
+        margin-left: 15px;
+        margin-top: 15px;
     }
 }
 
 .btn {
     text-transform: uppercase;
-    outline: 0;
-    font-size: 13px;
+    font-size: 13.5px;
     outline-offset: 0;
-    padding: 6px 12px;
-    border: 0;
+    border: 1px solid transparent;
     transition: all .15s ease-in-out;
     -o-transition: all .15s ease-in-out;
     -moz-transition: all .15s ease-in-out;
     -webkit-transition: all .15s ease-in-out;
+}
+
+.btn.btn-default {
+    border: 1px solid #E6E9EB;
 }
 
 .bold,
@@ -853,8 +883,8 @@ b {
     font-weight: 500;
 }
 
-.p15 {
-    padding: 15px;
+.p7 {
+    padding: 7px;
 }
 
 .p8 {
@@ -863,6 +893,15 @@ b {
 
 .p8-half {
     padding: 8.5px;
+}
+
+.p15 {
+    padding: 15px;
+}
+
+
+.valign-middle {
+    vertical-align: middle;
 }
 
 .mtop5 {
@@ -909,8 +948,16 @@ b {
     margin-bottom: 20px;
 }
 
+.mbot25 {
+    margin-bottom: 25px;
+}
+
 .mbot30 {
     margin-bottom: 30px;
+}
+
+.mbot40 {
+    margin-bottom: 40px;
 }
 
 .mleft5 {
@@ -927,6 +974,10 @@ b {
 
 .mright10 {
     margin-right: 10px;
+}
+
+.padding-30 {
+    padding: 30px !important;
 }
 
 .no-mbot {
@@ -1329,7 +1380,7 @@ input[type="radio"] .styled:checked+label::after {
 }
 
 .table.items thead {
-    background: #323a45;
+    background: #415164;
     color: #fff;
     border: 0px;
 }
@@ -1378,9 +1429,6 @@ input[type="radio"] .styled:checked+label::after {
     #staff_logged_in {
         display: none;
     }
-    .proposal-right-content {
-        padding-bottom: 25px;
-    }
     .viewestimate .panel-body,
     .viewinvoice .panel-body {
         padding: 0px;
@@ -1394,7 +1442,6 @@ input[type="radio"] .styled:checked+label::after {
 .article_group_wrapper {
     border-bottom: 1px solid #f0f0f0;
     padding: 15px;
-    margin-bottom: 15px;
 }
 
 .articles_list {
@@ -1475,18 +1522,6 @@ table.dataTable thead tr>th {
     padding: 1px 0 4px 26px
 }
 
-
-
-
-
-
-
-
-
-
-
-/* I'm using the default mimes from the CRM admin area, feel free to change it */
-
 .mime-word {
     background-image: url(../../../images/mime/word.png)
 }
@@ -1541,7 +1576,7 @@ table.dataTable thead tr>th {
     margin: 0;
 }
 
-.files-hr {
+.hr-10 {
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -1636,77 +1671,16 @@ table.dataTable thead tr>th {
     margin-right: 10px;
 }
 
-body.proposal {
-    background: #fff;
-    overflow: auto;
-}
-
-div.proposal-wrapper {
-    min-width: 320px;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0;
-    width: auto;
-}
-
 div.proposal-wrapper img:not(.media-object) {
     display: block;
     max-width: 100%;
     height: auto;
 }
 
-div.proposal-wrapper table {
-    overflow: scroll;
-    max-width: 100%;
-}
-
-.proposal-left {
-    background: #fff;
-}
-
-.proposal .proposal-right .company-name-formatted {
-    color: #fff !important;
-}
-
-.proposal-right {
-    background: #444A52;
-    position: absolute;
-    right: 0px;
-    height: 100vh;
-    min-height: 100vh;
-    padding-left: 35px;
-    padding-right: 35px;
-    color: #fff;
-}
-
-[dir="rtl"] .proposal-right {
-    left: 0px;
-    right: inherit;
-}
-
-.proposal-right a:not(.btn) {
-    color: #D9D9D9;
-}
-
-.proposal-right a:hover,
-.proposal-right a:active {
-    color: #fff;
-}
-
-.proposal-right .btn {
-    padding: 8px 20px;
-}
-
-.proposal-right hr {
-    border-top: 1px solid #727272;
-}
-
 .proposal-comment {
-    padding-bottom: 25px;
     display: inline-block;
     width: 100%;
-    padding-bottom: 35px;
+    margin-bottom: 15px;
 }
 
 .table.proposal-items thead>tr>th {
@@ -1718,13 +1692,13 @@ div.proposal-wrapper table {
     text-align: left;
 }
 
-.proposal-status {
-    width: 100%;
-    display: inline-block;
-    padding: 10px;
-    font-size: 18px;
+.content-view-status {
+    padding: 4px 14px;
+    font-size: 15.5px;
     text-align: center;
-    border-radius: 3px;
+    border-radius: 4px;
+    float: right;
+    margin-left: 5px;
 }
 
 .client-profile-image-small {
@@ -1980,10 +1954,6 @@ div.proposal-wrapper table {
     text-shadow: 0px 0px 2px #333;
 }
 
-.light-green-bg {
-    background: #D8EDA3;
-}
-
 .task-unfinished-table {
     border-left: 7px solid #ff6f00;
 }
@@ -2030,8 +2000,6 @@ form.dropzone {
     margin-top: 45px;
     color: #03a9f4;
 }
-
-/* Calendar styles start */
 
 .xdsoft_ {
     z-index: 99999999999999;
@@ -2103,11 +2071,9 @@ form.dropzone {
 }
 
 .xdsoft_datetimepicker .xdsoft_label>.xdsoft_select>div>.xdsoft_option:hover {
-    background:#e4e8f1;
-    color:#333;
+    background: #e4e8f1;
+    color: #333;
 }
-
-/* Calendar styles end */
 
 .dataTables_filter input {
     margin-left: 0px !important;
@@ -2148,26 +2114,6 @@ form.dropzone {
 }
 
 @media (max-width: 768px) {
-    div.proposal-wrapper {
-        width: 100%;
-        display: inline-block;
-    }
-    div.proposal-left {
-        display: inline-block;
-        position: relative;
-        width: 100%;
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    div.proposal-left h1:first-child {
-        margin-top: 0px;
-    }
-    .proposal-right {
-        height: 100% !important;
-        min-height: 100% !important;
-        display: block;
-        position: relative;
-    }
     #content {
         padding: 15px;
     }
@@ -2208,11 +2154,6 @@ form.dropzone {
     .dataTables_filter input,
     .dataTables_filter input:focus {
         width: 100% !important;
-    }
-    .proposal-right .btn {
-        display: block;
-        width: 100%;
-        margin-bottom: 15px;
     }
 }
 
@@ -2280,9 +2221,6 @@ div.dataTables_wrapper div.dataTables_length label,
     color: #9c9c9c;
 }
 
-div.dataTables_wrapper div.dataTables_filter .glyphicon {
-    color: #bfcbd9;
-}
 
 .modal-backdrop {
     background-color: #cacaca;
@@ -2484,7 +2422,7 @@ div.dataTables_wrapper div.dataTables_filter .glyphicon {
 .tc-content ul,
 .tc-content ol {
     list-style: inherit;
-    margin-left: 16px;
+    margin-left: 15px;
 }
 
 .tc-content ol {
@@ -2507,6 +2445,13 @@ div.dataTables_wrapper div.dataTables_filter .glyphicon {
 .tc-content table[border="1"],
 .tc-content table[border="1"] td {
     border: 1px solid;
+}
+
+.proposal-view .tc-content ul,
+.proposal-view .tc-content ol,
+.contract-view .tc-content ul,
+.contract-view .tc-content ol {
+    margin-left: 0px;
 }
 
 .float-alert {
@@ -2547,22 +2492,10 @@ div.dataTables_wrapper div.dataTables_filter .glyphicon {
 }
 
 .kb-search button[type="submit"] {
-    padding: 16px;
+    padding: 14.5px;
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;
 }
-
-
-
-
-
-
-
-
-
-
-
-/* The "go to top" and "go to bottom" links. */
 
 #toplink,
 #botlink {
@@ -2707,7 +2640,7 @@ div.dataTables_wrapper div.dataTables_filter .glyphicon {
     padding: 4px 10px;
     line-height: 2;
     height: 36px;
-    text-transform: none;
+    text-transform: inherit;
 }
 
 .bootstrap-select.btn-group.disabled,
@@ -2804,4 +2737,42 @@ td[align="center"] {
 [dir="rtl"] th[align="right"],
 [dir="rtl"] td[align="right"] {
     text-align: left !important;
+}
+
+.signature-pad--body {
+    border-radius: 4px;
+    position: relative;
+    -webkit-box-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    border: 1px solid #c0cbda;
+}
+
+.gdpr-right {
+    border: 1px solid #d8d8d8;
+    padding: 35px 15px;
+    text-align: center;
+    margin-bottom: 25px;
+    border-radius:4px;
+}
+
+.gdpr-right .gdpr-right-heading {
+    margin-top: 0px;
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.gdpr-purpose {
+    border: 1px solid #d8d8d8;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.gdpr-purpose .gdpr-purpose-heading {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 18px;
+    font-weight:500;
+    color: #5a5a5a;
 }

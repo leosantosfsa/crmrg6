@@ -23,14 +23,15 @@ class DocumentList extends ListResource {
      * Construct the DocumentList
      * 
      * @param Version $version Version that contains the resource
-     * @param string $serviceSid The service_sid
+     * @param string $serviceSid The unique SID identifier of the Service Instance
+     *                           that hosts this Document.
      * @return \Twilio\Rest\Sync\V1\Service\DocumentList 
      */
     public function __construct(Version $version, $serviceSid) {
         parent::__construct($version);
 
         // Path Solution
-        $this->solution = array('serviceSid' => $serviceSid);
+        $this->solution = array('serviceSid' => $serviceSid, );
 
         $this->uri = '/Services/' . rawurlencode($serviceSid) . '/Documents';
     }

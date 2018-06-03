@@ -2,54 +2,72 @@
 <?php echo form_hidden('_attachment_sale_type','proposal'); ?>
 <div class="panel_s">
    <div class="panel-body">
-      <ul class="nav nav-tabs" role="tablist">
-         <li role="presentation" class="active">
-            <a href="#tab_proposal" aria-controls="tab_proposal" role="tab" data-toggle="tab">
-            <?php echo _l('proposal'); ?>
-            </a>
-         </li>
-         <?php if(isset($proposal)){ ?>
-         <li role="presentation">
-            <a href="#tab_comments" onclick="get_proposal_comments(); return false;" aria-controls="tab_comments" role="tab" data-toggle="tab">
-            <?php echo _l('proposal_comments'); ?>
-            </a>
-         </li>
-         <li role="presentation">
-            <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $proposal->id ;?> + '/' + 'proposal', [4], [4],undefined,[1,'ASC']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
-            <?php echo _l('estimate_reminders'); ?>
-            <?php
-               $total_reminders = total_rows('tblreminders',
-                array(
-                 'isnotified'=>0,
-                 'staff'=>get_staff_user_id(),
-                 'rel_type'=>'proposal',
-                 'rel_id'=>$proposal->id
-                 )
-                );
-               if($total_reminders > 0){
-                echo '<span class="badge">'.$total_reminders.'</span>';
-               }
-               ?>
-            </a>
-         </li>
-         <li role="presentation" class="tab-separator">
-            <a href="#tab_tasks" onclick="init_rel_tasks_table(<?php echo $proposal->id; ?>,'proposal'); return false;" aria-controls="tab_tasks" role="tab" data-toggle="tab">
-            <?php echo _l('tasks'); ?>
-            </a>
-         </li>
-         <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('view_tracking'); ?>" class="tab-separator">
-            <a href="#tab_views" aria-controls="tab_views" role="tab" data-toggle="tab">
-                  <i class="fa fa-eye"></i>
-            </a>
-         </li>
-         <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="tab-separator">
-            <a href="#" onclick="small_table_full_view(); return false;" class="toggle_view">
-            <i class="fa fa-expand"></i></a>
-         </li>
-         <?php } ?>
-      </ul>
+      <div class="horizontal-scrollable-tabs preview-tabs-top">
+         <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
+         <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>
+         <div class="horizontal-tabs">
+            <ul class="nav nav-tabs nav-tabs-horizontal mbot15" role="tablist">
+               <li role="presentation" class="active">
+                  <a href="#tab_proposal" aria-controls="tab_proposal" role="tab" data-toggle="tab">
+                  <?php echo _l('proposal'); ?>
+                  </a>
+               </li>
+               <?php if(isset($proposal)){ ?>
+               <li role="presentation">
+                  <a href="#tab_comments" onclick="get_proposal_comments(); return false;" aria-controls="tab_comments" role="tab" data-toggle="tab">
+                  <?php echo _l('proposal_comments'); ?>
+                  </a>
+               </li>
+               <li role="presentation">
+                  <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $proposal->id ;?> + '/' + 'proposal', undefined, undefined, undefined,[1,'asc']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
+                  <?php echo _l('estimate_reminders'); ?>
+                  <?php
+                     $total_reminders = total_rows('tblreminders',
+                      array(
+                       'isnotified'=>0,
+                       'staff'=>get_staff_user_id(),
+                       'rel_type'=>'proposal',
+                       'rel_id'=>$proposal->id
+                       )
+                      );
+                     if($total_reminders > 0){
+                      echo '<span class="badge">'.$total_reminders.'</span>';
+                     }
+                     ?>
+                  </a>
+               </li>
+               <li role="presentation" class="tab-separator">
+                  <a href="#tab_tasks" onclick="init_rel_tasks_table(<?php echo $proposal->id; ?>,'proposal'); return false;" aria-controls="tab_tasks" role="tab" data-toggle="tab">
+                  <?php echo _l('tasks'); ?>
+                  </a>
+               </li>
+               <li role="presentation" data-toggle="tooltip" title="<?php echo _l('emails_tracking'); ?>" class="tab-separator">
+                  <a href="#tab_emails_tracking" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab">
+                    <?php if(!is_mobile()){ ?>
+                     <i class="fa fa-envelope-open-o" aria-hidden="true"></i>
+                     <?php } else { ?>
+                     <?php echo _l('emails_tracking'); ?>
+                     <?php } ?>
+                  </a>
+               </li>
+               <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('view_tracking'); ?>" class="tab-separator">
+                  <a href="#tab_views" aria-controls="tab_views" role="tab" data-toggle="tab">
+                    <?php if(!is_mobile()){ ?>
+                     <i class="fa fa-eye"></i>
+                     <?php } else { ?>
+                     <?php echo _l('view_tracking'); ?>
+                     <?php } ?>
+                  </a>
+               </li>
+               <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="tab-separator toggle_view">
+                  <a href="#" onclick="small_table_full_view(); return false;">
+                  <i class="fa fa-expand"></i></a>
+               </li>
+               <?php } ?>
+            </ul>
+         </div>
+      </div>
       <div class="row">
-
          <div class="col-md-3">
             <?php echo format_proposal_status($proposal->status,'pull-left mright5 mtop5'); ?>
          </div>
@@ -57,8 +75,19 @@
             <?php if(has_permission('proposals','','edit')){ ?>
             <a href="<?php echo admin_url('proposals/proposal/'.$proposal->id); ?>" data-placement="left" data-toggle="tooltip" title="<?php echo _l('proposal_edit'); ?>" class="btn btn-default btn-with-tooltip" data-placement="bottom"><i class="fa fa-pencil-square-o"></i></a>
             <?php } ?>
-            <a href="<?php echo admin_url('proposals/pdf/'.$proposal->id.'?print=true'); ?>" target="_blank" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('print'); ?>" data-placement="bottom"><i class="fa fa-print"></i></a>
-            <a href="<?php echo admin_url('proposals/pdf/'.$proposal->id); ?>" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('proposal_pdf'); ?>" data-placement="bottom"><i class="fa fa-file-pdf-o"></i></a>
+            <div class="btn-group">
+               <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-file-pdf-o"></i><?php if(is_mobile()){echo ' PDF';} ?> <span class="caret"></span></a>
+               <ul class="dropdown-menu dropdown-menu-right">
+                  <li class="hidden-xs"><a href="<?php echo admin_url('proposals/pdf/'.$proposal->id.'?output_type=I'); ?>"><?php echo _l('view_pdf'); ?></a></li>
+                  <li class="hidden-xs"><a href="<?php echo admin_url('proposals/pdf/'.$proposal->id.'?output_type=I'); ?>" target="_blank"><?php echo _l('view_pdf_in_new_window'); ?></a></li>
+                  <li><a href="<?php echo admin_url('proposals/pdf/'.$proposal->id); ?>"><?php echo _l('download'); ?></a></li>
+                  <li>
+                     <a href="<?php echo admin_url('proposals/pdf/'.$proposal->id.'?print=true'); ?>" target="_blank">
+                     <?php echo _l('print'); ?>
+                     </a>
+                  </li>
+               </ul>
+            </div>
             <a href="#" class="btn btn-default btn-with-tooltip" data-target="#proposal_send_to_customer" data-toggle="modal"><span data-toggle="tooltip" class="btn-with-tooltip" data-title="<?php echo _l('proposal_send_to_email'); ?>" data-placement="bottom"><i class="fa fa-envelope"></i></span></a>
             <div class="btn-group ">
                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -66,7 +95,7 @@
                </button>
                <ul class="dropdown-menu dropdown-menu-right">
                   <li>
-                     <a href="<?php echo site_url('viewproposal/'.$proposal->id .'/'.$proposal->hash); ?>" target="_blank"><?php echo _l('proposal_view'); ?></a>
+                     <a href="<?php echo site_url('proposal/'.$proposal->id .'/'.$proposal->hash); ?>" target="_blank"><?php echo _l('proposal_view'); ?></a>
                   </li>
                   <?php if(!empty($proposal->open_till) && date('Y-m-d') < $proposal->open_till && ($proposal->status == 4 || $proposal->status == 1) && is_proposals_expiry_reminders_enabled()) { ?>
                   <li>
@@ -89,7 +118,14 @@
                      <a href="<?php echo admin_url() . 'proposals/mark_action_status/'.$status.'/'.$proposal->id; ?>"><?php echo _l('proposal_mark_as',format_proposal_status($status,'',false)); ?></a>
                   </li>
                   <?php
-                     } } }?>
+                     } } } ?>
+                  <?php } ?>
+                  <?php if(!empty($proposal->signature) && has_permission('proposals','','delete')){ ?>
+                  <li>
+                     <a href="<?php echo admin_url('proposals/clear_signature/'.$proposal->id); ?>" class="_delete">
+                     <?php echo _l('clear_signature'); ?>
+                     </a>
+                  </li>
                   <?php } ?>
                   <?php if(has_permission('proposals','','delete')){ ?>
                   <li>
@@ -143,19 +179,18 @@
          <div class="col-md-12">
             <div class="tab-content">
                <div role="tabpanel" class="tab-pane active" id="tab_proposal">
-
                   <div class="row mtop10">
-                    <?php if($proposal->status == 3 && !empty($proposal->acceptance_firstname) && !empty($proposal->acceptance_lastname) && !empty($proposal->acceptance_email)){ ?>
-                       <div class="col-md-12">
-                           <div class="alert alert-info">
-                              <?php echo _l('accepted_identity_info',array(
+                     <?php if($proposal->status == 3 && !empty($proposal->acceptance_firstname) && !empty($proposal->acceptance_lastname) && !empty($proposal->acceptance_email)){ ?>
+                     <div class="col-md-12">
+                        <div class="alert alert-info">
+                           <?php echo _l('accepted_identity_info',array(
                               _l('proposal_lowercase'),
                               '<b>'.$proposal->acceptance_firstname . ' ' . $proposal->acceptance_lastname . '</b> (<a href="mailto:'.$proposal->acceptance_email.'">'.$proposal->acceptance_email.'</a>)',
-                             '<b>'. _dt($proposal->acceptance_date).'</b>',
+                              '<b>'. _dt($proposal->acceptance_date).'</b>',
                               '<b>'.$proposal->acceptance_ip.'</b>'.(is_admin() ? '&nbsp;<a href="'.admin_url('proposals/clear_acceptance_info/'.$proposal->id).'" class="_delete text-muted" data-toggle="tooltip" data-title="'._l('clear_this_information').'"><i class="fa fa-remove"></i></a>' : '')
                               )); ?>
-                           </div>
-                       </div>
+                        </div>
+                     </div>
                      <?php } ?>
                      <div class="col-md-6">
                         <h4 class="bold">
@@ -237,7 +272,7 @@
                      </div>
                   </div>
                   <?php } ?>
-                  <div class="editable proposal tc-content" id="proposal_content_area" style="border:1px solid #f1f1f1;min-height:70px;">
+                  <div class="editable proposal tc-content" id="proposal_content_area" style="border:1px solid #d2d2d2;min-height:70px;border-radius:4px;">
                      <?php if(empty($proposal->content)){
                         echo '<span class="text-danger text-uppercase mtop15 editor-add-content-notice"> ' . _l('click_to_add_content') . '</span>';
                         } else {
@@ -251,10 +286,18 @@
                      <div class="col-md-12">
                         <div id="proposal-comments"></div>
                         <div class="clearfix"></div>
-                        <textarea name="content" id="comment" rows="8" class="form-control mtop15 proposal-comment"></textarea>
+                        <textarea name="content" id="comment" rows="4" class="form-control mtop15 proposal-comment"></textarea>
                         <button type="button" class="btn btn-info mtop10 pull-right" onclick="add_proposal_comment();"><?php echo _l('proposal_add_comment'); ?></button>
                      </div>
                   </div>
+               </div>
+               <div role="tabpanel" class="tab-pane" id="tab_emails_tracking">
+                  <?php
+                     $this->load->view('admin/includes/emails_tracking',array(
+                       'tracked_emails'=>
+                       get_tracked_emails($proposal->id, 'proposal'))
+                       );
+                     ?>
                </div>
                <div role="tabpanel" class="tab-pane" id="tab_tasks">
                   <?php init_relation_tasks_table(array( 'data-new-rel-id'=>$proposal->id,'data-new-rel-type'=>'proposal')); ?>
@@ -262,12 +305,15 @@
                <div role="tabpanel" class="tab-pane" id="tab_reminders">
                   <a href="#" data-toggle="modal" class="btn btn-info" data-target=".reminder-modal-proposal-<?php echo $proposal->id; ?>"><i class="fa fa-bell-o"></i> <?php echo _l('proposal_set_reminder_title'); ?></a>
                   <hr />
-                  <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified'), _l( 'options'), ), 'reminders'); ?>
+                  <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified')), 'reminders'); ?>
                   <?php $this->load->view('admin/includes/modals/reminder',array('id'=>$proposal->id,'name'=>'proposal','members'=>$members,'reminder_title'=>_l('proposal_set_reminder_title'))); ?>
                </div>
                <div role="tabpanel" class="tab-pane ptop10" id="tab_views">
                   <?php
                      $views_activity = get_views_tracking('proposal',$proposal->id);
+                       if(count($views_activity) === 0) {
+                     echo '<h4 class="no-margin">'._l('not_viewed_yet',_l('proposal_lowercase')).'</h4>';
+                     }
                      foreach($views_activity as $activity){ ?>
                   <p class="text-success no-margin">
                      <?php echo _l('view_date') . ': ' . _dt($activity['date']); ?>
@@ -289,6 +335,7 @@
    init_datepicker();
    init_selectpicker();
    init_form_reminder();
+   init_tabs_scrollable();
      // defined in manage proposals
      proposal_id = '<?php echo $proposal->id; ?>';
      init_proposal_editor();

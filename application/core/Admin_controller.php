@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Admin_controller extends CRM_Controller
@@ -19,13 +20,13 @@ class Admin_controller extends CRM_Controller
             die;
         }
 
-        if (CI_VERSION != '3.1.7') {
-            echo '<h2>Additionally you will need to replace the <b>system</b> folder. We updated Codeigniter to 3.1.7.</h2>';
+        if (CI_VERSION != '3.1.8') {
+            echo '<h2>Additionally you will need to replace the <b>system</b> folder. We updated Codeigniter to 3.1.8.</h2>';
             echo '<p>From the newest downloaded files upload the <b>system</b> folder to your Perfex CRM installation directory.';
             die;
         }
 
-        if(!extension_loaded('mbstring') && (!function_exists('mb_strtoupper') || !function_exists('mb_strtolower'))){
+        if (!extension_loaded('mbstring') && (!function_exists('mb_strtoupper') || !function_exists('mb_strtolower'))) {
             die('<h1>"mbstring" PHP extension is not loaded. Enable this extension from cPanel or consult with your hosting provider to assist you enabling "mbstring" extension.</h4>');
         }
 
@@ -40,14 +41,15 @@ class Admin_controller extends CRM_Controller
         }
 
         // In case staff have setup logged in as client - This is important don't change it
-        $this->session->unset_userdata('client_user_id');
-        $this->session->unset_userdata('contact_user_id');
-        $this->session->unset_userdata('client_logged_in');
-        $this->session->unset_userdata('logged_in_as_client');
+        foreach (['client_user_id', 'contact_user_id', 'client_logged_in', 'logged_in_as_client'] as $sk) {
+            if ($this->session->has_userdata($sk)) {
+                $this->session->unset_userdata($sk);
+            }
+        }
 
         // Update staff last activity
-        $this->db->where('staffid',get_staff_user_id());
-        $this->db->update('tblstaff',array('last_activity'=>date('Y-m-d H:i:s')));
+        $this->db->where('staffid', get_staff_user_id());
+        $this->db->update('tblstaff', ['last_activity' => date('Y-m-d H:i:s')]);
 
         $this->load->model('staff_model');
 
@@ -61,158 +63,164 @@ class Admin_controller extends CRM_Controller
                     die('<h1>Encryption key length should be 32 charachters</h1>For more info visit <a href="https://help.perfexcrm.com/encryption-key-explained/">Encryption key explained</a>');
                 }
             }
-            _maybe_system_setup_warnings();
-        }
 
-        if (is_mobile()) {
-            $this->session->set_userdata(array('is_mobile' => true));
-        } else {
-            $this->session->unset_userdata('is_mobile');
+            _maybe_system_setup_warnings();
+
+            if (is_mobile()) {
+                $this->session->set_userdata(['is_mobile' => true]);
+            } else {
+                $this->session->unset_userdata('is_mobile');
+            }
         }
 
         $currentUser = $this->staff_model->get(get_staff_user_id());
 
         // Deleted or inactive but have session
-        if(!$currentUser || $currentUser->active == 0){
+        if (!$currentUser || $currentUser->active == 0) {
             $this->authentication_model->logout();
             redirect(site_url('authentication/admin'));
         }
 
         $GLOBALS['current_user'] = $currentUser;
-        $language = load_admin_language();
+        $language                = load_admin_language();
 
-        $auto_loaded_vars = array(
-            'current_user' => $currentUser,
-            'app_language'=>$language,
-            'locale' => get_locale_key($language),
+        $auto_loaded_vars = [
+            'current_user'         => $currentUser,
+            'app_language'         => $language,
+            'locale'               => get_locale_key($language),
+            'current_version'      => $this->current_db_version,
+            'task_statuses'        => $this->tasks_model->get_statuses(),
             'unread_notifications' => $currentUser->total_unread_notifications, // Deprecated
-            'google_api_key' => get_option('google_api_key'),
-            'current_version' => $this->current_db_version,
-            'task_statuses' => $this->tasks_model->get_statuses(),
-        );
+        ];
 
         $auto_loaded_vars = do_action('before_set_auto_loaded_vars_admin_area', $auto_loaded_vars);
         $this->load->vars($auto_loaded_vars);
 
-        if(!$is_ajax_request){
+        if (!$is_ajax_request) {
             $this->init_quick_actions_links();
         }
     }
 
-
     private function init_quick_actions_links()
     {
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('invoice'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('invoice'),
             'permission' => 'invoices',
-            'url' => 'invoices/invoice'
-            ));
+            'url'        => 'invoices/invoice',
+            ]);
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('estimate'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('estimate'),
             'permission' => 'estimates',
-            'url' => 'estimates/estimate'
-            ));
+            'url'        => 'estimates/estimate',
+            ]);
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('proposal'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('proposal'),
             'permission' => 'proposals',
-            'url' => 'proposals/proposal'
-            ));
+            'url'        => 'proposals/proposal',
+            ]);
 
-         $this->app->add_quick_actions_link(array(
-            'name' => _l('credit_note'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('credit_note'),
             'permission' => 'credit_notes',
-            'url' => 'credit_notes/credit_note'
-            ));
+            'url'        => 'credit_notes/credit_note',
+            ]);
 
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('client'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('client'),
             'permission' => 'customers',
-            'url' => 'clients/client'
-            ));
+            'url'        => 'clients/client',
+            ]);
+
+        $this->app->add_quick_actions_link([
+            'name'       => _l('subscription'),
+            'permission' => 'subscriptions',
+            'url'        => 'subscriptions/create',
+            ]);
 
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('project'),
-            'url' => 'projects/project',
-            'permission' => 'projects'
-            ));
+        $this->app->add_quick_actions_link([
+            'name'       => _l('project'),
+            'url'        => 'projects/project',
+            'permission' => 'projects',
+            ]);
 
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('task'),
-            'url' => '#',
-            'custom_url' => true,
-            'href_attributes' => array(
-                'onclick' => 'new_task();return false;'
-                ),
-            'permission' => 'tasks'
-            ));
+        $this->app->add_quick_actions_link([
+            'name'            => _l('task'),
+            'url'             => '#',
+            'custom_url'      => true,
+            'href_attributes' => [
+                'onclick' => 'new_task();return false;',
+                ],
+            'permission' => 'tasks',
+            ]);
 
-          $this->app->add_quick_actions_link(array(
-            'name' => _l('lead'),
-            'url' => '#',
-            'custom_url' => true,
-            'permission' => 'is_staff_member',
-            'href_attributes' => array(
-                'onclick' => 'init_lead(); return false;'
-                )
-            ));
+        $this->app->add_quick_actions_link([
+            'name'            => _l('lead'),
+            'url'             => '#',
+            'custom_url'      => true,
+            'permission'      => 'is_staff_member',
+            'href_attributes' => [
+                'onclick' => 'init_lead(); return false;',
+                ],
+            ]);
 
-           $this->app->add_quick_actions_link(array(
-            'name' => _l('expense'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('expense'),
             'permission' => 'expenses',
-            'url' => 'expenses/expense'
-            ));
+            'url'        => 'expenses/expense',
+            ]);
 
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('contract'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('contract'),
             'permission' => 'contracts',
-            'url' => 'contracts/contract'
-            ));
+            'url'        => 'contracts/contract',
+            ]);
 
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('goal'),
-            'url' => 'goals/goal',
-            'permission' => 'goals'
-            ));
+        $this->app->add_quick_actions_link([
+            'name'       => _l('goal'),
+            'url'        => 'goals/goal',
+            'permission' => 'goals',
+            ]);
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('kb_article'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('kb_article'),
             'permission' => 'knowledge_base',
-            'url' => 'knowledge_base/article'
-            ));
+            'url'        => 'knowledge_base/article',
+            ]);
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('survey'),
+        $this->app->add_quick_actions_link([
+            'name'       => _l('survey'),
             'permission' => 'surveys',
-            'url' => 'surveys/survey'
-            ));
+            'url'        => 'surveys/survey',
+            ]);
 
-        $tickets = array(
+        $tickets = [
             'name' => _l('ticket'),
-            'url' => 'tickets/add'
-            );
+            'url'  => 'tickets/add',
+            ];
+
         if (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member()) {
             $tickets['permission'] = 'is_staff_member';
         }
 
         $this->app->add_quick_actions_link($tickets);
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('staff_member'),
-            'url' => 'staff/member',
-            'permission' => 'staff'
-            ));
+        $this->app->add_quick_actions_link([
+            'name'       => _l('staff_member'),
+            'url'        => 'staff/member',
+            'permission' => 'staff',
+            ]);
 
-        $this->app->add_quick_actions_link(array(
-            'name' => _l('calendar_event'),
-            'url' => 'utilities/calendar?new_event=true&date='._d(date('Y-m-d')),
-            'permission' => ''
-            ));
+        $this->app->add_quick_actions_link([
+            'name'       => _l('calendar_event'),
+            'url'        => 'utilities/calendar?new_event=true&date=' . _d(date('Y-m-d')),
+            'permission' => '',
+            ]);
     }
 }

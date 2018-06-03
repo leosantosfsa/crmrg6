@@ -56,8 +56,8 @@
 <script>
    taskid = '<?php echo $taskid; ?>';
    $(function(){
-    tasks_kanban();
- });
+       tasks_kanban();
+   });
 </script>
 </body>
 </html>

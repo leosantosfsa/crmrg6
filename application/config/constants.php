@@ -97,7 +97,11 @@ define('UPDATE_INFO_URL','https://www.perfexcrm.com/perfex_updates/update_info.p
 
 // Do not send sms to data eq. invoices, estimates older then X days.
 if(!defined('DO_NOT_SEND_SMS_ON_DATA_OLDER_THEN')){
-    define('DO_NOT_SEND_SMS_ON_DATA_OLDER_THEN',45);
+    define('DO_NOT_SEND_SMS_ON_DATA_OLDER_THEN', 45);
+}
+
+if(!defined('CUSTOM_FIELD_TRANSFER_SIMILARITY')){
+    define('CUSTOM_FIELD_TRANSFER_SIMILARITY', 85);
 }
 
 // Defined folders

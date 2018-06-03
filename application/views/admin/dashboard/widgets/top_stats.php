@@ -3,18 +3,19 @@
       <div class="row">
       <?php
          $initial_column = 'col-lg-3';
-         if(!is_staff_member() && (!has_permission('invoices','','view') && !has_permission('invoices','','view_own'))) {
+         if(!is_staff_member() && ((!has_permission('invoices','','view') && !has_permission('invoices','','view_own') && (get_option('allow_staff_view_invoices_assigned') == 0
+           || (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices()))))) {
             $initial_column = 'col-lg-6';
-         } else if(!is_staff_member() || (!has_permission('invoices','','view') && !has_permission('invoices','','view_own'))) {
+         } else if(!is_staff_member() || (!has_permission('invoices','','view') && !has_permission('invoices','','view_own') && (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices()) || (get_option('allow_staff_view_invoices_assigned') == 0 && (!has_permission('invoices','','view') && !has_permission('invoices','','view_own'))))) {
             $initial_column = 'col-lg-4';
          }
       ?>
-         <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own')){ ?>
-         <div class="col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
+         <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own') || (get_option('allow_staff_view_invoices_assigned') == '1' && staff_has_assigned_invoices())){ ?>
+         <div class="quick-stats-invoices col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
             <div class="top_stats_wrapper">
                <?php
-                  $total_invoices = total_rows('tblinvoices','status NOT IN (5,6)'.(!has_permission('invoices','','view') ? ' AND addedfrom='.get_staff_user_id() : ''));
-                  $total_invoices_awaiting_payment = total_rows('tblinvoices','status NOT IN (2,5,6)'.(!has_permission('invoices','','view') ? ' AND addedfrom='.get_staff_user_id() : ''));
+                  $total_invoices = total_rows('tblinvoices','status NOT IN (5,6)'.(!has_permission('invoices','','view') ? ' AND ' . get_invoices_where_sql_for_staff(get_staff_user_id()) : ''));
+                  $total_invoices_awaiting_payment = total_rows('tblinvoices','status NOT IN (2,5,6)'.(!has_permission('invoices','','view') ? ' AND ' . get_invoices_where_sql_for_staff(get_staff_user_id()) : ''));
                   $percent_total_invoices_awaiting_payment = ($total_invoices > 0 ? number_format(($total_invoices_awaiting_payment * 100) / $total_invoices,2) : 0);
                   ?>
                <p class="text-uppercase mtop5"><i class="hidden-sm fa fa-balance-scale"></i> <?php echo _l('invoices_awaiting_payment'); ?>
@@ -29,7 +30,7 @@
          </div>
          <?php } ?>
          <?php if(is_staff_member()){ ?>
-         <div class="col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
+         <div class="quick-stats-leads col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
             <div class="top_stats_wrapper">
                <?php
                   $where = '';
@@ -57,7 +58,7 @@
             </div>
          </div>
          <?php } ?>
-         <div class="col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
+         <div class="quick-stats-projects col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
             <div class="top_stats_wrapper">
                <?php
                   $_where = '';
@@ -78,7 +79,7 @@
                </div>
             </div>
          </div>
-         <div class="col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
+         <div class="quick-stats-tasks col-xs-12 col-md-6 col-sm-6 <?php echo $initial_column; ?>">
             <div class="top_stats_wrapper">
                <?php
                   $_where = '';

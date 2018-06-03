@@ -8,8 +8,8 @@
  */
 function load_pdf_language($clientid)
 {
-    $CI =& get_instance();
-    $lang     = get_option('active_language');
+    $CI   = & get_instance();
+    $lang = get_option('active_language');
     // When cron or email sending pdf document the pdfs need to be on the client language
     $language = get_client_default_language($clientid);
     if (DEFINED('CRON') || DEFINED('EMAIL_TEMPLATE_SEND')) {
@@ -120,10 +120,10 @@ function do_curl_pdf_image($url)
 function get_pdf_format($option_name)
 {
     $oFormat = strtoupper(get_option($option_name));
-    $data    = array(
+    $data    = [
         'orientation' => '',
-        'format' => '',
-    );
+        'format'      => '',
+    ];
 
     if ($oFormat == 'A4-PORTRAIT') {
         $data['orientation'] = 'P';
@@ -152,13 +152,13 @@ function get_pdf_format($option_name)
 function invoice_pdf($invoice, $tag = '')
 {
     $GLOBALS['invoice_pdf'] = $invoice;
-    $CI =& get_instance();
+    $CI                     = & get_instance();
     load_pdf_language($invoice->clientid);
     $CI->load->library('pdf');
     $invoice_number = format_invoice_number($invoice->id);
 
-    $font_name      = get_option('pdf_font');
-    $font_size      = get_option('pdf_font_size');
+    $font_name = get_option('pdf_font');
+    $font_size = get_option('pdf_font_size');
 
     if ($font_size == '') {
         $font_size = 10;
@@ -175,7 +175,7 @@ function invoice_pdf($invoice, $tag = '')
         }
     }
 
-    $whereCF = array('show_on_pdf'=>1);
+    $whereCF = ['show_on_pdf' => 1];
     if (is_custom_fields_for_customers_portal()) {
         $whereCF['show_on_client_portal'] = 1;
     }
@@ -184,11 +184,11 @@ function invoice_pdf($invoice, $tag = '')
     $pdf_custom_fields = get_custom_fields('invoice', $whereCF);
 
     $formatArray = get_pdf_format('pdf_format_invoice');
-    if (!file_exists(APPPATH.'libraries/Invoice_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'invoice');
+    if (!file_exists(APPPATH . 'libraries/Invoice_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'invoice');
     } else {
-        include_once(APPPATH.'libraries/Invoice_pdf.php');
-        $pdf         = new Invoice_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Invoice_pdf.php');
+        $pdf = new Invoice_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
     if (defined('APP_PDF_MARGIN_LEFT') && defined('APP_PDF_MARGIN_TOP') && defined('APP_PDF_MARGIN_RIGHT')) {
@@ -213,9 +213,9 @@ function invoice_pdf($invoice, $tag = '')
 
     $status = $invoice->status;
     $swap   = get_option('swap_pdf_info');
-    $CI->load->library('numberword', array(
+    $CI->load->library('numberword', [
         'clientid' => $invoice->clientid,
-    ));
+    ]);
     $invoice = do_action('invoice_html_pdf_data', $invoice);
 
     _bulk_pdf_export_maybe_tag($tag, $pdf);
@@ -241,19 +241,19 @@ function invoice_pdf($invoice, $tag = '')
 function credit_note_pdf($credit_note, $tag = '')
 {
     $GLOBALS['credit_note_pdf'] = $credit_note;
-    $CI =& get_instance();
+    $CI                         = & get_instance();
     load_pdf_language($credit_note->clientid);
     $CI->load->library('pdf');
     $credit_note_number = format_credit_note_number($credit_note->id);
 
-    $font_name      = get_option('pdf_font');
-    $font_size      = get_option('pdf_font_size');
+    $font_name = get_option('pdf_font');
+    $font_size = get_option('pdf_font_size');
 
     if ($font_size == '') {
         $font_size = 10;
     }
 
-    $whereCF = array('show_on_pdf'=>1);
+    $whereCF = ['show_on_pdf' => 1];
     if (is_custom_fields_for_customers_portal()) {
         $whereCF['show_on_client_portal'] = 1;
     }
@@ -263,11 +263,11 @@ function credit_note_pdf($credit_note, $tag = '')
 
     $formatArray = get_pdf_format('pdf_format_credit_note');
 
-    if (!file_exists(APPPATH.'libraries/Credit_note_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'credit_note');
+    if (!file_exists(APPPATH . 'libraries/Credit_note_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'credit_note');
     } else {
-        include_once(APPPATH.'libraries/Credit_note_pdf.php');
-        $pdf         = new Credit_note_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Credit_note_pdf.php');
+        $pdf = new Credit_note_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
     if (defined('APP_PDF_MARGIN_LEFT') && defined('APP_PDF_MARGIN_TOP') && defined('APP_PDF_MARGIN_RIGHT')) {
@@ -290,16 +290,16 @@ function credit_note_pdf($credit_note, $tag = '')
         $pdf->IncludeJS($js);
     }
 
-    $swap   = get_option('swap_pdf_info');
+    $swap = get_option('swap_pdf_info');
 
-    $CI->load->library('numberword', array(
+    $CI->load->library('numberword', [
         'clientid' => $credit_note->clientid,
-    ));
+    ]);
 
     $credit_note = do_action('credit_note_html_pdf_data', $credit_note);
 
     _bulk_pdf_export_maybe_tag($tag, $pdf);
-     if (file_exists(APPPATH . 'views/themes/' . active_clients_theme() . '/views/my_credit_note_pdf.php')) {
+    if (file_exists(APPPATH . 'views/themes/' . active_clients_theme() . '/views/my_credit_note_pdf.php')) {
         include(APPPATH . 'views/themes/' . active_clients_theme() . '/views/my_credit_note_pdf.php');
     } else {
         include(APPPATH . 'views/themes/' . active_clients_theme() . '/views/credit_note_pdf.php');
@@ -322,7 +322,7 @@ function credit_note_pdf($credit_note, $tag = '')
 function estimate_pdf($estimate, $tag = '')
 {
     $GLOBALS['estimate_pdf'] = $estimate;
-    $CI =& get_instance();
+    $CI                      = & get_instance();
     load_pdf_language($estimate->clientid);
     $CI->load->library('pdf');
     $estimate_number = format_estimate_number($estimate->id);
@@ -333,7 +333,7 @@ function estimate_pdf($estimate, $tag = '')
         $font_size = 10;
     }
 
-    $whereCF = array('show_on_pdf'=>1);
+    $whereCF = ['show_on_pdf' => 1];
     if (is_custom_fields_for_customers_portal()) {
         $whereCF['show_on_client_portal'] = 1;
     }
@@ -342,11 +342,11 @@ function estimate_pdf($estimate, $tag = '')
 
     $formatArray = get_pdf_format('pdf_format_estimate');
 
-    if (!file_exists(APPPATH.'libraries/Estimate_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'estimate');
+    if (!file_exists(APPPATH . 'libraries/Estimate_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'estimate');
     } else {
-        include_once(APPPATH.'libraries/Estimate_pdf.php');
-        $pdf         = new Estimate_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Estimate_pdf.php');
+        $pdf = new Estimate_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
     if (defined('APP_PDF_MARGIN_LEFT') && defined('APP_PDF_MARGIN_TOP') && defined('APP_PDF_MARGIN_RIGHT')) {
@@ -368,9 +368,9 @@ function estimate_pdf($estimate, $tag = '')
     }
     $status = $estimate->status;
     $swap   = get_option('swap_pdf_info');
-    $CI->load->library('numberword', array(
+    $CI->load->library('numberword', [
         'clientid' => $estimate->clientid,
-    ));
+    ]);
     $estimate = do_action('estimate_html_pdf_data', $estimate);
 
     _bulk_pdf_export_maybe_tag($tag, $pdf);
@@ -396,7 +396,7 @@ function estimate_pdf($estimate, $tag = '')
 function proposal_pdf($proposal, $tag = '')
 {
     $GLOBALS['proposal_pdf'] = $proposal;
-    $CI =& get_instance();
+    $CI                      = & get_instance();
 
     if ($proposal->rel_id != null && $proposal->rel_type == 'customer') {
         load_pdf_language($proposal->rel_id);
@@ -408,17 +408,17 @@ function proposal_pdf($proposal, $tag = '')
     if ($proposal->rel_type == 'customer') {
         $number_word_lang_rel_id = $proposal->rel_id;
     }
-    $CI->load->library('numberword', array(
+    $CI->load->library('numberword', [
         'clientid' => $number_word_lang_rel_id,
-    ));
+    ]);
 
     $formatArray = get_pdf_format('pdf_format_proposal');
 
-    if (!file_exists(APPPATH.'libraries/Proposal_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'proposal');
+    if (!file_exists(APPPATH . 'libraries/Proposal_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'proposal');
     } else {
-        include_once(APPPATH.'libraries/Proposal_pdf.php');
-        $pdf         = new Proposal_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Proposal_pdf.php');
+        $pdf = new Proposal_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
 
@@ -428,7 +428,7 @@ function proposal_pdf($proposal, $tag = '')
         $font_size = 10;
     }
 
-    $proposal_url = site_url('viewproposal/' . $proposal->id . '/' . $proposal->hash);
+    $proposal_url = site_url('proposal/' . $proposal->id . '/' . $proposal->hash);
     $number       = format_proposal_number($proposal->id);
 
     $pdf->setImageScale(1.53);
@@ -471,7 +471,7 @@ function proposal_pdf($proposal, $tag = '')
     // Image center
     $proposal->content = str_replace('margin-left: auto; margin-right: auto;', 'text-align:center;', $proposal->content);
 
-    $proposal          = do_action('proposal_html_pdf_data', $proposal);
+    $proposal = do_action('proposal_html_pdf_data', $proposal);
 
     _bulk_pdf_export_maybe_tag($tag, $pdf);
     if (file_exists(APPPATH . 'views/themes/' . active_clients_theme() . '/views/my_proposalpdf.php')) {
@@ -494,16 +494,16 @@ function proposal_pdf($proposal, $tag = '')
 function contract_pdf($contract)
 {
     $GLOBALS['contract_pdf'] = $contract;
-    $CI =& get_instance();
+    $CI                      = & get_instance();
     $CI->load->library('pdf');
 
     $formatArray = get_pdf_format('pdf_format_contract');
 
-    if (!file_exists(APPPATH.'libraries/Contract_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'contract');
+    if (!file_exists(APPPATH . 'libraries/Contract_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'contract');
     } else {
-        include_once(APPPATH.'libraries/Contract_pdf.php');
-        $pdf         = new Contract_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Contract_pdf.php');
+        $pdf = new Contract_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
     $font_name = get_option('pdf_font');
@@ -564,17 +564,17 @@ function contract_pdf($contract)
 function payment_pdf($payment, $tag = '')
 {
     $GLOBALS['payment_pdf'] = $payment;
-    $CI =& get_instance();
+    $CI                     = & get_instance();
     load_pdf_language($payment->invoice_data->clientid);
     $CI->load->library('pdf');
 
     $formatArray = get_pdf_format('pdf_format_payment');
 
-    if (!file_exists(APPPATH.'libraries/Payment_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'payment');
+    if (!file_exists(APPPATH . 'libraries/Payment_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'payment');
     } else {
-        include_once(APPPATH.'libraries/Payment_pdf.php');
-        $pdf         = new Payment_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Payment_pdf.php');
+        $pdf = new Payment_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
     $amountDue = ($payment->invoice_data->status != 2 && $payment->invoice_data->status != 5 ? true : false);
@@ -628,23 +628,23 @@ function payment_pdf($payment, $tag = '')
 function statement_pdf($statement)
 {
     $GLOBALS['statement_pdf'] = $statement;
-    $CI =& get_instance();
+    $CI                       = & get_instance();
     load_pdf_language($statement['client_id']);
     $CI->load->library('pdf');
 
-    $font_name      = get_option('pdf_font');
-    $font_size      = get_option('pdf_font_size');
+    $font_name = get_option('pdf_font');
+    $font_size = get_option('pdf_font_size');
 
     if ($font_size == '') {
         $font_size = 10;
     }
 
     $formatArray = get_pdf_format('pdf_format_statement');
-    if (!file_exists(APPPATH.'libraries/Statement_pdf.php')) {
-        $pdf         = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'statement');
+    if (!file_exists(APPPATH . 'libraries/Statement_pdf.php')) {
+        $pdf = new Pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false, 'statement');
     } else {
-        include_once(APPPATH.'libraries/Statement_pdf.php');
-        $pdf         = new Statement_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
+        include_once(APPPATH . 'libraries/Statement_pdf.php');
+        $pdf = new Statement_pdf($formatArray['orientation'], 'mm', $formatArray['format'], true, 'UTF-8', false, false);
     }
 
     if (defined('APP_PDF_MARGIN_LEFT') && defined('APP_PDF_MARGIN_TOP') && defined('APP_PDF_MARGIN_RIGHT')) {
@@ -686,11 +686,12 @@ function statement_pdf($statement)
  * @param  object &$pdf pdf instance
  * @return null
  */
-function _bulk_pdf_export_maybe_tag($tag, &$pdf) {
+function _bulk_pdf_export_maybe_tag($tag, &$pdf)
+{
     // Tag - used in BULK pdf exporter
     if ($tag != '') {
-        $font_name      = get_option('pdf_font');
-        $font_size      = get_option('pdf_font_size');
+        $font_name = get_option('pdf_font');
+        $font_size = get_option('pdf_font_size');
 
         if ($font_size == '') {
             $font_size = 10;

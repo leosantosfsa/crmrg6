@@ -129,7 +129,7 @@
                                        <td>
                                           <?php
                                           if(isset($data['invoice_id'])) {
-                                             echo _l('statement_invoice_details',array('<a href="'.site_url('viewinvoice/'.$data['invoice_id']).'/'.$data['hash'].'" target="_blank">'.format_invoice_number($data['invoice_id']).'</a>',_d($data['duedate'])));
+                                             echo _l('statement_invoice_details',array('<a href="'.site_url('invoice/'.$data['invoice_id']).'/'.$data['hash'].'" target="_blank">'.format_invoice_number($data['invoice_id']).'</a>',_d($data['duedate'])));
                                           } else if(isset($data['payment_id'])){
                                              echo _l('statement_payment_details',array('#'.$data['payment_id'],format_invoice_number($data['payment_invoice_id'])));
                                           } else if(isset($data['credit_note_id'])) {

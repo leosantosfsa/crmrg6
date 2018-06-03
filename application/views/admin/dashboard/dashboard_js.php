@@ -155,12 +155,30 @@
                }
            });
         }
+
+        if($(window).width() < 500) {
+            // Fix for small devices weekly payment statistics
+            $('#weekly-payment-statistics').attr('height', '250');
+        }
+
+        fix_user_data_widget_tabs();
+        $(window).on('resize', function(){
+            $('.horizontal-scrollable-tabs ul.nav-tabs-horizontal').removeAttr('style');
+            fix_user_data_widget_tabs();
+        });
         // Payments statistics
         init_weekly_payment_statistics( <?php echo $weekly_payment_stats; ?> );
         $('select[name="currency"]').on('change', function() {
             init_weekly_payment_statistics();
         });
     });
+    function fix_user_data_widget_tabs(){
+        if((app_user_browser != 'firefox'
+                && isRTL == 'false' && is_mobile()) || (app_user_browser == 'firefox'
+                && isRTL == 'false' && is_mobile())){
+                $('.horizontal-scrollable-tabs ul.nav-tabs-horizontal').css('margin-bottom','26px');
+        }
+    }
     function init_weekly_payment_statistics(data) {
         if ($('#weekly-payment-statistics').length > 0) {
 

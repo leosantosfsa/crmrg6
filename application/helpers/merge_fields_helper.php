@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * General merge fields not linked to any features
@@ -6,17 +7,17 @@ defined('BASEPATH') or exit('No direct script access allowed');
  */
 function get_other_merge_fields()
 {
-    $CI =& get_instance();
-    $fields                          = array();
-    $fields['{logo_url}']            = base_url('uploads/company/' . get_option('company_logo'));
+    $CI                   = & get_instance();
+    $fields               = [];
+    $fields['{logo_url}'] = base_url('uploads/company/' . get_option('company_logo'));
 
-    $logo_width = do_action('merge_field_logo_img_width', '');
-    $fields['{logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo')) . '"'.($logo_width != '' ? ' width="'.$logo_width.'"' : '').'></a>';
+    $logo_width                      = do_action('merge_field_logo_img_width', '');
+    $fields['{logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo')) . '"' . ($logo_width != '' ? ' width="' . $logo_width . '"' : '') . '></a>';
 
-    $fields['{crm_url}']             = site_url();
-    $fields['{admin_url}']           = admin_url();
-    $fields['{main_domain}']         = get_option('main_domain');
-    $fields['{companyname}']         = get_option('companyname');
+    $fields['{crm_url}']     = site_url();
+    $fields['{admin_url}']   = admin_url();
+    $fields['{main_domain}'] = get_option('main_domain');
+    $fields['{companyname}'] = get_option('companyname');
 
     if (!is_staff_logged_in() || is_client_logged_in()) {
         $fields['{email_signature}'] = get_option('email_signature');
@@ -29,6 +30,9 @@ function get_other_merge_fields()
             $fields['{email_signature}'] = $signature;
         }
     }
+
+    $field['terms_and_conditions_url'] = terms_url();
+    $field['privacy_policy_url']       = privacy_policy_url();
 
     $hook_data['merge_fields'] = $fields;
     $hook_data['fields_to']    = 'other';
@@ -46,24 +50,26 @@ function get_other_merge_fields()
  */
 function get_lead_merge_fields($id)
 {
-    $CI =& get_instance();
-    $fields                       = array();
-    $fields['{lead_name}']        = '';
-    $fields['{lead_email}']       = '';
-    $fields['{lead_position}']    = '';
-    $fields['{lead_company}']     = '';
-    $fields['{lead_country}']     = '';
-    $fields['{lead_zip}']         = '';
-    $fields['{lead_city}']        = '';
-    $fields['{lead_state}']       = '';
-    $fields['{lead_address}']     = '';
-    $fields['{lead_assigned}']    = '';
-    $fields['{lead_status}']      = '';
-    $fields['{lead_source}']      = '';
-    $fields['{lead_phonenumber}'] = '';
-    $fields['{lead_link}']        = '';
-    $fields['{lead_website}']     = '';
-    $fields['{lead_description}'] = '';
+    $CI                                  = & get_instance();
+    $fields                              = [];
+    $fields['{lead_name}']               = '';
+    $fields['{lead_email}']              = '';
+    $fields['{lead_position}']           = '';
+    $fields['{lead_company}']            = '';
+    $fields['{lead_country}']            = '';
+    $fields['{lead_zip}']                = '';
+    $fields['{lead_city}']               = '';
+    $fields['{lead_state}']              = '';
+    $fields['{lead_address}']            = '';
+    $fields['{lead_assigned}']           = '';
+    $fields['{lead_status}']             = '';
+    $fields['{lead_source}']             = '';
+    $fields['{lead_phonenumber}']        = '';
+    $fields['{lead_link}']               = '';
+    $fields['{lead_website}']            = '';
+    $fields['{lead_description}']        = '';
+    $fields['{lead_public_form_url}']    = '';
+    $fields['{lead_public_consent_url}'] = '';
 
     $CI->db->where('id', $id);
     $lead = $CI->db->get('tblleads')->row();
@@ -72,18 +78,20 @@ function get_lead_merge_fields($id)
         return $fields;
     }
 
-    $fields['{lead_link}']        = admin_url('leads/index/' . $lead->id);
-    $fields['{lead_name}']        = $lead->name;
-    $fields['{lead_email}']       = $lead->email;
-    $fields['{lead_position}']    = $lead->title;
-    $fields['{lead_phonenumber}'] = $lead->phonenumber;
-    $fields['{lead_company}']     = $lead->company;
-    $fields['{lead_zip}']         = $lead->zip;
-    $fields['{lead_city}']        = $lead->city;
-    $fields['{lead_state}']       = $lead->state;
-    $fields['{lead_address}']     = $lead->address;
-    $fields['{lead_website}']     = $lead->website;
-    $fields['{lead_description}'] = $lead->description;
+    $fields['{lead_public_form_url}']    = leads_public_url($lead->id);
+    $fields['{lead_public_consent_url}'] = lead_consent_url($lead->id);
+    $fields['{lead_link}']               = admin_url('leads/index/' . $lead->id);
+    $fields['{lead_name}']               = $lead->name;
+    $fields['{lead_email}']              = $lead->email;
+    $fields['{lead_position}']           = $lead->title;
+    $fields['{lead_phonenumber}']        = $lead->phonenumber;
+    $fields['{lead_company}']            = $lead->company;
+    $fields['{lead_zip}']                = $lead->zip;
+    $fields['{lead_city}']               = $lead->city;
+    $fields['{lead_state}']              = $lead->state;
+    $fields['{lead_address}']            = $lead->address;
+    $fields['{lead_website}']            = $lead->website;
+    $fields['{lead_description}']        = $lead->description;
 
     if ($lead->assigned != 0) {
         $fields['{lead_assigned}'] = get_staff_full_name($lead->assigned);
@@ -128,9 +136,9 @@ function get_lead_merge_fields($id)
  * This field is also used for the project discussion files and regular discussions
  * @return array
  */
-function get_project_merge_fields($project_id, $additional_data = array())
+function get_project_merge_fields($project_id, $additional_data = [])
 {
-    $fields = array();
+    $fields = [];
 
     $fields['{project_name}']           = '';
     $fields['{project_deadline}']       = '';
@@ -145,7 +153,7 @@ function get_project_merge_fields($project_id, $additional_data = array())
     $fields['{discussion_description}'] = '';
     $fields['{discussion_comment}']     = '';
 
-    $CI =& get_instance();
+    $CI = & get_instance();
 
     $CI->db->where('id', $project_id);
     $project = $CI->db->get('tblprojects')->row();
@@ -161,9 +169,9 @@ function get_project_merge_fields($project_id, $additional_data = array())
     }
 
     if (is_client_logged_in()) {
-        $cf                             = get_contact_full_name(get_contact_user_id());
+        $cf = get_contact_full_name(get_contact_user_id());
     } else {
-        $cf                             = get_staff_full_name(get_staff_user_id());
+        $cf = get_staff_full_name(get_staff_user_id());
     }
 
     $fields['{file_creator}']       = $cf;
@@ -263,28 +271,30 @@ function get_password_merge_field($data, $staff, $type)
  */
 function get_client_contact_merge_fields($client_id, $contact_id = '', $password = '')
 {
-    $fields = array();
+    $fields = [];
 
     if ($contact_id == '') {
         $contact_id = get_primary_contact_user_id($client_id);
     }
 
-    $fields['{contact_firstname}']  = '';
-    $fields['{contact_lastname}']   = '';
-    $fields['{contact_email}']      = '';
-    $fields['{client_company}']     = '';
-    $fields['{client_phonenumber}'] = '';
-    $fields['{client_country}']     = '';
-    $fields['{client_city}']        = '';
-    $fields['{client_zip}']         = '';
-    $fields['{client_state}']       = '';
-    $fields['{client_address}']     = '';
-    $fields['{password}']           = '';
-    $fields['{client_vat_number}']  = '';
+    $fields['{contact_firstname}']          = '';
+    $fields['{contact_lastname}']           = '';
+    $fields['{contact_email}']              = '';
+    $fields['{contact_phonenumber}']        = '';
+    $fields['{client_company}']             = '';
+    $fields['{client_phonenumber}']         = '';
+    $fields['{client_country}']             = '';
+    $fields['{client_city}']                = '';
+    $fields['{client_zip}']                 = '';
+    $fields['{client_state}']               = '';
+    $fields['{client_address}']             = '';
+    $fields['{password}']                   = '';
+    $fields['{client_vat_number}']          = '';
+    $fields['{contact_public_consent_url}'] = '';
 
-    $CI =& get_instance();
+    $CI = & get_instance();
 
-    if($client_id == ''){
+    if ($client_id == '') {
         return $fields;
     }
 
@@ -299,10 +309,13 @@ function get_client_contact_merge_fields($client_id, $contact_id = '', $password
     $contact = $CI->db->get('tblcontacts')->row();
 
     if ($contact) {
-        $fields['{contact_firstname}'] = $contact->firstname;
-        $fields['{contact_lastname}']  = $contact->lastname;
-        $fields['{contact_email}']     = $contact->email;
+        $fields['{contact_firstname}']          = $contact->firstname;
+        $fields['{contact_lastname}']           = $contact->lastname;
+        $fields['{contact_email}']              = $contact->email;
+        $fields['{contact_phonenumber}']        = $contact->phonenumber;
+        $fields['{contact_public_consent_url}'] = contact_consent_url($contact->id);
     }
+
     if (!empty($client->vat)) {
         $fields['{client_vat_number}'] = $client->vat;
     }
@@ -314,7 +327,7 @@ function get_client_contact_merge_fields($client_id, $contact_id = '', $password
     $fields['{client_zip}']         = $client->zip;
     $fields['{client_state}']       = $client->state;
     $fields['{client_address}']     = $client->address;
-    $fields['{client_id}']     = $client_id;
+    $fields['{client_id}']          = $client_id;
 
     if ($password != '') {
         $fields['{password}'] = $password;
@@ -348,20 +361,52 @@ function get_client_contact_merge_fields($client_id, $contact_id = '', $password
  */
 function get_statement_merge_fields($statement)
 {
-    $fields = array();
+    $fields = [];
 
-    $fields['{statement_from}'] = _d($statement['from']);
-    $fields['{statement_to}'] = _d($statement['to']);
-    $fields['{statement_balance_due}'] = format_money($statement['balance_due'], $statement['currency']->symbol);
-    $fields['{statement_amount_paid}'] = format_money($statement['amount_paid'], $statement['currency']->symbol);
-    $fields['{statement_invoiced_amount}'] = format_money($statement['invoiced_amount'], $statement['currency']->symbol);
+    $fields['{statement_from}']              = _d($statement['from']);
+    $fields['{statement_to}']                = _d($statement['to']);
+    $fields['{statement_balance_due}']       = format_money($statement['balance_due'], $statement['currency']->symbol);
+    $fields['{statement_amount_paid}']       = format_money($statement['amount_paid'], $statement['currency']->symbol);
+    $fields['{statement_invoiced_amount}']   = format_money($statement['invoiced_amount'], $statement['currency']->symbol);
     $fields['{statement_beginning_balance}'] = format_money($statement['beginning_balance'], $statement['currency']->symbol);
 
-    $hook_data['fields_to'] = 'statement';
+    $hook_data['fields_to']    = 'statement';
     $hook_data['merge_fields'] = $fields;
-    $hook_data['statement'] = $statement;
+    $hook_data['statement']    = $statement;
 
     $hook_data = do_action('client_statement_merge_fields', $hook_data);
+    $fields    = $hook_data['merge_fields'];
+
+    return $fields;
+}
+
+/**
+ * Subscription merge fields merge fields
+ * @param  mixed id
+ * @return array
+ */
+function get_subscription_merge_fields($id)
+{
+    $CI = &get_instance();
+    if (!class_exists('subscriptions_model')) {
+        $CI->load->model('subscriptions_model');
+    }
+    $fields       = [];
+    $subscription = $CI->subscriptions_model->get_by_id($id);
+
+    if (!$subscription) {
+        return $fields;
+    }
+
+    $fields['{subscription_id}']          = $subscription->id;
+    $fields['{subscription_name}']        = $subscription->name;
+    $fields['{subscription_description}'] = $fields['{subscription_link}'] = site_url('subscription/' . $subscription->hash);
+
+    $hook_data['fields_to']    = 'subscription';
+    $hook_data['merge_fields'] = $fields;
+    $hook_data['subscription'] = $subscription;
+
+    $hook_data = do_action('subscription_merge_fields', $hook_data);
     $fields    = $hook_data['merge_fields'];
 
     return $fields;
@@ -374,8 +419,8 @@ function get_statement_merge_fields($statement)
  */
 function get_estimate_merge_fields($estimate_id)
 {
-    $fields = array();
-    $CI =& get_instance();
+    $fields = [];
+    $CI     = & get_instance();
     $CI->db->where('id', $estimate_id);
     $estimate = $CI->db->get('tblestimates')->row();
     if (!$estimate) {
@@ -385,10 +430,10 @@ function get_estimate_merge_fields($estimate_id)
     $CI->db->where('id', $estimate->currency);
     $symbol = $CI->db->get('tblcurrencies')->row()->symbol;
 
-    $fields['{estimate_sale_agent}']    = get_staff_full_name($estimate->sale_agent);
+    $fields['{estimate_sale_agent}']   = get_staff_full_name($estimate->sale_agent);
     $fields['{estimate_total}']        = format_money($estimate->total, $symbol);
     $fields['{estimate_subtotal}']     = format_money($estimate->subtotal, $symbol);
-    $fields['{estimate_link}']         = site_url('viewestimate/' . $estimate_id . '/' . $estimate->hash);
+    $fields['{estimate_link}']         = site_url('estimate/' . $estimate_id . '/' . $estimate->hash);
     $fields['{estimate_number}']       = format_estimate_number($estimate_id);
     $fields['{estimate_reference_no}'] = $estimate->reference_no;
     $fields['{estimate_expirydate}']   = _d($estimate->expirydate);
@@ -417,8 +462,8 @@ function get_estimate_merge_fields($estimate_id)
  */
 function get_credit_note_merge_fields($id)
 {
-    $fields = array();
-    $CI =& get_instance();
+    $fields = [];
+    $CI     = & get_instance();
 
     if (!class_exists('credit_notes_model')) {
         $CI->load->model('credit_notes_model');
@@ -430,13 +475,13 @@ function get_credit_note_merge_fields($id)
         return $fields;
     }
 
-    $fields['{credit_note_number}']    = format_credit_note_number($id);
-    $fields['{credit_note_total}']    = format_money($credit_note->total, $credit_note->symbol);
-    $fields['{credit_note_subtotal}'] = format_money($credit_note->subtotal, $credit_note->symbol);
+    $fields['{credit_note_number}']            = format_credit_note_number($id);
+    $fields['{credit_note_total}']             = format_money($credit_note->total, $credit_note->symbol);
+    $fields['{credit_note_subtotal}']          = format_money($credit_note->subtotal, $credit_note->symbol);
     $fields['{credit_note_credits_remaining}'] = format_money($credit_note->remaining_credits, $credit_note->symbol);
-    $fields['{credit_note_credits_used}'] = format_money($credit_note->credits_used, $credit_note->symbol);
-    $fields['{credit_note_date}']    = _d($credit_note->date);
-    $fields['{credit_note_status}']  = format_credit_note_status($credit_note->status, true);
+    $fields['{credit_note_credits_used}']      = format_money($credit_note->credits_used, $credit_note->symbol);
+    $fields['{credit_note_date}']              = _d($credit_note->date);
+    $fields['{credit_note_status}']            = format_credit_note_status($credit_note->status, true);
 
     $custom_fields = get_custom_fields('credit_note');
 
@@ -462,8 +507,8 @@ function get_credit_note_merge_fields($id)
  */
 function get_invoice_merge_fields($invoice_id, $payment_id = false)
 {
-    $fields = array();
-    $CI =& get_instance();
+    $fields = [];
+    $CI     = & get_instance();
     $CI->db->where('id', $invoice_id);
     $invoice = $CI->db->get('tblinvoices')->row();
 
@@ -485,11 +530,11 @@ function get_invoice_merge_fields($invoice_id, $payment_id = false)
         $fields['{payment_date}']  = _d($payment->date);
     }
 
-    $fields['{invoice_sale_agent}']    = get_staff_full_name($invoice->sale_agent);
-    $fields['{invoice_total}']    = format_money($invoice->total, $symbol);
-    $fields['{invoice_subtotal}'] = format_money($invoice->subtotal, $symbol);
+    $fields['{invoice_sale_agent}'] = get_staff_full_name($invoice->sale_agent);
+    $fields['{invoice_total}']      = format_money($invoice->total, $symbol);
+    $fields['{invoice_subtotal}']   = format_money($invoice->subtotal, $symbol);
 
-    $fields['{invoice_link}']    = site_url('viewinvoice/' . $invoice_id . '/' . $invoice->hash);
+    $fields['{invoice_link}']    = site_url('invoice/' . $invoice_id . '/' . $invoice->hash);
     $fields['{invoice_number}']  = format_invoice_number($invoice_id);
     $fields['{invoice_duedate}'] = _d($invoice->duedate);
     $fields['{invoice_date}']    = _d($invoice->date);
@@ -517,8 +562,8 @@ function get_invoice_merge_fields($invoice_id, $payment_id = false)
  */
 function get_proposal_merge_fields($proposal_id)
 {
-    $fields = array();
-    $CI =& get_instance();
+    $fields = [];
+    $CI     = & get_instance();
     $CI->db->where('id', $proposal_id);
     $CI->db->join('tblcountries', 'tblcountries.country_id=tblproposals.country', 'left');
     $proposal = $CI->db->get('tblproposals')->row();
@@ -537,7 +582,7 @@ function get_proposal_merge_fields($proposal_id)
 
     $fields['{proposal_id}']          = $proposal_id;
     $fields['{proposal_number}']      = format_proposal_number($proposal_id);
-    $fields['{proposal_link}']        = site_url('viewproposal/' . $proposal_id . '/' . $proposal->hash);
+    $fields['{proposal_link}']        = site_url('proposal/' . $proposal_id . '/' . $proposal->hash);
     $fields['{proposal_subject}']     = $proposal->subject;
     $fields['{proposal_total}']       = format_money($proposal->total, $currency->symbol);
     $fields['{proposal_subtotal}']    = format_money($proposal->subtotal, $currency->symbol);
@@ -547,10 +592,10 @@ function get_proposal_merge_fields($proposal_id)
     $fields['{proposal_email}']       = $proposal->email;
     $fields['{proposal_phone}']       = $proposal->phone;
 
-    $fields['{proposal_city}']    = $proposal->city;
-    $fields['{proposal_state}']   = $proposal->state;
-    $fields['{proposal_zip}']     = $proposal->zip;
-    $fields['{proposal_country}'] = $proposal->short_name;
+    $fields['{proposal_city}']     = $proposal->city;
+    $fields['{proposal_state}']    = $proposal->state;
+    $fields['{proposal_zip}']      = $proposal->zip;
+    $fields['{proposal_country}']  = $proposal->short_name;
     $fields['{proposal_assigned}'] = get_staff_full_name($proposal->assigned);
 
     $custom_fields = get_custom_fields('proposal');
@@ -575,8 +620,8 @@ function get_proposal_merge_fields($proposal_id)
  */
 function get_contract_merge_fields($contract_id)
 {
-    $fields = array();
-    $CI =& get_instance();
+    $fields = [];
+    $CI     = & get_instance();
     $CI->db->where('id', $contract_id);
     $contract = $CI->db->get('tblcontracts')->row();
 
@@ -593,6 +638,8 @@ function get_contract_merge_fields($contract_id)
     $fields['{contract_datestart}']      = _d($contract->datestart);
     $fields['{contract_dateend}']        = _d($contract->dateend);
     $fields['{contract_contract_value}'] = format_money($contract->contract_value, $currency->symbol);
+
+    $fields['{contract_link}'] = site_url('contract/' . $contract->id . '/' . $contract->hash);
 
     $custom_fields = get_custom_fields('contracts');
     foreach ($custom_fields as $field) {
@@ -617,9 +664,9 @@ function get_contract_merge_fields($contract_id)
  */
 function get_task_merge_fields($task_id, $client_template = false)
 {
-    $fields = array();
+    $fields = [];
 
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->db->where('id', $task_id);
     $task = $CI->db->get('tblstafftasks')->row();
 
@@ -646,7 +693,7 @@ function get_task_merge_fields($task_id, $client_template = false)
     $fields['{project_name}'] = '';
 
     if ($task->rel_type == 'project') {
-        $CI->db->select('name');
+        $CI->db->select('name, clientid');
         $CI->db->from('tblprojects');
         $CI->db->where('id', $task->rel_id);
         $project = $CI->db->get()->row();
@@ -656,18 +703,52 @@ function get_task_merge_fields($task_id, $client_template = false)
     }
 
     if (!empty($task->rel_id)) {
-        $rel_data   = get_relation_data($task->rel_type, $task->rel_id);
-        $rel_values = get_relation_values($rel_data, $task->rel_type);
+        $rel_data                 = get_relation_data($task->rel_type, $task->rel_id);
+        $rel_values               = get_relation_values($rel_data, $task->rel_type);
         $fields['{task_related}'] = $rel_values['name'];
     }
 
     $fields['{task_name}']        = $task->name;
     $fields['{task_description}'] = $task->description;
-    $fields['{task_status}']      = format_task_status($task->status, false, true);
-    $fields['{task_priority}']    = task_priority($task->priority);
-    $fields['{task_startdate}']   = _d($task->startdate);
-    $fields['{task_duedate}']     = _d($task->duedate);
-    $fields['{comment_link}']     = '';
+
+    $languageChanged = false;
+
+    // The tasks status may not be translated if the client language is not loaded
+    if (!is_client_logged_in()
+        && $task->rel_type == 'project'
+        && $project
+        && class_exists('emails_model')
+        && !$CI->emails_model->get_staff_id() // email to client
+    ) {
+        load_client_language($project->clientid);
+        $languageChanged = true;
+    } else {
+        if (class_exists('emails_model')) {
+            $sending_to_staff_id = $CI->emails_model->get_staff_id();
+            if ($sending_to_staff_id) {
+                load_admin_language($sending_to_staff_id);
+                $languageChanged = true;
+            }
+        }
+    }
+
+    $fields['{task_status}']   = format_task_status($task->status, false, true);
+    $fields['{task_priority}'] = task_priority($task->priority);
+
+    $custom_fields = get_custom_fields('tasks');
+    foreach ($custom_fields as $field) {
+        $fields['{' . $field['slug'] . '}'] = get_custom_field_value($task_id, $field['id'], 'tasks');
+    }
+
+    if (!is_client_logged_in() && $languageChanged) {
+        load_admin_language();
+    } elseif (is_client_logged_in() && $languageChanged) {
+        load_client_language();
+    }
+
+    $fields['{task_startdate}'] = _d($task->startdate);
+    $fields['{task_duedate}']   = _d($task->duedate);
+    $fields['{comment_link}']   = '';
 
     $CI->db->where('taskid', $task_id);
     $CI->db->limit(1);
@@ -676,12 +757,7 @@ function get_task_merge_fields($task_id, $client_template = false)
 
     if ($comment) {
         $fields['{task_comment}'] = $comment->content;
-        $fields['{comment_link}'] = $fields['{task_link}'].'#comment_'.$comment->id;
-    }
-
-    $custom_fields = get_custom_fields('tasks');
-    foreach ($custom_fields as $field) {
-        $fields['{' . $field['slug'] . '}'] = get_custom_field_value($task_id, $field['id'], 'tasks');
+        $fields['{comment_link}'] = $fields['{task_link}'] . '#comment_' . $comment->id;
     }
 
     $hook_data['merge_fields']    = $fields;
@@ -703,9 +779,9 @@ function get_task_merge_fields($task_id, $client_template = false)
  */
 function get_staff_merge_fields($staff_id, $password = '')
 {
-    $fields = array();
+    $fields = [];
 
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->db->where('staffid', $staff_id);
     $staff = $CI->db->get('tblstaff')->row();
 
@@ -757,9 +833,9 @@ function get_staff_merge_fields($staff_id, $password = '')
  */
 function get_ticket_merge_fields($template, $ticket_id, $reply_id = '')
 {
-    $fields = array();
+    $fields = [];
 
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->db->where('ticketid', $ticket_id);
     $ticket = $CI->db->get('tbltickets')->row();
 
@@ -769,7 +845,7 @@ function get_ticket_merge_fields($template, $ticket_id, $reply_id = '')
 
     // Replace contact firstname with the ticket name in case the ticket is not linked to any contact.
     // eq email or form imported.
-    if ($ticket->name != null && $ticket->name != "") {
+    if ($ticket->name != null && $ticket->name != '') {
         $fields['{contact_firstname}'] = $ticket->name;
     }
 
@@ -779,26 +855,60 @@ function get_ticket_merge_fields($template, $ticket_id, $reply_id = '')
 
     $CI->db->where('departmentid', $ticket->department);
     $department = $CI->db->get('tbldepartments')->row();
+
     if ($department) {
         $fields['{ticket_department}'] = $department->name;
+        $fields['{ticket_department_email}'] = $department->email;
+    }
+
+    $languageChanged = false;
+    if (!is_client_logged_in()
+        && !empty($ticket->userid)
+        && class_exists('emails_model')
+        && !$CI->emails_model->get_staff_id() // email to client
+    ) {
+        load_client_language($ticket->userid);
+        $languageChanged = true;
+    } else {
+        if (class_exists('emails_model')) {
+            $sending_to_staff_id = $CI->emails_model->get_staff_id();
+            if ($sending_to_staff_id) {
+                load_admin_language($sending_to_staff_id);
+                $languageChanged = true;
+            }
+        }
     }
 
     $fields['{ticket_status}'] = ticket_status_translate($ticket->status);
+
+    $fields['{ticket_priority}'] = ticket_priority_translate($ticket->priority);
+
+
+    $custom_fields = get_custom_fields('tickets');
+    foreach ($custom_fields as $field) {
+        $fields['{' . $field['slug'] . '}'] = get_custom_field_value($ticket_id, $field['id'], 'tickets');
+    }
+
+    if (!is_client_logged_in() && $languageChanged) {
+        load_admin_language();
+    } elseif (is_client_logged_in() && $languageChanged) {
+        load_client_language();
+    }
+
     $CI->db->where('serviceid', $ticket->service);
     $service = $CI->db->get('tblservices')->row();
     if ($service) {
         $fields['{ticket_service}'] = $service->name;
     }
 
-    $fields['{ticket_id}']       = $ticket_id;
-    $fields['{ticket_priority}'] = ticket_priority_translate($ticket->priority);
+    $fields['{ticket_id}'] = $ticket_id;
 
-    $customerTemplates = array(
+    $customerTemplates = [
         'new-ticket-opened-admin',
         'ticket-reply',
         'ticket-autoresponse',
         'auto-close-ticket',
-        );
+    ];
 
     if (in_array($template, $customerTemplates)) {
         $fields['{ticket_url}'] = site_url('clients/ticket/' . $ticket_id);
@@ -818,11 +928,6 @@ function get_ticket_merge_fields($template, $ticket_id, $reply_id = '')
 
     $fields['{ticket_date}']    = _dt($ticket->date);
     $fields['{ticket_subject}'] = $ticket->subject;
-
-    $custom_fields = get_custom_fields('tickets');
-    foreach ($custom_fields as $field) {
-        $fields['{' . $field['slug'] . '}'] = get_custom_field_value($ticket_id, $field['id'], 'tickets');
-    }
 
     $hook_data['merge_fields'] = $fields;
     $hook_data['fields_to']    = 'ticket';
@@ -850,14 +955,14 @@ function get_staff_reminder_merge_fields($reminder)
     $rel_data   = get_relation_data($reminder->rel_type, $reminder->rel_id);
     $rel_values = get_relation_values($rel_data, $reminder->rel_type);
 
-    $fields['{staff_reminder_description}'] = $reminder->description;
-    $fields['{staff_reminder_date}'] = _dt($reminder->date);
+    $fields['{staff_reminder_description}']   = $reminder->description;
+    $fields['{staff_reminder_date}']          = _dt($reminder->date);
     $fields['{staff_reminder_relation_name}'] = $rel_values['name'];
     $fields['{staff_reminder_relation_link}'] = $rel_values['link'];
 
     $hook_data['merge_fields'] = $fields;
     $hook_data['fields_to']    = 'reminder';
-    $hook_data['reminder']           = $reminder;
+    $hook_data['reminder']     = $reminder;
 
     $hook_data = do_action('staff_reminder_merge_fields', $hook_data);
     $fields    = $hook_data['merge_fields'];
@@ -870,85 +975,125 @@ function get_staff_reminder_merge_fields($reminder)
  */
 function get_available_merge_fields()
 {
-    $available_merge_fields = array(
-        array(
-            'staff' => array(
-                array(
-                    'name' => 'Staff Firstname',
-                    'key' => '{staff_firstname}',
-                    'available' => array(
+    $available_merge_fields = [
+        [
+            'staff' => [
+                [
+                    'name'      => 'Staff Firstname',
+                    'key'       => '{staff_firstname}',
+                    'available' => [
                         'staff',
                         'tasks',
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Staff Lastname',
-                    'key' => '{staff_lastname}',
-                    'available' => array(
+                        'gdpr',
+                    ],
+                    'templates' => [
+                        'contract-expiration-to-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Staff Lastname',
+                    'key'       => '{staff_lastname}',
+                    'available' => [
                         'staff',
                         'tasks',
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Staff Email',
-                    'key' => '{staff_email}',
-                    'available' => array(
+                        'gdpr',
+                    ],
+                    'templates' => [
+                        'contract-expiration-to-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Staff Email',
+                    'key'       => '{staff_email}',
+                    'available' => [
                         'staff',
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Staff Date Created',
-                    'key' => '{staff_datecreated}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Staff Date Created',
+                    'key'       => '{staff_datecreated}',
+                    'available' => [
                         'staff',
-                    ),
-                ),
-                array(
-                    'name' => 'Reset Password Url',
-                    'key' => '{reset_password_url}',
-                    'available' => array(
-                        'staff',
-                    ),
-                ),
-                array(
-                    'name' => 'Reminder Text',
-                    'key' => '{staff_reminder_description}',
-                    'available' => array(
-                        'staff',
-                    ),
-                ),
-                array(
-                    'name' => 'Reminder Date',
-                    'key' => '{staff_reminder_date}',
-                    'available' => array(
-                        'staff',
-                    ),
-                ),
-                 array(
-                    'name' => 'Reminder Relation Name',
-                    'key' => '{staff_reminder_relation_name}',
-                    'available' => array(
-                        'staff',
-                    ),
-                ),
-                array(
-                    'name' => 'Reminder Relation Link',
-                    'key' => '{staff_reminder_relation_link}',
-                    'available' => array(
-                        'staff',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'clients' => array(
-                array(
-                    'name' => 'Contact Firstname',
-                    'key' => '{contact_firstname}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Reset Password Url',
+                    'key'       => '{reset_password_url}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'staff-forgot-password',
+                    ],
+                ],
+                [
+                    'name'      => 'Reminder Text',
+                    'key'       => '{staff_reminder_description}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'reminder-email-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Reminder Date',
+                    'key'       => '{staff_reminder_date}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'reminder-email-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Reminder Relation Name',
+                    'key'       => '{staff_reminder_relation_name}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'reminder-email-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Reminder Relation Link',
+                    'key'       => '{staff_reminder_relation_link}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'reminder-email-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Two Factor Authentication Code',
+                    'key'       => '{two_factor_auth_code}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'two-factor-authentication',
+                    ],
+                ],
+                [
+                    'name'      => 'Password',
+                    'key'       => '{password}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-staff-created',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'clients' => [
+                [
+                    'name'      => 'Contact Firstname',
+                    'key'       => '{contact_firstname}',
+                    'available' => [
                         'client',
                         'ticket',
                         'invoice',
@@ -957,12 +1102,16 @@ function get_available_merge_fields()
                         'project',
                         'tasks',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Contact Lastname',
-                    'key' => '{contact_lastname}',
-                    'available' => array(
+                        'subscriptions',
+                    ],
+                       'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Contact Lastname',
+                    'key'       => '{contact_lastname}',
+                    'available' => [
                         'client',
                         'ticket',
                         'invoice',
@@ -971,911 +1120,1165 @@ function get_available_merge_fields()
                         'project',
                         'tasks',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Set New Password Url',
-                    'key' => '{set_password_url}',
-                    'available' => array(
+                        'subscriptions',
+                    ],
+                          'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Contact Phone Number',
+                    'key'       => '{contact_phonenumber}',
+                    'available' => [
                         'client',
-                    ),
-                ),
-                array(
-                    'name' => 'Reset Password Url',
-                    'key' => '{reset_password_url}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-                array(
-                    'name' => 'Contact Email',
-                    'key' => '{contact_email}',
-                    'available' => array(
-                        'client',
+                        'ticket',
                         'invoice',
                         'estimate',
-                        'ticket',
                         'contract',
                         'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client Company',
-                    'key' => '{client_company}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client Phone Number',
-                    'key' => '{client_phonenumber}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client Country',
-                    'key' => '{client_country}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client City',
-                    'key' => '{client_city}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client Zip',
-                    'key' => '{client_zip}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client State',
-                    'key' => '{client_state}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client Address',
-                    'key' => '{client_address}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client Vat Number',
-                    'key' => '{client_vat_number}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Client ID',
-                    'key' => '{client_id}',
-                    'available' => array(
-                        'client',
-                        'invoice',
-                        'estimate',
-                        'ticket',
-                        'contract',
-                        'project',
-                        'credit_note',
-                    ),
-                ),
-                 array(
-                    'name' => 'Statement From',
-                    'key' => '{statement_from}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-                 array(
-                    'name' => 'Statement To',
-                    'key' => '{statement_to}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-                array(
-                    'name' => 'Statement Balance Due',
-                    'key' => '{statement_balance_due}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-                array(
-                    'name' => 'Statement Amount Paid',
-                    'key' => '{statement_amount_paid}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-                array(
-                    'name' => 'Statement Invoiced Amount',
-                    'key' => '{statement_invoiced_amount}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-                array(
-                    'name' => 'Statement Beginning Balance',
-                    'key' => '{statement_beginning_balance}',
-                    'available' => array(
-                        'client',
-                    ),
-                ),
-            ),
-        ),
-array(
-    'credit_note'=>array(
-         array(
-                    'name' => 'Credit Note Number',
-                    'key' => '{credit_note_number}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Date',
-                    'key' => '{credit_note_date}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Status',
-                    'key' => '{credit_note_status}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Total',
-                    'key' => '{credit_note_total}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-                  array(
-                    'name' => 'Subtotal',
-                    'key' => '{credit_note_subtotal}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-                    array(
-                    'name' => 'Credits Used',
-                    'key' => '{credit_note_credits_used}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-                  array(
-                    'name' => 'Credits Remaining',
-                    'key' => '{credit_note_credits_remaining}',
-                    'available' => array(
-                        'credit_note',
-                    ),
-                ),
-    ),
-),
-        array(
-            'ticket' => array(
-                array(
-                    'name' => 'Ticket ID',
-                    'key' => '{ticket_id}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Ticket URL',
-                    'key' => '{ticket_url}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Department',
-                    'key' => '{ticket_department}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Date Opened',
-                    'key' => '{ticket_date}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Ticket Subject',
-                    'key' => '{ticket_subject}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Ticket Message',
-                    'key' => '{ticket_message}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Ticket Status',
-                    'key' => '{ticket_status}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Ticket Priority',
-                    'key' => '{ticket_priority}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-                array(
-                    'name' => 'Ticket Service',
-                    'key' => '{ticket_service}',
-                    'available' => array(
-                        'ticket',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'contract' => array(
-                array(
-                    'name' => 'Contract ID',
-                    'key' => '{contract_id}',
-                    'available' => array(
-                        'contract',
-                    ),
-                ),
-                array(
-                    'name' => 'Contract Subject',
-                    'key' => '{contract_subject}',
-                    'available' => array(
-                        'contract',
-                    ),
-                ),
-                array(
-                    'name' => 'Contract Description',
-                    'key' => '{contract_description}',
-                    'available' => array(
-                        'contract',
-                    ),
-                ),
-                array(
-                    'name' => 'Contract Date Start',
-                    'key' => '{contract_datestart}',
-                    'available' => array(
-                        'contract',
-                    ),
-                ),
-                array(
-                    'name' => 'Contract Date End',
-                    'key' => '{contract_dateend}',
-                    'available' => array(
-                        'contract',
-                    ),
-                ),
-                array(
-                    'name' => 'Contract Value',
-                    'key' => '{contract_contract_value}',
-                    'available' => array(
-                        'contract',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'invoice' => array(
-                array(
-                    'name' => 'Invoice Link',
-                    'key' => '{invoice_link}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Number',
-                    'key' => '{invoice_number}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Duedate',
-                    'key' => '{invoice_duedate}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Date',
-                    'key' => '{invoice_date}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Status',
-                    'key' => '{invoice_status}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Sale Agent',
-                    'key' => '{invoice_sale_agent}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Total',
-                    'key' => '{invoice_total}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Invoice Subtotal',
-                    'key' => '{invoice_subtotal}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Payment Recorded Total',
-                    'key' => '{payment_total}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-                array(
-                    'name' => 'Payment Recorded Date',
-                    'key' => '{payment_date}',
-                    'available' => array(
-                        'invoice',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'estimate' => array(
-                array(
-                    'name' => 'Estimate Link',
-                    'key' => '{estimate_link}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Number',
-                    'key' => '{estimate_number}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Reference no.',
-                    'key' => '{estimate_reference_no}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Expiry Date',
-                    'key' => '{estimate_expirydate}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Date',
-                    'key' => '{estimate_date}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Status',
-                    'key' => '{estimate_status}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Sale Agent',
-                    'key' => '{estimate_sale_agent}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Total',
-                    'key' => '{estimate_total}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-                array(
-                    'name' => 'Estimate Subtotal',
-                    'key' => '{estimate_subtotal}',
-                    'available' => array(
-                        'estimate',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'tasks' => array(
-                array(
-                    'name' => 'Staff/Contact who take action on task',
-                    'key' => '{task_user_take_action}',
-                    'available' => array(
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Link',
-                    'key' => '{task_link}',
-                    'available' => array(
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                        'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Set New Password Url',
+                    'key'       => '{set_password_url}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'contact-set-password',
+                    ],
+                ],
+                [
+                    'name'      => 'Reset Password Url',
+                    'key'       => '{reset_password_url}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'contact-forgot-password',
+                    ],
+                ],
+                [
+                    'name'      => 'Contact Email',
+                    'key'       => '{contact_email}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                       'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1' ? 'Contact Public Consent URL' : '',
+                    'key'       => is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1' ? '{contact_public_consent_url}' : '',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                          'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Client Company',
+                    'key'       => '{client_company}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                          'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Client Phone Number',
+                    'key'       => '{client_phonenumber}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                          'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Client Country',
+                    'key'       => '{client_country}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                          'templates' => [
+                        'gdpr-removal-request',
+                    ],
+                ],
+                [
+                    'name'      => 'Client City',
+                    'key'       => '{client_city}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Client Zip',
+                    'key'       => '{client_zip}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Client State',
+                    'key'       => '{client_state}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Client Address',
+                    'key'       => '{client_address}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Client Vat Number',
+                    'key'       => '{client_vat_number}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Client ID',
+                    'key'       => '{client_id}',
+                    'available' => [
+                        'client',
+                        'invoice',
+                        'estimate',
+                        'ticket',
+                        'contract',
+                        'project',
+                        'credit_note',
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Password',
+                    'key'       => '{password}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-client-created',
+                    ],
+                ],
+                [
+                    'name'      => 'Statement From',
+                    'key'       => '{statement_from}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'client-statement',
+                    ],
+                ],
+                [
+                    'name'      => 'Statement To',
+                    'key'       => '{statement_to}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'client-statement',
+                    ],
+                ],
+                [
+                    'name'      => 'Statement Balance Due',
+                    'key'       => '{statement_balance_due}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'client-statement',
+                    ],
+                ],
+                [
+                    'name'      => 'Statement Amount Paid',
+                    'key'       => '{statement_amount_paid}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'client-statement',
+                    ],
+                ],
+                [
+                    'name'      => 'Statement Invoiced Amount',
+                    'key'       => '{statement_invoiced_amount}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'client-statement',
+                    ],
+                ],
+                [
+                    'name'      => 'Statement Beginning Balance',
+                    'key'       => '{statement_beginning_balance}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'client-statement',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'credit_note' => [
+                [
+                    'name'      => 'Credit Note Number',
+                    'key'       => '{credit_note_number}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+                [
+                    'name'      => 'Date',
+                    'key'       => '{credit_note_date}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+                [
+                    'name'      => 'Status',
+                    'key'       => '{credit_note_status}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+                [
+                    'name'      => 'Total',
+                    'key'       => '{credit_note_total}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+                [
+                    'name'      => 'Subtotal',
+                    'key'       => '{credit_note_subtotal}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+                [
+                    'name'      => 'Credits Used',
+                    'key'       => '{credit_note_credits_used}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+                [
+                    'name'      => 'Credits Remaining',
+                    'key'       => '{credit_note_credits_remaining}',
+                    'available' => [
+                        'credit_note',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'subscriptions' => [
+                [
+                    'name'      => 'Subscription ID',
+                    'key'       => '{subscription_id}',
+                    'available' => [
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Subscription Name',
+                    'key'       => '{subscription_name}',
+                    'available' => [
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Subscription Description',
+                    'key'       => '{subscription_description}',
+                    'available' => [
+                        'subscriptions',
+                    ],
+                ],
+                [
+                    'name'      => 'Subscription Subscribe Link',
+                    'key'       => '{subscription_link}',
+                    'available' => [
+                        'subscriptions',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'ticket' => [
+                [
+                    'name'      => 'Ticket ID',
+                    'key'       => '{ticket_id}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Ticket URL',
+                    'key'       => '{ticket_url}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Department',
+                    'key'       => '{ticket_department}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Department Email',
+                    'key'       => '{ticket_department_email}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Date Opened',
+                    'key'       => '{ticket_date}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Ticket Subject',
+                    'key'       => '{ticket_subject}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Ticket Message',
+                    'key'       => '{ticket_message}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Ticket Status',
+                    'key'       => '{ticket_status}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Ticket Priority',
+                    'key'       => '{ticket_priority}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+                [
+                    'name'      => 'Ticket Service',
+                    'key'       => '{ticket_service}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'contract' => [
+                [
+                    'name'      => 'Contract ID',
+                    'key'       => '{contract_id}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+                [
+                    'name'      => 'Contract Subject',
+                    'key'       => '{contract_subject}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+                [
+                    'name'      => 'Contract Description',
+                    'key'       => '{contract_description}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+                [
+                    'name'      => 'Contract Date Start',
+                    'key'       => '{contract_datestart}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+                [
+                    'name'      => 'Contract Date End',
+                    'key'       => '{contract_dateend}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+                [
+                    'name'      => 'Contract Value',
+                    'key'       => '{contract_contract_value}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+                [
+                    'name'      => 'Contract Link',
+                    'key'       => '{contract_link}',
+                    'available' => [
+                        'contract',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'invoice' => [
+                [
+                    'name'      => 'Invoice Link',
+                    'key'       => '{invoice_link}',
+                    'available' => [
+                        'invoice',
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Number',
+                    'key'       => '{invoice_number}',
+                    'available' => [
+                        'invoice',
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Duedate',
+                    'key'       => '{invoice_duedate}',
+                    'available' => [
+                        'invoice',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Date',
+                    'key'       => '{invoice_date}',
+                    'available' => [
+                        'invoice',
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                    ],
+
+                ],
+                [
+                    'name'      => 'Invoice Status',
+                    'key'       => '{invoice_status}',
+                    'available' => [
+                        'invoice',
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Sale Agent',
+                    'key'       => '{invoice_sale_agent}',
+                    'available' => [
+                        'invoice',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Total',
+                    'key'       => '{invoice_total}',
+                    'available' => [
+                        'invoice',
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Subtotal',
+                    'key'       => '{invoice_subtotal}',
+                    'available' => [
+                        'invoice',
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                    ],
+                ],
+                [
+                    'name'      => 'Payment Recorded Total',
+                    'key'       => '{payment_total}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                        'invoice-payment-recorded-to-staff',
+                        'invoice-payment-recorded',
+                    ],
+                ],
+                [
+                    'name'      => 'Payment Recorded Date',
+                    'key'       => '{payment_date}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'subscription-payment-succeeded',
+                        'invoice-payment-recorded-to-staff',
+                        'invoice-payment-recorded',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'estimate' => [
+                [
+                    'name'      => 'Estimate Link',
+                    'key'       => '{estimate_link}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Number',
+                    'key'       => '{estimate_number}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Reference no.',
+                    'key'       => '{estimate_reference_no}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Expiry Date',
+                    'key'       => '{estimate_expirydate}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Date',
+                    'key'       => '{estimate_date}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Status',
+                    'key'       => '{estimate_status}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Sale Agent',
+                    'key'       => '{estimate_sale_agent}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Total',
+                    'key'       => '{estimate_total}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+                [
+                    'name'      => 'Estimate Subtotal',
+                    'key'       => '{estimate_subtotal}',
+                    'available' => [
+                        'estimate',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'tasks' => [
+                [
+                    'name'      => 'Staff/Contact who take action on task',
+                    'key'       => '{task_user_take_action}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Comment Link',
-                    'key' => '{comment_link}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Task Link',
+                    'key'       => '{task_link}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Name',
-                    'key' => '{task_name}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Comment Link',
+                    'key'       => '{comment_link}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'task-commented',
+                        'task-commented-to-contacts',
+                    ],
+                ],
+                [
+                    'name'      => 'Task Name',
+                    'key'       => '{task_name}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Description',
-                    'key' => '{task_description}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Task Description',
+                    'key'       => '{task_description}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Status',
-                    'key' => '{task_status}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Task Status',
+                    'key'       => '{task_status}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Comment',
-                    'key' => '{task_comment}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Task Comment',
+                    'key'       => '{task_comment}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'task-commented',
+                        'task-commented-to-contacts',
+                    ],
+                ],
+                [
+                    'name'      => 'Task Priority',
+                    'key'       => '{task_priority}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Priority',
-                    'key' => '{task_priority}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Task Start Date',
+                    'key'       => '{task_startdate}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Start Date',
-                    'key' => '{task_startdate}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Task Due Date',
+                    'key'       => '{task_duedate}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Task Due Date',
-                    'key' => '{task_duedate}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Related to',
+                    'key'       => '{task_related}',
+                    'available' => [
                         'tasks',
-                    ),
-                ),
-                array(
-                    'name' => 'Related to',
-                    'key' => '{task_related}',
-                    'available' => array(
-                        'tasks',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'proposals' => array(
-                array(
-                    'name' => 'Proposal ID',
-                    'key' => '{proposal_id}',
-                    'available' => array(
+                    ],
+                ],
+            ],
+        ],
+        [
+            'proposals' => [
+                [
+                    'name'      => 'Proposal ID',
+                    'key'       => '{proposal_id}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Proposal Number',
-                    'key' => '{proposal_number}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Proposal Number',
+                    'key'       => '{proposal_number}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Subject',
-                    'key' => '{proposal_subject}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Subject',
+                    'key'       => '{proposal_subject}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Proposal Total',
-                    'key' => '{proposal_total}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Proposal Total',
+                    'key'       => '{proposal_total}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Proposal Subtotal',
-                    'key' => '{proposal_subtotal}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Proposal Subtotal',
+                    'key'       => '{proposal_subtotal}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Open Till',
-                    'key' => '{proposal_open_till}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Open Till',
+                    'key'       => '{proposal_open_till}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Proposal Assigned',
-                    'key' => '{proposal_assigned}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Proposal Assigned',
+                    'key'       => '{proposal_assigned}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Company Name',
-                    'key' => '{proposal_proposal_to}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Company Name',
+                    'key'       => '{proposal_proposal_to}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Address',
-                    'key' => '{proposal_address}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Address',
+                    'key'       => '{proposal_address}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'City',
-                    'key' => '{proposal_city}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'City',
+                    'key'       => '{proposal_city}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'State',
-                    'key' => '{proposal_state}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'State',
+                    'key'       => '{proposal_state}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Zip Code',
-                    'key' => '{proposal_zip}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Zip Code',
+                    'key'       => '{proposal_zip}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Country',
-                    'key' => '{proposal_country}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Country',
+                    'key'       => '{proposal_country}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Email',
-                    'key' => '{proposal_email}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Email',
+                    'key'       => '{proposal_email}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Phone',
-                    'key' => '{proposal_phone}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Phone',
+                    'key'       => '{proposal_phone}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-                array(
-                    'name' => 'Proposal Link',
-                    'key' => '{proposal_link}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Proposal Link',
+                    'key'       => '{proposal_link}',
+                    'available' => [
                         'proposals',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'leads' => array(
-                array(
-                    'name' => 'Lead Name',
-                    'key' => '{lead_name}',
-                    'available' => array(
+                    ],
+                ],
+            ],
+        ],
+        [
+            'leads' => [
+                [
+                    'name'      => 'Lead Name',
+                    'key'       => '{lead_name}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Email',
-                    'key' => '{lead_email}',
-                    'available' => array(
+                    ],
+                    'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Email',
+                    'key'       => '{lead_email}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Position',
-                    'key' => '{lead_position}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Position',
+                    'key'       => '{lead_position}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Website',
-                    'key' => '{lead_website}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Website',
+                    'key'       => '{lead_website}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Description',
-                    'key' => '{lead_description}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Description',
+                    'key'       => '{lead_description}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Phone Number',
-                    'key' => '{lead_phonenumber}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Phone Number',
+                    'key'       => '{lead_phonenumber}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Company',
-                    'key' => '{lead_company}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Company',
+                    'key'       => '{lead_company}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Country',
-                    'key' => '{lead_country}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Country',
+                    'key'       => '{lead_country}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Zip',
-                    'key' => '{lead_zip}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Zip',
+                    'key'       => '{lead_zip}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead City',
-                    'key' => '{lead_city}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead City',
+                    'key'       => '{lead_city}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead State',
-                    'key' => '{lead_state}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead State',
+                    'key'       => '{lead_state}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Address',
-                    'key' => '{lead_address}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Address',
+                    'key'       => '{lead_address}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Assigned',
-                    'key' => '{lead_assigned}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Assigned',
+                    'key'       => '{lead_assigned}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Status',
-                    'key' => '{lead_status}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Status',
+                    'key'       => '{lead_status}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Souce',
-                    'key' => '{lead_source}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Souce',
+                    'key'       => '{lead_source}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-                array(
-                    'name' => 'Lead Link',
-                    'key' => '{lead_link}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Lead Link',
+                    'key'       => '{lead_link}',
+                    'available' => [
                         'leads',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'projects' => array(
-                array(
-                    'name' => 'Project Name',
-                    'key' => '{project_name}',
-                    'available' => array(
+                    ],
+                     'templates' => [
+                        'gdpr-removal-request-lead',
+                    ],
+                ],
+                [
+                    'name'      => is_gdpr() && get_option('gdpr_enable_lead_public_form') == '1' ? 'Lead Public Form URL' : '',
+                    'key'       => is_gdpr() && get_option('gdpr_enable_lead_public_form') == '1' ? '{lead_public_form_url}' : '',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'new-web-to-lead-form-submitted',
+                    ],
+                ],
+                [
+                    'name'      => is_gdpr() && get_option('gdpr_enable_consent_for_leads') == '1' ? 'Lead Consent Link' : '',
+                    'key'       => is_gdpr() && get_option('gdpr_enable_consent_for_leads') == '1' ? '{lead_public_consent_url}' : '',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'new-web-to-lead-form-submitted',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'projects' => [
+                [
+                    'name'      => 'Project Name',
+                    'key'       => '{project_name}',
+                    'available' => [
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Project Description',
-                    'key' => '{project_description}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Project Description',
+                    'key'       => '{project_description}',
+                    'available' => [
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Project Start Date',
-                    'key' => '{project_start_date}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Project Start Date',
+                    'key'       => '{project_start_date}',
+                    'available' => [
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Project Deadline',
-                    'key' => '{project_deadline}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Project Deadline',
+                    'key'       => '{project_deadline}',
+                    'available' => [
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Project Link',
-                    'key' => '{project_link}',
-                    'available' => array(
+                    ],
+                ],
+                [
+                    'name'      => 'Project Link',
+                    'key'       => '{project_link}',
+                    'available' => [
                         'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Discussion Link',
-                    'key' => '{discussion_link}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-                array(
-                    'name' => 'File Creator',
-                    'key' => '{file_creator}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Discussion Creator',
-                    'key' => '{discussion_creator}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Comment Creator',
-                    'key' => '{comment_creator}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Discussion Subject',
-                    'key' => '{discussion_subject}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Discussion Description',
-                    'key' => '{discussion_description}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-                array(
-                    'name' => 'Discussion Comment',
-                    'key' => '{discussion_comment}',
-                    'available' => array(
-                        'project',
-                    ),
-                ),
-            ),
-        ),
-        array(
-            'other' => array(
-                array(
-                    'name' => 'Logo URL',
-                    'key' => '{logo_url}',
+                    ],
+                ],
+                    [
+                    'name'      => 'File Creator',
+                    'key'       => '{file_creator}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-project-file-uploaded-to-customer',
+                        'new-project-file-uploaded-to-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Comment Creator',
+                    'key'       => '{comment_creator}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-project-discussion-comment-to-customer',
+                        'new-project-discussion-comment-to-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Discussion Link',
+                    'key'       => '{discussion_link}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-discussion-created-to-customer',
+                        'new-project-discussion-comment-to-customer',
+                        'new-project-discussion-comment-to-staff',
+                        'new-project-file-uploaded-to-staff',
+                        'new-project-file-uploaded-to-customer',
+                    ],
+                ],
+                [
+                    'name'      => 'Discussion Subject',
+                    'key'       => '{discussion_subject}',
+                    'available' => [
+                    ],
+                     'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-discussion-created-to-customer',
+                        'new-project-discussion-comment-to-customer',
+                        'new-project-discussion-comment-to-staff',
+                        'new-project-file-uploaded-to-staff',
+                        'new-project-file-uploaded-to-customer',
+                    ],
+                ],
+                [
+                    'name'      => 'Discussion Description',
+                    'key'       => '{discussion_description}',
+                    'available' => [
+                    ],
+                     'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-discussion-created-to-customer',
+                        'new-project-discussion-comment-to-customer',
+                        'new-project-discussion-comment-to-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Discussion Creator',
+                    'key'       => '{discussion_creator}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-discussion-created-to-customer',
+                        'new-project-discussion-comment-to-customer',
+                        'new-project-discussion-comment-to-staff',
+                    ],
+                ],
+                [
+                    'name'      => 'Discussion Comment',
+                    'key'       => '{discussion_comment}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'new-project-discussion-comment-to-customer',
+                        'new-project-discussion-comment-to-staff',
+                    ],
+                ],
+            ],
+        ],
+        [
+            'other' => [
+                [
+                    'name'        => 'Logo URL',
+                    'key'         => '{logo_url}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1887,13 +2290,15 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Logo image with URL',
-                    'key' => '{logo_image_with_url}',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Logo image with URL',
+                    'key'         => '{logo_image_with_url}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1905,13 +2310,15 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'CRM URL',
-                    'key' => '{crm_url}',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'CRM URL',
+                    'key'         => '{crm_url}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1923,13 +2330,15 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Admin URL',
-                    'key' => '{admin_url}',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Admin URL',
+                    'key'         => '{admin_url}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1941,13 +2350,15 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Main Domain',
-                    'key' => '{main_domain}',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Main Domain',
+                    'key'         => '{main_domain}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1959,13 +2370,15 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Company Name',
-                    'key' => '{companyname}',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Company Name',
+                    'key'         => '{companyname}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1977,13 +2390,15 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-                array(
-                    'name' => 'Email Signature',
-                    'key' => '{email_signature}',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Email Signature',
+                    'key'         => '{email_signature}',
                     'fromoptions' => true,
-                    'available' => array(
+                    'available'   => [
                         'ticket',
                         'client',
                         'staff',
@@ -1995,12 +2410,54 @@ array(
                         'project',
                         'leads',
                         'credit_note',
-                    ),
-                ),
-            ),
-        ),
-    );
-    $i                      = 0;
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Terms & Conditions URL',
+                    'key'         => '{terms_and_conditions_url}',
+                    'fromoptions' => true,
+                    'available'   => [
+                        'ticket',
+                        'client',
+                        'staff',
+                        'invoice',
+                        'estimate',
+                        'contract',
+                        'tasks',
+                        'proposals',
+                        'project',
+                        'leads',
+                        'credit_note',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Privacy Policy URL',
+                    'key'         => '{privacy_policy_url}',
+                    'fromoptions' => true,
+                    'available'   => [
+                        'ticket',
+                        'client',
+                        'staff',
+                        'invoice',
+                        'estimate',
+                        'contract',
+                        'tasks',
+                        'proposals',
+                        'project',
+                        'leads',
+                        'credit_note',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+            ],
+        ],
+    ];
+    $i = 0;
     foreach ($available_merge_fields as $fields) {
         $f = 0;
         // Fix for merge fields as custom fields not matching the names
@@ -2008,28 +2465,33 @@ array(
             switch ($key) {
                 case 'clients':
                     $_key = 'customers';
+
                     break;
                 case 'proposals':
                     $_key = 'proposal';
+
                     break;
                 case 'contract':
                     $_key = 'contracts';
+
                     break;
                 case 'ticket':
                     $_key = 'tickets';
+
                     break;
                 default:
                     $_key = $key;
+
                     break;
             }
 
-            $custom_fields = get_custom_fields($_key, array(), true);
+            $custom_fields = get_custom_fields($_key, [], true);
             foreach ($custom_fields as $field) {
-                array_push($available_merge_fields[$i][$key], array(
-                    'name' => $field['name'],
-                    'key' => '{' . $field['slug'] . '}',
+                array_push($available_merge_fields[$i][$key], [
+                    'name'      => $field['name'],
+                    'key'       => '{' . $field['slug'] . '}',
                     'available' => $available_merge_fields[$i][$key][$f]['available'],
-                ));
+                ]);
             }
 
             $f++;

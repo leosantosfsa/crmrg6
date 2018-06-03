@@ -104,6 +104,8 @@
       <i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-title="<?php echo _l('invoice_due_after_help'); ?>"></i>
       <?php echo render_input('settings[invoice_due_after]','settings_sales_invoice_due_after',get_option('invoice_due_after')); ?>
       <hr />
+      <?php echo render_yes_no_option('allow_staff_view_invoices_assigned','allow_staff_view_invoices_assigned'); ?>
+      <hr />
       <?php render_yes_no_option('view_invoice_only_logged_in','settings_sales_require_client_logged_in_to_view_invoice'); ?>
       <hr />
       <?php render_yes_no_option('delete_only_on_last_invoice','settings_delete_only_on_last_invoice'); ?>
@@ -197,10 +199,10 @@
       <?php render_yes_no_option('delete_only_on_last_estimate','settings_delete_only_on_last_estimate'); ?>
       <hr />
       <?php render_yes_no_option('estimate_number_decrement_on_delete','settings_sales_decrement_estimate_number_on_delete','settings_sales_decrement_estimate_number_on_delete_tooltip'); ?>
+      <hr />
+      <?php echo render_yes_no_option('allow_staff_view_estimates_assigned','allow_staff_view_estimates_assigned'); ?>
+      <hr />
 
-      <hr />
-      <?php render_yes_no_option('estimate_accept_identity_confirmation','accept_identity_confirmation'); ?>
-      <hr />
       <?php render_yes_no_option('view_estimate_only_logged_in','settings_sales_require_client_logged_in_to_view_estimate'); ?>
       <hr />
       <?php render_yes_no_option('show_sale_agent_on_estimates','settings_show_sale_agent_on_estimates'); ?>
@@ -296,8 +298,6 @@
          </div>
          <div class="clearfix"></div>
       </div>
-      <hr />
-      <?php render_yes_no_option('proposal_accept_identity_confirmation','accept_identity_confirmation'); ?>
       <hr />
       <?php render_yes_no_option('exclude_proposal_from_client_area_with_draft_status','exclude_proposal_from_client_area_with_draft_status'); ?>
       <hr />

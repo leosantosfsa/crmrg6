@@ -4,20 +4,21 @@
   <div class="panel-body no-radius">
    <table class="table table-borded no-margin">
     <tbody>
-     <tr>
-      <td class="bold"><?php echo _l('project_billing_type'); ?></td>
-      <td>
-       <?php
-       if($project->billing_type == 1){
-        $type_name = 'project_billing_type_fixed_cost';
-      } else if($project->billing_type == 2){
-        $type_name = 'project_billing_type_project_hours';
-      } else {
-        $type_name = 'project_billing_type_project_task_hours';
-      }
-      echo _l($type_name);
-      ?>
-    </td>
+      <tr class="project-billing-type">
+        <td class="bold"><?php echo _l('project_billing_type'); ?></td>
+        <td>
+         <?php
+         if($project->billing_type == 1){
+          $type_name = 'project_billing_type_fixed_cost';
+        } else if($project->billing_type == 2){
+          $type_name = 'project_billing_type_project_hours';
+        } else {
+          $type_name = 'project_billing_type_project_task_hours';
+        }
+        echo _l($type_name);
+        ?>
+      </td>
+    </tr>
     <?php if($project->billing_type == 1 || $project->billing_type == 2){
      echo '<tr class="project-cost">';
      if($project->billing_type == 1){
@@ -96,7 +97,7 @@
 </div>
 <div class="col-md-12 mtop5">
   <div class="progress no-margin progress-bar-mini">
-   <div class="progress-bar light-green-bg no-percent-text not-dynamic" role="progressbar" aria-valuenow="<?php echo $tasks_not_completed_progress; ?>" aria-valuemin="0" aria-valuemax="100" style="width: 0%" data-percent="<?php echo $tasks_not_completed_progress; ?>">
+   <div class="progress-bar progress-bar-success no-percent-text not-dynamic" role="progressbar" aria-valuenow="<?php echo $tasks_not_completed_progress; ?>" aria-valuemin="0" aria-valuemax="100" style="width: 0%" data-percent="<?php echo $tasks_not_completed_progress; ?>">
    </div>
  </div>
 </div>

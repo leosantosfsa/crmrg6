@@ -1,6 +1,7 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
-$aColumns      = array(
+$aColumns = [
     'tblexpenses.id as id',
     'tblexpensescategories.name as category_name',
     'amount',
@@ -12,37 +13,37 @@ $aColumns      = array(
     'invoiceid',
     'reference_no',
     'paymentmode',
-);
-$join          = array(
+];
+$join = [
     'LEFT JOIN tblclients ON tblclients.userid = tblexpenses.clientid',
     'JOIN tblexpensescategories ON tblexpensescategories.id = tblexpenses.category',
     'LEFT JOIN tblprojects ON tblprojects.id = tblexpenses.project_id',
     'LEFT JOIN tblfiles ON tblfiles.rel_id = tblexpenses.id AND rel_type="expense"',
     'LEFT JOIN tblcurrencies ON tblcurrencies.id = tblexpenses.currency',
-);
+];
 
 $custom_fields = get_table_custom_fields('expenses');
 
 foreach ($custom_fields as $key => $field) {
-    $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_'.$key);
+    $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
     array_push($customFieldsColumns, $selectAs);
     array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
     array_push($join, 'LEFT JOIN tblcustomfieldsvalues as ctable_' . $key . ' ON tblexpenses.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
 }
 
-$where = array();
-$filter = array();
-include_once(APPPATH.'views/admin/tables/includes/expenses_filter.php');
+$where  = [];
+$filter = [];
+include_once(APPPATH . 'views/admin/tables/includes/expenses_filter.php');
 
 if ($clientid != '') {
     array_push($where, 'AND tblexpenses.clientid=' . $clientid);
 }
 
 if (!has_permission('expenses', '', 'view')) {
-    array_push($where, 'AND tblexpenses.addedfrom='.get_staff_user_id());
+    array_push($where, 'AND tblexpenses.addedfrom=' . get_staff_user_id());
 }
 
-$sIndexColumn = "id";
+$sIndexColumn = 'id';
 $sTable       = 'tblexpenses';
 
 $aColumns = do_action('expenses_table_sql_columns', $aColumns);
@@ -52,7 +53,7 @@ if (count($custom_fields) > 4) {
     @$this->ci->db->query('SET SQL_BIG_SELECTS=1');
 }
 
-$result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, array(
+$result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'category',
     'billable',
     'symbol',
@@ -60,14 +61,14 @@ $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $wher
     'tax',
     'tax2',
     'project_id',
-));
-$output       = $result['output'];
-$rResult      = $result['rResult'];
+]);
+$output  = $result['output'];
+$rResult = $result['rResult'];
 
 $this->ci->load->model('payment_modes_model');
 
 foreach ($rResult as $aRow) {
-    $row = array();
+    $row = [];
 
     $row[] = $aRow['id'];
 
@@ -83,10 +84,10 @@ foreach ($rResult as $aRow) {
         if ($aRow['invoiceid'] == null) {
             $categoryOutput .= ' <p class="text-danger">' . _l('expense_list_unbilled') . '</p>';
         } else {
-            if (total_rows('tblinvoices', array(
+            if (total_rows('tblinvoices', [
                 'id' => $aRow['invoiceid'],
-                'status' => 2
-                )) > 0) {
+                'status' => 2,
+                ]) > 0) {
                 $categoryOutput .= ' <p class="text-success">' . _l('expense_list_billed') . '</p>';
             } else {
                 $categoryOutput .= ' <p class="text-success">' . _l('expense_list_invoice') . '</p>';
@@ -94,9 +95,23 @@ foreach ($rResult as $aRow) {
         }
     }
 
+    $categoryOutput .= '<div class="row-options">';
+
+
+    $categoryOutput .= '<a href="' . admin_url('expenses/list_expenses/' . $aRow['id']) . '" onclick="init_expense(' . $aRow['id'] . ');return false;">' . _l('view') . '</a>';
+
+    if (has_permission('expenses', '', 'edit')) {
+        $categoryOutput .= ' | <a href="' . admin_url('expenses/expense/' . $aRow['id']) . '">' . _l('edit') . '</a>';
+    }
+
+    if (has_permission('expenses', '', 'delete')) {
+        $categoryOutput .= ' | <a href="' . admin_url('expenses/delete/' . $aRow['id']) . '" class="text-danger _delete">' . _l('delete') . '</a>';
+    }
+
+    $categoryOutput .= '</div>';
     $row[] = $categoryOutput;
 
-    $total =  $aRow['amount'];
+    $total    = $aRow['amount'];
     $tmpTotal = $total;
 
     if ($aRow['tax'] != 0) {
@@ -115,19 +130,19 @@ foreach ($rResult as $aRow) {
     $outputReceipt = '';
 
     if (!empty($aRow['file_name'])) {
-        $outputReceipt =  '<a href="'.site_url('download/file/expense/'.$aRow['id']).'">'.$aRow['file_name'].'</a>';
+        $outputReceipt = '<a href="' . site_url('download/file/expense/' . $aRow['id']) . '">' . $aRow['file_name'] . '</a>';
     }
 
     $row[] = $outputReceipt;
 
-    $row[] =   _d($aRow['date']);
+    $row[] = _d($aRow['date']);
 
-    $row[] = '<a href="'.admin_url('projects/view/'.$aRow['project_id']).'">'.$aRow['project_name'].'</a>';
+    $row[] = '<a href="' . admin_url('projects/view/' . $aRow['project_id']) . '">' . $aRow['project_name'] . '</a>';
 
     $row[] = '<a href="' . admin_url('clients/client/' . $aRow['clientid']) . '">' . $aRow['company'] . '</a>';
 
     if ($aRow['invoiceid']) {
-        $row[] = '<a href="'.admin_url('invoices/list_invoices/'.$aRow['invoiceid']).'">'.format_invoice_number($aRow['invoiceid']).'</a>';
+        $row[] = '<a href="' . admin_url('invoices/list_invoices/' . $aRow['invoiceid']) . '">' . format_invoice_number($aRow['invoiceid']) . '</a>';
     } else {
         $row[] = '';
     }
@@ -136,22 +151,22 @@ foreach ($rResult as $aRow) {
 
     $paymentModeOutput = '';
     if ($aRow['paymentmode'] != '0' && !empty($aRow['paymentmode'])) {
-        $payment_mode = $this->ci->payment_modes_model->get($aRow['paymentmode'], array(), false, true);
+        $payment_mode = $this->ci->payment_modes_model->get($aRow['paymentmode'], [], false, true);
         if ($payment_mode) {
             $paymentModeOutput = $payment_mode->name;
         }
     }
     $row[] = $paymentModeOutput;
 
-     // Custom fields add values
-    foreach($customFieldsColumns as $customFieldColumn){
+    // Custom fields add values
+    foreach ($customFieldsColumns as $customFieldColumn) {
         $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);
     }
 
-    $hook = do_action('expenses_table_row_data', array(
+    $hook = do_action('expenses_table_row_data', [
         'output' => $row,
-        'row' => $aRow
-    ));
+        'row'    => $aRow,
+    ]);
 
     $row = $hook['output'];
 

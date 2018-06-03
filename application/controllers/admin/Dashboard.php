@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Dashboard extends Admin_controller
@@ -15,9 +16,9 @@ class Dashboard extends Admin_controller
         close_setup_menu();
         $this->load->model('departments_model');
         $this->load->model('todo_model');
-        $data['departments']               = $this->departments_model->get();
+        $data['departments'] = $this->departments_model->get();
 
-        $data['todos']                     = $this->todo_model->get_todo_items(0);
+        $data['todos'] = $this->todo_model->get_todo_items(0);
         // Only show last 5 finished todo items
         $this->todo_model->setTodosLimit(5);
         $data['todos_finished']            = $this->todo_model->get_todo_items(1);
@@ -25,11 +26,11 @@ class Dashboard extends Admin_controller
         $data['upcoming_events']           = $this->dashboard_model->get_upcoming_events();
         $data['title']                     = _l('dashboard_string');
         $this->load->model('currencies_model');
-        $data['currencies']                           = $this->currencies_model->get();
-        $data['base_currency']                        = $this->currencies_model->get_base_currency();
-        $data['activity_log']                         = $this->misc_model->get_activity_log();
+        $data['currencies']    = $this->currencies_model->get();
+        $data['base_currency'] = $this->currencies_model->get_base_currency();
+        $data['activity_log']  = $this->misc_model->get_activity_log();
         // Tickets charts
-        $tickets_awaiting_reply_by_status = $this->dashboard_model->tickets_awaiting_reply_by_status();
+        $tickets_awaiting_reply_by_status     = $this->dashboard_model->tickets_awaiting_reply_by_status();
         $tickets_awaiting_reply_by_department = $this->dashboard_model->tickets_awaiting_reply_by_department();
 
         $data['tickets_reply_by_status']              = json_encode($tickets_awaiting_reply_by_status);
@@ -38,15 +39,15 @@ class Dashboard extends Admin_controller
         $data['tickets_reply_by_status_no_json']              = $tickets_awaiting_reply_by_status;
         $data['tickets_awaiting_reply_by_department_no_json'] = $tickets_awaiting_reply_by_department;
 
-        $data['projects_status_stats']                = json_encode($this->dashboard_model->projects_status_stats());
-        $data['leads_status_stats']                   = json_encode($this->dashboard_model->leads_status_stats());
-        $data['google_ids_calendars']                 = $this->misc_model->get_google_calendar_ids();
-        $data['bodyclass']                            = 'home dashboard invoices_total_manual';
+        $data['projects_status_stats'] = json_encode($this->dashboard_model->projects_status_stats());
+        $data['leads_status_stats']    = json_encode($this->dashboard_model->leads_status_stats());
+        $data['google_ids_calendars']  = $this->misc_model->get_google_calendar_ids();
+        $data['bodyclass']             = 'dashboard invoices-total-manual';
         $this->load->model('announcements_model');
-        $data['staff_announcements'] = $this->announcements_model->get();
+        $data['staff_announcements']             = $this->announcements_model->get();
         $data['total_undismissed_announcements'] = $this->announcements_model->get_total_undismissed_announcements();
 
-        $data['goals'] = array();
+        $data['goals'] = [];
         if (is_staff_member()) {
             $this->load->model('goals_model');
             $data['goals'] = $this->goals_model->get_staff_goals(get_staff_user_id());
@@ -55,7 +56,7 @@ class Dashboard extends Admin_controller
         $this->load->model('projects_model');
         $data['projects_activity'] = $this->projects_model->get_activity('', do_action('projects_activity_dashboard_limit', 20));
         // To load js files
-        $data['calendar_assets']   = true;
+        $data['calendar_assets'] = true;
         $this->load->model('utilities_model');
         $this->load->model('estimates_model');
         $data['estimate_statuses'] = $this->estimates_model->get_statuses();
@@ -69,12 +70,12 @@ class Dashboard extends Admin_controller
         }
         $data['weekly_payment_stats'] = json_encode($this->dashboard_model->get_weekly_payments_statistics($wps_currency));
 
-        $data['dashboard']             = true;
+        $data['dashboard'] = true;
 
-        $data['user_dashboard_visibility'] = $GLOBALS['current_user']->dashboard_widgets_visibility;
+        $data['user_dashboard_visibility'] = get_staff_meta(get_staff_user_id(), 'dashboard_widgets_visibility');
 
         if (!$data['user_dashboard_visibility']) {
-            $data['user_dashboard_visibility'] = array();
+            $data['user_dashboard_visibility'] = [];
         } else {
             $data['user_dashboard_visibility'] = unserialize($data['user_dashboard_visibility']);
         }

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Client_vault_entries_model extends CRM_Model
@@ -26,7 +27,7 @@ class Client_vault_entries_model extends CRM_Model
      * @param  array  $where       additional wher
      * @return array
      */
-    public function get_by_customer_id($customer_id, $where = array())
+    public function get_by_customer_id($customer_id, $where = [])
     {
         $this->db->where('customer_id', $customer_id);
         $this->db->order_by('date_created', 'desc');
@@ -44,12 +45,12 @@ class Client_vault_entries_model extends CRM_Model
      */
     public function create($data, $customer_id)
     {
-        $data['date_created'] = date('Y-m-d H:i:s');
-        $data['customer_id'] = $customer_id;
+        $data['date_created']      = date('Y-m-d H:i:s');
+        $data['customer_id']       = $customer_id;
         $data['share_in_projects'] = isset($data['share_in_projects']) ? 1 : 0;
         $this->db->insert('tblvault', $data);
 
-        logActivity('Vault Entry Created [Customer ID: '.$customer_id.']');
+        logActivity('Vault Entry Created [Customer ID: ' . $customer_id . ']');
     }
 
     /**
@@ -71,8 +72,8 @@ class Client_vault_entries_model extends CRM_Model
 
         if ($this->db->affected_rows() > 0) {
             $this->db->where('id', $id);
-            $this->db->update('tblvault', array('last_updated'=>date('Y-m-d H:i:s'), 'last_updated_from'=>$last_updated_from));
-            logActivity('Vault Entry Updated [Customer ID: '.$vault->customer_id.']');
+            $this->db->update('tblvault', ['last_updated' => date('Y-m-d H:i:s'), 'last_updated_from' => $last_updated_from]);
+            logActivity('Vault Entry Updated [Customer ID: ' . $vault->customer_id . ']');
 
             return true;
         }
@@ -93,7 +94,7 @@ class Client_vault_entries_model extends CRM_Model
         $this->db->delete('tblvault');
 
         if ($this->db->affected_rows() > 0) {
-            logActivity('Vault Entry Deleted [Customer ID: '.$vault->customer_id.']');
+            logActivity('Vault Entry Deleted [Customer ID: ' . $vault->customer_id . ']');
 
             return true;
         }

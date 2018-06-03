@@ -1,54 +1,42 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
-/*$aColumns     = array(
-    'name',
-    '(SELECT GROUP_CONCAT(name SEPARATOR ",") FROM tbltags_in JOIN tbltags ON tbltags_in.tag_id = tbltags.id WHERE rel_id = tbltaskstimers.id and rel_type="timesheet" ORDER by tag_order ASC) as tags',
-    'start_time',
-    'end_time',
-    'note',
-    tasks_rel_name_select_query(),
-    'end_time - start_time',
-    'end_time - start_time',
-    );*/
 
 $v = $this->ci->db->query('SELECT VERSION() as version')->row();
 // 5.6 mysql version don't have the ANY_VALUE function implemented.
 
-  $additionalSelect = array(
+  $additionalSelect = [
     'tbltaskstimers.id',
     'task_id',
     'rel_type',
     'rel_id',
-    'status');
+    'status', ];
 
 $staffIdSelect = '';
 if ($v && strpos($v->version, '5.7') !== false) {
-
     $staffIdSelect = 'ANY_VALUE(staff_id) as staff_id';
-    foreach ($additionalSelect as $key=>$column) {
+    foreach ($additionalSelect as $key => $column) {
         if ($key !== 0) {
-            $additionalSelect[$key] = 'ANY_VALUE('.$column.') as '.$column;
+            $additionalSelect[$key] = 'ANY_VALUE(' . $column . ') as ' . $column;
         } else {
             // causing errors for ambigious column
-            $additionalSelect[$key] = 'ANY_VALUE('.$column.') as id';
+            $additionalSelect[$key] = 'ANY_VALUE(' . $column . ') as id';
         }
     }
-    $aColumns = array(
+    $aColumns = [
         'ANY_VALUE(name) as name',
         'ANY_VALUE((SELECT GROUP_CONCAT(name SEPARATOR ",") FROM tbltags_in JOIN tbltags ON tbltags_in.tag_id = tbltags.id WHERE rel_id = tbltaskstimers.id and rel_type="timesheet" ORDER by tag_order ASC)) as tags',
         'ANY_VALUE(start_time) as start_time',
         'ANY_VALUE(end_time) as end_time',
         'ANY_VALUE(note) as note',
-        'ANY_VALUE('.tasks_rel_name_select_query().') as rel_name',
+        'ANY_VALUE(' . tasks_rel_name_select_query() . ') as rel_name',
         'ANY_VALUE(end_time - start_time) as time_h',
-        'ANY_VALUE(end_time - start_time) as time_d'
-        );
-
+        'ANY_VALUE(end_time - start_time) as time_d',
+        ];
 } else {
-
     $staffIdSelect = 'staff_id';
 
-    $aColumns = array(
+    $aColumns = [
         'name as name',
         '(SELECT GROUP_CONCAT(name SEPARATOR ",") FROM tbltags_in JOIN tbltags ON tbltags_in.tag_id = tbltags.id WHERE rel_id = tbltaskstimers.id and rel_type="timesheet" ORDER by tag_order ASC) as tags',
         'start_time as start_time',
@@ -57,8 +45,7 @@ if ($v && strpos($v->version, '5.7') !== false) {
         tasks_rel_name_select_query() . ' as rel_name',
         'end_time - start_time as time_h',
         'end_time - start_time as time_d',
-    );
-
+    ];
 }
 
 $time_h_column = 6;
@@ -69,7 +56,6 @@ if ($view_all == true) {
 
     $time_h_column = 7;
     $time_d_column = 8;
-
 }
 
 if ($this->ci->input->post('group_by_task')) {
@@ -82,14 +68,14 @@ if ($this->ci->input->post('group_by_task')) {
     }
 }
 
-$sIndexColumn = "id";
+$sIndexColumn = 'id';
 $sTable       = 'tbltaskstimers';
 
-$join         = array(
-    'LEFT JOIN tblstafftasks ON tblstafftasks.id = tbltaskstimers.task_id'
-);
+$join = [
+    'LEFT JOIN tblstafftasks ON tblstafftasks.id = tbltaskstimers.task_id',
+];
 
-$where = array();
+$where = [];
 
 $staff_id = false;
 
@@ -100,22 +86,22 @@ if ($this->ci->input->post('staff_id')) {
 }
 
 if ($staff_id != false) {
-    $where        = array(
-        'AND staff_id=' . $staff_id
-        );
+    $where = [
+        'AND staff_id=' . $staff_id,
+        ];
 }
 
 if ($this->ci->input->post('project_id')) {
-    array_push($where, 'AND task_id IN (SELECT id FROM tblstafftasks WHERE rel_type = "project" AND rel_id = "'.$this->ci->input->post('project_id').'")');
+    array_push($where, 'AND task_id IN (SELECT id FROM tblstafftasks WHERE rel_type = "project" AND rel_id = "' . $this->ci->input->post('project_id') . '")');
 }
 
-array_push($where,'AND task_id != 0');
+array_push($where, 'AND task_id != 0');
 
 $filter = $this->ci->input->post('range');
 if ($filter != 'period') {
     if ($filter == 'today') {
-        $beginOfDay = strtotime("midnight");
-        $endOfDay   = strtotime("tomorrow", $beginOfDay) - 1;
+        $beginOfDay = strtotime('midnight');
+        $endOfDay   = strtotime('tomorrow', $beginOfDay) - 1;
         array_push($where, ' AND start_time BETWEEN ' . $beginOfDay . ' AND ' . $endOfDay);
     } elseif ($filter == 'this_month') {
         $beginThisMonth = date('Y-m-01');
@@ -137,7 +123,7 @@ if ($filter != 'period') {
 } else {
     $start_date = to_sql_date($this->ci->input->post('period-from'));
     $end_date   = to_sql_date($this->ci->input->post('period-to'));
-    array_push($where, ' AND start_time BETWEEN ' . strtotime($start_date. ' 00:00:00') . ' AND ' . strtotime($end_date.' 23:59:00'));
+    array_push($where, ' AND start_time BETWEEN ' . strtotime($start_date . ' 00:00:00') . ' AND ' . strtotime($end_date . ' 23:59:00'));
 }
 
 $result = data_tables_init(
@@ -150,41 +136,41 @@ $result = data_tables_init(
     ($this->ci->input->post('group_by_task') ? 'GROUP BY task_id' : '')
 );
 
-$output                           = $result['output'];
-$rResult                          = $result['rResult'];
+$output  = $result['output'];
+$rResult = $result['rResult'];
 
 $footer_data['total_logged_time_h'] = 0;
 $footer_data['total_logged_time_d'] = 0;
 
-$footer_data['chart'] = array();
-$footer_data['chart']['labels'] = array();
-$footer_data['chart']['data'] = array();
+$footer_data['chart']           = [];
+$footer_data['chart']['labels'] = [];
+$footer_data['chart']['data']   = [];
 
-$temp_weekdays_data = array();
-$temp_months_data = array();
-$chart_type = 'today';
+$temp_weekdays_data           = [];
+$temp_months_data             = [];
+$chart_type                   = 'today';
 $chart_type_month_from_filter = false;
-$weekDay = date('w', strtotime(date('Y-m-d H:i:s')));
+$weekDay                      = date('w', strtotime(date('Y-m-d H:i:s')));
 if ($filter == 'today') {
-    $footer_data['chart']['labels'] = array(_l('today'));
+    $footer_data['chart']['labels'] = [_l('today')];
 } elseif ($filter == 'this_week' || $filter == 'last_week') {
     foreach (get_weekdays() as $day) {
         array_push($footer_data['chart']['labels'], $day);
     }
     $i = 0;
     foreach (get_weekdays_original() as $day) {
-        if ($weekDay != "0") {
-            $footer_data['chart']['labels'][$i] = date('d', strtotime($day. ' ' . str_replace('_', ' ', $filter))). ' - ' .$footer_data['chart']['labels'][$i];
+        if ($weekDay != '0') {
+            $footer_data['chart']['labels'][$i] = date('d', strtotime($day . ' ' . str_replace('_', ' ', $filter))) . ' - ' . $footer_data['chart']['labels'][$i];
         } else {
             if ($filter == 'this_week') {
-                $strtotime = 'last '.$day;
+                $strtotime = 'last ' . $day;
                 if ($day == 'Sunday') {
                     $strtotime = 'sunday this week';
                 }
-                $footer_data['chart']['labels'][$i] = date('d', strtotime($strtotime)). ' - ' .$footer_data['chart']['labels'][$i];
+                $footer_data['chart']['labels'][$i] = date('d', strtotime($strtotime)) . ' - ' . $footer_data['chart']['labels'][$i];
             } else {
-                $strtotime = $day .' last week';
-                $footer_data['chart']['labels'][$i] = date('d', strtotime($strtotime)). ' - ' .$footer_data['chart']['labels'][$i];
+                $strtotime                          = $day . ' last week';
+                $footer_data['chart']['labels'][$i] = date('d', strtotime($strtotime)) . ' - ' . $footer_data['chart']['labels'][$i];
             }
         }
         $i++;
@@ -192,7 +178,7 @@ if ($filter == 'today') {
 
     $chart_type = 'week';
 } elseif ($filter == 'this_month' || $filter == 'last_month') {
-    $month = ($filter == 'this_month') ? date('m') : date('m', strtotime('first day last month'));
+    $month      = ($filter == 'this_month') ? date('m') : date('m', strtotime('first day last month'));
     $month_year = ($filter == 'this_month') ? date('Y') : date('Y', strtotime('first day last month'));
 
     for ($d = 1; $d <= 31; $d++) {
@@ -204,12 +190,12 @@ if ($filter == 'today') {
     $chart_type = 'month';
 } else {
     $_start_time = new DateTime(date('Y-m-d', strtotime($start_date)));
-    $_end_time = new DateTime(date('Y-m-d', strtotime($end_date)));
+    $_end_time   = new DateTime(date('Y-m-d', strtotime($end_date)));
 
-    $chart_type = 'weeks_split';
-    $weeks = get_weekdays_between_dates($_start_time, $_end_time);
+    $chart_type  = 'weeks_split';
+    $weeks       = get_weekdays_between_dates($_start_time, $_end_time);
     $total_weeks = count($weeks);
-    for ($i = 1; $i<=$total_weeks; $i++) {
+    for ($i = 1; $i <= $total_weeks; $i++) {
         array_push($footer_data['chart']['labels'], split_weeks_chart_label($weeks, $i));
     }
 }
@@ -218,7 +204,7 @@ $chartWhere = implode(' ', $where);
 $chartWhere = ltrim($chartWhere, 'AND ');
 
 $chartData = $this->ci->db->query('SELECT end_time - start_time logged_time_h,
-    end_time - start_time logged_time_d,start_time,end_time FROM tbltaskstimers WHERE '.trim($chartWhere))->result_array();
+    end_time - start_time logged_time_d,start_time,end_time FROM tbltaskstimers WHERE ' . trim($chartWhere))->result_array();
 
 foreach ($chartData as $timer) {
     if ($timer['logged_time_h'] == null) {
@@ -265,17 +251,17 @@ foreach ($chartData as $timer) {
 }
 
 foreach ($rResult as $aRow) {
-    $row = array();
+    $row = [];
 
-    if($view_all === true){
-        $row[] = '<a href="'.admin_url('staff/member/'.$aRow['staff_id']).'" target="_blank">'.get_staff_full_name($aRow['staff_id']).'</a>';
+    if ($view_all === true) {
+        $row[] = '<a href="' . admin_url('staff/member/' . $aRow['staff_id']) . '" target="_blank">' . get_staff_full_name($aRow['staff_id']) . '</a>';
     }
 
-    $taskName = '<a href="'.admin_url('tasks/view/'.$aRow['task_id']).'" onclick="init_task_modal(' . $aRow['task_id'] . '); return false;">' . $aRow['name'] . '</a>';
+    $taskName = '<a href="' . admin_url('tasks/view/' . $aRow['task_id']) . '" onclick="init_task_modal(' . $aRow['task_id'] . '); return false;">' . $aRow['name'] . '</a>';
 
     $status = get_task_status_by_id($aRow['status']);
 
-    $taskName .= '<span class="hidden"> - </span><span class="inline-block pull-right mright5 label" style="border:1px solid '.$status['color'].';color:'.$status['color'].'" task-status-table="' . $aRow['status'] . '">' . $status['name'] . '</span>';
+    $taskName .= '<span class="hidden"> - </span><span class="inline-block pull-right mright5 label" style="border:1px solid ' . $status['color'] . ';color:' . $status['color'] . '" task-status-table="' . $aRow['status'] . '">' . $status['name'] . '</span>';
 
     $row[] = $taskName;
 
@@ -283,16 +269,14 @@ foreach ($rResult as $aRow) {
 
     $row[] = _dt($aRow['start_time'], true);
 
-    $row[] = ($aRow['end_time'] ? _dt($aRow['end_time'],true) : '');
+    $row[] = ($aRow['end_time'] ? _dt($aRow['end_time'], true) : '');
 
     $row[] = $aRow['note'];
 
-    if($aRow['rel_name']){
-
-         $relName = task_rel_name($aRow['rel_name'], $aRow['rel_id'], $aRow['rel_type']);
-         $link = task_rel_link($aRow['rel_id'], $aRow['rel_type']);
-         $row[] = '<a href="' . $link . '">' . $relName . '</a>';
-
+    if ($aRow['rel_name']) {
+        $relName = task_rel_name($aRow['rel_name'], $aRow['rel_id'], $aRow['rel_type']);
+        $link    = task_rel_link($aRow['rel_id'], $aRow['rel_type']);
+        $row[]   = '<a href="' . $link . '">' . $relName . '</a>';
     } else {
         $row[] = '';
     }
@@ -313,14 +297,14 @@ foreach ($rResult as $aRow) {
     }
     $row[] = sec2qty($total_logged_time);
 
-    $output['aaData'][]    = $row;
+    $output['aaData'][] = $row;
 }
 
 if ($chart_type == 'today') {
-    $footer_data['chart']['data'] = array(sec2qty(array_sum($footer_data['chart']['data'])));
+    $footer_data['chart']['data'] = [sec2qty(array_sum($footer_data['chart']['data']))];
 } elseif ($chart_type == 'week') {
     ksort($temp_weekdays_data);
-    for ($i = 1; $i<=7; $i++) {
+    for ($i = 1; $i <= 7; $i++) {
         $total_logged_time = 0;
         if (isset($temp_weekdays_data[$i])) {
             $total_logged_time = $temp_weekdays_data[$i];
@@ -330,7 +314,7 @@ if ($chart_type == 'today') {
 } elseif ($chart_type == 'month') {
     ksort($temp_months_data);
 
-    for ($i = 1; $i<=31; $i++) {
+    for ($i = 1; $i <= 31; $i++) {
         $total_logged_time = 0;
         if (isset($temp_months_data[$i])) {
             $total_logged_time = $temp_months_data[$i];
@@ -348,10 +332,10 @@ if ($chart_type == 'today') {
     }
 }
 
-$output['chart'] = $footer_data['chart'];
+$output['chart']      = $footer_data['chart'];
 $output['chart_type'] = $chart_type;
 unset($footer_data['chart']);
 
 $footer_data['total_logged_time_h'] = seconds_to_time_format($footer_data['total_logged_time_h']);
 $footer_data['total_logged_time_d'] = sec2qty($footer_data['total_logged_time_d']);
-$output['logged_time'] = $footer_data;
+$output['logged_time']              = $footer_data;

@@ -33,7 +33,8 @@ class AlphaSenderInstance extends InstanceResource {
      * 
      * @param \Twilio\Version $version Version that contains the resource
      * @param mixed[] $payload The response payload
-     * @param string $serviceSid The service_sid
+     * @param string $serviceSid The 34 character unique sid of the Messaging
+     *                           Service.
      * @param string $sid The sid
      * @return \Twilio\Rest\Messaging\V1\Service\AlphaSenderInstance 
      */
@@ -52,7 +53,7 @@ class AlphaSenderInstance extends InstanceResource {
             'url' => Values::array_get($payload, 'url'),
         );
 
-        $this->solution = array('serviceSid' => $serviceSid, 'sid' => $sid ?: $this->properties['sid']);
+        $this->solution = array('serviceSid' => $serviceSid, 'sid' => $sid ?: $this->properties['sid'], );
     }
 
     /**

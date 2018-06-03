@@ -1,10 +1,9 @@
 <div class="col-md-12 page-pdf-html-logo">
     <?php get_company_logo('','pull-left'); ?>
-    <?php if(is_staff_logged_in()){ ?>
-    <a href="<?php echo admin_url(); ?>estimates/list_estimates/<?php echo $estimate->id; ?>" class="btn btn-info pull-right"><?php echo _l('goto_admin_area'); ?>
-    </a>
-    <?php } else if(is_client_logged_in() && has_contact_permission('estimates')){ ?>
-    <a href="<?php echo site_url('clients/estimates/'); ?>" class="btn btn-info pull-right"><?php echo _l('client_go_to_dashboard'); ?></a>
+    <?php if(is_client_logged_in() && has_contact_permission('estimates')){ ?>
+        <a href="<?php echo site_url('clients/estimates/'); ?>" class="btn btn-default pull-right">
+            <?php echo _l('client_go_to_dashboard'); ?>
+        </a>
     <?php } ?>
 </div>
 <div class="clearfix"></div>
@@ -21,25 +20,17 @@
                    <div class="visible-xs">
                     <div class="mtop10"></div>
                 </div>
-                <?php echo form_open($this->uri->uri_string(),array('class'=>'pull-right')); ?>
-                <button type="submit" name="estimatepdf" class="btn btn-info" value="estimatepdf">
-                    <i class="fa fa-file-pdf-o"></i> <?php echo _l('clients_invoice_html_btn_download'); ?>
-                </button>
-                <?php echo form_close(); ?>
+
                 <?php
                 if ($estimate->status != 4 && $estimate->status != 3) {
-                    echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
-                    echo form_hidden('estimate_action',3);
-                    echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-default"><i class="fa fa-remove"></i> '._l('clients_decline_estimate').'</button>';
-                    echo form_close();
                     $can_be_accepted = true;
                     if($identity_confirmation_enabled == '0'){
                         echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
                         echo form_hidden('estimate_action',4);
-                        echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-success"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
+                        echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-success action-btn accept"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
                         echo form_close();
                     } else {
-                        echo '<button type="button" id="accept_action" class="btn btn-success mright10 pull-right"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
+                        echo '<button type="button" id="accept_action" class="btn btn-success mright10 pull-right action-btn accept"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
                     }
                 } else if($estimate->status == 3){
                     if ($estimate->expirydate >= date('Y-m-d') && $estimate->status != 5) {
@@ -47,18 +38,29 @@
                         if($identity_confirmation_enabled == '0'){
                             echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
                             echo form_hidden('estimate_action',4);
-                            echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-success"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
+                            echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-success action-btn accept"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
                             echo form_close();
                         } else {
-                            echo '<button type="button" id="accept_action" class="btn btn-success mright10 pull-right"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
+                            echo '<button type="button" id="accept_action" class="btn btn-success mright10 pull-right action-btn accept"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
                         }
                     }
                 }
+               if ($estimate->status != 4 && $estimate->status != 3) {
+                        echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
+                    echo form_hidden('estimate_action',3);
+                    echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-default action-btn accept"><i class="fa fa-remove"></i> '._l('clients_decline_estimate').'</button>';
+                    echo form_close();
+                }
                 ?>
+                <?php echo form_open($this->uri->uri_string(),array('class'=>'pull-right')); ?>
+                <button type="submit" name="estimatepdf" class="btn btn-default action-btn download mright10" value="estimatepdf">
+                    <i class="fa fa-file-pdf-o"></i> <?php echo _l('clients_invoice_html_btn_download'); ?>
+                </button>
+                <?php echo form_close(); ?>
             </div>
         </div>
         <div class="row mtop40">
-            <div class="col-md-6">
+            <div class="col-md-6 col-sm-6">
                 <h4 class="bold"><?php echo format_estimate_number($estimate->id); ?></h4>
                 <address>
                     <?php echo format_organization_info(); ?>
@@ -249,4 +251,3 @@ if($identity_confirmation_enabled == '1' && $can_be_accepted){
     get_template_part('identity_confirmation_form',array('formData'=>form_hidden('estimate_action',4)));
 }
 ?>
-

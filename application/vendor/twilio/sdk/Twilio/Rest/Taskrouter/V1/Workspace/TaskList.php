@@ -20,14 +20,14 @@ class TaskList extends ListResource {
      * Construct the TaskList
      * 
      * @param Version $version Version that contains the resource
-     * @param string $workspaceSid The workspace_sid
+     * @param string $workspaceSid The ID of the Workspace that holds this Task
      * @return \Twilio\Rest\Taskrouter\V1\Workspace\TaskList 
      */
     public function __construct(Version $version, $workspaceSid) {
         parent::__construct($version);
 
         // Path Solution
-        $this->solution = array('workspaceSid' => $workspaceSid);
+        $this->solution = array('workspaceSid' => $workspaceSid, );
 
         $this->uri = '/Workspaces/' . rawurlencode($workspaceSid) . '/Tasks';
     }

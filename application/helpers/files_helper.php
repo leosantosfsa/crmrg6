@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 function access_control_media($attr, $path, $data, $volume, $isDir, $relpath)
@@ -85,14 +86,39 @@ function delete_dir($dirPath)
  */
 function is_image($path)
 {
+    $possibleBigFiles = [
+            'pdf',
+            'zip',
+            'mp4',
+            'ai',
+            'psd',
+            'ppt',
+            'gzip',
+            'rar',
+            'tar',
+            'tgz',
+            'mpeg',
+            'mpg',
+            'flv',
+            'mov',
+            'wav',
+        ];
+
+    $pathArray = explode('.', $path);
+    $ext       = end($pathArray);
+    // Causing performance issues if the file is too big
+    if (in_array($ext, $possibleBigFiles)) {
+        return false;
+    }
+
     $image      = @getimagesize($path);
     $image_type = $image[2];
-    if (in_array($image_type, array(
+    if (in_array($image_type, [
         IMAGETYPE_GIF,
         IMAGETYPE_JPEG,
         IMAGETYPE_PNG,
         IMAGETYPE_BMP,
-    ))) {
+    ])) {
         return true;
     }
 
@@ -106,14 +132,14 @@ function get_html5_video_extensions()
 {
     return do_action(
         'html5_video_extensions',
-        array(
+        [
             'mp4',
             'm4v',
             'webm',
             'ogv',
             'ogg',
             'flv',
-        )
+        ]
     );
 }
 /**
@@ -160,15 +186,15 @@ function unique_filename($dir, $filename)
         $filename2 = preg_replace('|' . preg_quote($ext) . '$|', $ext2, $filename);
         // Check for both lower and upper case extension or image sub-sizes may be overwritten.
         while (file_exists($dir . "/$filename") || file_exists($dir . "/$filename2")) {
-            $filename  = str_replace(array(
+            $filename = str_replace([
                 "-$number$ext",
                 "$number$ext",
-            ), "-$new_number$ext", $filename);
-            $filename2 = str_replace(array(
+            ], "-$new_number$ext", $filename);
+            $filename2 = str_replace([
                 "-$number$ext2",
                 "$number$ext2",
-            ), "-$new_number$ext2", $filename2);
-            $number    = $new_number;
+            ], "-$new_number$ext2", $filename2);
+            $number = $new_number;
         }
 
         return $filename2;
@@ -177,10 +203,10 @@ function unique_filename($dir, $filename)
         if ('' == "$number$ext") {
             $filename = "$filename-" . ++$number;
         } else {
-            $filename = str_replace(array(
+            $filename = str_replace([
                 "-$number$ext",
                 "$number$ext",
-            ), "-" . ++$number . $ext, $filename);
+            ], '-' . ++$number . $ext, $filename);
         }
     }
 
@@ -193,45 +219,45 @@ function unique_filename($dir, $filename)
  */
 function sanitize_file_name($filename)
 {
-    $special_chars = array(
-        "?",
-        "[",
-        "]",
-        "/",
-        "\\",
-        "=",
-        "<",
-        ">",
-        ":",
-        ";",
-        ",",
+    $special_chars = [
+        '?',
+        '[',
+        ']',
+        '/',
+        '\\',
+        '=',
+        '<',
+        '>',
+        ':',
+        ';',
+        ',',
         "'",
-        "\"",
-        "&",
-        "$",
-        "#",
-        "*",
-        "(",
-        ")",
-        "|",
-        "~",
-        "`",
-        "!",
-        "{",
-        "}",
-        "%",
-        "+",
+        '"',
+        '&',
+        '$',
+        '#',
+        '*',
+        '(',
+        ')',
+        '|',
+        '~',
+        '`',
+        '!',
+        '{',
+        '}',
+        '%',
+        '+',
         chr(0),
-    );
-    $filename      = str_replace($special_chars, '', $filename);
-    $filename      = str_replace(array(
+    ];
+    $filename = str_replace($special_chars, '', $filename);
+    $filename = str_replace([
         '%20',
         '+',
-    ), '-', $filename);
-    $filename      = preg_replace('/[\r\n\t -]+/', '-', $filename);
-    $filename      = trim($filename, '.-_');
+    ], '-', $filename);
+    $filename = preg_replace('/[\r\n\t -]+/', '-', $filename);
+    $filename = trim($filename, '.-_');
     // Split the filename into a base and extension[s]
-    $parts         = explode('.', $filename);
+    $parts = explode('.', $filename);
     // Return if only one extension
     if (count($parts) <= 2) {
         return $filename;
@@ -241,7 +267,7 @@ function sanitize_file_name($filename)
     $extension = array_pop($parts);
 
     $filename .= '.' . $extension;
-    $CI =& get_instance();
+    $CI       = & get_instance();
     $filename = $CI->security->sanitize_filename($filename);
 
     return $filename;
@@ -307,14 +333,12 @@ function get_mime_class($mime)
             return 'mime mime-word';
         }
         // Else
-        else {
-            return 'mime mime-file';
-        }
-    }
-    // Else
-    else {
+
         return 'mime mime-file';
     }
+    // Else
+
+    return 'mime mime-file';
 }
 
 /**
@@ -332,12 +356,12 @@ function bytesToSize($path, $filesize = '')
     }
     if ($bytes > 0) {
         $unit  = intval(log($bytes, 1024));
-        $units = array(
+        $units = [
             'B',
             'KB',
             'MB',
             'GB',
-        );
+        ];
         if (array_key_exists($unit, $units) === true) {
             return sprintf('%d %s', $bytes / pow(1024, $unit), $units[$unit]);
         }
@@ -352,7 +376,7 @@ function bytesToSize($path, $filesize = '')
  */
 function list_folders($path)
 {
-    $folders = array();
+    $folders = [];
     foreach (new DirectoryIterator($path) as $file) {
         if ($file->isDot()) {
             continue;
@@ -371,14 +395,14 @@ function list_folders($path)
  */
 function list_files($dir)
 {
-    $ignored = array(
+    $ignored = [
         '.',
         '..',
         '.svn',
         '.htaccess',
         'index.html',
-    );
-    $files   = array();
+    ];
+    $files = [];
     foreach (scandir($dir) as $file) {
         if (in_array($file, $ignored)) {
             continue;
@@ -388,7 +412,7 @@ function list_files($dir)
     arsort($files);
     $files = array_keys($files);
 
-    return ($files) ? $files : array();
+    return ($files) ? $files : [];
 }
 // Returns a file size limit in bytes based on the PHP upload_max_filesize
 // and post_max_size
@@ -425,7 +449,7 @@ function file_upload_max_size()
  */
 function replace_in_file($path, $find, $replace)
 {
-    $CI =& get_instance();
+    $CI = & get_instance();
     $CI->load->helper('file');
     @chmod($path, FILE_WRITE_MODE);
     $file = read_file($path);
@@ -456,9 +480,9 @@ function parse_upload_size($size)
     if ($unit) {
         // Find the position of the unit in the ordered string which is the power of magnitude to multiply a kilobyte by.
         return round($size * pow(1024, stripos('bkmgtpezy', $unit[0])));
-    } else {
-        return round($size);
     }
+
+    return round($size);
 }
 
 /**
@@ -470,17 +494,17 @@ function parse_upload_size($size)
 function protected_file_url_by_path($path, $preview = false)
 {
     if ($preview) {
-        $fname = pathinfo($path, PATHINFO_FILENAME);
-        $fext = pathinfo($path, PATHINFO_EXTENSION);
-        $thumbPath = pathinfo($path, PATHINFO_DIRNAME).'/'.$fname.'_thumb.'.$fext;
+        $fname     = pathinfo($path, PATHINFO_FILENAME);
+        $fext      = pathinfo($path, PATHINFO_EXTENSION);
+        $thumbPath = pathinfo($path, PATHINFO_DIRNAME) . '/' . $fname . '_thumb.' . $fext;
         if (file_exists($thumbPath)) {
             return str_replace(FCPATH, '', $thumbPath);
-        } else {
-            return str_replace(FCPATH, '', $path);
         }
-    } else {
+
         return str_replace(FCPATH, '', $path);
     }
+
+    return str_replace(FCPATH, '', $path);
 }
 
 /**
@@ -491,19 +515,19 @@ function protected_file_url_by_path($path, $preview = false)
  */
 function project_file_url($file, $preview = false)
 {
-    $path = 'uploads/projects/'.$file['project_id'].'/';
-    $fullPath = FCPATH.$path.$file['file_name'];
-    $url = base_url($path.$file['file_name']);
+    $path     = 'uploads/projects/' . $file['project_id'] . '/';
+    $fullPath = FCPATH . $path . $file['file_name'];
+    $url      = base_url($path . $file['file_name']);
 
     if (!empty($file['external']) && !empty($file['thumbnail_link'])) {
         $url = $file['thumbnail_link'];
     } else {
         if ($preview) {
-            $fname = pathinfo($fullPath, PATHINFO_FILENAME);
-            $fext = pathinfo($fullPath, PATHINFO_EXTENSION);
-            $thumbPath = pathinfo($fullPath, PATHINFO_DIRNAME).'/'.$fname.'_thumb.'.$fext;
+            $fname     = pathinfo($fullPath, PATHINFO_FILENAME);
+            $fext      = pathinfo($fullPath, PATHINFO_EXTENSION);
+            $thumbPath = pathinfo($fullPath, PATHINFO_DIRNAME) . '/' . $fname . '_thumb.' . $fext;
             if (file_exists($thumbPath)) {
-                $url = base_url('uploads/projects/'.$file['project_id'].'/'.$fname.'_thumb.'.$fext);
+                $url = base_url('uploads/projects/' . $file['project_id'] . '/' . $fname . '_thumb.' . $fext);
             }
         }
     }

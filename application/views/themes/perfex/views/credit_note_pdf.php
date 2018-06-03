@@ -61,7 +61,7 @@ foreach($pdf_custom_fields as $field){
 $pdf->writeHTMLCell(($dimensions['wk'] / 2) - $dimensions['rm'], '', '', ($swap == '1' ? $y : ''), $credit_note_info, 0, 1, false, true, ($swap == '1' ? 'J' : 'R'), true);
 
 // The Table
-$pdf->Ln(6);
+$pdf->Ln(do_action('pdf_info_and_table_separator', 6));
 
 $item_width = 38;
 // If show item taxes is disabled in PDF we should increase the item width table heading

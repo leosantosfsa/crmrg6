@@ -43,7 +43,7 @@
           echo $question_area; ?>
           <div class="row">
             <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-success"><?php echo _l('survey_submit'); ?></button>
+                <button type="submit" class="btn btn-success" id="submit"><?php echo _l('survey_submit'); ?></button>
             </div>
         </div>
         <?php } else { ?>
@@ -54,3 +54,10 @@
     </div>
 </div>
 </div>
+<?php if($this->input->get('participated')) { ?>
+<script>
+      $(function(){
+        $('body').find('input, textarea, #submit').prop('disabled',true);
+      });
+</script>
+<?php } ?>

@@ -45,13 +45,7 @@
                     $download_indicator = 'id';
                     $key_indicator = 'rel_id';
                     $upload_path = get_upload_path_by_type($type);
-                    if($type == 'invoice'){
-                        $url = site_url() .'download/file/sales_attachment/';
-                        $download_indicator = 'attachment_key';
-                    } else if($type == 'proposal'){
-                        $url = site_url() .'download/file/sales_attachment/';
-                        $download_indicator = 'attachment_key';
-                    } else if($type == 'estimate'){
+                    if($type == 'invoice' || $type == 'proposal' || $type == 'estimate' || $type == 'credit_note'){
                         $url = site_url() .'download/file/sales_attachment/';
                         $download_indicator = 'attachment_key';
                     } else if($type == 'contract'){
@@ -60,11 +54,13 @@
                         $url = site_url() .'download/file/lead_attachment/';
                     } else if($type == 'task'){
                         $url = site_url() .'download/file/taskattachment/';
+                        $download_indicator = 'attachment_key';
                     } else if($type == 'ticket'){
                         $url = site_url() .'download/file/ticket/';
                         $key_indicator = 'ticketid';
                     } else if($type == 'customer'){
                         $url = site_url() .'download/file/client/';
+                        $download_indicator = 'attachment_key';
                     } else if($type == 'expense'){
                         $url = site_url() .'download/file/expense/';
                         $download_indicator = 'rel_id';

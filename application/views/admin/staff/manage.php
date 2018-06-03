@@ -25,7 +25,6 @@
 						foreach($custom_fields as $field){
 							array_push($table_data,$field['name']);
 						}
-						array_push($table_data,_l('options'));
 						render_datatable($table_data,'staff');
 						?>
 					</div>
@@ -62,9 +61,7 @@
 <?php init_tail(); ?>
 <script>
 	$(function(){
-		var headers_staff = $('.table-staff').find('th');
-		var not_sortable_staff = (headers_staff.length - 1);
-		initDataTable('.table-staff', window.location.href, [not_sortable_staff], [not_sortable_staff]);
+		initDataTable('.table-staff', window.location.href);
 	});
 	function delete_staff_member(id){
 		$('#delete_staff').modal('show');

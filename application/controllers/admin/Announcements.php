@@ -1,5 +1,7 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Announcements extends Admin_controller
 {
     public function __construct()
@@ -59,10 +61,10 @@ class Announcements extends Admin_controller
                 blank_page(_l('announcement_not_found'));
             }
             $data['announcement']         = $announcement;
-            $data['recent_announcements'] = $this->announcements_model->get('', array(
-                'announcementid !=' => $id
-            ), 4);
-            $data['title']                = $announcement->name;
+            $data['recent_announcements'] = $this->announcements_model->get('', [
+                'announcementid !=' => $id,
+            ], 4);
+            $data['title'] = $announcement->name;
             $this->load->view('admin/announcements/view', $data);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class User_Autologin extends CRM_Model
 {
@@ -59,13 +60,13 @@ class User_Autologin extends CRM_Model
      */
     public function set($user_id, $key, $staff)
     {
-        return $this->db->insert('tbluserautologin', array(
-            'user_id' => $user_id,
-            'key_id' => $key,
+        return $this->db->insert('tbluserautologin', [
+            'user_id'    => $user_id,
+            'key_id'     => $key,
             'user_agent' => substr($this->input->user_agent(), 0, 149),
-            'last_ip' => $this->input->ip_address(),
-            'staff' => $staff
-        ));
+            'last_ip'    => $this->input->ip_address(),
+            'staff'      => $staff,
+        ]);
     }
 
     /**

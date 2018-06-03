@@ -76,6 +76,18 @@
    </div>
    <?php } ?>
 
+     <?php if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_ticket_form') == 1) { ?>
+     <div class="col-md-12">
+      <div class="text-center">
+        <div class="checkbox chk">
+          <input type="checkbox" name="accept_terms_and_conditions" required="true" id="accept_terms_and_conditions" <?php echo set_checkbox('accept_terms_and_conditions', 'on'); ?>>
+          <label for="accept_terms_and_conditions">
+            <?php echo _l('gdpr_terms_agree', terms_url()); ?>
+          </label>
+        </div>
+      </div>
+    </div>
+        <?php } ?>
    <div class="clearfix"></div>
    <div class="text-center">
     <button class="btn btn-success" id="form_submit" type="submit"><?php echo _l('ticket_form_submit'); ?></button>
@@ -119,6 +131,12 @@
     submitHandler:function(form) {
      var formURL = $(form).attr("action");
      var formData = new FormData($(form)[0]);
+
+      $("input[type=file]").each(function() {
+          if($(this).val() === "") {
+              formData.delete($(this).attr("name"));
+          }
+      });
 
      $('#form_submit').prop('disabled', true);
 

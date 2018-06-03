@@ -17,5 +17,5 @@
 </div>
 <!-- /.modal -->
 <script>
-    task_tracking_stats_data = <?php echo $stats; ?>;
+    taskTrackingStatsData = <?php echo $stats; ?>;
 </script>

@@ -133,12 +133,8 @@ if(get_option('total_to_words_enabled') == 1){
 $proposal->content = str_replace('{proposal_items}', $items_html, $proposal->content);
 
 // Get the proposals css
-$css = file_get_contents(FCPATH.'assets/css/proposals.css');
 // Theese lines should aways at the end of the document left side. Dont indent these lines
 $html = <<<EOF
-<style>
-    $css
-</style>
 <p style="font-size:20px;"># $number
 <br /><span style="font-size:15px;">$proposal->subject</span>
 </p>

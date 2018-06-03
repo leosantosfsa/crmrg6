@@ -17,7 +17,6 @@
        _l('form_name'),
        _l('total_submissions'),
        _l('leads_dt_datecreated'),
-       _l('options'),
        ),'web-to-lead'); ?>
      </div>
    </div>
@@ -27,8 +26,8 @@
 </div>
 <?php init_tail(); ?>
 <script>
- $(function(){
-  initDataTable('.table-web-to-lead', window.location.href, [3], [3]);
+$(function(){
+    initDataTable('.table-web-to-lead', window.location.href);
 });
 </script>
 </body>

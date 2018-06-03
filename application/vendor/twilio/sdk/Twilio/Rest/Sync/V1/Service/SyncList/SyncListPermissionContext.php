@@ -22,7 +22,7 @@ class SyncListPermissionContext extends InstanceContext {
      * Initialize the SyncListPermissionContext
      * 
      * @param \Twilio\Version $version Version that contains the resource
-     * @param string $serviceSid The service_sid
+     * @param string $serviceSid Sync Service Instance SID or unique name.
      * @param string $listSid Sync List SID or unique name.
      * @param string $identity Identity of the user to whom the Sync List
      *                         Permission applies.
@@ -32,7 +32,11 @@ class SyncListPermissionContext extends InstanceContext {
         parent::__construct($version);
 
         // Path Solution
-        $this->solution = array('serviceSid' => $serviceSid, 'listSid' => $listSid, 'identity' => $identity);
+        $this->solution = array(
+            'serviceSid' => $serviceSid,
+            'listSid' => $listSid,
+            'identity' => $identity,
+        );
 
         $this->uri = '/Services/' . rawurlencode($serviceSid) . '/Lists/' . rawurlencode($listSid) . '/Permissions/' . rawurlencode($identity) . '';
     }

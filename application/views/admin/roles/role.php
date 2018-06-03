@@ -48,7 +48,8 @@
                                     ?>
                                     <tr>
                                         <td>
-                                         <?php echo $permission['name']; ?></td>
+                                         <?php echo _l($permission['shortname']); ?>
+                                         </td>
                                          <td class="text-center">
                                             <?php if($permission_condition['view'] == true){
                                                 $statement = '';

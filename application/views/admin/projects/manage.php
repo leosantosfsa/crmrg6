@@ -6,10 +6,10 @@
             <div class="panel_s">
               <div class="panel-body">
               <div class="_buttons">
-                  <?php if(has_permission('projects','','create')){ ?>
-              <a href="<?php echo admin_url('projects/project'); ?>" class="btn btn-info pull-left display-block">
-                <?php echo _l('new_project'); ?>
-              </a>
+              <?php if(has_permission('projects','','create')){ ?>
+                <a href="<?php echo admin_url('projects/project'); ?>" class="btn btn-info pull-left display-block">
+                  <?php echo _l('new_project'); ?>
+                </a>
               <?php } ?>
               <div class="btn-group pull-right mleft4 btn-with-tooltip-group _filter_data" data-toggle="tooltip" data-title="<?php echo _l('filter_by'); ?>">
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -80,32 +80,7 @@
              <div class="clearfix"></div>
               <hr class="hr-panel-heading" />
              <?php echo form_hidden('custom_view'); ?>
-             <?php
-             $table_data = array(
-              '#',
-              _l('project_name'),
-              _l('project_customer'),
-              _l('tags'),
-              _l('project_start_date'),
-              _l('project_deadline'),
-              _l('project_members'),
-              );
-
-              if(has_permission('projects','','create') || has_permission('projects','','edit')){
-                   array_push($table_data,_l('project_billing_type'));
-              }
-
-              array_push($table_data,_l('project_status'));
-
-              $custom_fields = get_custom_fields('projects',array('show_on_table'=>1));
-               foreach($custom_fields as $field){
-                  array_push($table_data,$field['name']);
-              }
-
-              $table_data = do_action('projects_table_columns',$table_data);
-              array_push($table_data, _l('options'));
-
-            render_datatable($table_data,'projects'); ?>
+             <?php $this->load->view('admin/projects/table_html'); ?>
           </div>
         </div>
       </div>
@@ -117,11 +92,13 @@
 <script>
 $(function(){
      var ProjectsServerParams = {};
-    $.each($('._hidden_inputs._filters input'),function(){
-      ProjectsServerParams[$(this).attr('name')] = '[name="'+$(this).attr('name')+'"]';
-    });
-     var projects_not_sortable = $('.table-projects').find('th').length - 1;
-     initDataTable('.table-projects', admin_url+'projects/table', [projects_not_sortable], [projects_not_sortable], ProjectsServerParams, <?php echo do_action('projects_table_default_order',json_encode(array(5,'ASC'))); ?>);
+
+     $.each($('._hidden_inputs._filters input'),function(){
+         ProjectsServerParams[$(this).attr('name')] = '[name="'+$(this).attr('name')+'"]';
+     });
+
+     initDataTable('.table-projects', admin_url+'projects/table', undefined, undefined, ProjectsServerParams, <?php echo do_action('projects_table_default_order',json_encode(array(5,'asc'))); ?>);
+
      init_ajax_search('customer', '#clientid_copy_project.ajax-search');
 });
 </script>

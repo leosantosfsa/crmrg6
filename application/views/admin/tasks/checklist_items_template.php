@@ -7,7 +7,8 @@
     </div>
 </div>
 <?php foreach($checklists as $list){ ?>
-<div class="checklist relative<?php if(($list['finished'] == 1 && $list['finished_from'] != get_staff_user_id()) || ($list['addedfrom'] != get_staff_user_id())){echo ' mbot25';} ?>" data-checklist-id="<?php echo $list['id']; ?>">
+<div>
+    <div class="checklist relative<?php if(($list['finished'] == 1 && $list['finished_from'] != get_staff_user_id()) || ($list['addedfrom'] != get_staff_user_id())){echo ' mbot25';} ?>" data-checklist-id="<?php echo $list['id']; ?>">
     <div class="checkbox checkbox-success checklist-checkbox" data-toggle="tooltip" title="">
         <input type="checkbox" <?php if($list['finished'] == 1 && $list['finished_from'] != get_staff_user_id() && !is_admin()){echo 'disabled';} ?> name="checklist-box" <?php if($list['finished'] == 1){echo 'checked';}; ?>>
         <label for=""><span class="hide"><?php echo $list['description']; ?></span></label>
@@ -34,9 +35,11 @@
             if($list['finished'] == 1){
                 echo _l('task_checklist_item_completed_by',get_staff_full_name($list['finished_from']));
             }
+
         ?>
         </p>
     <?php } ?>
+</div>
 </div>
 
 <?php } ?>

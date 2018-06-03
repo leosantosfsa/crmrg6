@@ -34,17 +34,6 @@
      gen_reports();
    });
 
-   $('select[name="invoice_status"],select[name="estimate_status"],select[name="sale_agent_invoices"],select[name="sale_agent_items"],select[name="sale_agent_estimates"],select[name="proposals_sale_agents"],select[name="proposal_status"],select[name="credit_note_status"]').on('change', function() {
-     var value = $(this).val();
-     if (value != null) {
-       if (value.indexOf('') > -1) {
-         if (value.length > 1) {
-           value.splice(0, 1);
-           $(this).selectpicker('val', value);
-         }
-       }
-     }
-   });
    report_from.on('change', function() {
      var val = $(this).val();
      var report_to_val = report_to.val();
@@ -85,7 +74,7 @@
      var paymentReceivedReportsTable = $(this).DataTable();
      var sums = paymentReceivedReportsTable.ajax.json().sums;
      $(this).find('tfoot').addClass('bold');
-     $(this).find('tfoot td').eq(0).html("<?php echo _l('invoice_total'); ?>");
+     $(this).find('tfoot td').eq(0).html("<?php echo _l('invoice_total'); ?> (<?php echo _l('per_page'); ?>)");
      $(this).find('tfoot td.total').html(sums.total_amount);
    });
 
@@ -132,7 +121,7 @@
      var itemsTable = $(this).DataTable();
      var sums = itemsTable.ajax.json().sums;
      $(this).find('tfoot').addClass('bold');
-     $(this).find('tfoot td').eq(0).html("<?php echo _l('invoice_total'); ?>");
+     $(this).find('tfoot td').eq(0).html("<?php echo _l('invoice_total'); ?> (<?php echo _l('per_page'); ?>)");
      $(this).find('tfoot td.amount').html(sums.total_amount);
      $(this).find('tfoot td.qty').html(sums.total_qty);
    });
@@ -141,7 +130,7 @@
 
   function add_common_footer_sums(table,sums) {
        table.find('tfoot').addClass('bold');
-       table.find('tfoot td').eq(0).html("<?php echo _l('invoice_total'); ?>");
+       table.find('tfoot td').eq(0).html("<?php echo _l('invoice_total'); ?> (<?php echo _l('per_page'); ?>)");
        table.find('tfoot td.subtotal').html(sums.subtotal);
        table.find('tfoot td.total').html(sums.total);
        table.find('tfoot td.total_tax').html(sums.total_tax);
@@ -281,7 +270,7 @@
      if ($.fn.DataTable.isDataTable('.table-customers-report')) {
        $('.table-customers-report').DataTable().destroy();
      }
-     initDataTable('.table-customers-report', admin_url + 'reports/customers_report', false, false, fnServerParams, [0, 'ASC']);
+     initDataTable('.table-customers-report', admin_url + 'reports/customers_report', false, false, fnServerParams, [0, 'asc']);
    }
 
    function report_by_customer_groups() {
@@ -322,8 +311,8 @@
        $('.table-invoices-report').DataTable().destroy();
      }
      _table_api = initDataTable('.table-invoices-report', admin_url + 'reports/invoices_report', false, false, fnServerParams, [
-       [2, 'DESC'],
-       [0, 'DESC']
+       [2, 'desc'],
+       [0, 'desc']
        ]).column(2).visible(false, false).columns.adjust();
    }
 
@@ -332,7 +321,7 @@
      if ($.fn.DataTable.isDataTable('.table-credit-notes-report')) {
        $('.table-credit-notes-report').DataTable().destroy();
      }
-     _table_api = initDataTable('.table-credit-notes-report', admin_url + 'reports/credit_notes', false, false, fnServerParams,[1, 'DESC']);
+     _table_api = initDataTable('.table-credit-notes-report', admin_url + 'reports/credit_notes', false, false, fnServerParams,[1, 'desc']);
 
    }
 
@@ -341,8 +330,8 @@
        $('.table-estimates-report').DataTable().destroy();
      }
      _table_api = initDataTable('.table-estimates-report', admin_url + 'reports/estimates_report', false, false, fnServerParams, [
-       [3, 'DESC'],
-       [0, 'DESC']
+       [3, 'desc'],
+       [0, 'desc']
        ]).column(3).visible(false, false).columns.adjust();
    }
 
@@ -350,7 +339,7 @@
      if ($.fn.DataTable.isDataTable('.table-payments-received-report')) {
        $('.table-payments-received-report').DataTable().destroy();
      }
-     initDataTable('.table-payments-received-report', admin_url + 'reports/payments_received', false, false, fnServerParams, [1, 'DESC']);
+     initDataTable('.table-payments-received-report', admin_url + 'reports/payments_received', false, false, fnServerParams, [1, 'desc']);
    }
 
    function proposals_report(){
@@ -358,14 +347,14 @@
      $('.table-proposals-report').DataTable().destroy();
    }
 
-   initDataTable('.table-proposals-report', admin_url + 'reports/proposals_report', false, false, fnServerParams, [0, 'DESC']);
+   initDataTable('.table-proposals-report', admin_url + 'reports/proposals_report', false, false, fnServerParams, [0, 'desc']);
  }
 
  function items_report(){
    if ($.fn.DataTable.isDataTable('.table-items-report')) {
      $('.table-items-report').DataTable().destroy();
    }
-   initDataTable('.table-items-report', admin_url + 'reports/items', false, false, fnServerParams, [0, 'ASC']);
+   initDataTable('.table-items-report', admin_url + 'reports/items', false, false, fnServerParams, [0, 'asc']);
  }
 
    // Main generate report function

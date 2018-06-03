@@ -25,7 +25,6 @@
 							_l('survey_dt_total_participants'),
 							_l('survey_dt_date_created'),
 							_l('survey_dt_active'),
-							_l('options'),
 							),'surveys'); ?>
 						</div>
 					</div>
@@ -36,7 +35,7 @@
 	<?php init_tail(); ?>
 	<script>
 		$(function(){
-			initDataTable('.table-surveys', window.location.href, [6], [6]);
+			initDataTable('.table-surveys', window.location.href);
 		});
 	</script>
 </body>

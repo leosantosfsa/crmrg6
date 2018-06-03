@@ -90,7 +90,8 @@
                                         <label for="timesheet_task_id"><?php echo _l('project_timesheet_task'); ?></label>
                                     </div>
                                     <div class="col-md-9">
-                                            <select name="timesheet_task_id" id="timesheet_task_id" class="selectpicker" data-live-search="true" data-width="100%" data-none-selected-text="-">
+                                         <div class="form-group">
+                                                <select name="timesheet_task_id" id="timesheet_task_id" class="selectpicker" data-live-search="true" data-width="100%" data-none-selected-text="-">
                                             <option value=""></option>
                                             <?php $has_permission_create = has_permission('projects','','create');
                                             foreach($tasks as $task){
@@ -101,6 +102,7 @@
                                                 }
                                                 ?>
                                         </select>
+                                         </div>
                                     </div>
                                 </div>
                             </div>
@@ -112,9 +114,11 @@
                                         <label for="timesheet_staff_id"><?php echo _l('project_timesheet_user'); ?></label>
                                     </div>
                                     <div class="col-md-9">
-                                        <select name="timesheet_staff_id" id="timesheet_staff_id" class="selectpicker" data-live-search="true" data-width="100%" data-none-selected-text="-">
+                                      <div class="form-group">
+                                            <select name="timesheet_staff_id" id="timesheet_staff_id" class="selectpicker" data-live-search="true" data-width="100%" data-none-selected-text="-">
                                             <option value=""></option>
                                         </select>
+                                      </div>
                                     </div>
                                 </div>
                             </div>

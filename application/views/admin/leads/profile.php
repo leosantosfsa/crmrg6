@@ -1,15 +1,15 @@
-<div class="lead-wrapper" <?php if(isset($lead) && ($lead->junk == 1 || $lead->lost == 1)){ echo 'lead-is-junk-or-lost';} ?>>
+<div class="<?php if($openEdit == true){echo 'open-edit ';} ?>lead-wrapper" <?php if(isset($lead) && ($lead->junk == 1 || $lead->lost == 1)){ echo 'lead-is-junk-or-lost';} ?>>
    <?php if(isset($lead)){ ?>
    <div class="btn-group pull-left lead-actions-left">
       <a href="#" lead-edit class="mright10 font-medium-xs pull-left<?php if($lead_locked == true){echo ' hide';} ?>">
          <?php echo _l('edit'); ?>
          <i class="fa fa-pencil-square-o"></i>
       </a>
-      <a href="#" class="font-medium-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <a href="#" class="font-medium-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="lead-more-btn">
       <?php echo _l('more'); ?>
       <span class="caret"></span>
       </a>
-      <ul class="dropdown-menu dropdown-menu-left">
+      <ul class="dropdown-menu dropdown-menu-left" id="lead-more-dropdown">
          <?php if($lead->junk == 0){
          if($lead->lost == 0 && (total_rows('tblclients',array('leadid'=>$lead->id)) == 0)){ ?>
          <li>
@@ -55,6 +55,9 @@
          <?php } ?>
       </ul>
    </div>
+      <a data-toggle="tooltip" class="btn btn-default pull-right lead-print-btn lead-top-btn lead-view mleft5" onclick="print_lead_information(); return false;" data-placement="top" title="<?php echo _l('print'); ?>" href="#">
+      <i class="fa fa-print"></i>
+      </a>
        <?php
            $client = false;
            $convert_to_client_tooltip_email_exists = '';
@@ -75,7 +78,7 @@
       </div>
       <?php } ?>
       <?php if($client && (has_permission('customers','','view') || is_customer_admin(get_client_id_by_lead_id($lead->id)))){ ?>
-      <a data-toggle="tooltip" class="btn btn-success pull-right lead-top-btn lead-view" data-placement="left" title="<?php echo _l('lead_converted_edit_client_profile'); ?>" href="<?php echo admin_url('clients/client/'.get_client_id_by_lead_id($lead->id)); ?>">
+      <a data-toggle="tooltip" class="btn btn-success pull-right lead-top-btn lead-view" data-placement="top" title="<?php echo _l('lead_converted_edit_client_profile'); ?>" href="<?php echo admin_url('clients/client/'.get_client_id_by_lead_id($lead->id)); ?>">
       <i class="fa fa-user-o"></i>
       </a>
    <?php } ?>
@@ -87,10 +90,13 @@
    <?php } ?>
    <?php } ?>
    <div class="clearfix no-margin"></div>
-   <div class="row">
+
+   <?php if(isset($lead)){ ?>
+
+   <div class="row mbot15">
       <hr class="no-margin" />
    </div>
-   <?php if(isset($lead)){ ?>
+
    <div class="alert alert-warning hide mtop20" role="alert" id="lead_proposal_warning">
       <?php echo _l('proposal_warning_email_change',array(_l('lead_lowercase'),_l('lead_lowercase'),_l('lead_lowercase'))); ?>
       <hr />
@@ -105,15 +111,15 @@
    <?php } ?>
    <?php echo form_open((isset($lead) ? admin_url('leads/lead/'.$lead->id) : admin_url('leads/lead')),array('id'=>'lead_form')); ?>
    <div class="row">
-      <div class="lead-view<?php if(!isset($lead)){echo ' hide';} ?>">
-         <div class="col-md-4 col-xs-12 mtop15">
+      <div class="lead-view<?php if(!isset($lead)){echo ' hide';} ?>" id="leadViewWrapper">
+         <div class="col-md-4 col-xs-12 lead-information-col">
             <div class="lead-info-heading">
                <h4 class="no-margin font-medium-xs bold">
                   <?php echo _l('lead_info'); ?>
                </h4>
             </div>
             <p class="text-muted lead-field-heading no-mtop"><?php echo _l('lead_add_edit_name'); ?></p>
-            <p class="bold font-medium-xs"><?php echo (isset($lead) && $lead->name != '' ? $lead->name : '-') ?></p>
+            <p class="bold font-medium-xs lead-name"><?php echo (isset($lead) && $lead->name != '' ? $lead->name : '-') ?></p>
             <p class="text-muted lead-field-heading"><?php echo _l('lead_title'); ?></p>
             <p class="bold font-medium-xs"><?php echo (isset($lead) && $lead->title != '' ? $lead->title : '-') ?></p>
             <p class="text-muted lead-field-heading"><?php echo _l('lead_add_edit_email'); ?></p>
@@ -135,7 +141,7 @@
             <p class="text-muted lead-field-heading"><?php echo _l('lead_zip'); ?></p>
             <p class="bold font-medium-xs"><?php echo (isset($lead) && $lead->zip != '' ? $lead->zip : '-') ?></p>
          </div>
-         <div class="col-md-4 col-xs-12 mtop15">
+         <div class="col-md-4 col-xs-12 lead-information-col">
             <div class="lead-info-heading">
                <h4 class="no-margin font-medium-xs bold">
                   <?php echo _l('lead_general_info'); ?>
@@ -187,7 +193,7 @@
             <p class="bold font-medium-xs mbot15"><?php echo $lead->form_data->name; ?></p>
             <?php } ?>
          </div>
-         <div class="col-md-4 col-xs-12 mtop15">
+         <div class="col-md-4 col-xs-12 lead-information-col">
             <?php if(total_rows('tblcustomfields',array('fieldto'=>'leads','active'=>1)) > 0 && isset($lead)){ ?>
             <div class="lead-info-heading">
                <h4 class="no-margin font-medium-xs bold">
@@ -211,7 +217,7 @@
       </div>
       <div class="clearfix"></div>
       <div class="lead-edit<?php if(isset($lead)){echo ' hide';} ?>">
-         <div class="col-md-4 mtop15">
+         <div class="col-md-4">
           <?php
             $selected = '';
             if(isset($lead)){
@@ -221,19 +227,19 @@
             }
             foreach($statuses as $key => $status) {
               if($status['isdefault'] == 1) {
-                $statuses[$key]['option_attributes'] = array('data-subtext'=>_l('leads_converted_to_client'));
+                  $statuses[$key]['option_attributes'] = array('data-subtext'=>_l('leads_converted_to_client'));
               }
             }
             echo render_leads_status_select($statuses, $selected,'lead_add_edit_status');
           ?>
          </div>
-         <div class="col-md-4 mtop15">
+         <div class="col-md-4">
             <?php
                $selected = (isset($lead) ? $lead->source : get_option('leads_default_source'));
                echo render_leads_source_select($sources, $selected,'lead_add_edit_source');
             ?>
          </div>
-         <div class="col-md-4 mtop15">
+         <div class="col-md-4">
             <?php
                $assigned_attrs = array();
                $selected = (isset($lead) ? $lead->assigned : get_staff_user_id());
@@ -379,6 +385,9 @@
       var lead_fields = $('.lead-wrapper').find('input, select, textarea');
       $.each(lead_fields, function() {
           $(this).attr('disabled', true);
+          if($(this).is('select')) {
+              $(this).selectpicker('refresh');
+          }
       });
   });
 </script>

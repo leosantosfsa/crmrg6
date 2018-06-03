@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Todo extends Admin_controller
 {
@@ -15,16 +16,16 @@ class Todo extends Admin_controller
             echo json_encode($this->todo_model->get_todo_items($this->input->post('finished'), $this->input->post('todo_page')));
             exit;
         }
-        $data['bodyclass']              = 'main_todo_page';
-        $data['total_pages_finished']   = ceil(total_rows('tbltodoitems', array(
+        $data['bodyclass']            = 'main-todo-page';
+        $data['total_pages_finished'] = ceil(total_rows('tbltodoitems', [
             'finished' => 1,
-            'staffid' => get_staff_user_id()
-        )) / $this->todo_model->getTodosLimit());
-        $data['total_pages_unfinished'] = ceil(total_rows('tbltodoitems', array(
+            'staffid'  => get_staff_user_id(),
+        ]) / $this->todo_model->getTodosLimit());
+        $data['total_pages_unfinished'] = ceil(total_rows('tbltodoitems', [
             'finished' => 0,
-            'staffid' => get_staff_user_id()
-        )) / $this->todo_model->getTodosLimit());
-        $data['title']                  = _l('my_todos');
+            'staffid'  => get_staff_user_id(),
+        ]) / $this->todo_model->getTodosLimit());
+        $data['title'] = _l('my_todos');
         $this->load->view('admin/todos/all', $data);
     }
 
@@ -81,9 +82,9 @@ class Todo extends Admin_controller
     public function delete_todo_item($id)
     {
         if ($this->input->is_ajax_request()) {
-            echo json_encode(array(
-                'success' => $this->todo_model->delete_todo_item($id)
-            ));
+            echo json_encode([
+                'success' => $this->todo_model->delete_todo_item($id),
+            ]);
         }
         die();
     }

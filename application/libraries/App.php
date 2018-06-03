@@ -1,4 +1,6 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');
+<?php
+
+defined('BASEPATH') or exit('No direct script access allowed');
 
 class App
 {
@@ -6,52 +8,60 @@ class App
      * Options autoload=1
      * @var array
      */
-    private $options = array();
+    private $options = [];
+
     /**
      * Quick actions create aside
      * @var array
      */
-    private $quick_actions = array();
+    private $quick_actions = [];
+
     /**
      * CI Instance
      * @deprecated 1.9.8 Use $this->ci instead
      * @var object
      */
     private $_instance;
+
     /**
      * CI Instance
      * @var object
      */
     private $ci;
+
     /**
      * Show or hide setup menu
      * @var boolean
      */
     private $show_setup_menu = true;
+
     /**
      * Available reminders
      * @var array
      */
-    private $available_reminders = array('customer', 'lead', 'estimate', 'invoice', 'proposal', 'expense', 'credit_note');
+    private $available_reminders = ['customer', 'lead', 'estimate', 'invoice', 'proposal', 'expense', 'credit_note'];
+
     /**
      * Tables where currency id is used
      * @var array
      */
-    private $tables_with_currency = array();
+    private $tables_with_currency = [];
+
     /**
      * Media folder
      * @var string
      */
     private $media_folder;
+
     /**
      * Available languages
      * @var array
      */
-    private $available_languages = array();
+    private $available_languages = [];
 
     public function __construct()
     {
-        $this->ci =& get_instance();
+        $this->ci = & get_instance();
         // @deprecated
         $this->_instance = $this->ci;
 
@@ -123,19 +133,19 @@ class App
     public function get_update_info()
     {
         $curl = curl_init();
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_USERAGENT=>$this->ci->agent->agent_string(),
+            CURLOPT_USERAGENT      => $this->ci->agent->agent_string(),
             CURLOPT_SSL_VERIFYPEER => 0,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_URL => UPDATE_INFO_URL,
-            CURLOPT_POST => 1,
-            CURLOPT_POSTFIELDS => array(
-                'update_info' => 'true',
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_URL            => UPDATE_INFO_URL,
+            CURLOPT_POST           => 1,
+            CURLOPT_POSTFIELDS     => [
+                'update_info'     => 'true',
                 'current_version' => $this->get_current_db_version(),
-            ),
-        ));
+            ],
+        ]);
 
         $result = curl_exec($curl);
         $error  = '';
@@ -170,12 +180,12 @@ class App
      * @param  array  $params additional params
      * @return void
      */
-    public function get_table_data($table, $params = array())
+    public function get_table_data($table, $params = [])
     {
-        $hook_data = do_action('before_render_table_data', array(
-            'table' => $table,
+        $hook_data = do_action('before_render_table_data', [
+            'table'  => $table,
             'params' => $params,
-        ));
+        ]);
 
         foreach ($hook_data['params'] as $key => $val) {
             $$key = $val;
@@ -183,13 +193,15 @@ class App
 
         $table = $hook_data['table'];
 
-        $customFieldsColumns = array();
+        $customFieldsColumns = [];
+
+        $path = VIEWPATH . 'admin/tables/' . $table . '.php';
 
         if (file_exists(VIEWPATH . 'admin/tables/my_' . $table . '.php')) {
-            include_once(VIEWPATH . 'admin/tables/my_' . $table . '.php');
-        } else {
-            include_once(VIEWPATH . 'admin/tables/' . $table . '.php');
+            $path = VIEWPATH . 'admin/tables/my_' . $table . '.php';
         }
+
+        include_once($path);
 
         echo json_encode($output);
         die;
@@ -224,7 +236,7 @@ class App
             $name = 'number_padding_prefixes';
         }
 
-        $val = '';
+        $val  = '';
         $name = trim($name);
 
         if (!isset($this->options[$name])) {
@@ -239,7 +251,7 @@ class App
             $val = $this->options[$name];
         }
 
-        $hook_data = do_action('get_option', array('name'=>$name, 'value'=>$val));
+        $hook_data = do_action('get_option', ['name' => $name, 'value' => $val]);
 
         return $hook_data['value'];
     }
@@ -248,7 +260,7 @@ class App
      * Add new quick action data
      * @param array $item
      */
-    public function add_quick_actions_link($item = array())
+    public function add_quick_actions_link($item = [])
     {
         $this->quick_actions[] = $item;
     }
@@ -310,26 +322,25 @@ class App
 
         $beforeUpdateVersion = $this->get_current_db_version();
 
-        $this->ci->load->library('migration', array(
-            'migration_enabled' => true,
-            'migration_type' => $this->ci->config->item('migration_type'),
-            'migration_table' => $this->ci->config->item('migration_table'),
+        $this->ci->load->library('migration', [
+            'migration_enabled'     => true,
+            'migration_type'        => $this->ci->config->item('migration_type'),
+            'migration_table'       => $this->ci->config->item('migration_table'),
             'migration_auto_latest' => $this->ci->config->item('migration_auto_latest'),
-            'migration_version' => $this->ci->config->item('migration_version'),
-            'migration_path' => $this->ci->config->item('migration_path'),
-        ));
+            'migration_version'     => $this->ci->config->item('migration_version'),
+            'migration_path'        => $this->ci->config->item('migration_path'),
+        ]);
         if ($this->ci->migration->current() === false) {
-            return array(
+            return [
                 'success' => false,
                 'message' => $this->ci->migration->error_string(),
-            );
-        } else {
-            update_option('upgraded_from_version', $beforeUpdateVersion);
-
-            return array(
-                'success' => true,
-            );
+            ];
         }
+        update_option('upgraded_from_version', $beforeUpdateVersion);
+
+        return [
+                'success' => true,
+            ];
     }
 
     /**
@@ -356,7 +367,7 @@ class App
          * Available languages
          */
         foreach (list_folders(APPPATH . 'language') as $language) {
-            if (is_dir(APPPATH.'language/'.$language)) {
+            if (is_dir(APPPATH . 'language/' . $language)) {
                 array_push($this->available_languages, $language);
             }
         }
@@ -371,32 +382,36 @@ class App
          * Tables with currency
          * @var array
          */
-        $this->tables_with_currency = array(
-            array(
+        $this->tables_with_currency = [
+            [
                 'table' => 'tblinvoices',
                 'field' => 'currency',
-            ),
-            array(
+            ],
+            [
                 'table' => 'tblexpenses',
                 'field' => 'currency',
-            ),
-            array(
+            ],
+            [
                 'table' => 'tblproposals',
                 'field' => 'currency',
-            ),
-            array(
+            ],
+            [
                 'table' => 'tblestimates',
                 'field' => 'currency',
-            ),
-            array(
+            ],
+            [
                 'table' => 'tblclients',
                 'field' => 'default_currency',
-            ),
-            array(
+            ],
+            [
                 'table' => 'tblcreditnotes',
                 'field' => 'currency',
-            ),
-        );
+            ],
+            [
+                'table' => 'tblsubscriptions',
+                'field' => 'currency',
+            ],
+        ];
     }
 
     /**

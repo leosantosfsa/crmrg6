@@ -11,120 +11,127 @@
  </div>
  <?php } ?>
  <div class="col-md-3">
-  <div class="panel_s">
-   <div class="panel-body">
-    <ul class="nav navbar-pills nav-tabs nav-stacked">
-      <?php $settings_groups = array(
-        array(
-          'name'=>'general',
-          'lang'=>_l('settings_group_general'),
-          'order'=>1,
-          ),
-        array(
-          'name'=>'company',
-          'lang'=>_l('company_information'),
-          'order'=>2,
-          ),
-        array(
-          'name'=>'localization',
-          'lang'=>_l('settings_group_localization'),
-          'order'=>3,
-          ),
-        array(
-          'name'=>'email',
-          'lang'=>_l('settings_group_email'),
-          'order'=>4,
-          ),
-        array(
-          'name'=>'sales',
-          'lang'=>_l('settings_group_sales'),
-          'order'=>5,
-          ),
-        array(
-          'name'=>'online_payment_modes',
-          'lang'=>_l('settings_group_online_payment_modes'),
-          'order'=>6,
-          ),
-        array(
-          'name'=>'clients',
-          'lang'=>_l('settings_group_clients'),
-          'order'=>7,
-          ),
-        array(
-          'name'=>'tasks',
-          'lang'=>_l('tasks'),
-          'order'=>8,
-          ),
-        array(
-          'name'=>'tickets',
-          'lang'=>_l('support'),
-          'order'=>9,
-          ),
-        array(
-          'name'=>'leads',
-          'lang'=>_l('leads'),
-          'order'=>10,
-          ),
-        array(
-          'name'=>'calendar',
-          'lang'=>_l('settings_calendar'),
-          'order'=>11,
-          ),
-        array(
-          'name'=>'pdf',
-          'lang'=>_l('settings_pdf'),
-          'order'=>12,
-          ),
-        array(
-          'name'=>'cronjob',
-          'lang'=>_l('settings_group_cronjob'),
-          'order'=>13,
-          ),
-        array(
-          'name'=>'tags',
-          'lang'=>_l('tags'),
-          'order'=>14,
-          ),
-        array(
-          'name'=>'pusher',
-          'lang'=>'Pusher.com',
-          'order'=>15,
-          ),
-        array(
-          'name'=>'misc',
-          'lang'=>_l('settings_group_misc'),
-          'order'=>16,
-          ),
-        array(
-          'name'=>'update',
-          'lang'=>_l('settings_update'),
-          'order'=>17,
-          ),
-        );
 
-      $settings_groups = do_action('settings_groups',$settings_groups);
-      usort($settings_groups, function($a, $b) {
-          return $a['order'] - $b['order'];
-      });
+  <ul class="nav navbar-pills navbar-pills-flat nav-tabs nav-stacked">
+    <?php $settings_groups = array(
+      array(
+        'name'=>'general',
+        'lang'=>_l('settings_group_general'),
+        'order'=>1,
+      ),
+      array(
+        'name'=>'company',
+        'lang'=>_l('company_information'),
+        'order'=>2,
+      ),
+      array(
+        'name'=>'localization',
+        'lang'=>_l('settings_group_localization'),
+        'order'=>3,
+      ),
+      array(
+        'name'=>'email',
+        'lang'=>_l('settings_group_email'),
+        'order'=>4,
+      ),
+      array(
+        'name'=>'sales',
+        'lang'=>_l('settings_group_sales'),
+        'order'=>5,
+      ),
+      array(
+        'name'=>'subscriptions',
+        'lang'=>_l('subscriptions'),
+        'order'=>5,
+      ),
+      array(
+        'name'=>'online_payment_modes',
+        'lang'=>_l('settings_group_online_payment_modes'),
+        'order'=>6,
+      ),
+      array(
+        'name'=>'clients',
+        'lang'=>_l('settings_group_clients'),
+        'order'=>7,
+      ),
+      array(
+        'name'=>'tasks',
+        'lang'=>_l('tasks'),
+        'order'=>8,
+      ),
+      array(
+        'name'=>'tickets',
+        'lang'=>_l('support'),
+        'order'=>9,
+      ),
+      array(
+        'name'=>'leads',
+        'lang'=>_l('leads'),
+        'order'=>10,
+      ),
+      array(
+        'name'=>'calendar',
+        'lang'=>_l('settings_calendar'),
+        'order'=>11,
+      ),
+      array(
+        'name'=>'pdf',
+        'lang'=>_l('settings_pdf'),
+        'order'=>12,
+      ),
+      array(
+        'name'=>'e_sign',
+        'lang'=>'E-Sign',
+        'order'=>12,
+      ),
+      array(
+        'name'=>'cronjob',
+        'lang'=>_l('settings_group_cronjob'),
+        'order'=>13,
+      ),
+      array(
+        'name'=>'tags',
+        'lang'=>_l('tags'),
+        'order'=>14,
+      ),
+      array(
+        'name'=>'pusher',
+        'lang'=>'Pusher.com',
+        'order'=>15,
+      ),
+      array(
+        'name'=>'misc',
+        'lang'=>_l('settings_group_misc'),
+        'order'=>16,
+      ),
+    );
+
+    $settings_groups = do_action('settings_groups',$settings_groups);
+    usort($settings_groups, function($a, $b) {
+      return $a['order'] - $b['order'];
+    });
+    ?>
+    <?php
+    $i = 0;
+    foreach($settings_groups as $group){
+      if($group['name'] == 'update' && !is_admin()){continue;}
       ?>
-      <?php
-      $i = 0;
-      foreach($settings_groups as $group){
-        if($group['name'] == 'update' && !is_admin()){continue;}
-        ?>
-        <li<?php if($i == 0){echo " class='active'"; } ?>>
-        <a href="<?php echo (!isset($group['url']) ? admin_url('settings?group='.$group['name']) : $group['url']) ?>" data-group="<?php echo $group['name']; ?>">
-          <?php echo $group['lang']; ?></a>
-        </li>
-        <?php $i++; } ?>
-      </ul>
-      <div class="btn-bottom-toolbar text-right">
-       <button type="submit" class="btn btn-info"><?php echo _l('settings_save'); ?></button>
+      <li<?php if($i == 0){echo " class='active'"; } ?>>
+      <a href="<?php echo (!isset($group['url']) ? admin_url('settings?group='.$group['name']) : $group['url']) ?>" data-group="<?php echo $group['name']; ?>">
+        <?php echo $group['lang']; ?></a>
+      </li>
+      <?php $i++; } ?>
+    </ul>
+    <div class="panel_s">
+      <div class="panel-body">
+        <a href="<?php echo admin_url('settings?group=update'); ?>" class="<?php if($this->input->get('group') == 'update'){echo 'bold';} ?>"><?php echo _l('settings_update'); ?></a>
+        <div class="btn-bottom-toolbar text-right">
+         <button type="submit" class="btn btn-info"><?php echo _l('settings_save'); ?></button>
+       </div>
      </div>
    </div>
  </div>
-</div>
-<div class="col-md-9">
+ <div class="col-md-9">
   <div class="panel_s">
    <div class="panel-body">
     <?php do_action('before_settings_group_view',$group_view); ?>
@@ -144,18 +151,18 @@
 <script>
  $(function(){
   $('input[name="settings[email_protocol]"]').on('change',function(){
-      if($(this).val() == 'mail'){
-        $('.smtp-fields').addClass('hide');
-      } else {
-         $('.smtp-fields').removeClass('hide');
-      }
-  });
+    if($(this).val() == 'mail'){
+      $('.smtp-fields').addClass('hide');
+    } else {
+     $('.smtp-fields').removeClass('hide');
+   }
+ });
   $('.sms_gateway_active input').on('change',function(){
-      if($(this).val() == '1') {
-          $('body .sms_gateway_active').not($(this).parents('.sms_gateway_active')[0]).find('input[value="0"]').prop('checked',true);
-      }
+    if($(this).val() == '1') {
+      $('body .sms_gateway_active').not($(this).parents('.sms_gateway_active')[0]).find('input[value="0"]').prop('checked',true);
+    }
   });
-   <?php if($view_name == 'pusher'){ ?>
+  <?php if($view_name == 'pusher'){ ?>
     <?php if(get_option('desktop_notifications') == '1'){ ?>
       // Let's check if the browser supports notifications
       if (!("Notification" in window)) {
@@ -205,11 +212,11 @@
              update_errors = JSON.parse(response.responseText);
              $('#update_messages').html('<div class="alert alert-danger"></div>');
              for (var i in update_errors){
-               $('#update_messages .alert').append('<p>'+update_errors[i]+'</p>');
-             }
-             ubtn.removeClass('disabled');
-             ubtn.html($('.update_app_wrapper').data('original-text'));
-           });
+              $('#update_messages .alert').append('<p>'+update_errors[i]+'</p>');
+            }
+            ubtn.removeClass('disabled');
+            ubtn.html($('.update_app_wrapper').data('original-text'));
+          });
          } else {
           $('input[name="settings[purchase_key]"]').parents('.form-group').addClass('has-error');
         }

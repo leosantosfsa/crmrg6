@@ -14,14 +14,14 @@
         <?php if($article->staff_article == 1){ ?>
         <a href="<?php echo admin_url('knowledge_base/view/'.$article->slug); ?>" target="_blank"><?php echo admin_url('knowledge_base/view/'.$article->slug); ?></a>
         <?php } else { ?>
-        <a href="<?php echo site_url('clients/knowledge_base/'.$article->slug); ?>" target="_blank"><?php echo site_url('clients/knowledge_base/'.$article->slug); ?></a>
+        <a href="<?php echo site_url('knowledge-base/article/'.$article->slug); ?>" target="_blank"><?php echo site_url('knowledge-base/article/'.$article->slug); ?></a>
         <?php } ?>
       </small>
       <?php } ?>
     </h4>
     <?php if(isset($article)){ ?>
     <p>
-      <small>
+    <small>
        <?php echo _l('article_total_views'); ?>: <?php echo total_rows('tblviewstracking',array('rel_type'=>'kb_article','rel_id'=>$article->articleid)); ?>
      </small>
      <?php if(has_permission('knowledge_base','','create')){ ?>

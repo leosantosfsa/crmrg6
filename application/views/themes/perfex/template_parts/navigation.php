@@ -42,6 +42,13 @@
         <li class="customers-nav-item-tickets"><a href="<?php echo site_url('clients/tickets'); ?>"><?php echo _l('clients_nav_support'); ?></a></li>
         <?php } ?>
         <?php do_action('customers_navigation_end'); ?>
+        <?php if(is_gdpr() && is_client_logged_in() && get_option('show_gdpr_in_customers_menu') == '1') { ?>
+        <li class="customers-nav-item-tickets">
+            <a href="<?php echo site_url('clients/gdpr'); ?>">
+                GDPR
+            </a>
+        </li>
+        <?php } ?>
         <li class="dropdown customers-nav-item-profile">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             <img src="<?php echo contact_profile_image_url($contact->id,'thumb'); ?>" class="client-profile-image-small mright5">
@@ -50,14 +57,28 @@
             <ul class="dropdown-menu animated fadeIn">
               <li class="customers-nav-item-edit-profile"><a href="<?php echo site_url('clients/profile'); ?>"><?php echo _l('clients_nav_profile'); ?></a></li>
               <li class="customers-nav-item-company-info"><a href="<?php echo site_url('clients/company'); ?>"><?php echo _l('client_company_info'); ?></a></li>
-              <li class="customers-nav-item-announcements">
-                <a href="<?php echo site_url('clients/announcements'); ?>"><?php echo _l('announcements'); ?>
-                 <?php if($total_undismissed_announcements != 0){ ?>
-                 <span class="badge"><?php echo $total_undismissed_announcements; ?></span>
-                 <?php } ?>
-               </a>
-             </li>
-             <?php if(is_primary_contact() && get_option('disable_language') == 0){
+              <?php if(get_option('show_subscriptions_in_customers_area') == '1' && is_primary_contact($contact->id) && customer_has_subscriptions($contact->userid)) { ?>
+              <li>
+                  <a href="<?php echo site_url('clients/subscriptions'); ?>">
+                    <?php echo _l('subscriptions'); ?>
+                  </a>
+              </li>
+              <?php } ?>
+                <?php if(is_primary_contact($contact->id) && !empty($client->stripe_id) && $this->stripe_gateway->getSetting('allow_primary_contact_to_update_credit_card') == '1'){ ?>
+                <li class="customers-nav-item-stripe-card">
+                   <a href="<?php echo site_url('clients/credit_card'); ?>">
+                     <?php echo _l('credit_card'); ?>
+                   </a>
+                </li>
+                <?php } ?>
+                <li class="customers-nav-item-announcements">
+                  <a href="<?php echo site_url('clients/announcements'); ?>"><?php echo _l('announcements'); ?>
+                   <?php if($total_undismissed_announcements != 0){ ?>
+                   <span class="badge"><?php echo $total_undismissed_announcements; ?></span>
+                   <?php } ?>
+                 </a>
+               </li>
+             <?php if(is_primary_contact() && get_option('disable_language') == 0) {
               ?>
               <li class="dropdown-submenu pull-left customers-nav-item-languages">
                <a href="#" tabindex="-1"><?php echo _l('language'); ?></a>

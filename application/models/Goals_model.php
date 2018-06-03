@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Goals_model extends CRM_Model
 {
@@ -33,11 +34,11 @@ class Goals_model extends CRM_Model
             $this->db->where('notified', 0);
         }
 
-        $this->db->order_by('end_date','asc');
+        $this->db->order_by('end_date', 'asc');
         $goals = $this->db->get('tblgoals')->result_array();
 
-        foreach ($goals as $key=>$val) {
-            $goals[$key]['achievement'] = $this->calculate_goal_achievement($val['id']);
+        foreach ($goals as $key => $val) {
+            $goals[$key]['achievement']    = $this->calculate_goal_achievement($val['id']);
             $goals[$key]['goal_type_name'] = format_goal_type($val['goal_type']);
         }
 
@@ -51,13 +52,13 @@ class Goals_model extends CRM_Model
      */
     public function add($data)
     {
-        $data['notify_when_fail'] = isset($data['notify_when_fail']) ? 1 : 0;
+        $data['notify_when_fail']    = isset($data['notify_when_fail']) ? 1 : 0;
         $data['notify_when_achieve'] = isset($data['notify_when_achieve']) ? 1 : 0;
 
         $data['contract_type'] = $data['contract_type'] == '' ? 0 : $data['contract_type'];
-        $data['staff_id'] = $data['staff_id'] == '' ? 0 : $data['staff_id'];
-        $data['start_date'] = to_sql_date($data['start_date']);
-        $data['end_date']   = to_sql_date($data['end_date']);
+        $data['staff_id']      = $data['staff_id'] == '' ? 0 : $data['staff_id'];
+        $data['start_date']    = to_sql_date($data['start_date']);
+        $data['end_date']      = to_sql_date($data['end_date']);
         $this->db->insert('tblgoals', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
@@ -77,13 +78,13 @@ class Goals_model extends CRM_Model
      */
     public function update($data, $id)
     {
-        $data['notify_when_fail'] = isset($data['notify_when_fail']) ? 1 : 0;
+        $data['notify_when_fail']    = isset($data['notify_when_fail']) ? 1 : 0;
         $data['notify_when_achieve'] = isset($data['notify_when_achieve']) ? 1 : 0;
 
         $data['contract_type'] = $data['contract_type'] == '' ? 0 : $data['contract_type'];
-        $data['staff_id'] = $data['staff_id'] == '' ? 0 : $data['staff_id'];
-        $data['start_date'] = to_sql_date($data['start_date']);
-        $data['end_date']   = to_sql_date($data['end_date']);
+        $data['staff_id']      = $data['staff_id'] == '' ? 0 : $data['staff_id'];
+        $data['start_date']    = to_sql_date($data['start_date']);
+        $data['end_date']      = to_sql_date($data['end_date']);
         $this->db->where('id', $id);
         $this->db->update('tblgoals', $data);
         if ($this->db->affected_rows() > 0) {
@@ -134,28 +135,28 @@ class Goals_model extends CRM_Model
 
         if ($goal->staff_id == 0) {
             $this->load->model('staff_model');
-            $staff = $this->staff_model->get('', 1);
+            $staff = $this->staff_model->get('', ['active'=>1]);
         } else {
             $this->db->where('active', 1)
             ->where('staffid', $goal->staff_id);
             $staff = $this->db->get('tblstaff')->result_array();
         }
 
-        $notifiedUsers = array();
+        $notifiedUsers = [];
         foreach ($staff as $member) {
             if (is_staff_member($member['staffid'])) {
-                $notified = add_notification(array(
-                    'fromcompany' => 1,
-                    'touserid' => $member['staffid'],
-                    'description' => $goal_desc,
-                    'additional_data' => serialize(array(
+                $notified = add_notification([
+                    'fromcompany'     => 1,
+                    'touserid'        => $member['staffid'],
+                    'description'     => $goal_desc,
+                    'additional_data' => serialize([
                         format_goal_type($goal->goal_type),
                         $goal->achievement,
                         $achievement['total'],
                         _d($goal->start_date),
                         _d($goal->end_date),
-                    )),
-                ));
+                    ]),
+                ]);
                 if ($notified) {
                     array_push($notifiedUsers, $member['staffid']);
                 }
@@ -164,9 +165,9 @@ class Goals_model extends CRM_Model
 
         pusher_trigger_notification($notifiedUsers);
         $this->db->where('id', $goal->id);
-        $this->db->update('tblgoals', array(
+        $this->db->update('tblgoals', [
             'notified' => 1,
-        ));
+        ]);
 
         if (count($staff) > 0 && $this->db->affected_rows() > 0) {
             return true;
@@ -189,45 +190,45 @@ class Goals_model extends CRM_Model
         $total      = 0;
         $percent    = 0;
         if ($type == 1) {
-            $sql = "SELECT SUM(amount) as total FROM tblinvoicepaymentrecords";
+            $sql = 'SELECT SUM(amount) as total FROM tblinvoicepaymentrecords';
 
             if ($goal->staff_id != 0) {
-                $sql .= " JOIN tblinvoices ON tblinvoices.id = tblinvoicepaymentrecords.invoiceid";
+                $sql .= ' JOIN tblinvoices ON tblinvoices.id = tblinvoicepaymentrecords.invoiceid';
             }
 
             $sql .= " WHERE tblinvoicepaymentrecords.date BETWEEN '" . $start_date . "' AND '" . $end_date . "'";
 
             if ($goal->staff_id != 0) {
-                $sql .= " AND (tblinvoices.addedfrom=".$goal->staff_id.' OR sale_agent='.$goal->staff_id.')';
+                $sql .= ' AND (tblinvoices.addedfrom=' . $goal->staff_id . ' OR sale_agent=' . $goal->staff_id . ')';
             }
         } elseif ($type == 2) {
             $sql = "SELECT COUNT(tblleads.id) as total FROM tblleads WHERE DATE(date_converted) BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND status = 1 AND tblleads.id IN (SELECT leadid FROM tblclients WHERE leadid=tblleads.id)";
             if ($goal->staff_id != 0) {
-                $sql .= " AND CASE WHEN assigned=0 THEN addedfrom=".$goal->staff_id." ELSE assigned=".$goal->staff_id." END";
+                $sql .= ' AND CASE WHEN assigned=0 THEN addedfrom=' . $goal->staff_id . ' ELSE assigned=' . $goal->staff_id . ' END';
             }
         } elseif ($type == 3) {
             $sql = "SELECT COUNT(tblclients.userid) as total FROM tblclients WHERE DATE(datecreated) BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND leadid IS NULL";
             if ($goal->staff_id != 0) {
-                $sql .= " AND addedfrom=".$goal->staff_id;
+                $sql .= ' AND addedfrom=' . $goal->staff_id;
             }
         } elseif ($type == 4) {
             $sql = "SELECT COUNT(tblclients.userid) as total FROM tblclients WHERE DATE(datecreated) BETWEEN '" . $start_date . "' AND '" . $end_date . "'";
             if ($goal->staff_id != 0) {
-                $sql .= " AND addedfrom=".$goal->staff_id;
+                $sql .= ' AND addedfrom=' . $goal->staff_id;
             }
         } elseif ($type == 5 || $type == 7) {
             $column = 'dateadded';
             if ($type == 7) {
                 $column = 'datestart';
             }
-            $sql = "SELECT count(id) as total FROM tblcontracts WHERE " . $column . " BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND contract_type = " . $goal->contract_type . " AND trash = 0";
+            $sql = 'SELECT count(id) as total FROM tblcontracts WHERE ' . $column . " BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND contract_type = " . $goal->contract_type . ' AND trash = 0';
             if ($goal->staff_id != 0) {
-                $sql .= " AND addedfrom=".$goal->staff_id;
+                $sql .= ' AND addedfrom=' . $goal->staff_id;
             }
         } elseif ($type == 6) {
             $sql = "SELECT count(id) as total FROM tblestimates WHERE DATE(invoiced_date) BETWEEN '" . $start_date . "' AND '" . $end_date . "' AND invoiceid IS NOT NULL AND invoiceid NOT IN (SELECT id FROM tblinvoices WHERE status=5)";
             if ($goal->staff_id != 0) {
-                $sql .= " AND (addedfrom=".$goal->staff_id.' OR sale_agent='.$goal->staff_id.')';
+                $sql .= ' AND (addedfrom=' . $goal->staff_id . ' OR sale_agent=' . $goal->staff_id . ')';
             }
         } else {
             return;
@@ -242,10 +243,10 @@ class Goals_model extends CRM_Model
         }
         $progress_bar_percent = $percent / 100;
 
-        return array(
-            'total' => $total,
-            'percent' => $percent,
+        return [
+            'total'                => $total,
+            'percent'              => $percent,
             'progress_bar_percent' => $progress_bar_percent,
-        );
+        ];
     }
 }

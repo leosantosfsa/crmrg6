@@ -22,6 +22,9 @@ foreach($custom_fields as $field){
  array_push($table_data,$field['name']);
 }
 $table_data = do_action('proposals_relation_table_columns',$table_data);
-render_datatable($table_data,'proposals-client-profile');
+render_datatable($table_data,'proposals-client-profile',[],[
+    'data-last-order-identifier' => 'proposals-relation',
+    'data-default-order'         => get_table_last_order('proposals-relation'),
+]);
 ?>
 <?php } ?>

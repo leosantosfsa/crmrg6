@@ -1,12 +1,13 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Custom_fields_model extends CRM_Model
 {
-    private $pdf_fields = array('estimate', 'invoice', 'credit_note', 'items');
+    private $pdf_fields = ['estimate', 'invoice', 'credit_note', 'items'];
 
-    private $client_portal_fields = array('customers', 'estimate', 'invoice', 'proposal', 'contracts', 'tasks', 'projects', 'contacts', 'tickets', 'company', 'credit_note');
+    private $client_portal_fields = ['customers', 'estimate', 'invoice', 'proposal', 'contracts', 'tasks', 'projects', 'contacts', 'tickets', 'company', 'credit_note'];
 
-    private $client_editable_fields = array('customers', 'contacts', 'tasks');
+    private $client_editable_fields = ['customers', 'contacts', 'tasks'];
 
     public function __construct()
     {
@@ -86,13 +87,13 @@ class Custom_fields_model extends CRM_Model
             $data['field_order'] = 0;
         }
 
-        $data['slug'] = slug_it($data['fieldto'] . '_' . $data['name'], array(
-            'separator' => '_'
-        ));
-        $slugs_total = total_rows('tblcustomfields', array('slug'=>$data['slug']));
+        $data['slug'] = slug_it($data['fieldto'] . '_' . $data['name'], [
+            'separator' => '_',
+        ]);
+        $slugs_total = total_rows('tblcustomfields', ['slug' => $data['slug']]);
 
         if ($slugs_total > 0) {
-            $data['slug'] .= '_'.($slugs_total + 1);
+            $data['slug'] .= '_' . ($slugs_total + 1);
         }
 
         if ($data['fieldto'] == 'company') {
@@ -101,7 +102,7 @@ class Custom_fields_model extends CRM_Model
             $data['show_on_table']          = 1;
             $data['only_admin']             = 0;
             $data['disalow_client_to_edit'] = 0;
-        } else if($data['fieldto'] == 'items') {
+        } elseif ($data['fieldto'] == 'items') {
             $data['show_on_pdf']            = 1;
             $data['show_on_client_portal']  = 1;
             $data['show_on_table']          = 1;
@@ -112,7 +113,6 @@ class Custom_fields_model extends CRM_Model
         $this->db->insert('tblcustomfields', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
-
             logActivity('New Custom Field Added [' . $data['name'] . ']');
 
             return $insert_id;
@@ -194,7 +194,7 @@ class Custom_fields_model extends CRM_Model
             $data['show_on_table']          = 1;
             $data['only_admin']             = 0;
             $data['disalow_client_to_edit'] = 0;
-        } else if($data['fieldto'] == 'items') {
+        } elseif ($data['fieldto'] == 'items') {
             $data['show_on_pdf']            = 1;
             $data['show_on_client_portal']  = 1;
             $data['show_on_table']          = 1;
@@ -217,24 +217,24 @@ class Custom_fields_model extends CRM_Model
                     foreach ($options_before as $key => $val) {
                         $options_before[$key] = trim($val);
                     }
-                    $removed_options_in_use = array();
+                    $removed_options_in_use = [];
                     foreach ($options_before as $option) {
-                        if (!in_array($option, $options_now) && total_rows('tblcustomfieldsvalues', array(
+                        if (!in_array($option, $options_now) && total_rows('tblcustomfieldsvalues', [
                             'fieldid' => $id,
-                            'value' => $option
-                        ))) {
+                            'value' => $option,
+                        ])) {
                             array_push($removed_options_in_use, $option);
                         }
                     }
                     if (count($removed_options_in_use) > 0) {
                         $this->db->where('id', $id);
-                        $this->db->update('tblcustomfields', array(
-                            'options' => implode(',', $options_now) . ',' . implode(',', $removed_options_in_use)
-                        ));
+                        $this->db->update('tblcustomfields', [
+                            'options' => implode(',', $options_now) . ',' . implode(',', $removed_options_in_use),
+                        ]);
 
-                        return array(
-                            'cant_change_option_custom_field' => true
-                        );
+                        return [
+                            'cant_change_option_custom_field' => true,
+                        ];
                     }
                 }
             }
@@ -275,9 +275,9 @@ class Custom_fields_model extends CRM_Model
     public function change_custom_field_status($id, $status)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblcustomfields', array(
-            'active' => $status
-        ));
+        $this->db->update('tblcustomfields', [
+            'active' => $status,
+        ]);
         logActivity('Custom Field Status Changed [FieldID: ' . $id . ' - Active: ' . $status . ']');
     }
 

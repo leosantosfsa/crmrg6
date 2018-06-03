@@ -5,7 +5,7 @@
             <?php echo form_open('admin/clients/contact/'.$customer_id.'/'.$contactid,array('id'=>'contact-form','autocomplete'=>'off')); ?>
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel"><?php echo $title; ?><br /><small id=""><?php echo get_company_name($customer_id,true); ?></small></h4>
+                <h4 class="modal-title" id="myModalLabel"><?php echo $title; ?><br /><small class="color-white" id=""><?php echo get_company_name($customer_id,true); ?></small></h4>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -189,6 +189,15 @@
                 <div class="col-md-6 row">
                     <div class="row">
                         <div class="col-md-6 mtop10 border-right">
+                            <span><?php echo _l('tickets'); ?></span>
+                        </div>
+                        <div class="col-md-6 mtop10">
+                            <div class="onoffswitch">
+                                <input type="checkbox" id="ticket_emails" data-perm-id="5" class="onoffswitch-checkbox" <?php if(isset($contact) && $contact->ticket_emails == '1'){echo 'checked';} ?>  value="ticket_emails" name="ticket_emails">
+                                <label class="onoffswitch-label" for="ticket_emails"></label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mtop10 border-right">
                             <span><i class="fa fa-question-circle" data-toggle="tooltip" data-title="<?php echo _l('only_project_tasks'); ?>"></i> <?php echo _l('task'); ?></span>
                         </div>
                         <div class="col-md-6 mtop10">
@@ -197,6 +206,7 @@
                                 <label class="onoffswitch-label" for="task_emails"></label>
                             </div>
                         </div>
+
                     </div>
                 </div>
                  <div class="col-md-6 row">

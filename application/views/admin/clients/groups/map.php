@@ -23,7 +23,7 @@ if(isset($client)){ ?>
 <hr />
 <?php } ?>
 <?php
-if($google_api_key !== ''){
+if(get_option('google_api_key') !== ''){
     if($client->longitude == '' && $client->latitude == ''){
         echo _l('customer_map_notice');
     } else {

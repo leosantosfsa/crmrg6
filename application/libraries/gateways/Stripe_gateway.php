@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
@@ -30,48 +31,53 @@ class Stripe_gateway extends App_gateway
         /**
          * Add gateway settings
         */
-        $this->setSettings(array(
-            array(
-                'name' => 'api_secret_key',
+        $this->setSettings([
+            [
+                'name'      => 'api_secret_key',
                 'encrypted' => true,
-                'label' => 'settings_paymentmethod_stripe_api_secret_key'
-            ),
-            array(
-                'name' => 'api_publishable_key',
-                'label' => 'settings_paymentmethod_stripe_api_publishable_key'
-            ),
-            array(
-                'name' => 'description_dashboard',
-                'label' => 'settings_paymentmethod_description',
-                'type'=>'textarea',
-                'default_value'=>'Payment for Invoice {invoice_number}',
-            ),
-            array(
-                'name' => 'currencies',
-                'label' => 'settings_paymentmethod_currencies',
-                'default_value' => 'USD,CAD'
-            ),
-            array(
-                'name' => 'bitcoin_enabled',
-                'type' => 'yes_no',
-                'default_value' => 0,
-                'label' => 'Bitcoin'
-            ),
-            array(
-                'name' => 'test_mode_enabled',
-                'type' => 'yes_no',
+                'label'     => 'settings_paymentmethod_stripe_api_secret_key',
+            ],
+            [
+                'name'  => 'api_publishable_key',
+                'label' => 'settings_paymentmethod_stripe_api_publishable_key',
+            ],
+            [
+                'name'          => 'description_dashboard',
+                'label'         => 'settings_paymentmethod_description',
+                'type'          => 'textarea',
+                'default_value' => 'Payment for Invoice {invoice_number}',
+            ],
+            [
+                'name'             => 'webhook_key',
+                'label'            => 'Stripe Checkout Webhook Key',
+                'default_value'    => app_generate_hash(),
+                'after'            => '<p class="mbot15">Secret key to protect your webhook, webhook URL: ' . site_url('gateways/stripe/webhook/YOUR_WEBHOOK_KEY<br /><b>[Configure Webhook only if you are using Subscriptions]</b></p>'),
+                'field_attributes' => ['required' => true],
+            ],
+            [
+                'name'          => 'currencies',
+                'label'         => 'settings_paymentmethod_currencies',
+                'default_value' => 'USD,CAD',
+            ],
+            [
+                'name'          => 'allow_primary_contact_to_update_credit_card',
+                'type'          => 'yes_no',
                 'default_value' => 1,
-                'label' => 'settings_paymentmethod_testing_mode'
-            )
-        ));
+                'label'         => 'allow_primary_contact_to_update_credit_card',
+            ],
+            [
+                'name'          => 'test_mode_enabled',
+                'type'          => 'yes_no',
+                'default_value' => 1,
+                'label'         => 'settings_paymentmethod_testing_mode',
+            ],
+        ]);
 
         /**
          * REQUIRED
          * Hook gateway with other online payment modes
          */
-        add_action('before_add_online_payment_modes', array( $this, 'initMode' ));
-
-
+        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
     }
 
     public function process_payment($data)
@@ -81,19 +87,40 @@ class Stripe_gateway extends App_gateway
 
     public function finish_payment($data)
     {
-        // Process online for PayPal payment start
-        $gateway = Omnipay::create('Stripe');
-        $gateway->setApiKey($this->decryptSetting('api_secret_key'));
-        $oResponse = $gateway->purchase(array(
-            'amount' => number_format($data['amount'], 2, '.', ''),
-            'metadata' => array(
-                'ClientID' => $data['clientid']
-            ),
-            'description' => $data['description'],
-            'currency' => $data['currency'],
-            'token' => $data['stripeToken']
-        ))->send();
+        $this->ci->load->library('stripe_core');
 
-        return $oResponse;
+        $client = $this->ci->clients_model->get($data['clientid']);
+        $stripeCustomerId = $client->stripe_id;
+        if(empty($stripeCustomerId)) {
+
+            $stripeCustomer = $this->ci->stripe_core->create_customer([
+                'email'       => $data['email'],
+                'source'      => $data['stripeToken'],
+                'description' => $client->company,
+            ]);
+
+            $this->ci->db->where('userid', $client->userid);
+            $this->ci->db->update('tblclients', ['stripe_id'=>$stripeCustomer->id]);
+            $stripeCustomerId = $stripeCustomer->id;
+
+        } else if(!empty($stripeCustomerId)) {
+            $stripeCustomer = $this->ci->stripe_core->get_customer($stripeCustomerId);
+            if (empty($stripeCustomer->default_source)) {
+                $stripeCustomer->source = $data['stripeToken'];
+                $stripeCustomer->save();
+            }
+        }
+
+        $result = $this->ci->stripe_core->charge([
+            'amount'   => $data['amount'] * 100,
+            'metadata' => [
+                'ClientID' => $data['clientid'],
+            ],
+            'customer' => $stripeCustomerId,
+            'description' => $data['description'],
+            'currency'    => $data['currency'],
+        ]);
+
+        return $result;
     }
 }

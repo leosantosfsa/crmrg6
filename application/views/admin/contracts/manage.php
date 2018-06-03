@@ -146,23 +146,7 @@
                     <div class="panel_s">
                         <?php echo form_hidden('custom_view'); ?>
                         <div class="panel-body">
-                            <?php
-                            $table_data = array(
-                               '#',
-                               _l('contract_list_subject'),
-                               _l('contract_list_client'),
-                               _l('contract_types_list_name'),
-                               _l('contract_value'),
-                               _l('contract_list_start_date'),
-                               _l('contract_list_end_date'),
-                               );
-                            $custom_fields = get_custom_fields('contracts',array('show_on_table'=>1));
-                            foreach($custom_fields as $field){
-                               array_push($table_data,$field['name']);
-                           }
-                           $table_data = do_action('contracts_table_columns',$table_data);
-                           array_push($table_data,_l('options'));
-                           render_datatable($table_data,'contracts'); ?>
+                           <?php $this->load->view('admin/contracts/table_html'); ?>
                        </div>
                    </div>
                </div>
@@ -178,10 +162,8 @@
             ContractsServerParams[$(this).attr('name')] = '[name="'+$(this).attr('name')+'"]';
         });
 
-        var headers_contracts = $('.table-contracts').find('th');
-        var not_sortable_contracts = (headers_contracts.length - 1);
+        initDataTable('.table-contracts', admin_url+'contracts/table', undefined, undefined, ContractsServerParams,<?php echo do_action('contracts_table_default_order',json_encode(array(6,'asc'))); ?>);
 
-        initDataTable('.table-contracts', admin_url+'contracts/table', [not_sortable_contracts], [not_sortable_contracts], ContractsServerParams,<?php echo do_action('contracts_table_default_order',json_encode(array(6,'ASC'))); ?>);
         new Chart($('#contracts-by-type-chart'), {
             type: 'bar',
             data: <?php echo $chart_types; ?>,

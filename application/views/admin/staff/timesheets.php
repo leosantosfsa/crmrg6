@@ -201,7 +201,7 @@
   Timesheets_ServerParams['staff_id'] = '[name="staff_id"]';
   Timesheets_ServerParams['project_id'] = '[name="project_id"]';
   Timesheets_ServerParams['group_by_task'] = '[name="group_by_task"]:checked';
-  initDataTable('.table-timesheets-report', window.location.href, undefined, undefined, Timesheets_ServerParams, [<?php if(isset($view_all)){echo 3;} else {echo 2;} ?>, 'DESC']);
+  initDataTable('.table-timesheets-report', window.location.href, undefined, undefined, Timesheets_ServerParams, [<?php if(isset($view_all)){echo 3;} else {echo 2;} ?>, 'desc']);
 
   timesheetsTable.on('init.dt',function(){
     var $dtFilter = $('body').find('.dataTables_filter');

@@ -3,44 +3,59 @@
 <div class="col-md-12 no-padding">
    <div class="panel_s">
       <div class="panel-body">
-         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active">
-               <a href="#tab_credit_note" aria-controls="tab_credit_note" role="tab" data-toggle="tab">
-               <?php echo _l('credit_note'); ?>
-               </a>
-            </li>
-            <li role="presentation">
-               <a href="#invoices_credited" aria-controls="invoices_credited" role="tab" data-toggle="tab">
-               <?php echo _l('invoices_credited'); ?>
-               <?php if(count($credit_note->applied_credits) > 0) {
-                  echo '<span class="badge">'.count($credit_note->applied_credits).'</span>';
-                  }
-                  ?>
-               </a>
-            </li>
-            <li role="presentation" class="tab-separator">
-               <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $credit_note->id ;?> + '/' + 'credit_note', [4], [4],undefined,[1,'ASC']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
-               <?php echo _l('reminders'); ?>
-               <?php
-                  $total_reminders = total_rows('tblreminders',
-                   array(
-                     'isnotified'=>0,
-                     'staff'=>get_staff_user_id(),
-                     'rel_type'=>'credit_note',
-                     'rel_id'=>$credit_note->id
-                   )
-                  );
-                  if($total_reminders > 0){
-                   echo '<span class="badge">'.$total_reminders.'</span>';
-                  }
-                  ?>
-               </a>
-            </li>
-            <li role="presentation" class="tab-separator">
-               <a href="#" onclick="small_table_full_view(); return false;" data-placement="left" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="toggle_view">
-               <i class="fa fa-expand"></i></a>
-            </li>
-         </ul>
+         <div class="horizontal-scrollable-tabs preview-tabs-top">
+            <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
+            <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>
+            <div class="horizontal-tabs">
+               <ul class="nav nav-tabs nav-tabs-horizontal mbot15" role="tablist">
+                  <li role="presentation" class="active">
+                     <a href="#tab_credit_note" aria-controls="tab_credit_note" role="tab" data-toggle="tab">
+                     <?php echo _l('credit_note'); ?>
+                     </a>
+                  </li>
+                  <li role="presentation">
+                     <a href="#invoices_credited" aria-controls="invoices_credited" role="tab" data-toggle="tab">
+                     <?php echo _l('invoices_credited'); ?>
+                     <?php if(count($credit_note->applied_credits) > 0) {
+                        echo '<span class="badge">'.count($credit_note->applied_credits).'</span>';
+                        }
+                        ?>
+                     </a>
+                  </li>
+                  <li role="presentation" class="tab-separator">
+                     <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $credit_note->id ;?> + '/' + 'credit_note', undefined, undefined, undefined,[1,'asc']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
+                     <?php echo _l('reminders'); ?>
+                     <?php
+                        $total_reminders = total_rows('tblreminders',
+                         array(
+                           'isnotified'=>0,
+                           'staff'=>get_staff_user_id(),
+                           'rel_type'=>'credit_note',
+                           'rel_id'=>$credit_note->id
+                         )
+                        );
+                        if($total_reminders > 0){
+                         echo '<span class="badge">'.$total_reminders.'</span>';
+                        }
+                        ?>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" title="<?php echo _l('emails_tracking'); ?>" class="tab-separator">
+                     <a href="#tab_emails_tracking" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab">
+                     <?php if(!is_mobile()){ ?>
+                        <i class="fa fa-envelope-open-o" aria-hidden="true"></i>
+                     <?php } else { ?>
+                        <?php echo _l('emails_tracking'); ?>
+                     <?php } ?>
+                     </a>
+                  </li>
+                  <li role="presentation" class="tab-separator toggle_view">
+                     <a href="#" onclick="small_table_full_view(); return false;" data-placement="left" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>">
+                     <i class="fa fa-expand"></i></a>
+                  </li>
+               </ul>
+            </div>
+         </div>
          <div class="row">
             <div class="col-md-3">
                <?php echo format_credit_note_status($credit_note->status);  ?>
@@ -55,18 +70,25 @@
                   <i class="fa fa-pencil-square-o"></i>
                   </a>
                   <?php } ?>
-                  <a href="<?php echo admin_url('credit_notes/pdf/'.$credit_note->id.'?print=true'); ?>" target="_blank" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('print'); ?>" data-placement="bottom">
-                  <i class="fa fa-print"></i>
-                  </a>
-                  <a href="<?php echo admin_url('credit_notes/pdf/'.$credit_note->id); ?>" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('view_pdf'); ?>" data-placement="bottom">
-                  <i class="fa fa-file-pdf-o"></i>
-                  </a>
-                  <?php if($credit_note->status != 3) { ?>
+                  <div class="btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-file-pdf-o"></i><?php if(is_mobile()){echo ' PDF';} ?> <span class="caret"></span></a>
+                     <ul class="dropdown-menu dropdown-menu-right">
+                        <li class="hidden-xs"><a href="<?php echo admin_url('credit_notes/pdf/'.$credit_note->id.'?output_type=I'); ?>"><?php echo _l('view_pdf'); ?></a></li>
+                        <li class="hidden-xs"><a href="<?php echo admin_url('credit_notes/pdf/'.$credit_note->id.'?output_type=I'); ?>" target="_blank"><?php echo _l('view_pdf_in_new_window'); ?></a></li>
+                        <li><a href="<?php echo admin_url('credit_notes/pdf/'.$credit_note->id); ?>"><?php echo _l('download'); ?></a></li>
+                        <li>
+                           <a href="<?php echo admin_url('credit_notes/pdf/'.$credit_note->id.'?print=true'); ?>" target="_blank">
+                           <?php echo _l('print'); ?>
+                           </a>
+                        </li>
+                     </ul>
+                  </div>
+                  <?php if($credit_note->status != 3 && !empty($credit_note->clientid)) { ?>
                   <a href="#" class="credit-note-send-to-client btn btn-default" data-toggle="modal" data-target="#credit_note_send_to_client_modal">
                   <i class="fa fa-envelope"></i>
                   </a>
                   <?php } ?>
-                  <?php if($credit_note->status == 1){ ?>
+                  <?php if($credit_note->status == 1 && !empty($credit_note->clientid)){ ?>
                   <a href="#" data-toggle="modal" data-target="#apply_credits" class="btn btn-info">
                   <?php echo _l('apply_to_invoice'); ?>
                   </a>
@@ -123,7 +145,7 @@
             <div role="tabpanel" class="tab-pane ptop10 active" id="tab_credit_note">
                <div id="credit-note-preview">
                   <div class="row">
-                     <div class="col-md-6">
+                     <div class="col-md-6 col-sm-6">
                         <h4 class="bold">
                            <a href="<?php echo admin_url('credit_notes/credit_note/'.$credit_note->id); ?>">
                            <span id="credit-note-number">
@@ -165,13 +187,13 @@
                         </p>
                         <?php } ?>
                         <?php $pdf_custom_fields = get_custom_fields('credit_note',array('show_on_pdf'=>1));
-                        foreach($pdf_custom_fields as $field){
-                           $value = get_custom_field_value($credit_note->id,$field['id'],'credit_note');
-                           if($value == ''){continue;} ?>
-                           <p class="no-mbot">
-                              <span class="bold"><?php echo $field['name']; ?>: </span>
-                              <?php echo $value; ?>
-                           </p>
+                           foreach($pdf_custom_fields as $field){
+                              $value = get_custom_field_value($credit_note->id,$field['id'],'credit_note');
+                              if($value == ''){continue;} ?>
+                        <p class="no-mbot">
+                           <span class="bold"><?php echo $field['name']; ?>: </span>
+                           <?php echo $value; ?>
+                        </p>
                         <?php } ?>
                      </div>
                   </div>
@@ -229,9 +251,9 @@
                               <tr>
                                  <td>
                                     <span class="bold"><?php echo _l('credit_note_discount'); ?>
-                                       <?php if(is_sale_discount($credit_note,'percent')){ ?>
-                                       (<?php echo _format_number($credit_note->discount_percent,true); ?>%)
-                                       <?php } ?></span>
+                                    <?php if(is_sale_discount($credit_note,'percent')){ ?>
+                                    (<?php echo _format_number($credit_note->discount_percent,true); ?>%)
+                                    <?php } ?></span>
                                  </td>
                                  <td class="discount">
                                     <?php echo '-' . format_money($credit_note->discount_total,$credit_note->symbol); ?>
@@ -242,7 +264,7 @@
                                  foreach($taxes as $tax){
                                      echo '<tr class="tax-area"><td class="bold">'.$tax['taxname'].' ('._format_number($tax['taxrate']).'%)</td><td>'.format_money($tax['total_tax'], $credit_note->symbol).'</td></tr>';
                                  }
-                              ?>
+                                 ?>
                               <?php if((int)$credit_note->adjustment != 0){ ?>
                               <tr>
                                  <td>
@@ -361,10 +383,18 @@
                </table>
                <?php }  ?>
             </div>
+            <div role="tabpanel" class="tab-pane" id="tab_emails_tracking">
+               <?php
+                  $this->load->view('admin/includes/emails_tracking',array(
+                     'tracked_emails'=>
+                     get_tracked_emails($credit_note->id, 'credit_note'))
+                  );
+                  ?>
+            </div>
             <div role="tabpanel" class="tab-pane" id="tab_reminders">
                <a href="#" class="btn btn-info btn-xs" data-toggle="modal" data-target=".reminder-modal-credit_note-<?php echo $credit_note->id; ?>"><i class="fa fa-bell-o"></i> <?php echo _l('credit_note_set_reminder_title'); ?></a>
                <hr />
-               <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified'), _l( 'options'), ), 'reminders'); ?>
+               <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified')), 'reminders'); ?>
                <?php $this->load->view('admin/includes/modals/reminder',array('id'=>$credit_note->id,'name'=>'credit_note','members'=>$members,'reminder_title'=>_l('credit_note_set_reminder_title'))); ?>
             </div>
          </div>
@@ -380,4 +410,5 @@
    init_datepicker();
    init_selectpicker();
    init_form_reminder();
+   init_tabs_scrollable();
 </script>

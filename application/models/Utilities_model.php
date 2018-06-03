@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Utilities_model extends CRM_Model
 {
@@ -46,10 +47,10 @@ class Utilities_model extends CRM_Model
             }
 
             return false;
-        } else {
-            $this->db->insert('tblevents', $data);
-            $insert_id = $this->db->insert_id();
         }
+        $this->db->insert('tblevents', $data);
+        $insert_id = $this->db->insert_id();
+
         if ($insert_id) {
             return true;
         }
@@ -97,8 +98,8 @@ class Utilities_model extends CRM_Model
     public function get_calendar_data($start, $end, $client_id = '', $contact_id = '', $filters = false)
     {
         $is_admin                     = is_admin();
-        $has_permission_tasks_view      = has_permission('tasks', '', 'view');
-        $has_permission_projects_view      = has_permission('projects', '', 'view');
+        $has_permission_tasks_view    = has_permission('tasks', '', 'view');
+        $has_permission_projects_view = has_permission('projects', '', 'view');
         $has_permission_invoices      = has_permission('invoices', '', 'view');
         $has_permission_invoices_own  = has_permission('invoices', '', 'view_own');
         $has_permission_estimates     = has_permission('estimates', '', 'view');
@@ -107,7 +108,7 @@ class Utilities_model extends CRM_Model
         $has_permission_contracts_own = has_permission('contracts', '', 'view_own');
         $has_permission_proposals     = has_permission('proposals', '', 'view');
         $has_permission_proposals_own = has_permission('proposals', '', 'view_own');
-        $data                         = array();
+        $data                         = [];
 
         $client_data = false;
         if (is_numeric($client_id) && is_numeric($contact_id)) {
@@ -119,10 +120,10 @@ class Utilities_model extends CRM_Model
             $has_contact_permission_projects  = has_contact_permission('projects', $contact_id);
         }
 
-        $hook_data = array(
-            'data' => $data,
+        $hook_data = [
+            'data'        => $data,
             'client_data' => $client_data,
-        );
+        ];
 
         if ($client_data == true) {
             $hook_data['client_id']  = $client_id;
@@ -136,13 +137,13 @@ class Utilities_model extends CRM_Model
         $ff = (count($filters) > 1 && isset($filters['calendar_filters']) ? true : false);
 
         if (get_option('show_invoices_on_calendar') == 1 && !$ff || $ff && array_key_exists('invoices', $filters)) {
-            $this->db->select('duedate as date,number,id,clientid,hash,'.get_sql_select_client_company());
+            $this->db->select('duedate as date,number,id,clientid,hash,' . get_sql_select_client_company());
             $this->db->from('tblinvoices');
-            $this->db->join('tblclients','tblclients.userid=tblinvoices.clientid');
-            $this->db->where_not_in('status', array(
+            $this->db->join('tblclients', 'tblclients.userid=tblinvoices.clientid', 'left');
+            $this->db->where_not_in('status', [
                 2,
                 5,
-            ));
+            ]);
 
             $this->db->where('(duedate BETWEEN "' . $start . '" AND "' . $end . '")');
 
@@ -154,14 +155,12 @@ class Utilities_model extends CRM_Model
                 }
             } else {
                 if (!$has_permission_invoices) {
-                    $this->db->where('tblinvoices.addedfrom', get_staff_user_id());
+                    $this->db->where(get_invoices_where_sql_for_staff(get_staff_user_id()));
                 }
             }
             $invoices = $this->db->get()->result_array();
             foreach ($invoices as $invoice) {
-                if (!$has_permission_invoices && !$has_permission_invoices_own && !$client_data) {
-                    continue;
-                } elseif ($client_data && !$has_contact_permission_invoices) {
+                if (($client_data && !$has_contact_permission_invoices) || (!$client_data && !user_can_view_invoice($invoice['id']))) {
                     continue;
                 }
 
@@ -174,7 +173,7 @@ class Utilities_model extends CRM_Model
                     $rel_showcase = ' (' . $invoice['company'] . ')';
                 }
 
-                $number              = format_invoice_number($invoice['id']);
+                $number = format_invoice_number($invoice['id']);
 
                 $invoice['_tooltip'] = _l('calendar_invoice') . ' - ' . $number . $rel_showcase;
                 $invoice['title']    = $number;
@@ -183,16 +182,16 @@ class Utilities_model extends CRM_Model
                 if (!$client_data) {
                     $invoice['url'] = admin_url('invoices/list_invoices/' . $invoice['id']);
                 } else {
-                    $invoice['url'] = site_url('viewinvoice/' . $invoice['id'] . '/' . $invoice['hash']);
+                    $invoice['url'] = site_url('invoice/' . $invoice['id'] . '/' . $invoice['hash']);
                 }
 
                 array_push($data, $invoice);
             }
         }
-        if (get_option('show_estimates_on_calendar') == 1  && !$ff || $ff && array_key_exists('estimates', $filters)) {
-            $this->db->select('number,id,clientid,hash,CASE WHEN expirydate IS NULL THEN date ELSE expirydate END as date,'.get_sql_select_client_company(), false);
+        if (get_option('show_estimates_on_calendar') == 1 && !$ff || $ff && array_key_exists('estimates', $filters)) {
+            $this->db->select('number,id,clientid,hash,CASE WHEN expirydate IS NULL THEN date ELSE expirydate END as date,' . get_sql_select_client_company(), false);
             $this->db->from('tblestimates');
-            $this->db->join('tblclients','tblclients.userid=tblestimates.clientid');
+            $this->db->join('tblclients', 'tblclients.userid=tblestimates.clientid', 'left');
             $this->db->where('status !=', 3, false);
             $this->db->where('status !=', 4, false);
             // $this->db->where('expirydate IS NOT NULL');
@@ -207,16 +206,15 @@ class Utilities_model extends CRM_Model
                 }
             } else {
                 if (!$has_permission_estimates) {
-                    $this->db->where('tblestimates.addedfrom', get_staff_user_id(), false);
+                    $this->db->where(get_estimates_where_sql_for_staff(get_staff_user_id()));
                 }
             }
 
             $estimates = $this->db->get()->result_array();
 
             foreach ($estimates as $estimate) {
-                if (!$has_permission_estimates && !$has_permission_estimates_own && !$client_data) {
-                    continue;
-                } elseif ($client_data && !$has_contact_permission_estimates) {
+
+                if (($client_data && !$has_contact_permission_estimates) || (!$client_data && !user_can_view_estimate($estimate['id']))) {
                     continue;
                 }
 
@@ -232,7 +230,7 @@ class Utilities_model extends CRM_Model
                 if (!$client_data) {
                     $estimate['url'] = admin_url('estimates/list_estimates/' . $estimate['id']);
                 } else {
-                    $estimate['url'] = site_url('viewestimate/' . $estimate['id'] . '/' . $estimate['hash']);
+                    $estimate['url'] = site_url('estimate/' . $estimate['id'] . '/' . $estimate['hash']);
                 }
                 array_push($data, $estimate);
             }
@@ -255,15 +253,13 @@ class Utilities_model extends CRM_Model
                 }
             } else {
                 if (!$has_permission_proposals) {
-                    $this->db->where('addedfrom', get_staff_user_id(), false);
+                    $this->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
                 }
             }
 
             $proposals = $this->db->get()->result_array();
             foreach ($proposals as $proposal) {
-                if (!$has_permission_proposals && !$has_permission_proposals_own && !$client_data) {
-                    continue;
-                } elseif ($client_data && !$has_contact_permission_proposals) {
+                if (($client_data && !$has_contact_permission_proposals) || (!$client_data && !user_can_view_proposal($proposal['id']))) {
                     continue;
                 }
 
@@ -273,14 +269,14 @@ class Utilities_model extends CRM_Model
                 if (!$client_data) {
                     $proposal['url'] = admin_url('proposals/list_proposals/' . $proposal['id']);
                 } else {
-                    $proposal['url'] = site_url('viewproposal/' . $proposal['id'] . '/' . $proposal['hash']);
+                    $proposal['url'] = site_url('proposal/' . $proposal['id'] . '/' . $proposal['hash']);
                 }
                 array_push($data, $proposal);
             }
         }
 
         if (get_option('show_tasks_on_calendar') == 1 && !$ff || $ff && array_key_exists('tasks', $filters)) {
-            $this->db->select('name as title,id,'.tasks_rel_name_select_query() . ' as rel_name,rel_id,status,CASE WHEN duedate IS NULL THEN startdate ELSE duedate END as date', false);
+            $this->db->select('name as title,id,' . tasks_rel_name_select_query() . ' as rel_name,rel_id,status,CASE WHEN duedate IS NULL THEN startdate ELSE duedate END as date', false);
             $this->db->from('tblstafftasks');
             $this->db->where('status !=', 5);
 
@@ -288,12 +284,12 @@ class Utilities_model extends CRM_Model
 
             if ($client_data) {
                 $this->db->where('rel_type', 'project');
-                $this->db->where('rel_id IN (SELECT id FROM tblprojects WHERE clientid='.$client_id.')');
+                $this->db->where('rel_id IN (SELECT id FROM tblprojects WHERE clientid=' . $client_id . ')');
                 $this->db->where('rel_id IN (SELECT project_id FROM tblprojectsettings WHERE name="view_tasks" AND value=1)');
                 $this->db->where('visible_to_client', 1);
             }
 
-            if (!$has_permission_tasks_view && !$client_data) {
+            if ((!$has_permission_tasks_view || get_option('calendar_only_assigned_tasks') == '1') && !$client_data) {
                 $this->db->where('(id IN (SELECT taskid FROM tblstafftaskassignees WHERE staffid = ' . get_staff_user_id() . '))');
             }
 
@@ -303,7 +299,7 @@ class Utilities_model extends CRM_Model
                 $rel_showcase = '';
 
                 if (!empty($task['rel_id']) && !$client_data) {
-                    $rel_showcase   = ' (' . $task['rel_name'] . ')';
+                    $rel_showcase = ' (' . $task['rel_name'] . ')';
                 }
 
                 $task['date'] = $task['date'];
@@ -311,7 +307,7 @@ class Utilities_model extends CRM_Model
                 $name             = mb_substr($task['title'], 0, 60) . '...';
                 $task['_tooltip'] = _l('calendar_task') . ' - ' . $name . $rel_showcase;
                 $task['title']    = $name;
-                $status = get_task_status_by_id($task['status']);
+                $status           = get_task_status_by_id($task['status']);
                 $task['color']    = $status['color'];
 
                 if (!$client_data) {
@@ -325,10 +321,10 @@ class Utilities_model extends CRM_Model
         }
 
         if (!$client_data) {
-            $available_reminders = $this->app->get_available_reminders_keys();
+            $available_reminders   = $this->app->get_available_reminders_keys();
             $hideNotifiedReminders = get_option('hide_notified_reminders_from_calendar');
             foreach ($available_reminders as $key) {
-                if (get_option('show_' . $key . '_reminders_on_calendar') == 1  && !$ff || $ff && array_key_exists($key.'_reminders', $filters)) {
+                if (get_option('show_' . $key . '_reminders_on_calendar') == 1 && !$ff || $ff && array_key_exists($key . '_reminders', $filters)) {
                     $this->db->select('date,description,firstname,lastname,creator,staff,rel_id')
                     ->from('tblreminders')
                     ->where('(date BETWEEN "' . $start . '" AND "' . $end . '")')
@@ -346,7 +342,7 @@ class Utilities_model extends CRM_Model
                                 $_reminder['title'] .= '(' . $reminder['firstname'] . ' ' . $reminder['lastname'] . ') ';
                             }
 
-                            $name                  = mb_substr($reminder['description'], 0, 60) . '...';
+                            $name = mb_substr($reminder['description'], 0, 60) . '...';
 
                             $_reminder['_tooltip'] = _l('calendar_' . $key . '_reminder') . ' - ' . $name;
                             $_reminder['title'] .= $name;
@@ -360,8 +356,8 @@ class Utilities_model extends CRM_Model
                             } elseif ($key == 'estimate') {
                                 $url = admin_url('estimates/list_estimates/' . $reminder['rel_id']);
                             } elseif ($key == 'lead') {
-                                $url = '#';
-                                $_reminder['onclick'] = 'init_lead('.$reminder['rel_id'].'); return false;';
+                                $url                  = '#';
+                                $_reminder['onclick'] = 'init_lead(' . $reminder['rel_id'] . '); return false;';
                             } elseif ($key == 'proposal') {
                                 $url = admin_url('proposals/list_proposals/' . $reminder['rel_id']);
                             } elseif ($key == 'expense') {
@@ -379,9 +375,9 @@ class Utilities_model extends CRM_Model
         }
 
         if (get_option('show_contracts_on_calendar') == 1 && !$ff || $ff && array_key_exists('contracts', $filters)) {
-            $this->db->select('subject as title,dateend,datestart,id,client,content,'.get_sql_select_client_company());
+            $this->db->select('hash, subject as title, dateend, datestart, id, client, content, ' . get_sql_select_client_company());
             $this->db->from('tblcontracts');
-            $this->db->join('tblclients','tblclients.userid=tblcontracts.client');
+            $this->db->join('tblclients', 'tblclients.userid=tblcontracts.client');
             $this->db->where('trash', 0);
 
             if ($client_data) {
@@ -394,7 +390,6 @@ class Utilities_model extends CRM_Model
             }
 
             $this->db->where('(dateend > "' . date('Y-m-d') . '" AND dateend IS NOT NULL AND dateend BETWEEN "' . $start . '" AND "' . $end . '" OR datestart >"' . date('Y-m-d') . '")');
-
 
             $contracts = $this->db->get()->result_array();
 
@@ -417,12 +412,7 @@ class Utilities_model extends CRM_Model
                 if (!$client_data) {
                     $_contract['url'] = admin_url('contracts/contract/' . $contract['id']);
                 } else {
-                    if (empty($contract['content'])) {
-                        // No url for contracts
-                        $_contract['url'] = '#';
-                    } else {
-                        $_contract['url'] = site_url('clients/contract_pdf/' . $contract['id']);
-                    }
+                    $_contract['url'] = site_url('contract/' . $contract['id'] . '/' . $contract['hash']);
                 }
                 if (!empty($contract['dateend'])) {
                     $_contract['date'] = $contract['dateend'];
@@ -435,7 +425,7 @@ class Utilities_model extends CRM_Model
         //calendar_project
         if (get_option('show_projects_on_calendar') == 1 && !$ff || $ff && array_key_exists('projects', $filters)) {
             $this->load->model('projects_model');
-            $this->db->select('name as title,id,clientid, CASE WHEN deadline IS NULL THEN start_date ELSE deadline END as date,'.get_sql_select_client_company(), false);
+            $this->db->select('name as title,id,clientid, CASE WHEN deadline IS NULL THEN start_date ELSE deadline END as date,' . get_sql_select_client_company(), false);
 
             $this->db->from('tblprojects');
 
@@ -444,11 +434,11 @@ class Utilities_model extends CRM_Model
             $this->db->where('status !=', 5);
             $this->db->where("CASE WHEN deadline IS NULL THEN (start_date BETWEEN '$start' AND '$end') ELSE (deadline BETWEEN '$start' AND '$end') END", null, false);
 
-            $this->db->join('tblclients','tblclients.userid=tblprojects.clientid');
+            $this->db->join('tblclients', 'tblclients.userid=tblprojects.clientid');
 
             if (!$client_data && !$has_permission_projects_view) {
-                $this->db->where('id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id='.get_staff_user_id().')');
-            } else if($client_data) {
+                $this->db->where('id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . get_staff_user_id() . ')');
+            } elseif ($client_data) {
                 $this->db->where('clientid', $client_id);
             }
 

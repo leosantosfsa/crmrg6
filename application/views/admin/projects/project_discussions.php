@@ -7,7 +7,6 @@
      _l('project_discussion_last_activity'),
      _l('project_discussion_total_comments'),
      _l('project_discussion_show_to_customer'),
-     _l('options'),
      ),'project-discussions'); ?>
 <?php } else { ?>
 <h3 class="bold no-margin"><?php echo $discussion->subject; ?></h3>

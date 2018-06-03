@@ -29,10 +29,9 @@
             echo form_hidden('not_invoiced');
             ?>
         </div>
-        <?php $total_estimates = total_rows('tblestimates'); ?>
         <div class="row text-left quick-top-stats">
             <?php foreach($estimate_statuses as $status){
-              $percent_data = get_estimates_percent_by_status($status);
+              $percent_data = get_estimates_percent_by_status($status, (isset($project) ? $project->id : null));
               ?>
               <div class="col-md-5ths col-xs-12">
                 <div class="row">

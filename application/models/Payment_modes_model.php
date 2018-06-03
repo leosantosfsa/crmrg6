@@ -1,12 +1,13 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Payment_modes_model extends CRM_Model
 {
-    private $online_payment_modes = array();
+    private $online_payment_modes = [];
 
     public function __construct()
     {
-        $online_payment_modes       = array();
+        $online_payment_modes       = [];
         $online_payment_modes       = do_action('before_add_online_payment_modes', $online_payment_modes);
         $this->online_payment_modes = $online_payment_modes;
         parent::__construct();
@@ -17,7 +18,7 @@ class Payment_modes_model extends CRM_Model
      * @param  integer $id payment mode id
      * @return mixed    if id passed return object else array
      */
-    public function get($id = '', $where = array(), $all = false, $force = false)
+    public function get($id = '', $where = [], $all = false, $force = false)
     {
         $this->db->where($where);
 
@@ -91,15 +92,15 @@ class Payment_modes_model extends CRM_Model
             $data['selected_by_default'] = 1;
         }
 
-        $this->db->insert('tblinvoicepaymentsmodes', array(
-            'name' => $data['name'],
-            'description' => nl2br_save_html($data['description']),
-            'active' => $data['active'],
-            'expenses_only' => $data['expenses_only'],
-            'invoices_only' => $data['invoices_only'],
-            'show_on_pdf' => $data['show_on_pdf'],
-            'selected_by_default' => $data['selected_by_default']
-        ));
+        $this->db->insert('tblinvoicepaymentsmodes', [
+            'name'                => $data['name'],
+            'description'         => nl2br_save_html($data['description']),
+            'active'              => $data['active'],
+            'expenses_only'       => $data['expenses_only'],
+            'invoices_only'       => $data['invoices_only'],
+            'show_on_pdf'         => $data['show_on_pdf'],
+            'selected_by_default' => $data['selected_by_default'],
+        ]);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
             logActivity('New Payment Mode Added [ID: ' . $insert_id . ', Name:' . $data['name'] . ']');
@@ -152,15 +153,15 @@ class Payment_modes_model extends CRM_Model
         }
 
         $this->db->where('id', $id);
-        $this->db->update('tblinvoicepaymentsmodes', array(
-            'name' => $data['name'],
-            'description' => nl2br_save_html($data['description']),
-            'active' => $data['active'],
-            'expenses_only' => $data['expenses_only'],
-            'invoices_only' => $data['invoices_only'],
-            'show_on_pdf' => $data['show_on_pdf'],
-            'selected_by_default' => $data['selected_by_default']
-        ));
+        $this->db->update('tblinvoicepaymentsmodes', [
+            'name'                => $data['name'],
+            'description'         => nl2br_save_html($data['description']),
+            'active'              => $data['active'],
+            'expenses_only'       => $data['expenses_only'],
+            'invoices_only'       => $data['invoices_only'],
+            'show_on_pdf'         => $data['show_on_pdf'],
+            'selected_by_default' => $data['selected_by_default'],
+        ]);
 
         if ($this->db->affected_rows() > 0) {
             logActivity('Payment Mode Updated [ID: ' . $id . ', Name:' . $data['name'] . ']');
@@ -180,9 +181,9 @@ class Payment_modes_model extends CRM_Model
     {
         // Check if the payment mode is using in the invoiec payment records table.
         if (is_reference_in_table('paymentmode', 'tblinvoicepaymentrecords', $id) || is_reference_in_table('paymentmode', 'tblexpenses', $id)) {
-            return array(
-                'referenced' => true
-            );
+            return [
+                'referenced' => true,
+            ];
         }
         $this->db->where('id', $id);
         $this->db->delete('tblinvoicepaymentsmodes');
@@ -202,7 +203,7 @@ class Payment_modes_model extends CRM_Model
      */
     public function get_online_payment_modes($all = false)
     {
-        $modes = array();
+        $modes = [];
         foreach ($this->online_payment_modes as $mode) {
             if ($all !== true) {
                 if ($mode['active'] == 0) {
@@ -225,9 +226,9 @@ class Payment_modes_model extends CRM_Model
     public function change_payment_mode_status($id, $status)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblinvoicepaymentsmodes', array(
-            'active' => $status
-        ));
+        $this->db->update('tblinvoicepaymentsmodes', [
+            'active' => $status,
+        ]);
         if ($this->db->affected_rows() > 0) {
             logActivity('Payment Mode Status Changed [ModeID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
 
@@ -247,9 +248,9 @@ class Payment_modes_model extends CRM_Model
     public function change_payment_mode_show_to_client_status($id, $status)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblinvoicepaymentsmodes', array(
-            'showtoclient' => $status
-        ));
+        $this->db->update('tblinvoicepaymentsmodes', [
+            'showtoclient' => $status,
+        ]);
         if ($this->db->affected_rows() > 0) {
             logActivity('Payment Mode Show to Client Changed [ModeID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
 

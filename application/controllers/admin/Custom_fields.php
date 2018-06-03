@@ -1,10 +1,13 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Custom_fields extends Admin_controller
 {
-    private $pdf_fields = array();
-    private $client_portal_fields = array();
-    private $client_editable_fields = array();
+    private $pdf_fields = [];
+
+    private $client_portal_fields = [];
+
+    private $client_editable_fields = [];
 
     public function __construct()
     {
@@ -14,8 +17,8 @@ class Custom_fields extends Admin_controller
             access_denied('Access Custom Fields');
         }
         // Add the pdf allowed fields
-        $this->pdf_fields           = $this->custom_fields_model->get_pdf_allowed_fields();
-        $this->client_portal_fields = $this->custom_fields_model->get_client_portal_allowed_fields();
+        $this->pdf_fields             = $this->custom_fields_model->get_pdf_allowed_fields();
+        $this->client_portal_fields   = $this->custom_fields_model->get_client_portal_allowed_fields();
         $this->client_editable_fields = $this->custom_fields_model->get_client_editable_fields();
     }
 
@@ -54,10 +57,10 @@ class Custom_fields extends Admin_controller
             $data['custom_field'] = $this->custom_fields_model->get($id);
             $title                = _l('edit', _l('custom_field_lowercase'));
         }
-        $data['pdf_fields']           = $this->pdf_fields;
-        $data['client_portal_fields'] = $this->client_portal_fields;
+        $data['pdf_fields']             = $this->pdf_fields;
+        $data['client_portal_fields']   = $this->client_portal_fields;
         $data['client_editable_fields'] = $this->client_editable_fields;
-        $data['title']                = $title;
+        $data['title']                  = $title;
         $this->load->view('admin/custom_fields/customfield', $data);
     }
 

@@ -1,12 +1,11 @@
 <div class="widget" id="widget-<?php echo basename(__FILE__,".php"); ?>" data-name="<?php echo _l('finance_overview'); ?>">
-   <?php if(has_permission('invoices','','view') || has_permission('proposals','','view') || has_permission('estimates','','view') || has_permission('estimates','','view_own') || has_permission('proposals','','view_own') || has_permission('invoices','','view_own') || (get_option('allow_staff_view_proposals_assigned') == 1 && total_rows('tblproposals',array('assigned'=>get_staff_user_id())) > 0)){ ?>
+   <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices()) || has_permission('proposals','','view') || has_permission('estimates','','view') || has_permission('estimates','','view_own') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates()) || has_permission('proposals','','view_own') || (get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals())){ ?>
    <div class="finance-summary">
       <div class="panel_s">
          <div class="panel-body">
             <div class="widget-dragger"></div>
             <div class="row home-summary">
-               <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own')){
-                  $total_invoices = total_rows('tblinvoices','status NOT IN(5)'.(!has_permission('invoices','','view') ? ' AND addedfrom='.get_staff_user_id() : ''));
+               <?php if(has_permission('invoices','','view') || has_permission('invoices','','view_own') || get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices()){
                   ?>
                   <div class="col-md-6 col-lg-4 col-sm-6">
                      <div class="row">
@@ -14,7 +13,7 @@
                            <p class="text-dark text-uppercase"><?php echo _l('home_invoice_overview'); ?></p>
                            <hr class="mtop15" />
                         </div>
-                        <?php $percent_data = get_invoices_percent_by_status(6,$total_invoices); ?>
+                        <?php $percent_data = get_invoices_percent_by_status(6); ?>
                         <div class="col-md-12 text-stats-wrapper">
                            <a href="<?php echo admin_url('invoices/list_invoices?status=6'); ?>" class="text-muted mbot15 inline-block">
                               <span class="_total bold"><?php echo $percent_data['total_by_status']; ?></span> <?php echo format_invoice_status(6,'',false); ?>
@@ -27,7 +26,7 @@
                               </div>
                            </div>
                         </div>
-                        <?php $percent_data = get_invoices_percent_by_status('not_sent',$total_invoices); ?>
+                        <?php $percent_data = get_invoices_percent_by_status('not_sent'); ?>
                         <div class="col-md-12 text-stats-wrapper">
                            <a href="<?php echo admin_url('invoices/list_invoices?filter=not_sent'); ?>" class="text-muted inline-block mbot15">
                               <span class="_total bold"><?php echo $percent_data['total_by_status']; ?></span> <?php echo _l('not_sent_indicator'); ?>
@@ -40,7 +39,7 @@
                               </div>
                            </div>
                         </div>
-                        <?php $percent_data = get_invoices_percent_by_status(1,$total_invoices); ?>
+                        <?php $percent_data = get_invoices_percent_by_status(1); ?>
                         <div class="col-md-12 text-stats-wrapper">
                            <a href="<?php echo admin_url('invoices/list_invoices?status=1'); ?>" class="text-danger mbot15 inline-block">
                               <span class="_total bold"><?php echo $percent_data['total_by_status']; ?></span> <?php echo format_invoice_status(1,'',false); ?>
@@ -53,7 +52,7 @@
                               </div>
                            </div>
                         </div>
-                        <?php $percent_data = get_invoices_percent_by_status(3,$total_invoices); ?>
+                        <?php $percent_data = get_invoices_percent_by_status(3); ?>
                         <div class="col-md-12 text-stats-wrapper">
                            <a href="<?php echo admin_url('invoices/list_invoices?status=3'); ?>" class="text-warning mbot15 inline-block">
                               <span class="_total bold"><?php echo $percent_data['total_by_status']; ?></span> <?php echo format_invoice_status(3,'',false); ?>
@@ -66,7 +65,7 @@
                               </div>
                            </div>
                         </div>
-                        <?php $percent_data = get_invoices_percent_by_status(4,$total_invoices); ?>
+                        <?php $percent_data = get_invoices_percent_by_status(4); ?>
                         <div class="col-md-12 text-stats-wrapper">
                            <a href="<?php echo admin_url('invoices/list_invoices?status=4'); ?>" class="text-warning mbot15 inline-block">
                               <span class="_total bold"><?php echo $percent_data['total_by_status']; ?></span> <?php echo format_invoice_status(4,'',false); ?>
@@ -79,7 +78,7 @@
                               </div>
                            </div>
                         </div>
-                        <?php $percent_data = get_invoices_percent_by_status(2,$total_invoices); ?>
+                        <?php $percent_data = get_invoices_percent_by_status(2); ?>
                         <div class="col-md-12 text-stats-wrapper">
                            <a href="<?php echo admin_url('invoices/list_invoices?status=2'); ?>" class="text-success mbot15 inline-block">
                               <span class="_total bold"><?php echo $percent_data['total_by_status']; ?></span> <?php echo format_invoice_status(2,'',false); ?>
@@ -95,7 +94,7 @@
                      </div>
                   </div>
                   <?php } ?>
-                  <?php if(has_permission('estimates','','view') || has_permission('estimates','','view_own')){ ?>
+                  <?php if(has_permission('estimates','','view') || has_permission('estimates','','view_own') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates())){ ?>
                   <div class="col-md-6 col-lg-4 col-sm-6">
                      <div class="row">
                         <div class="col-md-12 text-stats-wrapper">
@@ -129,7 +128,7 @@
                      </div>
                   </div>
                   <?php } ?>
-                  <?php if(has_permission('proposals','','view') || has_permission('proposals','','view_own') || get_option('allow_staff_view_proposals_assigned') == 1 && total_rows('tblproposals',array('assigned'=>get_staff_user_id())) > 0){ ?>
+                  <?php if(has_permission('proposals','','view') || has_permission('proposals','','view_own') || get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals()){ ?>
                   <div class="col-md-12 col-sm-6 col-lg-4">
                      <div class="row">
                         <div class="col-md-12 text-stats-wrapper">

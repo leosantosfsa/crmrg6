@@ -29,83 +29,107 @@
          <?php if($invoice->recurring > 0){
             echo '<div class="ribbon info"><span>'._l('invoice_recurring_indicator').'</span></div>';
             } ?>
-         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="active">
-               <a href="#tab_invoice" aria-controls="tab_invoice" role="tab" data-toggle="tab">
-               <?php echo _l('invoice'); ?>
-               </a>
-            </li>
-            <?php if(count($invoice->payments) > 0) { ?>
-            <li role="presentation">
-               <a href="#invoice_payments_received" aria-controler="invoice_payments_received" role="tab" data-toggle="tab">
-               <?php echo _l('payments'); ?> <span class="badge"><?php echo count($invoice->payments); ?></span>
-               </a>
-            </li>
-            <?php } ?>
-            <?php if(count($applied_credits) > 0) { ?>
-            <li role="presentation">
-               <a href="#invoice_applied_credits" aria-controls="invoice_applied_credits" role="tab" data-toggle="tab">
-               <?php echo _l('applied_credits'); ?> <span class="badge"><?php echo count($applied_credits); ?></span>
-               </a>
-            </li>
-            <?php } ?>
-            <?php if($invoice->recurring > 0) { ?>
-            <li role="presentation">
-               <a href="#tab_child_invoices" aria-controls="tab_child_invoices" role="tab" data-toggle="tab">
-               <?php echo _l('child_invoices'); ?>
-               </a>
-            </li>
-            <?php } ?>
-            <li role="presentation">
-               <a href="#tab_tasks" onclick="init_rel_tasks_table(<?php echo $invoice->id; ?>,'invoice'); return false;" aria-controls="tab_tasks" role="tab" data-toggle="tab">
-               <?php echo _l('tasks'); ?>
-               </a>
-            </li>
-            <li role="presentation">
-               <a href="#tab_activity" aria-controls="tab_activity" role="tab" data-toggle="tab">
-               <?php echo _l('invoice_view_activity_tooltip'); ?>
-               </a>
-            </li>
-            <li role="presentation">
-               <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $invoice->id ;?> + '/' + 'invoice', [4], [4],undefined,[1,'ASC']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
-               <?php echo _l('estimate_reminders'); ?>
-               <?php
-                  $total_reminders = total_rows('tblreminders',
-                   array(
-                    'isnotified'=>0,
-                    'staff'=>get_staff_user_id(),
-                    'rel_type'=>'invoice',
-                    'rel_id'=>$invoice->id
-                  )
-                  );
-                  if($total_reminders > 0){
-                   echo '<span class="badge">'.$total_reminders.'</span>';
-                  }
-                  ?>
-               </a>
-            </li>
-            <li role="presentation" class="tab-separator">
-               <a href="#tab_notes" onclick="get_sales_notes(<?php echo $invoice->id; ?>,'invoices'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
-               <?php echo _l('estimate_notes'); ?> <span class="notes-total">
-               <?php if($totalNotes > 0){ ?>
-               <span class="badge"><?php echo $totalNotes; ?><span>
-               <?php } ?>
-               </span>
-               </a>
-            </li>
-            <li role="presentation" data-toggle="tooltip" title="<?php echo _l('view_tracking'); ?>" class="tab-separator">
-               <a href="#tab_views" aria-controls="tab_views" role="tab" data-toggle="tab">
-               <i class="fa fa-eye"></i>
-               </a>
-            </li>
-            <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="tab-separator">
-               <a href="#" onclick="small_table_full_view(); return false;" class="toggle_view">
-               <i class="fa fa-expand"></i></a>
-            </li>
-         </ul>
+         <div class="horizontal-scrollable-tabs preview-tabs-top">
+            <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
+            <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>
+            <div class="horizontal-tabs">
+               <ul class="nav nav-tabs nav-tabs-horizontal mbot15" role="tablist">
+                  <li role="presentation" class="active">
+                     <a href="#tab_invoice" aria-controls="tab_invoice" role="tab" data-toggle="tab">
+                     <?php echo _l('invoice'); ?>
+                     </a>
+                  </li>
+                  <?php if(count($invoice->payments) > 0) { ?>
+                  <li role="presentation">
+                     <a href="#invoice_payments_received" aria-controler="invoice_payments_received" role="tab" data-toggle="tab">
+                     <?php echo _l('payments'); ?> <span class="badge"><?php echo count($invoice->payments); ?></span>
+                     </a>
+                  </li>
+                  <?php } ?>
+                  <?php if(count($applied_credits) > 0) { ?>
+                  <li role="presentation">
+                     <a href="#invoice_applied_credits" aria-controls="invoice_applied_credits" role="tab" data-toggle="tab">
+                     <?php echo _l('applied_credits'); ?> <span class="badge"><?php echo count($applied_credits); ?></span>
+                     </a>
+                  </li>
+                  <?php } ?>
+                  <?php if($invoice->recurring > 0) { ?>
+                  <li role="presentation">
+                     <a href="#tab_child_invoices" aria-controls="tab_child_invoices" role="tab" data-toggle="tab">
+                     <?php echo _l('child_invoices'); ?>
+                     </a>
+                  </li>
+                  <?php } ?>
+                  <li role="presentation">
+                     <a href="#tab_tasks" onclick="init_rel_tasks_table(<?php echo $invoice->id; ?>,'invoice'); return false;" aria-controls="tab_tasks" role="tab" data-toggle="tab">
+                     <?php echo _l('tasks'); ?>
+                     </a>
+                  </li>
+                  <li role="presentation">
+                     <a href="#tab_activity" aria-controls="tab_activity" role="tab" data-toggle="tab">
+                     <?php echo _l('invoice_view_activity_tooltip'); ?>
+                     </a>
+                  </li>
+                  <li role="presentation">
+                     <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $invoice->id ;?> + '/' + 'invoice', undefined, undefined,undefined,[1,'asc']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
+                     <?php echo _l('estimate_reminders'); ?>
+                     <?php
+                        $total_reminders = total_rows('tblreminders',
+                         array(
+                          'isnotified'=>0,
+                          'staff'=>get_staff_user_id(),
+                          'rel_type'=>'invoice',
+                          'rel_id'=>$invoice->id
+                        )
+                        );
+                        if($total_reminders > 0){
+                         echo '<span class="badge">'.$total_reminders.'</span>';
+                        }
+                        ?>
+                     </a>
+                  </li>
+                  <li role="presentation" class="tab-separator">
+                     <a href="#tab_notes" onclick="get_sales_notes(<?php echo $invoice->id; ?>,'invoices'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
+                     <?php echo _l('estimate_notes'); ?> <span class="notes-total">
+                     <?php if($totalNotes > 0){ ?>
+                     <span class="badge"><?php echo $totalNotes; ?><span>
+                     <?php } ?>
+                     </span>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" title="<?php echo _l('emails_tracking'); ?>" class="tab-separator">
+                     <a href="#tab_emails_tracking" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab">
+                     <?php if(!is_mobile()){ ?>
+                     <i class="fa fa-envelope-open-o" aria-hidden="true"></i>
+                     <?php } else { ?>
+                     <?php echo _l('emails_tracking'); ?>
+                     <?php } ?>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" title="<?php echo _l('view_tracking'); ?>" class="tab-separator">
+                     <a href="#tab_views" aria-controls="tab_views" role="tab" data-toggle="tab">
+                     <?php if(!is_mobile()){ ?>
+                     <i class="fa fa-eye"></i>
+                     <?php } else { ?>
+                     <?php echo _l('view_tracking'); ?>
+                     <?php } ?>
+                     </a>
+                  </li>
+                  <li role="presentation" data-toggle="tooltip" data-title="<?php echo _l('toggle_full_view'); ?>" class="tab-separator toggle_view">
+                     <a href="#" onclick="small_table_full_view(); return false;">
+                     <i class="fa fa-expand"></i></a>
+                  </li>
+               </ul>
+            </div>
+         </div>
          <div class="row">
             <div class="col-md-3">
                <?php echo format_invoice_status($invoice->status,'mtop5'); ?>
+               <?php if($invoice->status == 3 || $invoice->status == 4){
+                  if($invoice->duedate && date('Y-m-d') > date('Y-m-d',strtotime(to_sql_date($invoice->duedate)))){
+                    echo '<p class="text-danger mtop15 no-mbot">'._l('invoice_is_overdue',floor((abs(time() - strtotime(to_sql_date($invoice->duedate))))/(60*60*24))).'</p>';
+                  }
+                  } ?>
             </div>
             <div class="col-md-9 _buttons">
                <div class="visible-xs">
@@ -122,24 +146,37 @@
                   <?php if(has_permission('invoices','','edit')){ ?>
                   <a href="<?php echo admin_url('invoices/invoice/'.$invoice->id); ?>" data-toggle="tooltip" title="<?php echo _l('edit_invoice_tooltip'); ?>" class="btn btn-default btn-with-tooltip" data-placement="bottom"><i class="fa fa-pencil-square-o"></i></a>
                   <?php } ?>
-                  <a href="<?php echo admin_url('invoices/pdf/'.$invoice->id.'?print=true'); ?>" target="_blank" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('print'); ?>" data-placement="bottom"><i class="fa fa-print"></i></a>
-                  <a href="<?php echo admin_url('invoices/pdf/'.$invoice->id); ?>" class="btn btn-default btn-with-tooltip" data-toggle="tooltip" title="<?php echo _l('view_pdf'); ?>" data-placement="bottom"><i class="fa fa-file-pdf-o"></i></a>
+                  <div class="btn-group">
+                     <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-file-pdf-o"></i><?php if(is_mobile()){echo ' PDF';} ?> <span class="caret"></span></a>
+                     <ul class="dropdown-menu dropdown-menu-right">
+                        <li class="hidden-xs"><a href="<?php echo admin_url('invoices/pdf/'.$invoice->id.'?output_type=I'); ?>"><?php echo _l('view_pdf'); ?></a></li>
+                        <li class="hidden-xs"><a href="<?php echo admin_url('invoices/pdf/'.$invoice->id.'?output_type=I'); ?>" target="_blank"><?php echo _l('view_pdf_in_new_window'); ?></a></li>
+                        <li><a href="<?php echo admin_url('invoices/pdf/'.$invoice->id); ?>"><?php echo _l('download'); ?></a></li>
+                        <li>
+                           <a href="<?php echo admin_url('invoices/pdf/'.$invoice->id.'?print=true'); ?>" target="_blank">
+                           <?php echo _l('print'); ?>
+                           </a>
+                        </li>
+                     </ul>
+                  </div>
+                  <?php if(!empty($invoice->clientid)){ ?>
                   <span<?php if($invoice->status == '5'){ ?> data-toggle="tooltip" data-title="<?php echo _l('invoice_cancelled_email_disabled'); ?>"<?php } ?>>
                   <a href="#" class="invoice-send-to-client btn-with-tooltip btn btn-default<?php if($invoice->status == 5){echo ' disabled';} ?>" data-toggle="tooltip" title="<?php echo $_tooltip; ?>" data-placement="bottom"><span data-toggle="tooltip" data-title="<?php echo $_tooltip_already_send; ?>"><i class="fa fa-envelope"></i></span></a>
                   </span>
+                  <?php } ?>
                   <!-- Single button -->
                   <div class="btn-group">
                      <button type="button" class="btn btn-default pull-left dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                      <?php echo _l('more'); ?> <span class="caret"></span>
                      </button>
                      <ul class="dropdown-menu dropdown-menu-right">
-                        <li><a href="<?php echo site_url('viewinvoice/' . $invoice->id . '/' .  $invoice->hash) ?>" target="_blank"><?php echo _l('view_invoice_as_customer_tooltip'); ?></a></li>
+                        <li><a href="<?php echo site_url('invoice/' . $invoice->id . '/' .  $invoice->hash) ?>" target="_blank"><?php echo _l('view_invoice_as_customer_tooltip'); ?></a></li>
                         <li>
                            <?php if($invoice->status == 4 || ($invoice->status == 3 && !empty($invoice->duedate) && $invoice->duedate && date('Y-m-d') > date('Y-m-d',strtotime(to_sql_date($invoice->duedate)))) && is_invoices_overdue_reminders_enabled()){ ?>
                            <a href="<?php echo admin_url('invoices/send_overdue_notice/'.$invoice->id); ?>"><?php echo _l('send_overdue_notice_tooltip'); ?></a>
                            <?php } ?>
                         </li>
-                        <?php if($invoice->status != 5 && has_permission('credit_notes','','create')) {?>
+                        <?php if($invoice->status != 5 && has_permission('credit_notes','','create') && !empty($invoice->clientid)) {?>
                         <li>
                            <a href="<?php echo admin_url('credit_notes/credit_note_from_invoice/'.$invoice->id); ?>" id="invoice_create_credit_note" data-status="<?php echo $invoice->status; ?>"><?php echo _l('create_credit_note'); ?></a>
                         </li>
@@ -186,7 +223,8 @@
                      </ul>
                   </div>
                   <?php if(has_permission('payments','','create') && abs($invoice->total) > 0){ ?>
-                  <a href="#" onclick="record_payment(<?php echo $invoice->id; ?>); return false;"  class="mleft10 pull-right btn btn-success<?php if($invoice->status == 2 || $invoice->status == 5){echo ' disabled';} ?>"><?php echo _l('invoice_record_payment'); ?></a>
+                  <a href="#" onclick="record_payment(<?php echo $invoice->id; ?>); return false;"  class="mleft10 pull-right btn btn-success<?php if($invoice->status == 2 || $invoice->status == 5){echo ' disabled';} ?>">
+                     <i class="fa fa-plus-square"></i> <?php echo _l('payment'); ?></a>
                   <?php } ?>
                </div>
             </div>
@@ -194,286 +232,13 @@
          <div class="clearfix"></div>
          <hr class="hr-panel-heading" />
          <div class="tab-content">
-            <div role="tabpanel" class="tab-pane ptop10 active" id="tab_invoice">
-               <?php
-                  if($invoice->status == 6){ ?>
+            <div role="tabpanel" class="tab-pane active" id="tab_invoice">
+               <?php if($invoice->status == 5 && $invoice->recurring > 0) { ?>
                <div class="alert alert-info">
-                  <?php echo _l('invoice_draft_status_info'); ?>
+                  Recurring invoice with status Cancelled <b>is still ongoing recurring invoice</b>. If you want to stop this recurring invoice you should update the invoice recurring field to <b>No</b>.
                </div>
                <?php } ?>
-               <?php if($invoice->status == 3 || $invoice->status == 4){
-                  if($invoice->duedate && date('Y-m-d') > date('Y-m-d',strtotime(to_sql_date($invoice->duedate)))){
-                   echo '<p class="text-danger no-mbot">'._l('invoice_is_overdue',floor((abs(time() - strtotime(to_sql_date($invoice->duedate))))/(60*60*24))).'</p>';
-                  }
-                  } ?>
-               <div id="invoice-preview">
-                  <div class="row">
-                     <?php
-                        if($invoice->recurring > 0 || $invoice->is_recurring_from != NULL) {
-                         $recurring_invoice = $invoice;
-                         $next_recurring_date_compare = to_sql_date($recurring_invoice->date);
-                         if($recurring_invoice->last_recurring_date){
-                           $next_recurring_date_compare = $recurring_invoice->last_recurring_date;
-                         }
-                         if($invoice->is_recurring_from != NULL){
-                           $recurring_invoice = $this->invoices_model->get($invoice->is_recurring_from);
-                           $next_recurring_date_compare = $recurring_invoice->last_recurring_date;
-                         }
-                         if ($recurring_invoice->custom_recurring == 0) {
-                           $recurring_invoice->recurring_type = 'MONTH';
-                         }
-                         $next_date = date('Y-m-d', strtotime('+' . $recurring_invoice->recurring . ' ' . strtoupper($recurring_invoice->recurring_type),strtotime($next_recurring_date_compare)));
-                         ?>
-                     <div class="col-md-12">
-                        <h4 class="font-medium text-success">
-                           <?php if(!$recurring_invoice->recurring_ends_on || ($next_date <= $recurring_invoice->recurring_ends_on)){ ?>
-                           <?php echo '<i class="fa fa-question-circle" data-toggle="tooltip" data-title="'._l('recurring_recreate_hour_notice',_l('invoice')).'"></i> ' . _l('next_invoice_date',_d($next_date)); ?><br />
-                           <?php if($invoice->status == 6){
-                              echo '<p class="mtop5 no-mbot"><small class="text-warning ">'._l('recurring_invoice_draft_notice').'</small></p>';
-                              } ?>
-                           <?php } ?>
-                           <?php if($invoice->is_recurring_from != NULL){ ?>
-                           <?php echo '<small class="text-muted">'._l('invoice_recurring_from','<a href="'.admin_url('invoices/list_invoices/'.$invoice->is_recurring_from).'" onclick="init_invoice('.$invoice->is_recurring_from.');return false;">'.format_invoice_number($invoice->is_recurring_from).'</small></a>'); ?>
-                           <?php } ?>
-                        </h4>
-                     </div>
-                     <?php } ?>
-                     <?php if($invoice->project_id != 0){ ?>
-                     <div class="col-md-12">
-                        <h4 class="font-medium no-mtop mbot20"><?php echo _l('related_to_project',array(
-                           _l('invoice_lowercase'),
-                           _l('project_lowercase'),
-                           '<a href="'.admin_url('projects/view/'.$invoice->project_id).'" target="_blank">' . $invoice->project_data->name . '</a>',
-                           )); ?></h4>
-                     </div>
-                     <?php } ?>
-                     <div class="col-md-6">
-                        <h4 class="bold">
-                            <?php
-                              $tags = get_tags_in($invoice->id,'invoice');
-                              if(count($tags) > 0){
-                                echo '<i class="fa fa-tag" aria-hidden="true" data-toggle="tooltip" data-title="'.implode(', ',$tags).'"></i>';
-                              }
-                              ?>
-                           <a href="<?php echo admin_url('invoices/invoice/'.$invoice->id); ?>">
-                           <span id="invoice-number">
-                           <?php echo format_invoice_number($invoice->id); ?>
-                           </span>
-                           </a>
-                        </h4>
-                        <address>
-                           <?php echo format_organization_info(); ?>
-                        </address>
-                     </div>
-                     <div class="col-sm-6 text-right">
-                        <span class="bold"><?php echo _l('invoice_bill_to'); ?>:</span>
-                        <address>
-                           <?php echo format_customer_info($invoice, 'invoice', 'billing', true); ?>
-                        </address>
-                        <?php if($invoice->include_shipping == 1 && $invoice->show_shipping_on_invoice == 1){ ?>
-                        <span class="bold"><?php echo _l('ship_to'); ?>:</span>
-                        <address>
-                           <?php echo format_customer_info($invoice, 'invoice', 'shipping'); ?>
-                        </address>
-                        <?php } ?>
-                        <p class="no-mbot">
-                           <span class="bold">
-                           <?php echo _l('invoice_data_date'); ?>
-                           </span>
-                           <?php echo $invoice->date; ?>
-                        </p>
-                        <?php if(!empty($invoice->duedate)){ ?>
-                        <p class="no-mbot">
-                           <span class="bold">
-                           <?php echo _l('invoice_data_duedate'); ?>
-                           </span>
-                           <?php echo $invoice->duedate; ?>
-                        </p>
-                        <?php } ?>
-                        <?php if($invoice->sale_agent != 0 && get_option('show_sale_agent_on_invoices') == 1){ ?>
-                        <p class="no-mbot">
-                           <span class="bold"><?php echo _l('sale_agent_string'); ?>: </span>
-                           <?php echo get_staff_full_name($invoice->sale_agent); ?>
-                        </p>
-                        <?php } ?>
-                        <?php if($invoice->project_id != 0 && get_option('show_project_on_invoice') == 1){ ?>
-                        <p class="no-mbot">
-                           <span class="bold"><?php echo _l('project'); ?>:</span>
-                           <?php echo get_project_name_by_id($invoice->project_id); ?>
-                        </p>
-                        <?php } ?>
-                        <?php $pdf_custom_fields = get_custom_fields('invoice',array('show_on_pdf'=>1));
-                           foreach($pdf_custom_fields as $field){
-                             $value = get_custom_field_value($invoice->id,$field['id'],'invoice');
-                             if($value == ''){continue;} ?>
-                        <p class="no-mbot">
-                           <span class="bold"><?php echo $field['name']; ?>: </span>
-                           <?php echo $value; ?>
-                        </p>
-                        <?php } ?>
-                     </div>
-                  </div>
-                  <div class="row">
-                     <div class="col-md-12">
-                        <div class="table-responsive">
-                           <table class="table items invoice-items-preview">
-                              <thead>
-                                 <tr>
-                                    <th align="center">#</th>
-                                    <th class="description" width="50%" align="left"><?php echo _l('invoice_table_item_heading'); ?></th>
-                                    <?php
-                                       $custom_fields = get_items_custom_fields_for_table_html($invoice->id,'invoice');
-                                       foreach($custom_fields as $cf){
-                                         echo '<th class="custom_field" align="left">' . $cf['name'] . '</th>';
-                                       }
-                                       $qty_heading = _l('invoice_table_quantity_heading');
-                                       if($invoice->show_quantity_as == 2){
-                                         $qty_heading = _l('invoice_table_hours_heading');
-                                       } else if($invoice->show_quantity_as == 3){
-                                         $qty_heading = _l('invoice_table_quantity_heading') .'/'._l('invoice_table_hours_heading');
-                                       }
-                                       ?>
-                                    <th align="right"><?php echo $qty_heading; ?></th>
-                                    <th align="right"><?php echo _l('invoice_table_rate_heading'); ?></th>
-                                    <?php if(get_option('show_tax_per_item') == 1){ ?>
-                                    <th align="right"><?php echo _l('invoice_table_tax_heading'); ?></th>
-                                    <?php } ?>
-                                    <th align="right"><?php echo _l('invoice_table_amount_heading'); ?></th>
-                                 </tr>
-                              </thead>
-                              <tbody>
-                                 <?php
-                                    $items_data = get_table_items_and_taxes($invoice->items,'invoice',true);
-                                    $taxes = $items_data['taxes'];
-                                    echo $items_data['html'];
-                                 ?>
-                              </tbody>
-                           </table>
-                        </div>
-                     </div>
-                     <div class="col-md-4 col-md-offset-8">
-                        <table class="table text-right">
-                           <tbody>
-                              <tr id="subtotal">
-                                 <td><span class="bold"><?php echo _l('invoice_subtotal'); ?></span>
-                                 </td>
-                                 <td class="subtotal">
-                                    <?php echo format_money($invoice->subtotal,$invoice->symbol); ?>
-                                 </td>
-                              </tr>
-                              <?php if(is_sale_discount_applied($invoice)){ ?>
-                              <tr>
-                                 <td>
-                                    <span class="bold"><?php echo _l('invoice_discount'); ?>
-                                       <?php if(is_sale_discount($invoice,'percent')){ ?>
-                                       (<?php echo _format_number($invoice->discount_percent,true); ?>%)
-                                       <?php } ?></span>
-                                 </td>
-                                 <td class="discount">
-                                    <?php echo '-' . format_money($invoice->discount_total,$invoice->symbol); ?>
-                                 </td>
-                              </tr>
-                              <?php } ?>
-                              <?php
-                                 foreach($taxes as $tax){
-                                    echo '<tr class="tax-area"><td class="bold">'.$tax['taxname'].' ('._format_number($tax['taxrate']).'%)</td><td>'.format_money($tax['total_tax'], $invoice->symbol).'</td></tr>';
-                                 }
-                              ?>
-                              <?php if((int)$invoice->adjustment != 0){ ?>
-                              <tr>
-                                 <td>
-                                    <span class="bold"><?php echo _l('invoice_adjustment'); ?></span>
-                                 </td>
-                                 <td class="adjustment">
-                                    <?php echo format_money($invoice->adjustment,$invoice->symbol); ?>
-                                 </td>
-                              </tr>
-                              <?php } ?>
-                              <tr>
-                                 <td><span class="bold"><?php echo _l('invoice_total'); ?></span>
-                                 </td>
-                                 <td class="total">
-                                    <?php echo format_money($invoice->total,$invoice->symbol); ?>
-                                 </td>
-                              </tr>
-                              <?php if(count($invoice->payments) > 0 && get_option('show_total_paid_on_invoice') == 1) { ?>
-                              <tr>
-                                 <td><span class="bold"><?php echo _l('invoice_total_paid'); ?></span></td>
-                                 <td>
-                                    <?php echo '-' . format_money(sum_from_table('tblinvoicepaymentrecords',array('field'=>'amount','where'=>array('invoiceid'=>$invoice->id))),$invoice->symbol); ?>
-                                 </td>
-                              </tr>
-                              <?php } ?>
-                              <?php if(get_option('show_credits_applied_on_invoice') == 1 && $credits_applied = total_credits_applied_to_invoice($invoice->id)){ ?>
-                              <tr>
-                                 <td><span class="bold"><?php echo _l('applied_credits'); ?></span></td>
-                                 <td>
-                                    <?php echo '-' . format_money($credits_applied,$invoice->symbol); ?>
-                                 </td>
-                              </tr>
-                              <?php } ?>
-                              <?php if(get_option('show_amount_due_on_invoice') == 1 && $invoice->status != 5) { ?>
-                              <tr>
-                                 <td><span class="<?php if($invoice->total_left_to_pay > 0){echo 'text-danger ';} ?>bold"><?php echo _l('invoice_amount_due'); ?></span></td>
-                                 <td>
-                                    <span class="<?php if($invoice->total_left_to_pay > 0){echo 'text-danger';} ?>">
-                                    <?php echo format_money($invoice->total_left_to_pay,$invoice->symbol); ?>
-                                    </span>
-                                 </td>
-                              </tr>
-                              <?php } ?>
-                           </tbody>
-                        </table>
-                     </div>
-                  </div>
-                  <?php if(count($invoice->attachments) > 0){ ?>
-                  <div class="clearfix"></div>
-                  <hr />
-                  <p class="bold text-muted"><?php echo _l('invoice_files'); ?></p>
-                  <?php foreach($invoice->attachments as $attachment){
-                     $attachment_url = site_url('download/file/sales_attachment/'.$attachment['attachment_key']);
-                     if(!empty($attachment['external'])){
-                      $attachment_url = $attachment['external_link'];
-                     }
-                     ?>
-                  <div class="mbot15 row inline-block full-width" data-attachment-id="<?php echo $attachment['id']; ?>">
-                     <div class="col-md-8">
-                        <div class="pull-left"><i class="<?php echo get_mime_class($attachment['filetype']); ?>"></i></div>
-                        <a href="<?php echo $attachment_url; ?>" target="_blank"><?php echo $attachment['file_name']; ?></a>
-                        <br />
-                        <small class="text-muted"> <?php echo $attachment['filetype']; ?></small>
-                     </div>
-                     <div class="col-md-4 text-right">
-                        <?php if($attachment['visible_to_customer'] == 0){
-                           $icon = 'fa-toggle-off';
-                           $tooltip = _l('show_to_customer');
-                           } else {
-                           $icon = 'fa-toggle-on';
-                           $tooltip = _l('hide_from_customer');
-                           }
-                           ?>
-                        <a href="#" data-toggle="tooltip" onclick="toggle_file_visibility(<?php echo $attachment['id']; ?>,<?php echo $invoice->id; ?>,this); return false;" data-title="<?php echo $tooltip; ?>"><i class="fa <?php echo $icon; ?>" aria-hidden="true"></i></a>
-                        <?php if($attachment['staffid'] == get_staff_user_id() || is_admin()){ ?>
-                        <a href="#" class="text-danger" onclick="delete_invoice_attachment(<?php echo $attachment['id']; ?>); return false;"><i class="fa fa-times"></i></a>
-                        <?php } ?>
-                     </div>
-                  </div>
-                  <?php } ?>
-                  <?php } ?>
-                  <hr />
-                  <?php if($invoice->clientnote != ''){ ?>
-                  <div class="col-md-12 row mtop15">
-                     <p class="bold text-muted"><?php echo _l('invoice_note'); ?></p>
-                     <p><?php echo $invoice->clientnote; ?></p>
-                  </div>
-                  <?php } ?>
-                  <?php if($invoice->terms != ''){ ?>
-                  <div class="col-md-12 row mtop15">
-                     <p class="bold text-muted"><?php echo _l('terms_and_conditions'); ?></p>
-                     <p><?php echo $invoice->terms; ?></p>
-                  </div>
-                  <?php } ?>
-               </div>
+               <?php $this->load->view('admin/invoices/invoice_preview_html'); ?>
             </div>
             <?php if(count($invoice->payments) > 0) { ?>
             <div class="tab-pane" role="tabpanel" id="invoice_payments_received">
@@ -514,7 +279,7 @@
             <div role="tabpanel" class="tab-pane" id="tab_reminders">
                <a href="#" class="btn btn-info btn-xs" data-toggle="modal" data-target=".reminder-modal-invoice-<?php echo $invoice->id; ?>"><i class="fa fa-bell-o"></i> <?php echo _l('invoice_set_reminder_title'); ?></a>
                <hr />
-               <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified'), _l( 'options'), ), 'reminders'); ?>
+               <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified')), 'reminders'); ?>
                <?php $this->load->view('admin/includes/modals/reminder',array('id'=>$invoice->id,'name'=>'invoice','members'=>$members,'reminder_title'=>_l('invoice_set_reminder_title'))); ?>
             </div>
             <?php if($invoice->recurring > 0){ ?>
@@ -541,6 +306,14 @@
                <?php } ?>
             </div>
             <?php } ?>
+            <div role="tabpanel" class="tab-pane" id="tab_emails_tracking">
+               <?php
+                  $this->load->view('admin/includes/emails_tracking',array(
+                     'tracked_emails'=>
+                     get_tracked_emails($invoice->id, 'invoice'))
+                  );
+                  ?>
+            </div>
             <div role="tabpanel" class="tab-pane" id="tab_notes">
                <?php echo form_open(admin_url('invoices/add_note/'.$invoice->id),array('id'=>'sales-notes','class'=>'invoice-notes-form')); ?>
                <?php echo render_textarea('description'); ?>
@@ -561,9 +334,9 @@
                         <div class="feed-item" data-sale-activity-id="<?php echo $activity['id']; ?>">
                            <div class="date">
                               <span class="text-has-action" data-toggle="tooltip" data-title="<?php echo _dt($activity['date']); ?>">
-                                 <?php echo time_ago($activity['date']); ?>
+                              <?php echo time_ago($activity['date']); ?>
                               </span>
-                              </div>
+                           </div>
                            <div class="text">
                               <?php if(is_numeric($activity['staffid']) && $activity['staffid'] != 0){ ?>
                               <a href="<?php echo admin_url('profile/'.$activity["staffid"]); ?>">
@@ -609,9 +382,12 @@
                   </div>
                </div>
             </div>
-            <div role="tabpanel" class="tab-pane ptop10" id="tab_views">
+            <div role="tabpanel" class="tab-pane" id="tab_views">
                <?php
                   $views_activity = get_views_tracking('invoice',$invoice->id);
+                  if(count($views_activity) === 0) {
+                     echo '<h4 class="no-mbot">'._l('not_viewed_yet',_l('invoice_lowercase')).'</h4>';
+                  }
                   foreach($views_activity as $activity){ ?>
                <p class="text-success no-margin">
                   <?php echo _l('view_date') . ': ' . _dt($activity['date']); ?>
@@ -635,4 +411,5 @@
    init_datepicker();
    init_selectpicker();
    init_form_reminder();
+   init_tabs_scrollable();
 </script>

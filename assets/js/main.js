@@ -1,3 +1,6 @@
+/* jshint expr: true */
+/* jshint sub:true */
+/* jshint loopfunc:true */
 /**
  * Core JS Files
  * Not recommened to edit this file directly if you plan to upgrade the script when new versions are released.
@@ -20,7 +23,6 @@ Dropzone.options.salesUpload = false;
 if (("Notification" in window) && app_desktop_notifications == '1') {
     Notification.requestPermission();
 }
-
 // Jquery validate set default options
 $.validator.setDefaults({
     highlight: function(element) {
@@ -31,14 +33,17 @@ $.validator.setDefaults({
                 .css('color', 'red')
                 .addClass('tab-validation');
         }
-        $(element).closest('.form-group').addClass('has-error');
+        setTimeout(function() {
+            $(element).closest('.form-group').addClass('has-error');
+        }, 200);
     },
     unhighlight: function(element) {
-        var $child_tab_in_form = $(element).parents('.tab-pane');
+        element = $(element);
+        var $child_tab_in_form = element.parents('.tab-pane');
         if ($child_tab_in_form.length) {
             $('a[href="#' + $child_tab_in_form.attr('id') + '"]').removeAttr('style').removeClass('tab-validation');
         }
-        $(element).closest('.form-group').removeClass('has-error');
+        element.closest('.form-group').removeClass('has-error');
     },
     errorElement: 'p',
     errorClass: 'text-danger',
@@ -49,6 +54,8 @@ $.validator.setDefaults({
             } else {
                 error.insertAfter(element.parents('.chk'));
             }
+        } else if (element.is('select') && (element.hasClass('selectpicker') || element.hasClass('ajax-search'))) {
+            error.insertAfter(element.parents('.form-group *').last());
         } else {
             error.insertAfter(element);
         }
@@ -66,21 +73,6 @@ $.validator.addMethod("extension", function(value, element, param) {
     return this.optional(element) || value.match(new RegExp("\\.(" + param + ")$", "i"));
 }, $.validator.format(appLang.validation_extension_not_allowed));
 
-// Custom deselect all on bootstrap ajax select input
-$("body").on('loaded.bs.select change', 'select.ajax-search', function(e) {
-    if ($(this).selectpicker('val')) {
-        var $elmWrapper = $(this).parents('.bootstrap-select.ajax-search');
-        if ($elmWrapper.find('.ajax-clear-values').length === 0) {
-            $elmWrapper.addClass('ajax-remove-values-option').find('button.dropdown-toggle').after('<span class="pointer ajax-clear-values" onclick="deselect_ajax_search(this); return false;" data-id="' + $(this).attr('id') + '"><i class="fa fa-remove"></i></span>');
-        }
-    }
-});
-
-// On render select remove the placeholder
-$("body").on('rendered.bs.select', 'select', function() {
-    $(this).parents().removeClass('select-placeholder');
-});
-
 // Predefined global variables
 var original_top_search_val,
     table_leads,
@@ -95,15 +87,40 @@ var original_top_search_val,
     setup_menu = $('#setup-menu-wrapper'),
     menu_href_selector,
     calendar_selector = $('#calendar'),
-    notifications_wrapper = $('#header li.notifications-wrapper'),
+    notifications_wrapper = $('#header').find('li.notifications-wrapper'),
     doc_initial_title = document.title,
     newsfeed_posts_page = 0,
     track_load_post_likes = 0,
     track_load_comment_likes = 0,
     post_likes_total_pages = 0,
     comment_likes_total_pages = 0,
+    select_picker_validated_event = false,
     postid = 0,
     setup_menu_item = $('#setup-menu-item');
+
+
+// Custom deselect all on bootstrap ajax select input
+$("body").on('loaded.bs.select change', 'select.ajax-search', function(e) {
+    if ($(this).selectpicker('val') && !$(this).is(':disabled')) {
+        var $elmWrapper = $(this).parents('.bootstrap-select.ajax-search');
+        if ($elmWrapper.find('.ajax-clear-values').length === 0) {
+            var id = $(this).attr('id');
+            var dropdownToggle = $elmWrapper.addClass('ajax-remove-values-option').find('button.dropdown-toggle');
+            dropdownToggle.after('<span class="pointer ajax-clear-values" onclick="deselect_ajax_search(this); return false;" data-id="' + id + '"><i class="fa fa-remove"></i></span>');
+        }
+    }
+});
+
+// On render select remove the placeholder
+$("body").on('rendered.bs.select', 'select', function() {
+    $(this).parents().removeClass('select-placeholder');
+    $(this).parents('.form-group').find('.select-placeholder').removeClass('select-placeholder');
+});
+
+// Init bootstrap selectpicker
+$("body").on('loaded.bs.select', '._select_input_group', function(e) {
+    $(this).parents('.form-group').find('.input-group-select .input-group-addon').css('opacity', '1');
+});
 
 $(window).on("load resize", function(e) {
 
@@ -112,7 +129,7 @@ $(window).on("load resize", function(e) {
         set_body_small();
     }
 
-    // Waint until metsiMenu, collapse and other effect finish and set wrapper height
+    // Wait until metsiMenu, collapse and other effect finish and set wrapper height
     setTimeout(function() {
         mainWrapperHeightFix();
     }, e.type == 'load' ? 150 : 0);
@@ -121,9 +138,11 @@ $(window).on("load resize", function(e) {
 
 $(function() {
 
+
+
     // Add notifications indicator on document title
-    if (total_unread_notifications > 0) {
-        document.title = '(' + total_unread_notifications + ') ' + doc_initial_title;
+    if (totalUnreadNotifications > 0) {
+        document.title = '(' + totalUnreadNotifications + ') ' + doc_initial_title;
     }
 
     $('.screen-options-btn').on('click', function() {
@@ -141,7 +160,7 @@ $(function() {
             if (!$taskCommentsWrapper.is(':visible')) {
                 $taskCommentsWrapper.css('display', 'block');
             }
-            $taskModal.find('#task_comment').click();
+            init_new_task_comment();
         } else {
             window.location.href = admin_url + 'clients/client';
         }
@@ -224,7 +243,7 @@ $(function() {
      * List shortcuts
      */
 
-    /** Go to dashbaord **/
+    /** Go to dashboard **/
     add_hotkey('Alt+D', function() {
         window.location.href = admin_url;
     });
@@ -352,10 +371,31 @@ $(function() {
     init_progress_bars();
     // Init datepickers
     init_datepicker();
-    // Init bootstrap selectpicker
-    $("body").on('loaded.bs.select', '._select_input_group', function(e) {
-        $(this).parents('.form-group').find('.input-group-select .input-group-addon').css('opacity', '1');
+
+    // jQuery validation fix for select, works only on required
+    // Wrap it in another validate event because is throwing errors if the form is not yet validated
+    $(document).on('app.form-validate', function(e, form) {
+
+        if (select_picker_validated_event === true) {
+            return true;
+        }
+
+        select_picker_validated_event = true;
+
+        $(form).on('change', 'select.ajax-search, select.selectpicker', function(e) {
+            if ($(this).selectpicker('val') && !$(this).is(':disabled')) {
+                if (typeof($(this).rules()) != 'undefined' &&
+                    Object.keys($(this).rules()).length === 1 &&
+                    $(this).rules().hasOwnProperty('required')) {
+
+                    var parent = $(this).parents('.form-group');
+                    parent.find('#' + $(this).attr('name') + '-error').remove();
+                    parent.removeClass('has-error');
+                }
+            }
+        });
     });
+
     init_selectpicker();
     // Optimize body
     set_body_small();
@@ -365,34 +405,24 @@ $(function() {
     init_ajax_search('customer', '#clientid.ajax-search');
 
     // Check for active class in sidebar links
-    var sidebar_links = side_bar.find('li > a');
-    $.each(sidebar_links, function(i, data) {
-        var href = $(data).attr('href');
-        // Check if the url matches so we can add the active class
-        if (location == href) {
-            var $hrefSelector = side_bar.find('a[href="' + href + '"]');
-            // Do not add on the top quick links
-            $hrefSelector.parents('li').not('.quick-links').addClass('active');
-            // Set aria expanded to true
-            $hrefSelector.prop('aria-expanded', true);
-            $hrefSelector.parents('ul.nav-second-level').prop('aria-expanded', true);
-            $hrefSelector.parents('li').find('a:first-child').prop('aria-expanded', true);
-        }
-    });
+    var $linkSidebarActive = side_bar.find('li > a[href="' + location + '"]');
+    if ($linkSidebarActive.length) {
+        $linkSidebarActive.parents('li').not('.quick-links').addClass('active');
+        // Set aria expanded to true
+        $linkSidebarActive.prop('aria-expanded', true);
+        $linkSidebarActive.parents('ul.nav-second-level').prop('aria-expanded', true);
+        $linkSidebarActive.parents('li').find('a:first-child').prop('aria-expanded', true);
+    }
 
-    // Check for customizer active class
+    // Check for setu menu active class
     if (setup_menu.hasClass('display-block')) {
-        var setup_menu_links = setup_menu.find('li > a');
-        $.each(setup_menu_links, function(i, data) {
-            var href = $(data).attr('href');
-            if (location == href) {
-                var $hrefSelector = setup_menu.find('a[href="' + href + '"]');
-                $hrefSelector.parents('li').addClass('active');
-                $hrefSelector.prev('active');
-                $hrefSelector.parents('ul.nav-second-level').prop('aria-expanded', true);
-                $hrefSelector.parents('li').find('a:first-child').prop('aria-expanded', true);
-            }
-        });
+        var $linkSetupSidebarActive = setup_menu.find('li > a[href="' + location + '"]');
+        if ($linkSetupSidebarActive.length) {
+            $linkSetupSidebarActive.parents('li').addClass('active');
+            $linkSetupSidebarActive.prev('active');
+            $linkSetupSidebarActive.parents('ul.nav-second-level').prop('aria-expanded', true);
+            $linkSetupSidebarActive.parents('li').find('a:first-child').prop('aria-expanded', true);
+        }
     }
 
     // Init now metisMenu for the main admin sidebar
@@ -402,14 +432,14 @@ $(function() {
 
     // Handle minimalize sidebar menu
     $('.hide-menu').click(function(e) {
+
         e.preventDefault();
-
-        if ($(window).width() < 769) {
-            $("body").toggleClass("show-sidebar");
+        if ($('body').hasClass('hide-sidebar')) {
+            $('body').removeClass('hide-sidebar').addClass('show-sidebar');
         } else {
-            $("body").toggleClass("hide-sidebar");
+            $('body').removeClass('show-sidebar').addClass('hide-sidebar');
         }
-
+        // $("body").toggleClass($(window).width() < 769 ? 'show-sidebar' : 'hide-sidebar');
         if (setup_menu.hasClass('display-block')) {
             $('.close-customizer').click();
         }
@@ -419,7 +449,7 @@ $(function() {
     if (is_mobile()) {
         content_wrapper.on('click', function() {
             if ($("body").hasClass('show-sidebar')) {
-                $("body").removeClass('show-sidebar');
+                $('.hide-menu').click();
             }
             if (setup_menu.hasClass('display-block')) {
                 $('.close-customizer').click();
@@ -435,6 +465,10 @@ $(function() {
 
     // Optimize wrapper height
     mainWrapperHeightFix();
+
+    // Init scrollable tabs
+    init_tabs_scrollable();
+
     // Top search input fetch results
     $('#search_input').on('keyup paste' + (app_user_browser == 'safari' ? ' input' : ''), function() {
 
@@ -480,7 +514,7 @@ $(function() {
         if (val.indexOf(':') > -1) {
             var duration_array = val.split(':');
 
-            if (duration_array[0].length == 0) {
+            if (duration_array[0].length === 0) {
                 duration_array[0] = '00';
             }
 
@@ -490,21 +524,21 @@ $(function() {
                 duration_array[1] = (duration_array[1] - (subtr * 60));
             }
 
-            if (duration_array[0].toString().length == 1) {
+            if (duration_array[0].toString().length === 1) {
                 duration_array[0] = '0' + duration_array[0];
             }
 
-            if (duration_array[1].toString().length == 1) {
+            if (duration_array[1].toString().length === 1) {
                 duration_array[1] = '0' + duration_array[1];
-            } else if (duration_array[1].toString().length == 0) {
+            } else if (duration_array[1].toString().length === 0) {
                 duration_array[1] = '00';
             }
 
             val = duration_array[0] + ':' + duration_array[1];
 
-        } else if (val.length == 1 && val.indexOf(':') == -1) {
+        } else if (val.length === 1 && val.indexOf(':') === -1) {
             val = '0' + val + ':' + '00';
-        } else if (val.length >= 2 && val.indexOf(':') == -1) {
+        } else if (val.length >= 2 && val.indexOf(':') === -1) {
             val = val + ':' + '00';
         }
         val = val == '00:00' ? '' : val;
@@ -516,7 +550,7 @@ $(function() {
         e.preventDefault();
         var $switch_to = $(this).find('span.switch-to').removeClass('switch-to').addClass('hide');
         $(this).find('span').not($switch_to).removeClass('hide').addClass('switch-to');
-        $('.timesheet-start-end-time,.timesheet-duration').toggleClass('hide');
+        $('.timesheet-start-end-time, .timesheet-duration').toggleClass('hide');
         $('.timesheet-start-end-time input').val('');
         $('.timesheet-duration input').val('');
     });
@@ -555,49 +589,34 @@ $(function() {
     /* Update tasks checklist items when focusing out */
     $("body").on('blur paste', 'textarea[name="checklist-description"]', function() {
         var textArea = $(this);
-        var description = textArea.val();
-        description = description.trim();
-        var listid = textArea.parents('.checklist').data('checklist-id');
+        setTimeout(function() {
+            var description = textArea.val();
+            description = description.trim();
+            var listid = textArea.parents('.checklist').data('checklist-id');
 
-        $.post(admin_url + 'tasks/update_checklist_item', {
-            description: description,
-            listid: listid
-        }).done(function(response) {
-            response = JSON.parse(response);
-            if (response.can_be_template === true) {
-                textArea.parents('.checklist').find('.save-checklist-template').removeClass('hide');
-            }
-            if (description === '') {
-                $('#checklist-items').find('.checklist[data-checklist-id="' + listid + '"]').remove();
-            }
-        });
+            $.post(admin_url + 'tasks/update_checklist_item', {
+                description: description,
+                listid: listid
+            }).done(function(response) {
+                response = JSON.parse(response);
+                if (response.can_be_template === true) {
+                    textArea.parents('.checklist').find('.save-checklist-template').removeClass('hide');
+                }
+                if (description === '') {
+                    $('#checklist-items').find('.checklist[data-checklist-id="' + listid + '"]').remove();
+                }
+            });
+        }, 400);
     });
 
-    $("body").on('rendered.bs.select,refreshed.bs.select', 'select.checklist-items-template-select', function() {
+    $("body").on('show.bs.select', 'select.checklist-items-template-select', _make_task_checklist_items_deletable);
+    $("body").on('refreshed.bs.select', 'select.checklist-items-template-select', _make_task_checklist_items_deletable);
 
-        if (has_permission_tasks_checklist_items_delete == '1') {
-            setTimeout(function() {
-                var itemsHtml = $("body").find('.checklist-items-template-select ul.dropdown-menu li').not(':first-child');
-                var itemsSelect = $("body").find('.checklist-items-template-select select option').not(':first-child');
-                $.each(itemsSelect, function(i, item) {
-                    var $item = $(item);
-                    if ($(itemsHtml[i]).find('.checklist-item-template-remove').length == 0) {
-                        $(itemsHtml[i]).find('a > span.text').after('<small class="checklist-item-template-remove" onclick="remove_checklist_item_template(' + $item.attr('value') + '); event.stopPropagation();"><i class="fa fa-remove"></i></small>');
-                    }
-                });
-            }, 100);
-        }
-    });
-
-    // Cant update if nothing is selected
-    $('body').on('change', 'select.custom-field-multi-select', function() {
-        var selected = $(this).selectpicker('val');
-        if (selected.length == 0 || (selected.length == 1 && selected[0] == "")) {
-            $(this).selectpicker('val', "");
-        } else if (selected.length > 1 && selected[0] == "") {
-            selected.splice(0, 1);
-            $(this).selectpicker('val', selected);
-        }
+    // Can't update if no values selected, no $_POST data send
+    $("body").on('changed.bs.select', 'select.custom-field-multi-select', function(e) {
+        var val = $(this).val();
+        $(this).find('option[value=""]').prop("selected", val.length === 0 ? true : false);
+        $(this).selectpicker('refresh');
     });
 
     // Task single modal inline changes, eq start date, due date...
@@ -608,15 +627,15 @@ $(function() {
             var name = $(this).attr('name');
             var val = $(this).val();
             var $parentwrap = $(this).parents('.task-single-inline-wrap');
-            if (name == 'startdate' && val == '') {
+            if (name == 'startdate' && val === '') {
                 $parentwrap.addClass('text-danger');
-            } else if (name == 'startdate' && val != '') {
+            } else if (name == 'startdate' && val !== '') {
                 $parentwrap.removeClass('text-danger');
             }
-            if ((name == 'startdate' && val != '') || name != 'startdate') {
+            if ((name == 'startdate' && val !== '') || name != 'startdate') {
                 data[$(this).attr('name')] = val;
                 // Name is required
-                if (name != 'startdate' && val == '') {
+                if (name != 'startdate' && val === '') {
                     $parentwrap.css('opacity', 0.5);
                 } else {
                     $parentwrap.css('opacity', 1);
@@ -631,12 +650,14 @@ $(function() {
     // When user select from checklist items template add this template
     $("body").on('change', '#task-modal #checklist_items_templates', function() {
         var val = $(this).val();
-        var $taskModal = $('#task-modal');
-        add_task_checklist_item(
-            $taskModal.find('[data-task-single-id]').attr('data-task-single-id'),
-            $(this).find('option[value="' + val + '"]').html().trim());
-
-        $(this).selectpicker('val', '');
+        var valTemplate = $(this).find('option[value="' + val + '"]').html().trim();
+        if (valTemplate !== '') {
+            var $taskModal = $('#task-modal');
+            add_task_checklist_item(
+                $taskModal.find('[data-task-single-id]').attr('data-task-single-id'),
+                valTemplate);
+            $(this).selectpicker('val', '');
+        }
     });
 
     // Used on task comment date href, can be used directly to add the link in browser for scroll.
@@ -659,32 +680,12 @@ $(function() {
         $('div.dataTables_filter input').focus();
     });
 
-    // Search by lead status from the tables for any status clicked.
-    $("body").on('click', 'table.dataTable tbody .lead-status', function() {
-        var lead_status_name = $.trim($(this).text());
-        var lead_status_select = $('#leads-filter-status select');
-        lead_status_select.selectpicker('val', '');
-        var selected_status = [];
-        lead_status_select.find('option').filter(function() {
-            if (this.text == lead_status_name) {
-                selected_status.push($(this).attr('value'))
-            }
-        });
-        lead_status_select.selectpicker('val', selected_status);
-        lead_status_select.selectpicker('refresh');
-        table_leads.DataTable().ajax.reload();
-    });
-
     // Permissions change, apply necessary action to disable OWN or VIEW OWN
-    $('[data-can-view-own],[data-can-view]').on('change', function() {
+    $('[data-can-view-own], [data-can-view]').on('change', function() {
         var is_own_attr = $(this).attr('data-can-view-own');
         view_chk_selector = $(this).parents('tr').find('td input[' + (typeof is_own_attr !== typeof undefined && is_own_attr !== false ? 'data-can-view' : 'data-can-view-own') + ']');
         view_chk_selector.prop('checked', false);
-        if ($(this).prop('checked') === true) {
-            view_chk_selector.prop('disabled', true);
-        } else {
-            view_chk_selector.prop('disabled', false);
-        }
+        view_chk_selector.prop('disabled', $(this).prop('checked') === true);
     });
 
     // Init single task data
@@ -702,9 +703,8 @@ $(function() {
     });
 
     // On click on task comment textarea make it tinymce, by default is plain textarea
-    $("body").on('click', '#task_comment', function() {
-        if (tinymce.editors.task_comment) { tinymce.remove('#task_comment'); }
-        init_editor('#task_comment', _simple_editor_config());
+    $("body").on('click focus', '#task_comment', function(e) {
+        init_new_task_comment();
     });
 
     // Delete task timesheet from the task single modal
@@ -728,7 +728,7 @@ $(function() {
         var start_time = $("body").find('#task-modal input[name="timesheet_start_time"]').val();
         var end_time = $("body").find('#task-modal input[name="timesheet_end_time"]').val();
         var duration = $("body").find('#task-modal input[name="timesheet_duration"]').val();
-        if ((start_time != '' && end_time != '') || duration != '') {
+        if ((start_time !== '' && end_time !== '') || duration !== '') {
             var data = {};
             data.timesheet_duration = duration;
             data.start_time = start_time;
@@ -738,7 +738,7 @@ $(function() {
             data.timesheet_staff_id = $("body").find('#task-modal select[name="single_timesheet_staff_id"]').val();
             $.post(admin_url + 'tasks/log_time', data).done(function(response) {
                 response = JSON.parse(response);
-                if (response.success == true) {
+                if (response.success === true || response.success == 'true') {
                     init_task_modal(data.timesheet_task_id);
                     alert_float('success', response.message);
                     setTimeout(function() {
@@ -754,6 +754,7 @@ $(function() {
     // Copy task href/button event.
     $("body").on('click', '.copy_task_action', function() {
         var data = {};
+        $(this).prop('disabled', true);
         data.copy_from = $(this).data('task-copy-from');
         data.copy_task_assignees = $("body").find('#copy_task_assignees').prop('checked');
         data.copy_task_followers = $("body").find('#copy_task_followers').prop('checked');
@@ -762,7 +763,7 @@ $(function() {
         data.copy_task_status = $("body").find('input[name="copy_task_status"]:checked').val();
         $.post(admin_url + 'tasks/copy', data).done(function(response) {
             response = JSON.parse(response);
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 var $taskModal = $('#_task_modal');
                 if ($taskModal.is(':visible')) {
                     $taskModal.modal('hide');
@@ -854,7 +855,7 @@ $(function() {
         $("body").append('<div class="dt-loader"></div>');
         var data = {};
         data.assignee = $('select[name="select-assignees"]').val();
-        if (data.assignee != '') {
+        if (data.assignee !== '') {
             data.taskid = $(this).attr('data-task-id');
             $.post(admin_url + 'tasks/add_task_assignees', data).done(function(response) {
                 $("body").find('.dt-loader').remove();
@@ -869,7 +870,7 @@ $(function() {
     $("body").on('change', 'select[name="select-followers"]', function() {
         var data = {};
         data.follower = $('select[name="select-followers"]').val();
-        if (data.follower != '') {
+        if (data.follower !== '') {
             data.taskid = $(this).attr('data-task-id');
             $("body").append('<div class="dt-loader"></div>');
             $.post(admin_url + 'tasks/add_task_followers', data).done(function(response) {
@@ -894,12 +895,12 @@ $(function() {
     $("body").on('show.bs.modal', '#task-tracking-stats-modal', function() {
         var tracking_chart_selector = $("body").find('#task-tracking-stats-chart');
         setTimeout(function() {
-            if (typeof(task_track_chart) != 'undefined') {
-                task_track_chart.destroy();
+            if (typeof(taskTrackingChart) != 'undefined') {
+                taskTrackingChart.destroy();
             }
-            task_track_chart = new Chart(tracking_chart_selector, {
+            taskTrackingChart = new Chart(tracking_chart_selector, {
                 type: 'line',
-                data: task_tracking_stats_data,
+                data: taskTrackingStatsData,
                 options: {
                     legend: {
                         display: false,
@@ -946,7 +947,9 @@ $(function() {
     });
 
     // Maybe lead ID passed from url?
-    if (typeof(c_leadid) != 'undefined' && c_leadid != '') { init_lead(c_leadid); }
+    if (typeof(openLeadID) != 'undefined' && openLeadID !== '') {
+        init_lead(openLeadID, (get_url_param('edit') ? true : false));
+    }
 
     // Status color change
     $("body").on('click', '.leads-kan-ban .cpicker', function() {
@@ -986,7 +989,7 @@ $(function() {
     $("body").on('change', 'input.include_leads_custom_fields', function() {
         var val = $(this).val();
         var fieldid = $(this).data('field-id');
-        val == 2 ? $('#merge_db_field_' + fieldid).removeClass('hide') : $('#merge_db_field_' + fieldid).addClass('hide')
+        val == 2 ? $('#merge_db_field_' + fieldid).removeClass('hide') : $('#merge_db_field_' + fieldid).addClass('hide');
         val == 3 ? $('#merge_db_contact_field_' + fieldid) : $('#merge_db_contact_field_' + fieldid).addClass('hide');
     });
 
@@ -1062,29 +1065,29 @@ $(function() {
                 $('#newEventModal').modal('show');
                 return false;
             }
-        }
+        };
         if ($("body").hasClass('dashboard')) {
             calendar_settings.customButtons.viewFullCalendar = {
                 text: appLang.calendar_expand,
                 click: function() {
                     window.location.href = admin_url + 'utilities/calendar';
                 }
-            }
+            };
         }
         calendar_settings.customButtons.calendarFilter = {
             text: appLang.filter_by.toLowerCase(),
             click: function() {
                 slideToggle('#calendar_filters');
             }
-        }
+        };
         if (is_staff_member == 1) {
-            if (google_api != '') {
+            if (google_api !== '') {
                 calendar_settings.googleCalendarApiKey = google_api;
             }
-            if (calendarIDs != '') {
+            if (calendarIDs !== '') {
                 calendarIDs = JSON.parse(calendarIDs);
                 if (calendarIDs.length != 0) {
-                    if (google_api != '') {
+                    if (google_api !== '') {
                         for (var i = 0; i < calendarIDs.length; i++) {
                             var _gcal = {};
                             _gcal.googleCalendarId = calendarIDs[i];
@@ -1109,11 +1112,11 @@ $(function() {
     $("body").on('change', 'select[name="tax"]', function() {
         var sp_tax_2 = $("body").find('select[name="tax2"]');
         var sp_tax_1 = $(this);
-        if (sp_tax_1.val() != '') {
+        if (sp_tax_1.val() !== '') {
             sp_tax_2.prop('disabled', false);
         } else {
             sp_tax_2.prop('disabled', true);
-            if (sp_tax_2.val() != '') {
+            if (sp_tax_2.val() !== '') {
                 sp_tax_1.val(sp_tax_2.val());
                 sp_tax_2.val('');
                 sp_tax_1.selectpicker('refresh');
@@ -1141,13 +1144,13 @@ $(function() {
         var creditsRemaining = $applyCredits.attr('data-credits-remaining');
 
         $.each($amountInputs, function() {
-            if ($(this).valid() == true) {
+            if ($(this).valid() === true) {
                 var amount = $(this).val();
                 amount = parseFloat(amount);
                 if (!isNaN(amount)) {
                     total += amount;
                 } else {
-                    $(this).val(0)
+                    $(this).val(0);
                 }
             }
         });
@@ -1175,13 +1178,13 @@ $(function() {
         var invoiceBalanceDue = $applyCredits.attr('data-balance-due');
 
         $.each($amountInputs, function() {
-            if ($(this).valid() == true) {
+            if ($(this).valid() === true) {
                 var amount = $(this).val();
                 amount = parseFloat(amount);
                 if (!isNaN(amount)) {
                     total += amount;
                 } else {
-                    $(this).val(0)
+                    $(this).val(0);
                 }
             }
         });
@@ -1220,8 +1223,21 @@ $(function() {
     // Auto focus the lead name if user is adding new lead
     $("body").on("shown.bs.modal", '#lead-modal', function(e) {
         custom_fields_hyperlink();
-        if ($("body").find('#lead-modal input[name="leadid"]').length == 0) {
+        if ($("body").find('#lead-modal input[name="leadid"]').length === 0) {
             $("body").find('#lead-modal input[name="name"]').focus();
+        }
+        init_tabs_scrollable();
+        if ($('body').find('.lead-wrapper').hasClass('open-edit')) {
+            $('body').find('a[lead-edit]').click();
+        }
+    });
+
+    // Remove the more button for leads if there is no options in the dropdown
+    // This is happening because the if statements are not checked
+    $("body").on("show.bs.modal", '#lead-modal', function(e) {
+        if ($('#lead-more-dropdown').find('li').length == 0) {
+            $('#lead-more-btn').css('opacity', 0)
+                .css('pointer-events', 'none');
         }
     });
 
@@ -1265,11 +1281,20 @@ $(function() {
         $(this).data('bs.modal', null);
     });
 
+    $('body').on('submit', '#lead-modal .consent-form', function() {
+        var data = $(this).serialize();
+        $.post($(this).attr('action'), data).done(function(response) {
+            response = JSON.parse(response);
+            init_lead_modal_data(response.lead_id);
+        });
+        return false;
+    });
     // Set hash on modal tab change
     $("body").on('click', '#lead-modal a[data-toggle="tab"]', function() {
         if (this.hash == '#tab_lead_profile' ||
             this.hash == '#attachments' ||
             this.hash == '#lead_notes' ||
+            this.hash == '#gdpr' ||
             this.hash == '#lead_activity') {
             window.location.hash = this.hash;
         } else {
@@ -1283,7 +1308,7 @@ $(function() {
     $("body").on('click', '#lead_enter_activity', function() {
         var message = $('#lead_activity_textarea').val();
         var aLeadId = $('#lead-modal').find('input[name="leadid"]').val();
-        if (message == '') { return; }
+        if (message === '') { return; }
         $.post(admin_url + 'leads/add_activity', {
             leadid: aLeadId,
             activity: message
@@ -1314,13 +1339,31 @@ $(function() {
         "assigned": "[name='view_assigned']",
         "status": "[name='view_status[]']",
         "source": "[name='view_source']",
-    }
+    };
 
     // Init the table
     table_leads = $('table.table-leads');
     if (table_leads.length) {
-        var headers_leads = table_leads.find('th');
-        initDataTable(table_leads, admin_url + 'leads/table', [headers_leads.length - 1, 0], [headers_leads.length - 1, 0], LeadsServerParams, [table_leads.find('th.date-created').index(), 'DESC']);
+        var tableLeadsConsentHeading = table_leads.find('#th-consent');
+        var leadsTableNotSortable = [0];
+        var leadsTableNotSearchable = [0, table_leads.find('#th-assigned').index()];
+
+        if (tableLeadsConsentHeading.length > 0) {
+            leadsTableNotSortable.push(tableLeadsConsentHeading.index());
+            leadsTableNotSearchable.push(tableLeadsConsentHeading.index());
+        }
+
+        _table_api = initDataTable(table_leads, admin_url + 'leads/table', leadsTableNotSearchable, leadsTableNotSortable, LeadsServerParams, [table_leads.find('th.date-created').index(), 'desc']);
+
+        if (_table_api && tableLeadsConsentHeading.length > 0) {
+            _table_api.on('draw', function() {
+                var tableData = table_leads.find('tbody tr');
+                $.each(tableData, function() {
+                    $(this).find('td:eq(3)').addClass('bg-light-gray');
+                });
+            });
+        }
+
         $.each(LeadsServerParams, function(i, obj) {
             $('select' + obj).on('change', function() {
                 if ($(this).val() == 'lost' || $(this).val() == 'junk') {
@@ -1363,7 +1406,7 @@ $(function() {
     // Show please wait text on button where data-loading-text is added
     $("body").on('click', '[data-loading-text]', function() {
         var form = $(this).data('form');
-        if (form != null) {
+        if (form !== null && typeof(form) != 'undefined') {
             if ($(form).valid()) { $(this).button('loading'); }
         } else {
             $(this).button('loading');
@@ -1385,14 +1428,17 @@ $(function() {
 
     // For inline tinymce editors when content is blank a message is shown, on click this message should be hidden.
     $("body").on('click', '.editor-add-content-notice', function() {
-        $(this).remove();
-        tinymce.triggerSave();
+        var that = $(this);
+        setTimeout(function() {
+            that.remove();
+            tinymce.triggerSave();
+        }, 500);
     });
 
     // Global on change for mass delete to hide all other elements for bulk actions
     $('.bulk_actions').on('change', 'input[name="mass_delete"]', function() {
         var $bulkChange = $('#bulk_change');
-        if ($(this).prop('checked') == true) {
+        if ($(this).prop('checked') === true) {
             $bulkChange.find('select').selectpicker('val', '');
         }
         $bulkChange.toggleClass('hide');
@@ -1412,7 +1458,7 @@ $(function() {
     $("body").on("shown.bs.modal", '#__todo', function() {
         var $toDo = $('#__todo');
         $toDo.find('textarea[name="description"]').focus();
-        if ($toDo.find('input[name="todoid"]').val() != '') {
+        if ($toDo.find('input[name="todoid"]').val() !== '') {
             $toDo.find('.add-title').addClass('hide');
             $toDo.find('.edit-title').removeClass('hide');
         } else {
@@ -1497,15 +1543,20 @@ $(function() {
         table_activity_log.DataTable().ajax.reload();
     });
 
+    $('body').on('change', '#unlimited_cycles', function() {
+        $(this).parents('.recurring-cycles').find('#cycles').prop('disabled', $(this).prop('checked'));
+    });
+
     // For expenses and recurring tasks
-    $("body").on('change', '[name="repeat_every"],[name="recurring"]', function() {
+    $("body").on('change', '[name="repeat_every"], [name="recurring"]', function() {
         var val = $(this).val();
         val == 'custom' ? $('.recurring_custom').removeClass('hide') : $('.recurring_custom').addClass('hide');
-        if (val != '' && val != 0) {
-            $("body").find('#recurring_ends_on').removeClass('hide');
+        if (val !== '' && val != 0) {
+            $("body").find('#cycles_wrapper').removeClass('hide');
         } else {
-            $("body").find('#recurring_ends_on').addClass('hide');
-            $("body").find('#recurring_ends_on input').val('');
+            $("body").find('#cycles_wrapper').addClass('hide');
+            $("body").find('#cycles_wrapper #cycles').val(0);
+            $('#unlimited_cycles').prop('checked', true).change();
         }
     });
 
@@ -1527,7 +1578,7 @@ $(function() {
         rows = $('.table-' + to).find('tbody tr');
         checked = $(this).prop('checked');
         $.each(rows, function() {
-            var checkbox = $($(this).find('td').eq(0)).find('input').prop('checked', checked);
+            $($(this).find('td').eq(0)).find('input').prop('checked', checked);
         });
     });
 
@@ -1602,7 +1653,7 @@ $(function() {
         not_href = $notLink.hasClass('notification_link') ? $notLink.data('link') : e.currentTarget.href;
 
         not_href = not_href.split('#');
-        var notRedirect = true;;
+        var notRedirect = true;
         if (not_href[1] && not_href[1].indexOf('=') > -1) {
             notRedirect = false;
             not_href_id = not_href[1].split('=')[1];
@@ -1633,7 +1684,7 @@ $(function() {
         if (total > 0) {
             $.post(admin_url + 'misc/set_notifications_read').done(function(response) {
                 response = JSON.parse(response);
-                if (response.success == true) {
+                if (response.success === true || response.success == 'true') {
                     document.title = doc_initial_title;
                     $(".icon-notifications").addClass('hide');
                 }
@@ -1647,11 +1698,11 @@ $(function() {
     init_table_staff_projects();
 
     // Ticket pipe log and system activity log
-    table_activity_log = $('table.table-activity-log')
+    table_activity_log = $('table.table-activity-log');
     if (table_activity_log.length) {
         var ActivityLogServerParams = [];
         ActivityLogServerParams['activity_log_date'] = '[name="activity_log_date"]';
-        initDataTable(table_activity_log, window.location.href, 'undefined', 'undefined', ActivityLogServerParams, [1, 'DESC']);
+        initDataTable(table_activity_log, window.location.href, 'undefined', 'undefined', ActivityLogServerParams, [1, 'desc']);
     }
 
     table_invoices = $('table.table-invoices');
@@ -1670,15 +1721,15 @@ $(function() {
         if (table_invoices.length) {
             // Invoices tables
             initDataTable(table_invoices, admin_url + 'invoices/table', 'undefined', 'undefined', Invoices_Estimates_ServerParams, [
-                [3, 'DESC'],
-                [0, 'DESC']
+                [3, 'desc'],
+                [0, 'desc']
             ]);
         }
         if (table_estimates.length) {
             // Estimates table
             initDataTable(table_estimates, admin_url + 'estimates/table', 'undefined', 'undefined', Invoices_Estimates_ServerParams, [
-                [3, 'DESC'],
-                [0, 'DESC']
+                [3, 'desc'],
+                [0, 'desc']
             ]);
         }
     }
@@ -1693,20 +1744,18 @@ $(function() {
         });
 
         // Tasks not sortable
-        var _tns = [(table_tasks.find('th').length - 1)];
+        var tasksTableNotSortable = [0]; // bulk actions
         var tasksTableURL = admin_url + 'tasks/table';
 
-        if ($("body").hasClass('tasks_page')) {
-            _tns.push(0);
+        if ($("body").hasClass('tasks-page')) {
             tasksTableURL += '?bulk_actions=true';
         }
 
-        _table_api = initDataTable(table_tasks, tasksTableURL, _tns, _tns, TasksServerParams, [table_tasks.find('th.duedate').index(), 'ASC']);
+        _table_api = initDataTable(table_tasks, tasksTableURL, tasksTableNotSortable, tasksTableNotSortable, TasksServerParams, [table_tasks.find('th.duedate').index(), 'asc']);
 
         if (_table_api && $("body").hasClass('dashboard')) {
-            _table_api.column(3).visible(false, false)
-                .column(4).visible(false, false)
-                .column(table_tasks.find('.table-tasks-options').index()).visible(false, false)
+            _table_api.column(5).visible(false, false)
+                .column(6).visible(false, false)
                 .columns.adjust();
         }
     }
@@ -1790,7 +1839,7 @@ $(function() {
         $('#modal_post_likes_wrapper').empty();
         $('.likes_modal .modal-footer').removeClass('hide');
         var invoker = $(e.relatedTarget);
-        var postid = $(invoker).data('postid')
+        var postid = $(invoker).data('postid');
         post_likes_total_pages = $(invoker).data('total-pages');
         $(".load_more_post_likes").attr('data-postid', postid);
         load_post_likes(postid);
@@ -1824,19 +1873,6 @@ $(function() {
     $('.add-attachments').on('click', function(e) {
         e.preventDefault();
         $('#post-attachments').toggleClass('hide');
-    });
-
-    // Set post visibility on change select by department
-    $("body").on('change', '#post-visibility,#visible_customer_profile_tabs', function() {
-        var value = $(this).val();
-        if (value != null) {
-            if (value.indexOf('all') > -1) {
-                if (value.length > 1) {
-                    value.splice(0, 1);
-                    $(this).selectpicker('val', value);
-                }
-            }
-        }
     });
 
     // Init invoices top stats
@@ -1875,7 +1911,7 @@ $(function() {
         var $itemsTable = $(this).find('table.items');
         var $previewItem = $itemsTable.find('.main');
 
-        if ($previewItem.find('[name="description"]').val().trim().length > 0 &&
+        if ($previewItem.find('[name="description"]').length && $previewItem.find('[name="description"]').val().trim().length > 0 &&
             $previewItem.find('[name="rate"]').val().trim().length > 0) {
 
             $itemsTable.before('<div class="alert alert-warning mbot20" id="items-warning">' + appLang.item_forgotten_in_preview + '<i class="fa fa-angle-double-down pointer pull-right fa-2x" style="margin-top:-4px;" onclick="add_item_to_table(\'undefined\',\'undefined\',undefined); return false;"></i></div>');
@@ -1887,7 +1923,7 @@ $(function() {
             return false;
 
         } else {
-            if ($itemsTable.find('.item').length == 0) {
+            if ($itemsTable.length && $itemsTable.find('.item').length === 0) {
                 $itemsTable.before('<div class="alert alert-warning mbot20" id="items-warning">' + appLang.no_items_warning + '</div>');
                 $('html,body').animate({
                     scrollTop: $("#items-warning").offset().top
@@ -1925,7 +1961,7 @@ $(function() {
     // add invoice/estimate note
     $("body").on('submit', '#sales-notes', function() {
         var form = $(this);
-        if (form.find('textarea[name="description"]').val() == '') { return; }
+        if (form.find('textarea[name="description"]').val() === '') { return; }
 
         $.post(form.attr('action'), $(form).serialize()).done(function(rel_id) {
             // Reset the note textarea value
@@ -1968,11 +2004,11 @@ $(function() {
             due_date_input_name = 'expirydate';
         }
 
-        if (date == '') {
+        if (date === '') {
             $('input[name="' + due_date_input_name + '"]').val('');
         }
 
-        if (date != '') {
+        if (date !== '') {
             $.post(due_calc_url, { date: date }).done(function(formatted) {
                 if (formatted) {
                     $('input[name="' + due_date_input_name + '"]').val(formatted);
@@ -2052,10 +2088,10 @@ $(function() {
                     }
                 }
                 var data = '';
-                if (response.success == true) {
+                if (response.success === true || response.success == 'true') {
                     data += '<div class="display-block sales-attach-file-preview" data-attachment-id="' + response.attachment_id + '">';
                     data += '<div class="col-md-10">';
-                    data += '<div class="pull-left"><i class="attachment-icon-preview fa fa-file-o"></i></div>'
+                    data += '<div class="pull-left"><i class="attachment-icon-preview fa fa-file-o"></i></div>';
                     data += '<a href="' + site_url + dl_url + response.key + '" target="_blank">' + response.file_name + '</a>';
                     data += '<p class="text-muted">' + response.filetype + '</p>';
                     data += '</div>';
@@ -2091,7 +2127,7 @@ $(function() {
     // Include shipping show/hide details
     $("body").on('change', '#include_shipping', function() {
         var $sd = $('#shipping_details');
-        $(this).prop('checked') == true ? $sd.removeClass('hide') : $sd.addClass('hide');
+        $(this).prop('checked') === true ? $sd.removeClass('hide') : $sd.addClass('hide');
     });
 
     // Init the billing and shipping details in the field - estimates and invoices
@@ -2128,7 +2164,7 @@ $(function() {
     // Discount type for estimate/invoice
     $("body").on('change', 'select[name="discount_type"]', function() {
         // if discount_type == ''
-        if ($(this).val() == '') {
+        if ($(this).val() === '') {
             $('input[name="discount_percent"]').val(0);
         }
         // Recalculate the total
@@ -2137,7 +2173,7 @@ $(function() {
 
     // In case user enter discount percent but there is no discount type set
     $("body").on('change', 'input[name="discount_percent"],input[name="discount_total"]', function() {
-        if ($('select[name="discount_type"]').val() == '' && $(this).val() != 0) {
+        if ($('select[name="discount_type"]').val() === '' && $(this).val() != 0) {
             alert('You need to select discount type');
             $('html,body').animate({ scrollTop: 0 }, 'slow');
             $('#wrapper').highlight($('label[for="discount_type"]').text());
@@ -2146,23 +2182,23 @@ $(function() {
             }, 3000);
             return false;
         }
-        if ($(this).valid() == true) {
+        if ($(this).valid() === true) {
             calculate_total();
         }
     });
 
     $('body').on('change', '.invoice #project_id', function() {
         var project_id = $(this).selectpicker('val');
-        if (project_id != '') {
+        if (project_id !== '') {
             requestGetJSON('tasks/get_billable_tasks_by_project/' + project_id).done(function(tasks) {
                 _init_tasks_billable_select(tasks, project_id);
             });
         } else {
             var client_id = $('#clientid').selectpicker('val');
-            if(client_id != ''){
-                requestGetJSON('tasks/get_billable_tasks_by_customer_id/'+client_id).done(function(tasks){
+            if (client_id !== '') {
+                requestGetJSON('tasks/get_billable_tasks_by_customer_id/' + client_id).done(function(tasks) {
                     _init_tasks_billable_select(tasks);
-                })
+                });
             } else {
                 // Empty dropdown
                 _init_tasks_billable_select([], '');
@@ -2172,7 +2208,7 @@ $(function() {
 
     // Add task data to preview from the dropdown for invoiecs
     $("body").on('change', 'select[name="task_select"]', function() {
-        ($(this).selectpicker('val') != '' ? add_task_to_preview_as_item($(this).selectpicker('val')) : '');
+        ($(this).selectpicker('val') !== '' ? add_task_to_preview_as_item($(this).selectpicker('val')) : '');
     });
 
     // When user record payment check if is online mode
@@ -2206,18 +2242,18 @@ $(function() {
             $('#merge').html(response.merge_info);
             var $billExpenses = $('#expenses_to_bill');
             // Invoice from project, in invoice_template this is not shown
-            $billExpenses.length == 0 ? response.expenses_bill_info = '' : $billExpenses.html(response.expenses_bill_info);
-            ((response.merge_info != '' || response.expenses_bill_info != '') ? $('#invoice_top_info').removeClass('hide') : $('#invoice_top_info').addClass('hide'));
+            $billExpenses.length === 0 ? response.expenses_bill_info = '' : $billExpenses.html(response.expenses_bill_info);
+            ((response.merge_info !== '' || response.expenses_bill_info !== '') ? $('#invoice_top_info').removeClass('hide') : $('#invoice_top_info').addClass('hide'));
 
-            for (var f in bs_fields) {
-                if (bs_fields[f].indexOf('billing') > -1) {
-                    if (bs_fields[f].indexOf('country') > -1) {
-                        $('select[name="' + bs_fields[f] + '"]').selectpicker('val', response['billing_shipping'][0][bs_fields[f]]);
+            for (var f in billingAndShippingFields) {
+                if (billingAndShippingFields[f].indexOf('billing') > -1) {
+                    if (billingAndShippingFields[f].indexOf('country') > -1) {
+                        $('select[name="' + billingAndShippingFields[f] + '"]').selectpicker('val', response['billing_shipping'][0][billingAndShippingFields[f]]);
                     } else {
-                        if (bs_fields[f].indexOf('billing_street') > -1) {
-                            $('textarea[name="' + bs_fields[f] + '"]').val(response['billing_shipping'][0][bs_fields[f]]);
+                        if (billingAndShippingFields[f].indexOf('billing_street') > -1) {
+                            $('textarea[name="' + billingAndShippingFields[f] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[f]]);
                         } else {
-                            $('input[name="' + bs_fields[f] + '"]').val(response['billing_shipping'][0][bs_fields[f]]);
+                            $('input[name="' + billingAndShippingFields[f] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[f]]);
                         }
                     }
                 }
@@ -2227,15 +2263,15 @@ $(function() {
                 $('input[name="include_shipping"]').prop("checked", true).change();
             }
 
-            for (var f in bs_fields) {
-                if (bs_fields[f].indexOf('shipping') > -1) {
-                    if (bs_fields[f].indexOf('country') > -1) {
-                        $('select[name="' + bs_fields[f] + '"]').selectpicker('val', response['billing_shipping'][0][bs_fields[f]]);
+            for (var f in billingAndShippingFields) {
+                if (billingAndShippingFields[f].indexOf('shipping') > -1) {
+                    if (billingAndShippingFields[f].indexOf('country') > -1) {
+                        $('select[name="' + billingAndShippingFields[f] + '"]').selectpicker('val', response['billing_shipping'][0][billingAndShippingFields[f]]);
                     } else {
-                        if (bs_fields[f].indexOf('shipping_street') > -1) {
-                            $('textarea[name="' + bs_fields[f] + '"]').val(response['billing_shipping'][0][bs_fields[f]]);
+                        if (billingAndShippingFields[f].indexOf('shipping_street') > -1) {
+                            $('textarea[name="' + billingAndShippingFields[f] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[f]]);
                         } else {
-                            $('input[name="' + bs_fields[f] + '"]').val(response['billing_shipping'][0][bs_fields[f]]);
+                            $('input[name="' + billingAndShippingFields[f] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[f]]);
                         }
                     }
                 }
@@ -2256,19 +2292,19 @@ $(function() {
     });
 
     // When customer_id is passed init the data
-    if ($('input[name="isedit"]').length == 0) {
+    if ($('body').find('input[name="isedit"]').length === 0) {
         $('.f_client_id select[name="clientid"]').change();
     }
 
     $("body").on('click', '#get_shipping_from_customer_profile', function(e) {
         e.preventDefault();
         var include_shipping = $('#include_shipping');
-        if (include_shipping.prop('checked') == false) {
+        if (include_shipping.prop('checked') === false) {
             include_shipping.prop('checked', true);
             $('#shipping_details').removeClass('hide');
         }
         var clientid = $('select[name="clientid"]').val();
-        if (clientid == '') { return; }
+        if (clientid === '') { return; }
         requestGetJSON('clients/get_customer_billing_and_shipping_details/' + clientid).done(function(response) {
             $('textarea[name="shipping_street"]').val(response[0]['shipping_street']);
             $('input[name="shipping_city"]').val(response[0]['shipping_city']);
@@ -2296,10 +2332,10 @@ $(function() {
     $("body").on('change', 'input[name="invoices_to_merge[]"]', function() {
         var checked = $(this).prop('checked');
         var _id = $(this).val();
-        if (checked == true) {
+        if (checked === true) {
             requestGetJSON('invoices/get_merge_data/' + _id).done(function(response) {
                 $.each(response.items, function(i, obj) {
-                    if (obj.rel_type != '') {
+                    if (obj.rel_type !== '') {
                         if (obj.rel_type == 'task') {
                             $('input[name="task_id"]').val(obj.item_related_formatted_for_input);
                         } else if (obj.rel_type == 'expense') {
@@ -2320,7 +2356,7 @@ $(function() {
     $("body").on('change', 'input[name="bill_expenses[]"]', function() {
         var checked = $(this).prop('checked');
         var _id = $(this).val();
-        if (checked == true) {
+        if (checked === true) {
             requestGetJSON('invoices/get_bill_expense_data/' + _id).done(function(response) {
                 $('input[name="expense_id"]').val(_id);
                 add_item_to_table(response, 'undefined', 'undefined', _id);
@@ -2339,8 +2375,8 @@ $(function() {
             desc_selector = $('[data-bill-expense=' + $(this).attr('data-id') + '] .item_long_description');
         current_desc_val = desc_selector.val();
         current_desc_val = current_desc_val.trim();
-        if (_data_content != '') {
-            if ($(this).prop('checked') == true) {
+        if (_data_content !== '') {
+            if ($(this).prop('checked') === true) {
                 new_desc_value = current_desc_val + "\n" + _data_content;
                 desc_selector.val(new_desc_value.trim());
             } else {
@@ -2357,7 +2393,7 @@ $(document).keyup(function(e) {
     if (e.keyCode == 27) { // escape key maps to keycode `27`
         // Close modal if only modal is opened and there is no 2 modals opened
         // This will trigger only if there is only 1 modal visible/opened
-        if ($('.modal').is(':visible') && $('.modal:visible').length == 1) {
+        if ($('.modal').is(':visible') && $('.modal:visible').length === 1) {
             $("body").find('.modal:visible [onclick^="close_modal_manually"]').eq(0).click();
         }
         if ($('.popup-wrapper').is(':visible')) {
@@ -2365,6 +2401,19 @@ $(document).keyup(function(e) {
         }
     }
 });
+
+function _make_task_checklist_items_deletable() {
+    if (has_permission_tasks_checklist_items_delete == '1') {
+        var itemsHtml = $("body").find('.checklist-templates-wrapper ul.dropdown-menu li').not(':first-child');
+        var itemsSelect = $("body").find('.checklist-templates-wrapper select option').not(':first-child');
+        $.each(itemsSelect, function(i, item) {
+            var $item = $(item);
+            if ($(itemsHtml[i]).find('.checklist-item-template-remove').length === 0) {
+                $(itemsHtml[i]).find('a > span.text').after('<small class="checklist-item-template-remove" onclick="remove_checklist_item_template(' + $item.attr('value') + '); event.stopPropagation();"><i class="fa fa-remove"></i></small>');
+            }
+        });
+    }
+}
 
 function _init_tasks_billable_select(tasks, project_id) {
     var billable_tasks_area = $('#task_select');
@@ -2376,9 +2425,9 @@ function _init_tasks_billable_select(tasks, project_id) {
 
         $.each(tasks, function(i, obj) {
             option_data = ' ';
-            if (obj.started_timers == true) {
+            if (obj.started_timers === true) {
                 option_data += 'disabled class="text-danger important" data-subtext="' + appLang.invoice_task_billable_timers_found + '"';
-            } else if (obj.started_timers == false && obj.rel_type != 'project') {
+            } else if (obj.started_timers === false && obj.rel_type != 'project') {
                 option_data += 'data-subtext="' + obj.rel_name + '"';
             }
             billable_tasks_area.append('<option value="' + obj.id + '"' + option_data + '>' + obj.name + '</option>');
@@ -2399,10 +2448,10 @@ function _init_tasks_billable_select(tasks, project_id) {
         tasks_help_wrapper.html('<span class="pointer popover-invoker" data-container=".form-group-select-task_select" data-trigger="click" data-placement="top" data-toggle="popover" data-content="' + help_tooltip + '"><i class="fa fa-question-circle"></i></span>');
 
         delay(function() {
-            if ((tasks_help_wrapper.attr('info-shown-count') < 3 || typeof(tasks_help_wrapper.attr('info-shown-count')) == 'undefined')
-                && $('.projects-wrapper').is(':visible') && tasks.length > 0) {
-               tasks_help_wrapper.attr('info-shown-count', typeof(tasks_help_wrapper.attr('info-shown-count')) == 'undefined' ? 1 : parseInt(tasks_help_wrapper.attr('info-shown-count')) + 1);
-                tasks_help_wrapper.find('.popover-invoker').click()
+            if ((tasks_help_wrapper.attr('info-shown-count') < 3 || typeof(tasks_help_wrapper.attr('info-shown-count')) == 'undefined') &&
+                $('.projects-wrapper').is(':visible') && tasks.length > 0) {
+                tasks_help_wrapper.attr('info-shown-count', typeof(tasks_help_wrapper.attr('info-shown-count')) == 'undefined' ? 1 : parseInt(tasks_help_wrapper.attr('info-shown-count')) + 1);
+                tasks_help_wrapper.find('.popover-invoker').click();
             }
         }, 3500);
     }
@@ -2426,7 +2475,7 @@ function init_lightbox(options) {
 
 // Progress bar animation load
 function init_progress_bars() {
-    var progress_bars = $('.progress .progress-bar');
+    var progress_bars = $('body').find('.progress div.progress-bar');
     if (progress_bars.length) {
         progress_bars.each(function() {
             var bar = $(this);
@@ -2457,8 +2506,7 @@ function mainWrapperHeightFix() {
     // Get and set current height
     var headerH = 63;
     var navigationH = side_bar.height();
-    var contentH = $(".content").height();
-
+    var contentH = $("#wrapper").find('.content').height();
     setup_menu.css('min-height', ($(document).outerHeight(true) - (headerH * 2)) + 'px');
 
     content_wrapper.css('min-height', $(document).outerHeight(true) - headerH + 'px');
@@ -2498,14 +2546,14 @@ function generatePassword(field) {
     for (var i = 0, n = charset.length; i < length; ++i) {
         retVal += charset.charAt(Math.floor(Math.random() * n));
     }
-    $(field).parents().find('input.password').val(retVal)
+    $(field).parents().find('input.password').val(retVal);
 }
 
 // Switch field make request
 function switch_field(field) {
     var status, url, id;
     status = 0;
-    if ($(field).prop('checked') == true) { status = 1; }
+    if ($(field).prop('checked') === true) { status = 1; }
     url = $(field).data('switch-url');
     id = $(field).data('id');
     requestGet(url + '/' + id + '/' + status);
@@ -2532,7 +2580,7 @@ function _validate_form(form, form_rules, submithandler) {
                 } else {
                     return true;
                 }
-            }
+            },
         });
 
         var custom_required_fields = $form.find('[data-custom-field-required]');
@@ -2549,21 +2597,22 @@ function _validate_form(form, form_rules, submithandler) {
 
                     var name = $(this).attr('name');
                     var label = $(this).parents('.form-group').find('[for="' + name + '"]');
-                    if (label.length > 0 && label.find('.req').length == 0) {
+                    if (label.length > 0 && label.find('.req').length === 0) {
                         label.prepend('<small class="req text-danger">* </small>');
                     }
                 }
             });
         }
-
         $.each(form_rules, function(name, rule) {
             if ((rule == 'required' && !jQuery.isPlainObject(rule)) || (jQuery.isPlainObject(rule) && rule.hasOwnProperty('required'))) {
                 var label = $form.find('[for="' + name + '"]');
-                if (label.length > 0 && label.find('.req').length == 0) {
+                if (label.length > 0 && label.find('.req').length === 0) {
                     label.prepend(' <small class="req text-danger">* </small>');
                 }
             }
         });
+
+        $(document).trigger('app.form-validate', $form);
     }
     return false;
 }
@@ -2572,7 +2621,7 @@ function _validate_form(form, form_rules, submithandler) {
 function delete_option(child, id) {
     if (confirm_delete()) {
         requestGetJSON('settings/delete_option/' + id).done(function(response) {
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 $(child).parents('.option').remove();
             }
         });
@@ -2615,38 +2664,32 @@ function alert_float(type, message) {
 function init_rel_tasks_table(rel_id, rel_type, selector) {
     if (typeof(selector) == 'undefined') { selector = '.table-rel-tasks'; }
     var $selector = $("body").find(selector);
-    if ($selector.length == 0) { return; }
+    if ($selector.length === 0) { return; }
 
     var TasksServerParams = {},
-        not_sortable_tasks, Tasks_Filters;
+        tasksRelationTableNotSortable = [0], // bulk actions
+        TasksFilters;
 
-    Tasks_Filters = $('._hidden_inputs._filters._tasks_filters input');
+    TasksFilters = $('body').find('._hidden_inputs._filters._tasks_filters input');
 
-    $.each(Tasks_Filters, function() {
+    $.each(TasksFilters, function() {
         TasksServerParams[$(this).attr('name')] = '[name="' + $(this).attr('name') + '"]';
     });
 
     var url = admin_url + 'tasks/init_relation_tasks/' + rel_id + '/' + rel_type;
 
-    not_sortable_tasks = [($selector.find('th').length - 1)];
-
     if ($selector.attr('data-new-rel-type') == 'project') {
-        not_sortable_tasks.push(0);
         url += '?bulk_actions=true';
     }
 
-    var Api = initDataTable($selector, url, not_sortable_tasks, not_sortable_tasks, TasksServerParams, [$selector.find('th.duedate').index(), 'ASC']);
-    // Hide option on lead modal because the table reserved area is too small
-    if (Api && rel_type == 'lead') {
-        Api.column($('table .table-tasks-options').index()).visible(false, false).columns.adjust();
-    }
+    initDataTable($selector, url, tasksRelationTableNotSortable, tasksRelationTableNotSortable, TasksServerParams, [$selector.find('th.duedate').index(), 'asc']);
 }
 
 // Returns datatbles export button array based on settings
-function get_dt_export_buttons(table) {
+function get_datatable_buttons(table) {
     // pdfmake arabic fonts support
     if (app_language.toLowerCase() == 'persian' || app_language.toLowerCase() == 'arabic') {
-        if ($('body').find('#amiri').length == 0) {
+        if ($('body').find('#amiri').length === 0) {
             var mainjs = document.createElement('script');
             mainjs.setAttribute('src', 'https://rawgit.com/xErik/pdfmake-fonts-google/master/build/script/ofl/amiri.js');
             mainjs.setAttribute('id', 'amiri');
@@ -2666,8 +2709,19 @@ function get_dt_export_buttons(table) {
             // This logic may be extended in future for other similar fixes
             var newTmpRow = $('<div></div>', data);
             newTmpRow.append(data);
+
             if (newTmpRow.find('[data-note-edit-textarea]').length > 0) {
                 newTmpRow.find('[data-note-edit-textarea]').remove();
+                data = newTmpRow.html().trim();
+            }
+
+            if (newTmpRow.find('.row-options').length > 0) {
+                newTmpRow.find('.row-options').remove();
+                data = newTmpRow.html().trim();
+            }
+
+            if (newTmpRow.find('.status-table-mark').length > 0) {
+                newTmpRow.find('.status-table-mark').remove();
                 data = newTmpRow.html().trim();
             }
 
@@ -2678,110 +2732,100 @@ function get_dt_export_buttons(table) {
 
             return text.trim();
         }
-    }
+    };
+    var table_buttons_options = [];
 
-    var table_buttons_options = [{
-        extend: 'collection',
-        text: appLang.dt_button_export,
-        className: 'btn btn-default-dt-options',
-        buttons: [{
-            extend: 'excel', // Causing issues with formats, the excel is still using csv so in this case will work good
-            text: appLang.dt_button_excel,
-            footer: true,
-            exportOptions: {
-                columns: [':not(.not-export)'],
-                rows: function(index) {
-                    return _dt_maybe_export_only_selected_rows(index, table);
+    if (!table_export_button_is_hidden()) {
+        table_buttons_options.push({
+            extend: 'collection',
+            text: appLang.dt_button_export,
+            className: 'btn btn-default-dt-options',
+            buttons: [{
+                extend: 'excel', // Causing issues with formats, the excel is still using csv so in this case will work good
+                text: appLang.dt_button_excel,
+                footer: true,
+                exportOptions: {
+                    columns: [':not(.not-export)'],
+                    rows: function(index) {
+                        return _dt_maybe_export_only_selected_rows(index, table);
+                    },
+                    format: formatExport,
                 },
-                format: formatExport,
-            },
-        }, {
-            extend: 'csvHtml5',
-            text: appLang.dt_button_csv,
-            footer: true,
-            exportOptions: {
-                columns: [':not(.not-export)'],
-                rows: function(index) {
-                    return _dt_maybe_export_only_selected_rows(index, table);
-                },
-                format: formatExport,
-            }
-        }, {
-            extend: 'pdfHtml5',
-            text: appLang.dt_button_pdf,
-            footer: true,
-            exportOptions: {
-                columns: [':not(.not-export)'],
-                rows: function(index) {
-                    return _dt_maybe_export_only_selected_rows(index, table);
-                },
-                format: formatExport,
-            },
-            orientation: 'landscape',
-            customize: function(doc) {
-                // Fix for column widths
-                var table_api = $(table).DataTable();
-                var columns = table_api.columns().visible();
-                var columns_total = columns.length;
-                var pdf_widths = [];
-                var total_visible_columns = 0;
-                for (i = 0; i < columns_total; i++) {
-                    // Is only visible column
-                    if (columns[i] == true) {
-                        total_visible_columns++;
-                    }
+            }, {
+                extend: 'csvHtml5',
+                text: appLang.dt_button_csv,
+                footer: true,
+                exportOptions: {
+                    columns: [':not(.not-export)'],
+                    rows: function(index) {
+                        return _dt_maybe_export_only_selected_rows(index, table);
+                    },
+                    format: formatExport,
                 }
-                setTimeout(function() {
-                    if (total_visible_columns <= 5) {
-                        for (i = 0; i < total_visible_columns; i++) {
-                            pdf_widths.push((735 / total_visible_columns));
+            }, {
+                extend: 'pdfHtml5',
+                text: appLang.dt_button_pdf,
+                footer: true,
+                exportOptions: {
+                    columns: [':not(.not-export)'],
+                    rows: function(index) {
+                        return _dt_maybe_export_only_selected_rows(index, table);
+                    },
+                    format: formatExport,
+                },
+                orientation: 'landscape',
+                customize: function(doc) {
+                    // Fix for column widths
+                    var table_api = $(table).DataTable();
+                    var columns = table_api.columns().visible();
+                    var columns_total = columns.length;
+                    var pdf_widths = [];
+                    var total_visible_columns = 0;
+                    for (i = 0; i < columns_total; i++) {
+                        // Is only visible column
+                        if (columns[i] == true) {
+                            total_visible_columns++;
                         }
-                        doc.content[1].table.widths = pdf_widths;
                     }
-                }, 10);
+                    setTimeout(function() {
+                        if (total_visible_columns <= 5) {
+                            for (i = 0; i < total_visible_columns; i++) {
+                                pdf_widths.push((735 / total_visible_columns));
+                            }
+                            doc.content[1].table.widths = pdf_widths;
+                        }
+                    }, 10);
 
-                if (app_language.toLowerCase() == 'persian' || app_language.toLowerCase() == 'arabic') {
-                    doc.defaultStyle.font = Object.keys(pdfMake.fonts)[0];
+                    if (app_language.toLowerCase() == 'persian' || app_language.toLowerCase() == 'arabic') {
+                        doc.defaultStyle.font = Object.keys(pdfMake.fonts)[0];
+                    }
+                    //  doc.defaultStyle.font = 'test';
+                    doc.styles.tableHeader.alignment = 'left';
+                    doc.styles.tableHeader.margin = [5, 5, 5, 5];
+                    doc.pageMargins = [12, 12, 12, 12];
                 }
-                //  doc.defaultStyle.font = 'test';
-                doc.styles.tableHeader.alignment = 'left';
-                doc.styles.tableHeader.margin = [5, 5, 5, 5];
-                doc.pageMargins = [12, 12, 12, 12];
-            }
-        }, {
-            extend: 'print',
-            text: appLang.dt_button_print,
-            footer: true,
-            exportOptions: {
-                columns: [':not(.not-export)'],
-                rows: function(index) {
-                    return _dt_maybe_export_only_selected_rows(index, table);
-                },
-                format: formatExport,
-            }
-        }],
-    }, {
-        extend: 'colvis',
-        postfixButtons: ['colvisRestore'],
-        className: 'btn btn-default-dt-options dt-column-visibility',
-        text: appLang.dt_button_column_visibility
-    }];
-
-    if (app_show_table_columns_visibility == 0) {
-        delete table_buttons_options[1];
+            }, {
+                extend: 'print',
+                text: appLang.dt_button_print,
+                footer: true,
+                exportOptions: {
+                    columns: [':not(.not-export)'],
+                    rows: function(index) {
+                        return _dt_maybe_export_only_selected_rows(index, table);
+                    },
+                    format: formatExport,
+                }
+            }],
+        });
     }
-
-    if (table_export_button_is_hidden()) {
-        delete table_buttons_options[0];
-    }
-
     var tableButtons = $("body").find('.table-btn');
+
     $.each(tableButtons, function() {
         var b = $(this);
         if (b.length && b.attr('data-table')) {
             if ($(table).is(b.attr('data-table'))) {
                 table_buttons_options.push({
-                    text: b.text(),
+                    text: b.text().trim(),
                     className: 'btn btn-default-dt-options',
                     action: function(e, dt, node, config) {
                         b.click();
@@ -2791,13 +2835,27 @@ function get_dt_export_buttons(table) {
         }
     });
 
-    table_buttons_options.push({
-        text: '<i class="fa fa-refresh"></i>',
-        className: 'btn btn-default-dt-options btn-dt-reload',
-        action: function(e, dt, node, config) {
-            dt.ajax.reload();
-        }
-    });
+    if (!$(table).hasClass('dt-no-serverside')) {
+        table_buttons_options.push({
+            text: '<i class="fa fa-refresh"></i>',
+            className: 'btn btn-default-dt-options btn-dt-reload',
+            action: function(e, dt, node, config) {
+                dt.ajax.reload();
+            }
+        });
+    }
+
+    // TODO
+    // console.log
+
+    /*   if ($(table).hasClass('customizable-table')) {
+            table_buttons_options.push({
+                columns: '.toggleable',
+                text: '<i class="fa fa-cog"></i>',
+                extend: 'colvis',
+                className: 'btn btn-default-dt-options dt-column-visibility',
+            });
+        }*/
 
     return table_buttons_options;
 }
@@ -2805,7 +2863,7 @@ function get_dt_export_buttons(table) {
 // Check if table export button should be hidden based on settings
 function table_export_button_is_hidden() {
     if (app_show_table_export_button != 'to_all') {
-        if (app_show_table_export_button == 'hide' || app_show_table_export_button == 'only_admins' && is_admin == 0) {
+        if (app_show_table_export_button === 'hide' || app_show_table_export_button === 'only_admins' && is_admin == 0) {
             return true;
         }
     }
@@ -2851,7 +2909,6 @@ function _table_jump_to_page(table, oSettings) {
 
     var paginationData = table.DataTable().page.info();
     var previousDtPageJump = $("body").find('#dt-page-jump-' + oSettings.sTableId);
-    var currentPage = null;
 
     if (previousDtPageJump.length) {
         previousDtPageJump.remove();
@@ -2881,7 +2938,7 @@ function initDataTableInline(dt_table) {
     var selector = typeof(dt_table) !== 'undefined' ? dt_table : '.dt-table';
     var tables = $(selector);
 
-    if (tables.length == 0) {
+    if (tables.length === 0) {
         return;
     }
 
@@ -2891,8 +2948,8 @@ function initDataTableInline(dt_table) {
     app_tables_pagination_limit = parseFloat(app_tables_pagination_limit);
 
     if ($.inArray(app_tables_pagination_limit, length_options) == -1) {
-        length_options.push(app_tables_pagination_limit)
-        length_options_names.push(app_tables_pagination_limit)
+        length_options.push(app_tables_pagination_limit);
+        length_options_names.push(app_tables_pagination_limit);
     }
 
     length_options.sort(function(a, b) {
@@ -2915,13 +2972,13 @@ function initDataTableInline(dt_table) {
             'paginate': true,
             "responsive": true,
             "autoWidth": false,
-            "order": [0, 'DESC'],
+            "order": [0, 'desc'],
             "pageLength": app_tables_pagination_limit,
             "lengthMenu": [length_options, length_options_names],
             "fnRowCallback": DataTablesOfflineLazyLoadImages,
             "fnDrawCallback": function(oSettings) {
                 _table_jump_to_page(this, oSettings);
-                if (oSettings.aoData.length == 0 || oSettings.aiDisplay.length == 0) {
+                if (oSettings.aoData.length === 0 || oSettings.aiDisplay.length === 0) {
                     $(oSettings.nTableWrapper).addClass('app_dt_empty');
                 } else {
                     $(oSettings.nTableWrapper).removeClass('app_dt_empty');
@@ -2949,10 +3006,10 @@ function initDataTableInline(dt_table) {
                 }
             },
             dom: "<'row'><'row'<'col-md-6'lB><'col-md-6'f>r>t<'row'<'col-md-4'i>><'row'<'#colvis'><'.dt-page-jump'>p>",
-        }
+        };
 
-        var order_col = $($(this)).attr('data-order-col');
-        var order_type = $($(this)).attr('data-order-type');
+        order_col = $($(this)).attr('data-order-col');
+        order_type = $($(this)).attr('data-order-type');
         $.each(tables, function() {
             $(this).addClass('dt-no-serverside');
             options = _options;
@@ -2964,11 +3021,10 @@ function initDataTableInline(dt_table) {
             if (order_col && order_type) {
                 options.order = [
                     [order_col, order_type]
-                ]
+                ];
             }
-            _buttons = get_dt_export_buttons(this);
+            _buttons = get_datatable_buttons(this);
             // Remove the reload button here because its not ajax request
-            delete _buttons[2];
             options.buttons = _buttons;
             var tableApi = $(this).DataTable(options);
             $(document).on("change", ".dt-page-jump-select", function() {
@@ -2982,7 +3038,7 @@ function initDataTableInline(dt_table) {
 function initDataTable(selector, url, notsearchable, notsortable, fnserverparams, defaultorder) {
     var table = typeof(selector) == 'string' ? $("body").find('table' + selector) : selector;
 
-    if (table.length == 0) {
+    if (table.length === 0) {
         return false;
     }
 
@@ -2991,11 +3047,27 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
     // If not order is passed order by the first column
     if (typeof(defaultorder) == 'undefined') {
         defaultorder = [
-            [0, 'ASC']
+            [0, 'asc']
         ];
     } else {
-        if (defaultorder.length == 1) {
-            defaultorder = [defaultorder]
+        if (defaultorder.length === 1) {
+            defaultorder = [defaultorder];
+        }
+    }
+
+    var user_table_default_order = table.attr('data-default-order');
+
+    if (!empty(user_table_default_order)) {
+        var tmp_new_default_order = JSON.parse(user_table_default_order);
+        var new_defaultorder = [];
+        for (var i in tmp_new_default_order) {
+            // If the order index do not exists will throw errors
+            if (table.find('thead th:eq(' + tmp_new_default_order[i][0] + ')').length > 0) {
+                new_defaultorder.push(tmp_new_default_order[i]);
+            }
+        }
+        if (new_defaultorder.length > 0) {
+            defaultorder = new_defaultorder;
         }
     }
 
@@ -3005,8 +3077,8 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
     app_tables_pagination_limit = parseFloat(app_tables_pagination_limit);
 
     if ($.inArray(app_tables_pagination_limit, length_options) == -1) {
-        length_options.push(app_tables_pagination_limit)
-        length_options_names.push(app_tables_pagination_limit)
+        length_options.push(app_tables_pagination_limit);
+        length_options_names.push(app_tables_pagination_limit);
     }
 
     length_options.sort(function(a, b) {
@@ -3029,7 +3101,7 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
         "bDeferRender": true,
         "responsive": true,
         "autoWidth": false,
-        dom: "<'row'><'row'<'col-md-7'lB><'col-md-5'f>r>t<'row'<'col-md-4'i>><'row'<'#colvis'><'.dt-page-jump'>p>",
+        dom: "<'row'><'row'<'col-md-7'lB><'col-md-5'f>>rt<'row'<'col-md-4'i>><'row'<'#colvis'><'.dt-page-jump'>p>",
         "pageLength": app_tables_pagination_limit,
         "lengthMenu": [length_options, length_options_names],
         "columnDefs": [{
@@ -3041,7 +3113,7 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
         }],
         "fnDrawCallback": function(oSettings) {
             _table_jump_to_page(this, oSettings);
-            if (oSettings.aoData.length == 0) {
+            if (oSettings.aoData.length === 0) {
                 $(oSettings.nTableWrapper).addClass('app_dt_empty');
             } else {
                 $(oSettings.nTableWrapper).removeClass('app_dt_empty');
@@ -3049,14 +3121,18 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
         },
         "fnCreatedRow": function(nRow, aData, iDataIndex) {
             // If tooltips found
-            $(nRow).attr('data-title', aData.Data_Title)
-            $(nRow).attr('data-toggle', aData.Data_Toggle)
+            $(nRow).attr('data-title', aData.Data_Title);
+            $(nRow).attr('data-toggle', aData.Data_Toggle);
         },
         "initComplete": function(settings, json) {
             var t = this;
+            var $btnReload = $('.btn-dt-reload');
+            $btnReload.attr('data-toggle', 'tooltip');
+            $btnReload.attr('title', appLang.dt_button_reload);
 
-            $('.btn-dt-reload').attr('data-toggle', 'tooltip');
-            $('.btn-dt-reload').attr('title', appLang.dt_button_reload);
+            var $btnColVis = $('.dt-column-visibility');
+            $btnColVis.attr('data-toggle', 'tooltip');
+            $btnColVis.attr('title', appLang.dt_button_column_visibility);
 
             if (t.hasClass('scroll-responsive') || app_scroll_responsive_tables == 1) {
                 t.wrap('<div class="table-responsive"></div>');
@@ -3096,14 +3172,12 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
                 for (var key in fnserverparams) {
                     d[key] = $(fnserverparams[key]).val();
                 }
-            },
-            "error": function(error) {
-                if (error.responseText != '') {
-                    alert_float('danger', error.responseText);
+                if (table.attr('data-last-order-identifier')) {
+                    d['last_order_identifier'] = table.attr('data-last-order-identifier');
                 }
-            },
+            }
         },
-        buttons: get_dt_export_buttons(table),
+        buttons: get_datatable_buttons(table),
     };
 
     if (table.hasClass('scroll-responsive') || app_scroll_responsive_tables == 1) {
@@ -3111,7 +3185,6 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
     }
 
     table = table.dataTable(dtSettings);
-
     var tableApi = table.DataTable();
 
     var hiddenHeadings = table.find('th.not_visible');
@@ -3127,10 +3200,64 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
         }
     }, 10);
 
+    if (table.hasClass('customizable-table')) {
+
+        var tableToggleAbleHeadings = table.find('th.toggleable');
+        var invisible = $('#hidden-columns-' + table.attr('id'));
+        try {
+            invisible = JSON.parse(invisible.text());
+        } catch (err) {
+            invisible = [];
+        }
+
+        $.each(tableToggleAbleHeadings, function() {
+            var cID = $(this).attr('id');
+            if ($.inArray(cID, invisible) > -1) {
+                tableApi.column('#' + cID).visible(false);
+            }
+        });
+
+        // For for not blurring out when clicked on the link
+        // Causing issues hidden column still to be shown as not hidden because the link is focused
+        $('body').on('click', '.buttons-columnVisibility a', function() {
+            $(this).blur();
+        });
+        /*
+                table.on('column-visibility.dt', function(e, settings, column, state) {
+                    var hidden = [];
+                    $.each(tableApi.columns()[0], function() {
+                        var visible = tableApi.column($(this)).visible();
+                        var columnHeader = $(tableApi.column($(this)).header());
+                        if (columnHeader.hasClass('toggleable')) {
+                            if (!visible) {
+                                hidden.push(columnHeader.attr('id'))
+                            }
+                        }
+                    });
+                    var data = {};
+                    data.id = table.attr('id');
+                    data.hidden = hidden;
+                    if (data.id) {
+                        $.post(admin_url + 'staff/save_hidden_table_columns', data).fail(function(data) {
+                            // Demo usage, prevent multiple alerts
+                            if ($('body').find('.float-alert').length === 0) {
+                                alert_float('danger', data.responseText);
+                            }
+                        });
+                    } else {
+                        console.error('Table that have ability to show/hide columns must have an ID');
+                    }
+                });*/
+    }
+
     // Fix for hidden tables colspan not correct if the table is empty
     if (table.is(':hidden')) {
         table.find('.dataTables_empty').attr('colspan', table.find('thead th').length);
     }
+
+    table.on('preXhr.dt', function(e, settings, data) {
+        if (settings.jqXHR) settings.jqXHR.abort();
+    });
 
     $(document).on("change", ".dt-page-jump-select", function() {
         tableApi.page($(this).val() - 1).draw(false);
@@ -3150,8 +3277,9 @@ function task_single_update_tags() {
 
 // By default only 2 attachments for tasks are shown the other are hidden and there is button show more, this will show all the attachments
 function task_attachments_toggle() {
-    $("body").find('.task-attachments-more').toggleClass('hide');
-    $("body").find('.task-attachments-less').toggleClass('hide');
+    var $taskModal = $('#task-modal');
+    $taskModal.find('.task_attachments_wrapper .task-attachments-more').toggleClass('hide');
+    $taskModal.find('.task_attachments_wrapper .task-attachments-less').toggleClass('hide');
 }
 
 // Update todo items when drop happen
@@ -3165,14 +3293,14 @@ function update_todo_items() {
         $(this).find('input[name="finished"]').val(0);
         i++;
     });
-    if (unfinished_items.length == 0) {
+    if (unfinished_items.length === 0) {
         $('.nav-total-todos').addClass('hide');
         $('.unfinished-todos li.no-todos').removeClass('hide');
     } else if (unfinished_items.length > 0) {
         if (!$('.unfinished-todos li.no-todos').hasClass('hide')) {
             $('.unfinished-todos li.no-todos').addClass('hide');
         }
-        $('.nav-total-todos').removeClass('hide').html(unfinished_items.length)
+        $('.nav-total-todos').removeClass('hide').html(unfinished_items.length);
     }
     x = 1;
     $.each(finished, function() {
@@ -3182,7 +3310,7 @@ function update_todo_items() {
         i++;
         x++;
     });
-    if (finished.length == 0) {
+    if (finished.length === 0) {
         $('.finished-todos li.no-todos').removeClass('hide');
     } else if (finished.length > 0) {
         if (!$('.finished-todos li.no-todos').hasClass('hide')) {
@@ -3193,7 +3321,7 @@ function update_todo_items() {
     $.each(unfinished_items, function() {
         var description = $(this).find('.todo-description');
         if (description.hasClass('line-throught')) {
-            description.removeClass('line-throught')
+            description.removeClass('line-throught');
         }
         $(this).find('input[type="checkbox"]').prop('checked', false);
         update.push([
@@ -3205,7 +3333,7 @@ function update_todo_items() {
     $.each(finished, function() {
         var description = $(this).find('.todo-description');
         if (!description.hasClass('line-throught')) {
-            description.addClass('line-throught')
+            description.addClass('line-throught');
         }
         update.push([
             $(this).find('input[name="todo_id"]').val(),
@@ -3221,7 +3349,7 @@ function update_todo_items() {
 // Delete single todo item
 function delete_todo_item(list, id) {
     requestGetJSON('todo/delete_todo_item/' + id).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             $(list).parents('li').remove();
             update_todo_items();
         }
@@ -3244,10 +3372,10 @@ function init_datepicker(element, element_time) {
     var datepickers = typeof(element) == 'undefined' ? $('.datepicker') : element;
     var datetimepickers = typeof(element_time) == 'undefined' ? $('.datetimepicker') : element_time;
 
-    if (datetimepickers.length == 0 && datepickers.length == 0) { return; }
-    var opt;
+    if (datetimepickers.length === 0 && datepickers.length === 0) { return; }
     // Datepicker without time
     $.each(datepickers, function() {
+        var that = $(this);
         var opt = {
             timepicker: false,
             scrollInput: false,
@@ -3257,21 +3385,28 @@ function init_datepicker(element, element_time) {
         };
 
         // Check in case the input have date-end-date or date-min-date
-        var max_date = $(this).data('date-end-date');
-        var min_date = $(this).data('date-min-date');
+        var max_date = that.data('date-end-date');
+        var min_date = that.data('date-min-date');
         if (max_date) {
             opt.maxDate = max_date;
         }
         if (min_date) {
             opt.minDate = min_date;
         }
+
         // Init the picker
-        $(this).datetimepicker(opt);
+        that.datetimepicker(opt);
+
+        that.parents('.form-group').find('.calendar-icon').on('click', function() {
+            that.focus();
+            that.trigger('open.xdsoft');
+        });
     });
-    var opt_time;
+
     // Datepicker with time
     $.each(datetimepickers, function() {
-        opt_time = {
+        var that = $(this);
+        var opt_time = {
             lazyInit: true,
             scrollInput: false,
             validateOnBlur: false,
@@ -3284,8 +3419,8 @@ function init_datepicker(element, element_time) {
             opt_time.formatTime = 'g:i A';
         }
         // Check in case the input have date-end-date or date-min-date
-        var max_date = $(this).data('date-end-date');
-        var min_date = $(this).data('date-min-date');
+        var max_date = that.data('date-end-date');
+        var min_date = that.data('date-min-date');
         if (max_date) {
             opt_time.maxDate = max_date;
         }
@@ -3293,7 +3428,12 @@ function init_datepicker(element, element_time) {
             opt_time.minDate = min_date;
         }
         // Init the picker
-        $(this).datetimepicker(opt_time);
+        that.datetimepicker(opt_time);
+
+        that.parents('.form-group').find('.calendar-icon').on('click', function() {
+            that.focus();
+            that.trigger('open.xdsoft');
+        });
     });
 }
 
@@ -3367,7 +3507,8 @@ function dt_custom_view(value, table, custom_input_name, clear_other_filters) {
 
 // Sets table filters dropdown to active
 function do_filter_active(value, parent_selector) {
-    if (value != '' && typeof(value) != 'undefined') {
+    if (value !== '' && typeof(value) != 'undefined') {
+
         $('[data-cview="all"]').parents('li').removeClass('active');
         var selector = $('[data-cview="' + value + '"]');
         if (typeof(parent_selector) != 'undefined') {
@@ -3377,7 +3518,10 @@ function do_filter_active(value, parent_selector) {
         if (parent.hasClass('filter-group')) {
             var group = parent.data('filter-group');
             $('[data-filter-group="' + group + '"]').not(parent).removeClass('active');
-            $('input[name="' + value + '"]').val('');
+            $.each($('[data-filter-group="' + group + '"]').not(parent), function() {
+                $('input[name="' + $(this).find('a').attr('data-cview') + '"]').val('');
+            });
+            //   $('input[name="' + value + '"]').val('');
         }
         if (!parent.not('.dropdown-submenu').hasClass('active')) {
             parent.addClass('active');
@@ -3387,7 +3531,7 @@ function do_filter_active(value, parent_selector) {
             // Remove active class from the parent dropdown if nothing selected in the child dropdown
             var parents_sub = selector.parents('li.dropdown-submenu');
             if (parents_sub.length > 0) {
-                if (parents_sub.find('li.active').length == 0) {
+                if (parents_sub.find('li.active').length === 0) {
                     parents_sub.removeClass('active');
                 }
             }
@@ -3418,7 +3562,7 @@ function init_roles_permissions(roleid, user_changed) {
     }
 
     // Last if the roleid is blank return
-    if (roleid == '') {
+    if (roleid === '') {
         return;
     }
 
@@ -3432,20 +3576,20 @@ function init_roles_permissions(roleid, user_changed) {
             var row = $(this);
 
             // No permissions for this role
-            if (response.length == 0) {
+            if (response.length === 0) {
                 row.find('input[type="checkbox"]').prop('checked', false);
             }
 
             $.each(response, function(i, obj) {
                 if (permissionid == obj.permissionid) {
                     can_view_st = (obj.can_view == 1 ? true : false);
-                    can_view_own_st = (obj.can_view_own == 1 ? true : false)
+                    can_view_own_st = (obj.can_view_own == 1 ? true : false);
                     row.find('[data-can-view]').prop('checked', can_view_st);
-                    if (can_view_st == true) {
+                    if (can_view_st === true) {
                         row.find('[data-can-view]').change();
                     }
                     row.find('[data-can-view-own]').prop('checked', can_view_own_st);
-                    if (can_view_own_st == true) {
+                    if (can_view_own_st === true) {
                         row.find('[data-can-view-own]').change();
                     }
                     row.find('[data-can-edit]').prop('checked', (obj.can_edit == 1 ? true : false));
@@ -3466,7 +3610,7 @@ function toggle_small_view(table, main_data) {
 
     $("body").toggleClass('small-table');
     var tablewrap = $('#small-table');
-    if (tablewrap.length == 0) { return; }
+    if (tablewrap.length === 0) { return; }
     var _visible = false;
     if (tablewrap.hasClass('col-md-5')) {
         tablewrap.removeClass('col-md-5').addClass('col-md-12');
@@ -3480,7 +3624,8 @@ function toggle_small_view(table, main_data) {
     // Show hide hidden columns
     _table.columns(hidden_columns).visible(_visible, false);
     _table.columns.adjust();
-    $(main_data).toggleClass('hide')
+    $(main_data).toggleClass('hide');
+    $(window).trigger('resize');
 }
 
 // Strip html from string
@@ -3499,7 +3644,7 @@ function empty(data) {
         return true;
     }
     if (typeof(data.length) != 'undefined') {
-        return data.length == 0;
+        return data.length === 0;
     }
     var count = 0;
     for (var i in data) {
@@ -3507,7 +3652,7 @@ function empty(data) {
             count++;
         }
     }
-    return count == 0;
+    return count === 0;
 }
 
 // Is mobile checker javascript
@@ -3573,9 +3718,11 @@ function elFinderBrowser(field_name, url, type, win) {
 
 // Function to init the tinymce editor
 function init_editor(selector, settings) {
+
     selector = typeof(selector) == 'undefined' ? '.tinymce' : selector;
     var _editor_selector_check = $(selector);
-    if (_editor_selector_check.length == 0) { return; }
+
+    if (_editor_selector_check.length === 0) { return; }
 
     $.each(_editor_selector_check, function() {
         if ($(this).hasClass('tinymce-manual')) {
@@ -3591,11 +3738,12 @@ function init_editor(selector, settings) {
         height: 400,
         theme: 'modern',
         skin: 'perfex',
-        language: tinymce_lang,
+        language: tinymceLang,
         relative_urls: false,
         inline_styles: true,
         verify_html: false,
         cleanup: false,
+        autoresize_bottom_margin: 25,
         valid_elements: '+*[*]',
         valid_children: "+body[style], +style[type]",
         apply_source_formatting: false,
@@ -3654,7 +3802,7 @@ function _formatMenuIconInput(e) {
 // Show password on hidden input field
 function showPassword(name) {
     var target = $('input[name="' + name + '"]');
-    if ($(target).attr('type') == 'password' && $(target).val() != '') {
+    if ($(target).attr('type') == 'password' && $(target).val() !== '') {
         $(target)
             .queue(function() {
                 $(target).attr('type', 'text').dequeue();
@@ -3670,6 +3818,11 @@ function showPassword(name) {
 // Will show all buttons tooltips as regular button with text
 function init_btn_with_tooltips() {
     if (is_mobile()) {
+
+        var is_iPad = navigator.userAgent.match(/iPad/i) != null;
+        if (is_iPad) {
+            return false;
+        }
         var tooltips_href_btn = $('._buttons').find('.btn-with-tooltip');
         $.each(tooltips_href_btn, function() {
             var title = $(this).attr('title');
@@ -3720,7 +3873,7 @@ function init_form_reminder() {
 function edit_reminder(id, e) {
     requestGetJSON('misc/get_reminder/' + id).done(function(response) {
         var $reminderModal = $('.reminder-modal-' + response.rel_type + '-' + response.rel_id);
-        if ($reminderModal.length === 0 && $('body').hasClass('all_reminders')) {
+        if ($reminderModal.length === 0 && $('body').hasClass('all-reminders')) {
             // maybe from view all reminders?
             $reminderModal = $('.reminder-modal--');
             $reminderModal.find('input[name="rel_type"]').val(response.rel_type);
@@ -3739,18 +3892,17 @@ function edit_reminder(id, e) {
 function reminderFormHandler(form) {
     form = $(form);
     var data = form.serialize();
-    var serializeArray = $(form).serializeArray();
     $.post(form.attr('action'), data).done(function(data) {
 
         data = JSON.parse(data);
 
-        if (data.message != '') {
+        if (data.message !== '') {
             alert_float(data.alert_type, data.message);
         }
         reload_reminders_tables();
     });
 
-    if ($('body').hasClass('all_reminders')) {
+    if ($('body').hasClass('all-reminders')) {
         $('.reminder-modal--').modal('hide');
     } else {
         $('.reminder-modal-' + form.find('[name="rel_type"]').val() + '-' + form.find('[name="rel_id"]').val()).modal('hide');
@@ -3772,7 +3924,7 @@ function reload_reminders_tables() {
 
 // Function to close modal manually... needed in some modals where the data is flexible.
 function close_modal_manually(modal) {
-    modal = $(modal).length == 0 ? $("body").find(modal) : modal = $(modal);
+    modal = $(modal).length === 0 ? $("body").find(modal) : modal = $(modal);
     modal.fadeOut('fast', function() {
         modal.remove();
         if (!$("body").find('.modal').is(':visible')) {
@@ -3791,12 +3943,12 @@ function toggle_edit_note(id) {
 // Global function to edit note
 function edit_note(id) {
     var description = $("body").find('[data-note-edit-textarea="' + id + '"] textarea').val();
-    if (description != '') {
+    if (description !== '') {
         $.post(admin_url + 'misc/edit_note/' + id, {
             description: description
         }).done(function(response) {
             response = JSON.parse(response);
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 alert_float('success', response.message);
                 $("body").find('[data-note-description="' + id + '"]').html(nl2br(description));
             }
@@ -3845,12 +3997,12 @@ function kanban_load_more(status_id, e, url, column_px, container_px) {
 
         var sort_type = $('input[name="sort_type"]');
         var sort = $('input[name="sort"]').val();
-        if (sort_type.length != 0 && sort_type.val() != '') {
+        if (sort_type.length != 0 && sort_type.val() !== '') {
             LoadMoreParameters['sort_by'] = sort_type.val();
             LoadMoreParameters['sort'] = sort;
         }
 
-        if (typeof(search) != 'undefined' && search != '') {
+        if (typeof(search) != 'undefined' && search !== '') {
             LoadMoreParameters['search'] = search;
         }
 
@@ -3860,7 +4012,7 @@ function kanban_load_more(status_id, e, url, column_px, container_px) {
             } else {
                 _kanban_param_val = $(this).val();
             }
-            if (_kanban_param_val != '') {
+            if (_kanban_param_val !== '') {
                 LoadMoreParameters[$(this).attr('name')] = _kanban_param_val;
             }
         });
@@ -3899,7 +4051,7 @@ function check_kanban_empty_col(selector) {
 // General function to init kan ban based on settings
 function init_kanban(url, callbackUpdate, connect_with, column_px, container_px, callback_after_load) {
 
-    if ($('#kan-ban').length == 0) { return; }
+    if ($('#kan-ban').length === 0) { return; }
     var parameters = [];
     var _kanban_param_val;
 
@@ -3909,7 +4061,7 @@ function init_kanban(url, callbackUpdate, connect_with, column_px, container_px,
         } else {
             _kanban_param_val = $(this).val();
         }
-        if (_kanban_param_val != '') {
+        if (_kanban_param_val !== '') {
             parameters[$(this).attr('name')] = _kanban_param_val;
         }
     });
@@ -3919,13 +4071,13 @@ function init_kanban(url, callbackUpdate, connect_with, column_px, container_px,
 
     var sort_type = $('input[name="sort_type"]');
     var sort = $('input[name="sort"]').val();
-    if (sort_type.length != 0 && sort_type.val() != '') {
+    if (sort_type.length != 0 && sort_type.val() !== '') {
         parameters['sort_by'] = sort_type.val();
         parameters['sort'] = sort;
     }
 
     parameters['kanban'] = true;
-    var url = admin_url + url;
+    url = admin_url + url;
     url = buildUrl(url, parameters);
     delay(function() {
         $("body").append('<div class="dt-loader"></div>');
@@ -4072,7 +4224,7 @@ function init_newsfeed_form() {
         },
         complete: function(file) {},
         drop: function(file) {
-            $('#new-post-form').removeClass('dropzone-active')
+            $('#new-post-form').removeClass('dropzone-active');
         },
         success: function(files, response) {
             if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
@@ -4088,7 +4240,7 @@ function init_newsfeed_form() {
 // Clear newsfeed new post area
 function clear_newsfeed_post_area() {
     $('#new-post-form textarea').val('');
-    $('#post-visibility').selectpicker('val', 'all');
+    $('#post-visibility').selectpicker('deselectAll');
 }
 
 // Load post likes modal
@@ -4099,7 +4251,7 @@ function load_post_likes(postid) {
             page: track_load_post_likes,
             postid: postid
         }).done(function(response) {
-            track_load_post_likes++
+            track_load_post_likes++;
             $('#modal_post_likes_wrapper').append(response);
         });
 
@@ -4117,7 +4269,7 @@ function load_comment_likes(commentid) {
             page: track_load_comment_likes,
             commentid: commentid
         }).done(function(response) {
-            track_load_comment_likes++
+            track_load_comment_likes++;
             $('#modal_comment_likes_wrapper').append(response);
         });
 
@@ -4155,8 +4307,8 @@ function newsfeed_new_post(postid) {
     data.postid = postid;
     $.post(admin_url + 'newsfeed/load_newsfeed', data).done(function(response) {
         var pinned = $('#newsfeed_data').find('.pinned');
-        var pinned_length = pinned.length
-        if (pinned_length == 0) {
+        var pinned_length = pinned.length;
+        if (pinned_length === 0) {
             $('#newsfeed_data').prepend(response);
         } else {
             var last_pinned = $('#newsfeed_data').find('.pinned').eq(pinned_length - 1);
@@ -4176,7 +4328,7 @@ function load_newsfeed(postid) {
     var total_pages = $('input[name="total_pages_newsfeed"]').val();
     if (newsfeed_posts_page <= total_pages) {
         $.post(admin_url + 'newsfeed/load_newsfeed', data).done(function(response) {
-            newsfeed_posts_page++
+            newsfeed_posts_page++;
             $('#newsfeed_data').append(response);
         });
         if (newsfeed_posts_page >= total_pages - 1) { return; }
@@ -4186,21 +4338,21 @@ function load_newsfeed(postid) {
 // When user click heart button
 function like_post(postid) {
     requestGetJSON('newsfeed/like_post/' + postid).done(function(response) {
-        if (response.success == true) { refresh_post_likes(postid); }
+        if (response.success === true || response.success == 'true') { refresh_post_likes(postid); }
     });
 }
 
 // Unlikes post
 function unlike_post(postid) {
     requestGetJSON('newsfeed/unlike_post/' + postid).done(function(response) {
-        if (response.success == true) { refresh_post_likes(postid); }
+        if (response.success === true || response.success == 'true') { refresh_post_likes(postid); }
     });
 }
 
 // Like post comment
 function like_comment(commentid, postid) {
     requestGetJSON('newsfeed/like_comment/' + commentid + '/' + postid).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             $('[data-commentid="' + commentid + '"]').replaceWith(response.comment);
         }
     });
@@ -4209,7 +4361,7 @@ function like_comment(commentid, postid) {
 // Unlike post comment
 function unlike_comment(commentid, postid) {
     requestGetJSON('newsfeed/unlike_comment/' + commentid + '/' + postid).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             $('[data-commentid="' + commentid + '"]').replaceWith(response.comment);
         }
     });
@@ -4223,7 +4375,7 @@ function add_comment(input) {
         postid: postid
     }).done(function(response) {
         response = JSON.parse(response);
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             $(input).val('');
             if ($("body").find('[data-comments-postid="' + postid + '"] .post-comment').length > 0) {
                 $("body").find('[data-comments-postid="' + postid + '"] .post-comment').prepend(response.comment);
@@ -4237,7 +4389,7 @@ function add_comment(input) {
 // Removes post comment
 function remove_post_comment(id, postid) {
     requestGetJSON('newsfeed/remove_post_comment/' + id + '/' + postid).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             $('.comment[data-commentid="' + id + '"]').remove();
         }
     });
@@ -4261,7 +4413,7 @@ function refresh_post_comments(postid) {
 function delete_post(postid) {
     if (confirm_delete()) {
         $.post(admin_url + 'newsfeed/delete_post/' + postid, function(response) {
-            if (response.success == true) { $('[data-main-postid="' + postid + '"]').remove(); }
+            if (response.success === true || response.success == 'true') { $('[data-main-postid="' + postid + '"]').remove(); }
         }, 'json');
     }
 }
@@ -4269,14 +4421,14 @@ function delete_post(postid) {
 // Pin post to top
 function pin_post(id) {
     requestGetJSON('newsfeed/pin_newsfeed_post/' + id).done(function(response) {
-        if (response.success == true) { window.location.reload(); }
+        if (response.success === true || response.success == 'true') { window.location.reload(); }
     });
 }
 
 // Unpin post from top
 function unpin_post(id) {
     requestGetJSON('newsfeed/unpin_newsfeed_post/' + id).done(function(response) {
-        if (response.success == true) { window.location.reload(); }
+        if (response.success === true || response.success == 'true') { window.location.reload(); }
     });
 }
 
@@ -4287,6 +4439,7 @@ function _gen_lead_add_inline_on_select_field(type) {
     }
     html = "<div id=\"new_lead_" + type + "_inline\" class=\"form-group\"><label for=\"new_" + type + "_name\">" + $('label[for=\"' + type + '\"]').html().trim() + "</label><div class=\"input-group\"><input type=\"text\" id=\"new_" + type + "_name\" name=\"new_" + type + "_name\" class=\"form-control\"><div class=\"input-group-addon\"><a href=\"#\" onclick=\"lead_add_inline_select_submit('" + type + "'); return false;\" class=\"lead-add-inline-submit-" + type + "\"><i class=\"fa fa-check\"></i></a></div></div></div>";
     $('.form-group-select-input-' + type).after(html);
+    $('body').find('#new_'+type+'_name').focus();
     $('.lead-save-btn,#form_info button[type="submit"],#leads-email-integration button[type="submit"],.btn-import-submit').prop('disabled', true);
     $(".inline-field-new").addClass('disabled').css('opacity', 0.5);
     $('.form-group-select-input-' + type).addClass('hide');
@@ -4302,7 +4455,7 @@ function new_lead_source_inline() {
 
 function lead_add_inline_select_submit(type) {
     var val = $('#new_' + type + '_name').val().trim();
-    if (val != '') {
+    if (val !== '') {
 
         var requestURI = type;
         if (type.indexOf('lead_') > -1) {
@@ -4314,7 +4467,7 @@ function lead_add_inline_select_submit(type) {
         data.inline = true;
         $.post(admin_url + 'leads/' + requestURI, data).done(function(response) {
             response = JSON.parse(response);
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 var select = $('body').find('select#' + type);
                 select.append('<option value="' + response.id + '">' + val + '</option>');
                 select.selectpicker('val', response.id);
@@ -4331,12 +4484,12 @@ function lead_add_inline_select_submit(type) {
 }
 
 // Init lead for add/edit/view or refresh data
-function init_lead(id) {
+function init_lead(id, isEdit) {
     if ($('#task-modal').is(':visible')) {
         $('#task-modal').modal('hide');
     }
     // In case header error
-    if (init_lead_modal_data(id)) {
+    if (init_lead_modal_data(id, undefined, isEdit)) {
         $('#lead-modal').modal('show');
     }
 }
@@ -4384,7 +4537,7 @@ function validate_lead_convert_to_client_form() {
             required: {
                 depends: function(element) {
                     var sent_set_password = $('input[name="send_set_password_email"]');
-                    if (sent_set_password.prop('checked') == false) {
+                    if (sent_set_password.prop('checked') === false) {
                         return true;
                     }
                 }
@@ -4415,12 +4568,11 @@ function validate_lead_convert_to_client_form() {
 function lead_profile_form_handler(form) {
     form = $(form);
     var data = form.serialize();
-    var serializeArray = $(form).serializeArray();
     var leadid = $('#lead-modal').find('input[name="leadid"]').val();
     $('.lead-save-btn').addClass('disabled');
     $.post(form.attr('action'), data).done(function(response) {
         response = JSON.parse(response);
-        if (response.message != '') {
+        if (response.message !== '') {
             alert_float('success', response.message);
         }
         if (response.proposal_warning && response.proposal_warning != false) {
@@ -4461,9 +4613,10 @@ function _lead_init_data(data, id) {
     var hash = window.location.hash;
 
     var $leadModal = $('#lead-modal');
-    $('#lead_reminder_modal').html(data.leadView.reminder_data)
+    $('#lead_reminder_modal').html(data.leadView.reminder_data);
 
     $leadModal.find('.data').html(data.leadView.data);
+
     $leadModal.modal({ show: true, backdrop: 'static' });
     init_tags_inputs();
     init_selectpicker();
@@ -4472,10 +4625,13 @@ function _lead_init_data(data, id) {
     init_color_pickers();
     validate_lead_form();
 
-    if (hash == '#tab_lead_profile' || hash == '#attachments' || hash == '#lead_notes') {
+    if (hash == '#tab_lead_profile' || hash == '#attachments' || hash == '#lead_notes' || hash == '#lead_activity' || hash == '#gdpr') {
         window.location.hash = hash;
     }
-    if (id != '' && typeof(id) != 'undefined') {
+
+    initDataTableInline($('#consentHistoryTable'));
+
+    if (id !== '' && typeof(id) != 'undefined') {
 
         if (typeof(Dropbox) != 'undefined') {
             document.getElementById("dropbox-chooser-lead").appendChild(Dropbox.createChooseButton({
@@ -4500,7 +4656,7 @@ function _lead_init_data(data, id) {
         leadAttachmentsDropzone = new Dropzone("#lead-attachment-upload", $.extend({}, _dropzone_defaults(), {
             sending: function(file, xhr, formData) {
                 formData.append("id", id);
-                if (this.getQueuedFiles().length == 0) {
+                if (this.getQueuedFiles().length === 0) {
                     formData.append("last_file", true);
                 }
             },
@@ -4529,12 +4685,78 @@ function _lead_init_data(data, id) {
 }
 
 // Fetches lead modal data, can be edit/add/view
-function init_lead_modal_data(id, url) {
-    requestGetJSON((typeof(url) != 'undefined' ? url : 'leads/lead/') + (typeof(id) != 'undefined' ? id : '')).done(function(response) {
+function init_lead_modal_data(id, url, isEdit) {
+    var requestURL = (typeof(url) != 'undefined' ? url : 'leads/lead/') + (typeof(id) != 'undefined' ? id : '');
+    if (isEdit === true) {
+        var concat = '?';
+        if (requestURL.indexOf('?') > -1) {
+            concat += '&';
+        }
+        requestURL += concat + 'edit=true';
+    }
+    requestGetJSON(requestURL).done(function(response) {
         _lead_init_data(response, id);
     }).fail(function(data) {
         alert_float('danger', data.responseText);
     });
+}
+
+function print_lead_information() {
+
+    var $leadViewWrapper = $('#leadViewWrapper').clone();
+    var name = $leadViewWrapper.find('.lead-name').text().trim();
+
+    $leadViewWrapper.find('p').css('font-size', '100%')
+        .css('font', 'inherit')
+        .css('vertical-align', 'baseline')
+        .css('margin', '0px');
+
+    $leadViewWrapper.find('h4').css('font-size', '100%');
+
+    $leadViewWrapper.find('.lead-field-heading').css('color', '#777').css('margin-bottom', '3px');
+    $leadViewWrapper.find('.lead-field-heading + p').css('margin-bottom', '15px');
+
+    // Unwrap href for print
+    $leadViewWrapper.find("a[href]").contents().unwrap();
+
+    params = 'width=' + screen.width;
+    params += ', height=' + screen.height;
+    params += ', top=0, left=0';
+    params += ', fullscreen=yes';
+
+    var mywindow = window.open('', name, params);
+
+    mywindow.document.write('<html><head><title>' + name + '</title>');
+    mywindow.document.write('<style>');
+    mywindow.document.write('.clearfix:after { ' +
+        'clear: both;' +
+        '}' +
+        '.clearfix:before, .clearfix:after { ' +
+        'display: table; content: " ";' +
+        '}' +
+        'body { ' +
+        'font-family: Arial, Helvetica, sans-serif;color: #444; font-size:13px;' +
+        '}' +
+        '.bold { ' +
+        'font-weight: bold !important;' +
+        '}' +
+        '.lead-information-col { ' +
+        'float: left; width: 33.33333333%;' +
+        '}' +
+        '');
+
+    mywindow.document.write('</style>');
+
+    mywindow.document.write('</head><body>');
+    mywindow.document.write('<h1>' + name + '</h1>');
+    mywindow.document.write('<div id="#leadViewWrapper">' + $leadViewWrapper.html() + '</div>');
+    mywindow.document.write('</body></html>');
+
+    mywindow.document.close(); // necessary for IE >= 10
+    mywindow.focus(); // necessary for IE >= 10*/
+
+    mywindow.print();
+    mywindow.close();
 }
 
 // Kan ban leads sorting
@@ -4550,7 +4772,7 @@ function leads_kanban_update(ui, object) {
         data.leadid = $(ui.item).data('lead-id');
 
         var order = [];
-        var status = $(ui.item).parents('.leads-status').find('li')
+        var status = $(ui.item).parents('.leads-status').find('li');
         var i = 1;
         $.each(status, function() {
             order.push([$(this).data('lead-id'), i]);
@@ -4559,7 +4781,7 @@ function leads_kanban_update(ui, object) {
 
         data.order = order;
         setTimeout(function() {
-            $.post(admin_url + 'leads/update_kan_ban_lead_status', data).done(function(response) {
+            $.post(admin_url + 'leads/update_lead_status', data).done(function(response) {
                 check_kanban_empty_col('[data-lead-id]');
             });
         }, 200);
@@ -4579,7 +4801,7 @@ function init_leads_status_sortable() {
                 order.push([$(this).data('col-status-id'), i]);
                 i++;
             });
-            var data = {}
+            var data = {};
             data.order = order;
             $.post(admin_url + 'leads/update_status_order', data);
         }
@@ -4595,7 +4817,7 @@ function leads_kanban(search) {
 function delete_lead_attachment(wrapper, id) {
     if (confirm_delete()) {
         requestGetJSON('leads/delete_attachment/' + id).done(function(response) {
-            if (response.success == true) { $(wrapper).parents('.lead-attachment-wrapper').remove(); }
+            if (response.success === true || response.success == 'true') { $(wrapper).parents('.lead-attachment-wrapper').remove(); }
         }).fail(function(data) {
             alert_float('danger', data.responseText);
         });
@@ -4606,7 +4828,7 @@ function delete_lead_attachment(wrapper, id) {
 function delete_lead_note(wrapper, id) {
     if (confirm_delete()) {
         requestGetJSON('leads/delete_note/' + id).done(function(response) {
-            if (response.success == true) { $(wrapper).parents('.lead-note').remove(); }
+            if (response.success === true || response.success == 'true') { $(wrapper).parents('.lead-note').remove(); }
         }).fail(function(data) {
             alert_float('danger', data.responseText);
         });
@@ -4616,7 +4838,7 @@ function delete_lead_note(wrapper, id) {
 // Mark lead as lost function
 function lead_mark_as_lost(id) {
     requestGetJSON('leads/mark_as_lost/' + id).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             alert_float('success', response.message);
             $("body").find('tr#lead_' + id).remove();
             $("body").find('#kan-ban li[data-lead-id="' + id + '"]').remove();
@@ -4630,7 +4852,7 @@ function lead_mark_as_lost(id) {
 // Unmark lead as lost function
 function lead_unmark_as_lost(id) {
     requestGetJSON('leads/unmark_as_lost/' + id).done(function(response) {
-        if (response.success == true) { alert_float('success', response.message); }
+        if (response.success === true || response.success == 'true') { alert_float('success', response.message); }
         _lead_init_data(response, response.id);
     }).fail(function(error) {
         alert_float('danger', error.responseText);
@@ -4640,7 +4862,7 @@ function lead_unmark_as_lost(id) {
 // Mark lead as junk function
 function lead_mark_as_junk(id) {
     requestGetJSON('leads/mark_as_junk/' + id).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             alert_float('success', response.message);
             $("body").find('tr#lead_' + id).remove();
             $("body").find('#kan-ban li[data-lead-id="' + id + '"]').remove();
@@ -4650,11 +4872,20 @@ function lead_mark_as_junk(id) {
         alert_float('danger', error.responseText);
     });
 }
+// From lead table mark as
+function lead_mark_as(status_id, lead_id) {
+    var data = {};
+    data.status = status_id;
+    data.leadid = lead_id;
+    $.post(admin_url + 'leads/update_lead_status', data).done(function(response) {
+        table_leads.DataTable().ajax.reload(null, false);
+    });
+}
 
 // Unmark lead as junk function
 function lead_unmark_as_junk(id) {
     requestGetJSON('leads/unmark_as_junk/' + id).done(function(response) {
-        if (response.success == true) { alert_float('success', response.message); }
+        if (response.success === true || response.success == 'true') { alert_float('success', response.message); }
         _lead_init_data(response, response.id);
     }).fail(function(error) {
         alert_float('danger', error.responseText);
@@ -4693,7 +4924,7 @@ function leads_bulk_action(event) {
             data.assigned = typeof(data.assigned) == 'undefined' ? '' : data.assigned;
             data.visibility = typeof(data.visibility) == 'undefined' ? '' : data.visibility;
 
-            if (data.status == '' && data.assigned == '' && data.source == '' && data.last_contact == '' && data.tags == '' && data.visibility == '') {
+            if (data.status === '' && data.assigned === '' && data.source === '' && data.last_contact === '' && data.tags === '' && data.visibility === '') {
                 return;
             }
         } else {
@@ -4702,7 +4933,7 @@ function leads_bulk_action(event) {
         var rows = table_leads.find('tbody tr');
         $.each(rows, function() {
             var checkbox = $($(this).find('td').eq(0)).find('input');
-            if (checkbox.prop('checked') == true) {
+            if (checkbox.prop('checked') === true) {
                 ids.push(checkbox.val());
             }
         });
@@ -4741,7 +4972,7 @@ function sync_proposals_data(rel_id, rel_type) {
 // Table announcements
 function init_table_announcements(manual) {
     if (typeof(manual) == 'undefined' && $("body").hasClass('dashboard')) { return false; }
-    initDataTable('.table-announcements', admin_url + 'announcements', [2], [2], 'undefined', [1, 'DESC']);
+    initDataTable('.table-announcements', admin_url + 'announcements', undefined, undefined, 'undefined', [1, 'desc']);
 }
 
 // Table tickets
@@ -4753,9 +4984,8 @@ function init_table_tickets(manual) {
         return false;
     }
 
-    if ($("body").find('.tickets-table').length == 0) { return; }
+    if ($("body").find('.tickets-table').length === 0) { return; }
 
-    var tickets_not_sortable = $('.tickets-table').find('th').length - 1;
     var TicketServerParams = {},
         Tickets_Filters = $('._hidden_inputs._filters.tickets_filters input');
     var tickets_date_created_index = $('table.tickets-table thead .ticket_created_column').index();
@@ -4765,31 +4995,28 @@ function init_table_tickets(manual) {
 
     TicketServerParams['project_id'] = '[name="project_id"]';
 
-    var _tns = [tickets_not_sortable];
+    var ticketsTableNotSortable = [0]; // bulk actions
     var _tickets_table_url = admin_url + 'tickets';
 
-    if ($("body").hasClass('tickets_page')) {
-        _tns.push(0);
+    if ($("body").hasClass('tickets-page')) {
         _tickets_table_url += '?bulk_actions=true';
     }
 
-    _table_api = initDataTable('.tickets-table', _tickets_table_url, _tns, _tns, TicketServerParams, [tickets_date_created_index, 'DESC']);
+    _table_api = initDataTable('.tickets-table', _tickets_table_url, ticketsTableNotSortable, ticketsTableNotSortable, TicketServerParams, [tickets_date_created_index, 'desc']);
 
     if (_table_api && $("body").hasClass('dashboard')) {
-        _table_api
-            .column(tickets_not_sortable).visible(false, false)
-            .column(3).visible(false, false)
-            .column(tickets_date_created_index).visible(false, false)
-            .column(4).visible(false, false)
-            .column(5).visible(false, false)
-            .columns.adjust();
+        var notVisibleDashboardDefault = [4, tickets_date_created_index, 5, 6];
+        for (var i in notVisibleDashboardDefault) {
+            _table_api.column(notVisibleDashboardDefault[i]).visible(false, false);
+        }
+        _table_api.columns.adjust();
     }
 }
 
 // Staff projects table in staff profile
 function init_table_staff_projects(manual) {
     if (typeof(manual) == 'undefined' && $("body").hasClass('dashboard')) { return false; }
-    if ($("body").find('.table-staff-projects').length == 0) { return; }
+    if ($("body").find('.table-staff-projects').length === 0) { return; }
 
     var staffProjectsParams = {},
         Staff_Projects_Filters = $('._hidden_inputs._filters.staff_projects_filter input');
@@ -4798,7 +5025,7 @@ function init_table_staff_projects(manual) {
         staffProjectsParams[$(this).attr('name')] = '[name="' + $(this).attr('name') + '"]';
     });
 
-    initDataTable('.table-staff-projects', admin_url + 'projects/staff_projects', 'undefined', 'undefined', staffProjectsParams, [2, 'ASC']);
+    initDataTable('.table-staff-projects', admin_url + 'projects/staff_projects', 'undefined', 'undefined', staffProjectsParams, [2, 'asc']);
 }
 
 // Fix task checklist content textarea height
@@ -4813,7 +5040,7 @@ function do_task_checklist_items_height(task_checklist_items) {
             $(this).height(0).height(this.scrollHeight);
             $(this).parents('.checklist').height(this.scrollHeight);
         }
-        if (val == '') {
+        if (val === '') {
             $(this).removeAttr('style');
             $(this).parents('.checklist').removeAttr('style');
         }
@@ -4847,7 +5074,7 @@ function recalculate_checklist_items_progress() {
 // Remove task checklist items template
 function remove_checklist_item_template(id) {
     requestGetJSON('tasks/remove_checklist_item_template/' + id).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             var itemsTemplateSelect = $("body").find('select.checklist-items-template-select');
             var deletedItemDescription = itemsTemplateSelect.find('option[value="' + id + '"]').html().trim();
             var currentChecklists = $('#task-modal .checklist');
@@ -4859,7 +5086,7 @@ function remove_checklist_item_template(id) {
             });
             itemsTemplateSelect.find('option[value="' + id + '"]').remove();
             itemsTemplateSelect.selectpicker('refresh');
-            if (itemsTemplateSelect.find('option').length == 1) {
+            if (itemsTemplateSelect.find('option').length === 1) {
                 itemsTemplateSelect.selectpicker('destroy');
                 $('.checklist-templates-wrapper').addClass('hide');
             }
@@ -4884,13 +5111,13 @@ function save_checklist_item_template(id, field) {
 function update_checklist_order() {
     var order = [];
     var items = $("body").find('.checklist');
-    if (items.length == 0) { return; }
+    if (items.length === 0) { return; }
     var i = 1;
     $.each(items, function() {
         order.push([$(this).data('checklist-id'), i]);
         i++;
     });
-    var data = {}
+    var data = {};
     data.order = order;
     $.post(admin_url + 'tasks/update_checklist_order', data);
 }
@@ -4909,7 +5136,7 @@ function add_task_checklist_item(task_id, description) {
 // Remove task checklist item from the task
 function delete_checklist_item(id, field) {
     requestGetJSON('tasks/delete_checklist_item/' + id).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             $(field).parents('.checklist').remove();
             recalculate_checklist_items_progress();
         }
@@ -4924,10 +5151,29 @@ function init_tasks_checklist_items(is_new, task_id) {
         $('#checklist-items').html(data);
         if (typeof(is_new) != 'undefined') {
             var first = $('#checklist-items').find('.checklist textarea').eq(0);
-            if (first.val() == '') { first.focus(); }
+            if (first.val() === '') { first.focus(); }
         }
         recalculate_checklist_items_progress();
         update_checklist_order();
+    });
+}
+
+function _task_attachments_more_and_less_checks() {
+    var att_wrap = $("body").find('.task_attachments_wrapper');
+    var attachments = att_wrap.find('.task-attachment-col');
+    var taskAttachmentsMore = $("body").find('#show-more-less-task-attachments-col .task-attachments-more');
+    if (attachments.length === 0) {
+        att_wrap.remove();
+    } else if (attachments.length == 2 && taskAttachmentsMore.hasClass('hide')) {
+        $("body").find('#show-more-less-task-attachments-col').remove();
+    } else if ($('.task_attachments_wrapper .task-attachment-col:visible').length === 0 && !taskAttachmentsMore.hasClass('hide')) {
+        taskAttachmentsMore.click();
+    }
+
+    $.each($('#task-modal .comment-content'), function() {
+        if ($(this).find('.task-attachment-col').length === 0) {
+            $(this).find('.download-all').remove();
+        }
     });
 }
 
@@ -4935,16 +5181,10 @@ function init_tasks_checklist_items(is_new, task_id) {
 function remove_task_attachment(link, id) {
     if (confirm_delete()) {
         requestGetJSON('tasks/remove_task_attachment/' + id).done(function(response) {
-            if (response.success == true) { $('[data-task-attachment-id="' + id + '"]').remove(); }
-            var att_wrap = $("body").find('.task_attachments_wrapper');
-            var attachments = att_wrap.find('.task-attachment-col');
-            var taskAttachmentsMore = $("body").find('#show-more-less-task-attachments-col .task-attachments-more');
-            if (attachments.length == 0) {
-                att_wrap.remove();
-            } else if (attachments.length == 2 && taskAttachmentsMore.hasClass('hide')) {
-                $("body").find('#show-more-less-task-attachments-col').remove();
-            } else if ($('.task-attachment-col:visible').length == 0 && !taskAttachmentsMore.hasClass('hide')) {
-                taskAttachmentsMore.click();
+            if (response.success === true || response.success == 'true') { $('[data-task-attachment-id="' + id + '"]').remove(); }
+            _task_attachments_more_and_less_checks();
+            if (response.comment_removed) {
+                $('#comment_' + response.comment_removed).remove();
             }
         });
     }
@@ -4953,8 +5193,17 @@ function remove_task_attachment(link, id) {
 // Add new task comment from the modal
 function add_task_comment(task_id) {
     var data = {};
-    data.content = tinyMCE.activeEditor.getContent();
 
+    if (taskCommentAttachmentDropzone.files.length > 0) {
+        taskCommentAttachmentDropzone.processQueue(task_id);
+        return;
+    }
+    if (tinymce.activeEditor) {
+        data.content = tinyMCE.activeEditor.getContent();
+    } else {
+        data.content = $('#task_comment').val();
+        data.no_editor = true;
+    }
     data.taskid = task_id;
     $.post(admin_url + 'tasks/add_task_comment', data).done(function(response) {
         response = JSON.parse(response);
@@ -4969,8 +5218,10 @@ function add_task_comment(task_id) {
 function remove_task_comment(commentid) {
     if (confirm_delete()) {
         requestGetJSON('tasks/remove_comment/' + commentid).done(function(response) {
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 $('[data-commentid="' + commentid + '"]').remove();
+                $('[data-comment-attachment="' + commentid + '"]').remove();
+                _task_attachments_more_and_less_checks();
             }
         });
     }
@@ -4980,7 +5231,7 @@ function remove_task_comment(commentid) {
 function remove_assignee(id, task_id) {
     if (confirm_delete()) {
         requestGetJSON('tasks/remove_assignee/' + id + '/' + task_id).done(function(response) {
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 alert_float('success', response.message);
                 _task_append_html(response.taskHtml);
             }
@@ -4988,11 +5239,14 @@ function remove_assignee(id, task_id) {
     }
 }
 
+function is_ios() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
 // Remove task follower
 function remove_follower(id, task_id) {
     if (confirm_delete()) {
         requestGetJSON('tasks/remove_follower/' + id + '/' + task_id).done(function(response) {
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 alert_float('success', response.message);
                 _task_append_html(response.taskHtml);
             }
@@ -5018,13 +5272,13 @@ function task_mark_as(status, task_id, url) {
     $("body").append('<div class="dt-loader"></div>');
     requestGetJSON(url).done(function(response) {
         $("body").find('.dt-loader').remove();
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             reload_tasks_tables();
             if (taskModalVisible) { _task_append_html(response.taskHtml); }
             if (status == 5 && typeof(_maybe_remove_task_from_project_milestone) == 'function') {
                 _maybe_remove_task_from_project_milestone(task_id);
             }
-            if ($('.tasks-kanban').length == 0) { alert_float('success', response.message); }
+            if ($('.tasks-kanban').length === 0) { alert_float('success', response.message); }
         }
     });
 }
@@ -5035,7 +5289,7 @@ function task_change_priority(priority_id, task_id) {
     var taskModalVisible = $('#task-modal').is(':visible');
     url += '?single_task=' + taskModalVisible;
     requestGetJSON(url).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             reload_tasks_tables();
             if (taskModalVisible) { _task_append_html(response.taskHtml); }
         }
@@ -5048,7 +5302,7 @@ function task_change_milestone(milestone_id, task_id) {
     var taskModalVisible = $('#task-modal').is(':visible');
     url += '?single_task=' + taskModalVisible;
     requestGetJSON(url).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             reload_tasks_tables();
             if (taskModalVisible) { _task_append_html(response.taskHtml); }
         }
@@ -5078,7 +5332,7 @@ function reload_tasks_tables() {
 // Makes task public with AJAX request
 function make_task_public(task_id) {
     requestGetJSON('tasks/make_public/' + task_id).done(function(response) {
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             reload_tasks_tables();
             _task_append_html(response.taskHtml);
         }
@@ -5128,7 +5382,7 @@ function new_task_from_relation(table, rel_type, rel_id) {
 // Go to edit view
 function edit_task(task_id) {
     requestGet('tasks/task/' + task_id).done(function(response) {
-        $('#_task').html(response)
+        $('#_task').html(response);
         $('#task-modal').modal('hide');
         $("body").find('#_task_modal').modal({ show: true, backdrop: 'static' });
     });
@@ -5142,6 +5396,12 @@ function task_form_handler(form) {
     var formURL = form.action;
     var formData = new FormData($(form)[0]);
 
+    $("#_task_modal input[type=file]").each(function() {
+        if ($(this).val() === "") {
+            formData.delete($(this).attr("name"));
+        }
+    });
+
     $.ajax({
         type: $(form).attr('method'),
         data: formData,
@@ -5152,7 +5412,7 @@ function task_form_handler(form) {
         url: formURL
     }).done(function(response) {
         response = JSON.parse(response);
-        if (response.success == true) { alert_float('success', response.message); }
+        if (response.success === true || response.success == 'true') { alert_float('success', response.message); }
         if (!$("body").hasClass('project')) {
             $('#_task_modal').attr('data-task-created', true);
             $('#_task_modal').modal('hide');
@@ -5168,7 +5428,7 @@ function task_form_handler(form) {
             if (group) { params['group'] = group; }
             if (excludeCompletedTasks) { params['exclude_completed'] = excludeCompletedTasks; }
             params['taskid'] = response.id;
-            window.location.href = buildUrl(location[0], params)
+            window.location.href = buildUrl(location[0], params);
         }
     }).fail(function(error) {
         alert_float('danger', JSON.parse(error.responseText));
@@ -5223,17 +5483,17 @@ function timer_action(e, task_id, timer_id) {
     timer_id = typeof(timer_id) == 'undefined' ? '' : timer_id;
 
     var $timerSelectTask = $('#timer-select-task');
-    if (task_id == '' && $timerSelectTask.is(':visible')) {
+    if (task_id === '' && $timerSelectTask.is(':visible')) {
         return;
     }
-    if (timer_id != '' && task_id == '0') {
+    if (timer_id !== '' && task_id == '0') {
         var popupData = {};
         popupData.content = '';
         popupData.content += '<div class="row">';
         popupData.content += '<div class="form-group"><select id="timer_add_task_id" data-empty-title="' + appLang.search_tasks + '" data-width="60%" class="ajax-search" data-live-search="true">';
         popupData.content += '</select></div>';
         popupData.content += '<div class="form-group">';
-        popupData.content += '<textarea id="timesheet_note" placeholder="' + appLang.note + '" style="margin:0 auto;width:60%;" rows="4" class="form-control"></textarea>'
+        popupData.content += '<textarea id="timesheet_note" placeholder="' + appLang.note + '" style="margin:0 auto;width:60%;" rows="4" class="form-control"></textarea>';
         popupData.content += '</div>';
         popupData.content += '<button type=\'button\' onclick=\'timer_action(this,document.getElementById("timer_add_task_id").value,' + timer_id + ');return false;\' class=\'btn btn-info\'>' + appLang.confirm + '</button>';
 
@@ -5259,7 +5519,7 @@ function timer_action(e, task_id, timer_id) {
             $timerSelectTask.find('.system-popup-close').click();
         }
         _init_timers_top_html(JSON.parse(response.timers));
-        $('.popover-top-timer-note').popover('hide')
+        $('.popover-top-timer-note').popover('hide');
         reload_tasks_tables();
     });
 }
@@ -5287,15 +5547,17 @@ function init_task_modal(task_id) {
 
 // General function to append task html returned from request
 function _task_append_html(html) {
-    $('#task-modal .data').html(html);
+
+    var $taskModal = $('#task-modal');
+    $taskModal.find('.data').html(html);
     //init_tasks_checklist_items(false, task_id);
     recalculate_checklist_items_progress();
     do_task_checklist_items_height();
     setTimeout(function() {
-        $('#task-modal').modal('show');
+        $taskModal.modal('show');
         // Init_tags_input is trigged too when task modal is shown
         // This line prevents triggering twice.
-        if ($('#task-modal').is(':visible')) { init_tags_inputs(); }
+        if ($taskModal.is(':visible')) { init_tags_inputs(); }
         fix_task_modal_left_col_height();
     }, 150);
 }
@@ -5328,18 +5590,23 @@ function edit_task_comment(id) {
     var edit_wrapper = $('[data-edit-comment="' + id + '"]');
     edit_wrapper.next().addClass('hide');
     edit_wrapper.removeClass('hide');
-    tinymce.remove('#task_comment_' + id);
-    init_editor('#task_comment_' + id, _simple_editor_config());
-    tinymce.triggerSave();
+
+    if (!is_ios()) {
+        tinymce.remove('#task_comment_' + id);
+        var editorConfig = _simple_editor_config()
+        editorConfig.auto_focus = 'task_comment_' + id;
+        init_editor('#task_comment_' + id, editorConfig);
+        tinymce.triggerSave();
+    }
 }
 
 function _simple_editor_config() {
     return {
-        height: 150,
-        auto_focus: true,
+        height: !is_mobile() ? 100 : 50,
         menubar: false,
+        autoresize_bottom_margin: 15,
         plugins: [
-            'table advlist codesample autosave autoresize lists link image textcolor media contextmenu paste',
+            'table advlist codesample autosave' + (!is_mobile() ? ' autoresize ' : ' ') + 'lists link image textcolor media contextmenu paste',
         ],
         toolbar: 'insert formatselect bold forecolor backcolor' + (is_mobile() ? ' | ' : ' ') + 'alignleft aligncenter alignright bullist numlist | restoredraft',
         insert_button_items: 'image media link codesample',
@@ -5362,9 +5629,12 @@ function save_edited_comment(id, task_id) {
     data.id = id;
     data.task_id = task_id;
     data.content = $('[data-edit-comment="' + id + '"]').find('textarea').val();
+    if (is_ios()) {
+        data.no_editor = true;
+    }
     $.post(admin_url + 'tasks/edit_comment', data).done(function(response) {
         response = JSON.parse(response);
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             alert_float('success', response.message);
             _task_append_html(response.taskHtml);
         } else {
@@ -5469,7 +5739,7 @@ function tasks_bulk_action(event) {
             data.priority = $('#task_bulk_priority').val();
             data.priority = typeof(data.priority) == 'undefined' ? '' : data.priority;
 
-            if (data.status == '' && data.priority == '' && data.tags == '' && data.assignees == '' && data.milestone == '') {
+            if (data.status === '' && data.priority === '' && data.tags === '' && data.assignees === '' && data.milestone === '') {
                 return;
             }
         } else {
@@ -5478,7 +5748,7 @@ function tasks_bulk_action(event) {
         var rows = $($('#tasks_bulk_actions').attr('data-table')).find('tbody tr');
         $.each(rows, function() {
             var checkbox = $($(this).find('td').eq(0)).find('input');
-            if (checkbox.prop('checked') == true) {
+            if (checkbox.prop('checked') === true) {
                 ids.push(checkbox.val());
             }
         });
@@ -5495,7 +5765,7 @@ function tasks_bulk_action(event) {
 function load_small_table_item(id, selector, input_name, url, table) {
     var _tmpID = $('input[name="' + input_name + '"]').val();
     // Check if id passed from url, hash is prioritized becuase is last
-    if (_tmpID != '' && !window.location.hash) {
+    if (_tmpID !== '' && !window.location.hash) {
         id = _tmpID;
         // Clear the current id value in case user click on the left sidebar credit_note_ids
         $('input[name="' + input_name + '"]').val('');
@@ -5505,7 +5775,7 @@ function load_small_table_item(id, selector, input_name, url, table) {
             id = window.location.hash.substring(1); //Puts hash in variable, and removes the # character
         }
     }
-    if (typeof(id) == 'undefined' || id == '') { return; }
+    if (typeof(id) == 'undefined' || id === '') { return; }
     if (!$("body").hasClass('small-table')) { toggle_small_view(table, selector); }
     $('input[name="' + input_name + '"]').val(id);
     do_hash_helper(id);
@@ -5543,14 +5813,14 @@ function init_expense(id) {
 
 // Clear billing and shipping inputs for invoice,estimate etc...
 function clear_billing_and_shipping_details() {
-    for (var f in bs_fields) {
-        if (bs_fields[f].indexOf('country') > -1) {
-            $('select[name="' + bs_fields[f] + '"]').selectpicker('val', '');
+    for (var f in billingAndShippingFields) {
+        if (billingAndShippingFields[f].indexOf('country') > -1) {
+            $('select[name="' + billingAndShippingFields[f] + '"]').selectpicker('val', '');
         } else {
-            $('input[name="' + bs_fields[f] + '"]').val('');
-            $('textarea[name="' + bs_fields[f] + '"]').val('');
+            $('input[name="' + billingAndShippingFields[f] + '"]').val('');
+            $('textarea[name="' + billingAndShippingFields[f] + '"]').val('');
         }
-        if (bs_fields[f] == 'billing_country') {
+        if (billingAndShippingFields[f] == 'billing_country') {
             $('input[name="include_shipping"]').prop("checked", false);
             $('input[name="include_shipping"]').change();
         }
@@ -5563,16 +5833,19 @@ function clear_billing_and_shipping_details() {
 function init_billing_and_shipping_details() {
     var _f;
     var include_shipping = $('input[name="include_shipping"]').prop('checked');
-    for (var f in bs_fields) {
+
+    for (var f in billingAndShippingFields) {
         _f = '';
-        if (bs_fields[f].indexOf('country') > -1) {
-            _f = $("#" + bs_fields[f] + " option:selected").data('subtext');
-        } else if (bs_fields[f].indexOf('shipping_street') > -1 || bs_fields[f].indexOf('billing_street') > -1) {
-            _f = $('textarea[name="' + bs_fields[f] + '"]').val().replace(/(?:\r\n|\r|\n)/g, "<br />");
+        if (billingAndShippingFields[f].indexOf('country') > -1) {
+            _f = $("#" + billingAndShippingFields[f] + " option:selected").data('subtext');
+        } else if (billingAndShippingFields[f].indexOf('shipping_street') > -1 || billingAndShippingFields[f].indexOf('billing_street') > -1) {
+            if ($('textarea[name="' + billingAndShippingFields[f] + '"]').length) {
+                _f = $('textarea[name="' + billingAndShippingFields[f] + '"]').val().replace(/(?:\r\n|\r|\n)/g, "<br />");
+            }
         } else {
-            _f = $('input[name="' + bs_fields[f] + '"]').val();
+            _f = $('input[name="' + billingAndShippingFields[f] + '"]').val();
         }
-        if (bs_fields[f].indexOf('shipping') > -1) {
+        if (billingAndShippingFields[f].indexOf('shipping') > -1) {
             if (!include_shipping) {
                 _f = '';
             }
@@ -5580,15 +5853,15 @@ function init_billing_and_shipping_details() {
         if (typeof(_f) == 'undefined') {
             _f = '';
         }
-        _f = (_f != '' ? _f : '--');
-        $('.' + bs_fields[f]).html(_f);
+        _f = (_f !== '' ? _f : '--');
+        $('.' + billingAndShippingFields[f]).html(_f);
     }
     $('#billing_and_shipping_details').modal('hide');
 }
 
 // Record payment function
 function record_payment(id) {
-    if (typeof(id) == 'undefined' || id == '') { return; }
+    if (typeof(id) == 'undefined' || id === '') { return; }
     $('#invoice').load(admin_url + 'invoices/record_invoice_payment_ajax/' + id);
 }
 
@@ -5731,7 +6004,7 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
     }
 
     // Check if rate is number
-    if (data.rate == '' || isNaN(data.rate)) {
+    if (data.rate === '' || isNaN(data.rate)) {
         data.rate = 0;
     }
 
@@ -5862,18 +6135,22 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
         var billed_task = $('input[name="task_id"]').val();
         var billed_expense = $('input[name="expense_id"]').val();
 
-        if (billed_task != '' && typeof(billed_task) != 'undefined') {
+        if (billed_task !== '' && typeof(billed_task) != 'undefined') {
             billed_tasks = billed_task.split(',');
             $.each(billed_tasks, function(i, obj) {
                 $('#billed-tasks').append(hidden_input('billed_tasks[' + item_key + '][]', obj));
             });
         }
 
-        if (billed_expense != '' && typeof(billed_expense) != 'undefined') {
+        if (billed_expense !== '' && typeof(billed_expense) != 'undefined') {
             billed_expenses = billed_expense.split(',');
             $.each(billed_expenses, function(i, obj) {
                 $('#billed-expenses').append(hidden_input('billed_expenses[' + item_key + '][]', obj));
             });
+        }
+
+        if ($('#item_select').hasClass('ajax-search') && $('#item_select').selectpicker('val') !== '') {
+            $('#item_select').prepend('<option></option>');
         }
 
         init_selectpicker();
@@ -5886,7 +6163,7 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
         $("body").find('.dt-loader').remove();
         $('#item_select').selectpicker('val', '');
 
-        if (cf_has_required == true && $('.invoice-form').length) {
+        if (cf_has_required && $('.invoice-form').length) {
             validate_invoice_form();
         } else if (cf_has_required && $('.estimate-form').length) {
             validate_estimate_form();
@@ -5905,6 +6182,7 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
 
 // Get taxes dropdown selectpicker template / Causing problems with ajax becuase is fetching from server
 function get_taxes_dropdown_template(name, taxname) {
+
     jQuery.ajaxSetup({ async: false });
     var d = $.post(admin_url + 'misc/get_taxes_dropdown_template/', { name: name, taxname: taxname });
     jQuery.ajaxSetup({ async: true });
@@ -5915,13 +6193,13 @@ function get_taxes_dropdown_template(name, taxname) {
 // Custom function for deselecting selected value from ajax dropdown
 function deselect_ajax_search(e) {
     var $elm = $('select#' + $(e).attr('data-id'));
-    $elm.data('AjaxBootstrapSelect').list.cache = {}
+    $elm.data('AjaxBootstrapSelect').list.cache = {};
     var $elmWrapper = $elm.parents('.bootstrap-select');
-    $elm.html('').append('<option value=""></option>').selectpicker('val', '')
+    $elm.html('').append('<option value=""></option>').selectpicker('val', '');
     $elmWrapper.removeClass('ajax-remove-values-option').find('.ajax-clear-values').remove();
     setTimeout(function() {
         $elm.trigger('selected.cleared.ajax.bootstrap.select', e);
-        $elm.trigger('change').data('AjaxBootstrapSelect').list.cache = {}
+        $elm.trigger('change').data('AjaxBootstrapSelect').list.cache = {};
     }, 50);
 }
 
@@ -5951,8 +6229,9 @@ function fixHelperTableHelperSortable(e, ui) {
 
 // Make items sortable with jquery sort plugin
 function init_items_sortable(preview_table) {
-    var _items_sortable = $("body").find('.items tbody');
-    if (_items_sortable.length == 0) { return; }
+    var _items_sortable = $("#wrapper").find('.items tbody');
+
+    if (_items_sortable.length === 0) { return; }
     _items_sortable.sortable({
         helper: fixHelperTableHelperSortable,
         handle: '.dragger',
@@ -6036,6 +6315,10 @@ function get_item_preview_values() {
 // Calculate invoice total - NOT RECOMENDING EDIT THIS FUNCTION BECUASE IS VERY SENSITIVE
 function calculate_total() {
 
+    if ($('body').hasClass('no-calculate-total')) {
+        return false;
+    }
+
     var calculated_tax,
         taxrate,
         item_taxes,
@@ -6055,12 +6338,11 @@ function calculate_total() {
         discount_fixed = $('input[name="discount_total"]').val(),
         discount_total_type = $('.discount-total-type.selected'),
         discount_type = $('select[name="discount_type"]').val();
-
     $('.tax-area').remove();
 
     $.each(rows, function() {
         quantity = $(this).find('[data-quantity]').val();
-        if (quantity == '') {
+        if (quantity === '') {
             quantity = 1;
             $(this).find('[data-quantity]').val(1);
         }
@@ -6093,32 +6375,32 @@ function calculate_total() {
     });
 
     // Discount by percent
-    if ((discount_percent != '' && discount_percent != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-percent')) {
+    if ((discount_percent !== '' && discount_percent != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-percent')) {
         total_discount_calculated = (subtotal * discount_percent) / 100;
-    } else if ((discount_fixed != '' && discount_fixed != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-fixed')) {
+    } else if ((discount_fixed !== '' && discount_fixed != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-fixed')) {
         total_discount_calculated = discount_fixed;
     }
 
     $.each(taxes, function(taxname, total_tax) {
-        if ((discount_percent != '' && discount_percent != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-percent')) {
+        if ((discount_percent !== '' && discount_percent != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-percent')) {
             total_tax_calculated = (total_tax * discount_percent) / 100;
             total_tax = (total_tax - total_tax_calculated);
-        } else if ((discount_fixed != '' && discount_fixed != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-fixed')) {
+        } else if ((discount_fixed !== '' && discount_fixed != 0) && discount_type == 'before_tax' && discount_total_type.hasClass('discount-type-fixed')) {
             var t = (discount_fixed / subtotal) * 100;
             total_tax = (total_tax - (total_tax * t) / 100);
         }
 
         total += total_tax;
-        total_tax = accounting.formatNumber(total_tax)
+        total_tax = accounting.formatNumber(total_tax);
         $('#tax_id_' + slugify(taxname)).html(total_tax);
     });
 
     total = (total + subtotal);
 
     // Discount by percent
-    if ((discount_percent != '' && discount_percent != 0) && discount_type == 'after_tax' && discount_total_type.hasClass('discount-type-percent')) {
+    if ((discount_percent !== '' && discount_percent != 0) && discount_type == 'after_tax' && discount_total_type.hasClass('discount-type-percent')) {
         total_discount_calculated = (total * discount_percent) / 100;
-    } else if ((discount_fixed != '' && discount_fixed != 0) && discount_type == 'after_tax' && discount_total_type.hasClass('discount-type-fixed')) {
+    } else if ((discount_fixed !== '' && discount_fixed != 0) && discount_type == 'after_tax' && discount_total_type.hasClass('discount-type-fixed')) {
         total_discount_calculated = discount_fixed;
     }
 
@@ -6147,7 +6429,7 @@ function delete_item(row, itemid) {
         setTimeout(function() {
             $(row).parents('tr').remove();
             calculate_total();
-        }, 50)
+        }, 50);
     });
     // If is edit we need to add to input removed_items to track activity
     if ($('input[name="isedit"]').length > 0) {
@@ -6237,11 +6519,11 @@ function delete_proposal_attachment(id) {
 // Invoices quick total stats
 function init_invoices_total(manual) {
 
-    if ($('#invoices_total').length == 0) { return; }
+    if ($('#invoices_total').length === 0) { return; }
     var _inv_total_inline = $('.invoices-total-inline');
     var _inv_total_href_manual = $('.invoices-total');
 
-    if ($("body").hasClass('invoices_total_manual') && typeof(manual) == 'undefined' &&
+    if ($("body").hasClass('invoices-total-manual') && typeof(manual) == 'undefined' &&
         !_inv_total_href_manual.hasClass('initialized')) {
         return;
     }
@@ -6257,7 +6539,7 @@ function init_invoices_total(manual) {
     var _years = $("body").find('select[name="invoices_total_years"]').selectpicker('val');
     var years = [];
     $.each(_years, function(i, _y) {
-        if (_y != '') { years.push(_y); }
+        if (_y !== '') { years.push(_y); }
     });
 
     var currency = $("body").find('select[name="total_currency"]').val();
@@ -6282,9 +6564,9 @@ function init_invoices_total(manual) {
 // Estimates quick total stats
 function init_estimates_total(manual) {
 
-    if ($('#estimates_total').length == 0) { return; }
+    if ($('#estimates_total').length === 0) { return; }
     var _est_total_href_manual = $('.estimates-total');
-    if ($("body").hasClass('estimates_total_manual') && typeof(manual) == 'undefined' &&
+    if ($("body").hasClass('estimates-total-manual') && typeof(manual) == 'undefined' &&
         !_est_total_href_manual.hasClass('initialized')) {
         return;
     }
@@ -6293,7 +6575,7 @@ function init_estimates_total(manual) {
     var _years = $("body").find('select[name="estimates_total_years"]').selectpicker('val');
     var years = [];
     $.each(_years, function(i, _y) {
-        if (_y != '') { years.push(_y); }
+        if (_y !== '') { years.push(_y); }
     });
 
     var customer_id = '';
@@ -6321,12 +6603,12 @@ function init_estimates_total(manual) {
 // Expenses quick total stats
 function init_expenses_total() {
 
-    if ($('#expenses_total').length == 0) { return; }
+    if ($('#expenses_total').length === 0) { return; }
     var currency = $("body").find('select[name="expenses_total_currency"]').val();
     var _years = $("body").find('select[name="expenses_total_years"]').selectpicker('val');
     var years = [];
     $.each(_years, function(i, _y) {
-        if (_y != '') { years.push(_y); }
+        if (_y !== '') { years.push(_y); }
     });
 
     var customer_id = '';
@@ -6353,7 +6635,14 @@ function validate_invoice_form(selector) {
     selector = typeof(selector) == 'undefined' ? '#invoice-form' : selector;
 
     _validate_form($(selector), {
-        clientid: 'required',
+        clientid: {
+            required: {
+                depends: function() {
+                    var customerRemoved = $('select#clientid').hasClass('customer-removed');
+                    return !customerRemoved;
+                }
+            }
+        },
         date: 'required',
         currency: 'required',
         number: {
@@ -6389,7 +6678,14 @@ function validate_credit_note_form(selector) {
     selector = typeof(selector) == 'undefined' ? '#credit-note-form' : selector;
 
     _validate_form($(selector), {
-        clientid: 'required',
+        clientid: {
+            required: {
+                depends: function() {
+                    var customerRemoved = $('select#clientid').hasClass('customer-removed');
+                    return !customerRemoved;
+                }
+            }
+        },
         date: 'required',
         currency: 'required',
         number: {
@@ -6425,7 +6721,14 @@ function validate_estimate_form(selector) {
     selector = typeof(selector) == 'undefined' ? '#estimate-form' : selector;
 
     _validate_form($(selector), {
-        clientid: 'required',
+        clientid: {
+            required: {
+                depends: function() {
+                    var customerRemoved = $('select#clientid').hasClass('customer-removed');
+                    return !customerRemoved;
+                }
+            }
+        },
         date: 'required',
         currency: 'required',
         number: {
@@ -6481,7 +6784,7 @@ function estimates_pipeline_update(ui, object) {
         data.estimateid = $(ui.item).data('estimate-id');
         data.status = $(ui.item.parent()[0]).data('status-id');
         var order = [];
-        var status = $(ui.item).parents('.pipeline-status').find('li')
+        var status = $(ui.item).parents('.pipeline-status').find('li');
         var i = 1;
         $.each(status, function() {
             order.push([$(this).data('estimate-id'), i]);
@@ -6500,7 +6803,7 @@ function proposals_pipeline_update(ui, object) {
         data.order = [];
         data.proposalid = $(ui.item).data('proposal-id');
         data.status = $(ui.item.parent()[0]).data('status-id');
-        var status = $(ui.item).parents('.pipeline-status').find('li')
+        var status = $(ui.item).parents('.pipeline-status').find('li');
 
         var i = 1;
         $.each(status, function() {
@@ -6520,26 +6823,34 @@ function proposals_pipeline() {
 
 // Open single proposal in pipeline
 function proposal_pipeline_open(id) {
-    if (id == '') { return; }
+    if (id === '') { return; }
     requestGet('proposals/pipeline_open/' + id).done(function(response) {
+        var visible = $('.proposal-pipeline-modal:visible').length > 0;
         $('#proposal').html(response);
-        if ($('.proposal-pipeline-modal:visible').length == 0) {
+        if (!visible) {
             $('.proposal-pipeline-modal').modal({ show: true, backdrop: 'static', keyboard: false });
         } else {
-            $('#proposal').find('.modal.proposal-pipeline-modal').addClass('in').css('display', 'block');
+            $('#proposal').find('.modal.proposal-pipeline-modal')
+                .removeClass('fade')
+                .addClass('in')
+                .css('display', 'block');
         }
     });
 }
 
 // Estimate single open in pipeline
 function estimate_pipeline_open(id) {
-    if (id == '') { return; }
+    if (id === '') { return; }
     requestGet('estimates/pipeline_open/' + id).done(function(response) {
+        var visible = $('.estimate-pipeline:visible').length > 0;
         $('#estimate').html(response);
-        if ($('.estimate-pipeline:visible').length == 0) {
+        if (!visible) {
             $('.estimate-pipeline').modal({ show: true, backdrop: 'static', keyboard: false });
         } else {
-            $('#estimate').find('.modal.estimate-pipeline').addClass('in').css('display', 'block');
+            $('#estimate').find('.modal.estimate-pipeline')
+                .removeClass('fade')
+                .addClass('in')
+                .css('display', 'block');
         }
     });
 }
@@ -6548,9 +6859,9 @@ function estimate_pipeline_open(id) {
 function delete_sales_note(wrapper, id) {
     if (confirm_delete()) {
         requestGetJSON('misc/delete_note/' + id).done(function(response) {
-            if (response.success == true) {
+            if (response.success === true || response.success == 'true') {
                 $(wrapper).parents('.sales-note-wrapper').remove();
-                var salesNotesWrapper = $('#sales-notes-wrapper')
+                var salesNotesWrapper = $('#sales-notes-wrapper');
                 var totalNotesNow = salesNotesWrapper.attr('data-total') - 1;
                 var notesTotal = $('.notes-total');
                 salesNotesWrapper.attr('data-total', totalNotesNow);
@@ -6584,6 +6895,7 @@ function insert_proposal_merge_field(field) {
 function small_table_full_view() {
     $('#small-table').toggleClass('hide');
     $('.small-table-right-col').toggleClass('col-md-12 col-md-7');
+    $(window).trigger('resize');
 }
 
 // Used to update manually the prefix after invoice/estimate is created.
@@ -6635,6 +6947,34 @@ function do_prefix_year(date) {
     }
 }
 
+function init_tabs_scrollable() {
+    // Not working fine on RTL
+    if (isRTL != 'true') {
+        if ($(window).width() <= 768) {
+            $('body').find('.toggle_view').remove();
+        }
+        // Horinzontal tabs
+        $(".horizontal-scrollable-tabs").horizontalTabs();
+    } else {
+        $(".arrow-left, .arrow-right").css('display', 'none');
+        $(".horizontal-scrollable-tabs").removeClass('horizontal-scrollable-tabs');
+        $(".nav-tabs-horizontal").removeClass('nav-tabs-horizontal');
+    }
+}
+
+function view_contact_consent(id) {
+    requestGet('clients/consents/' + id).done(function(response) {
+        $('#consent_data').html(response);
+        initDataTableInline($('#consentHistoryTable'));
+        $('#consentModal').modal('show');
+    });
+}
+
+function view_lead_consent(id) {
+    window.location.hash = 'gdpr';
+    init_lead(id);
+}
+
 // Set single notification as read INLINE
 function set_notification_read_inline(id) {
     requestGet('misc/set_notification_read_inline/' + id).done(function() {
@@ -6678,7 +7018,7 @@ function view_event(id) {
 function delete_event(id) {
     if (confirm_delete()) {
         requestGetJSON('utilities/delete_event/' + id).done(function(response) {
-            if (response.success == true) { window.location.reload(); }
+            if (response.success === true || response.success == 'true') { window.location.reload(); }
         });
     }
 }
@@ -6702,7 +7042,7 @@ function validate_calendar_form() {
 function calendar_form_handler(form) {
     $.post(form.action, $(form).serialize()).done(function(response) {
         response = JSON.parse(response);
-        if (response.success == true) {
+        if (response.success === true || response.success == 'true') {
             alert_float('success', response.message);
             setTimeout(function() {
                 var location = window.location.href;
@@ -6741,7 +7081,7 @@ function fetch_notifications(callback) {
         var nIds = response.notificationsIds;
         if (app_user_browser == 'firefox' && nIds.length > 1) {
             var lastNotification = nIds[0];
-            nIds = new Array();
+            nIds = [];
             nIds.push(lastNotification);
         }
         setTimeout(function() {
@@ -6765,7 +7105,7 @@ function fetch_notifications(callback) {
                             currentTotalNotifications = (currentTotalNotifications - 1);
                             if (currentTotalNotifications > 0) {
                                 document.title = '(' + currentTotalNotifications + ') ' + doc_initial_title;
-                                $totalIndicator.html(currentTotalNotifications)
+                                $totalIndicator.html(currentTotalNotifications);
                             } else {
                                 document.title = doc_initial_title;
                                 $totalIndicator.addClass('hide');
@@ -6785,8 +7125,57 @@ function fetch_notifications(callback) {
     });
 }
 
+function init_new_task_comment() {
+
+    if (tinymce.editors.task_comment) {
+        tinymce.remove('#task_comment');
+    }
+
+    if (typeof(taskCommentAttachmentDropzone) != 'undefined') {
+        taskCommentAttachmentDropzone.destroy();
+    }
+
+    $('#dropzoneTaskComment').removeClass('hide');
+    $('#addTaskCommentBtn').removeClass('hide');
+
+    taskCommentAttachmentDropzone = new Dropzone("#task-comment-form", $.extend({}, _dropzone_defaults(), {
+        uploadMultiple: true,
+        clickable: '#dropzoneTaskComment',
+        previewsContainer: '.dropzone-task-comment-previews',
+        autoProcessQueue: false,
+        addRemoveLinks: true,
+        parallelUploads: 20,
+        maxFiles: 20,
+        paramName: 'file',
+        sending: function(file, xhr, formData) {
+            formData.append("taskid", $('#addTaskCommentBtn').attr('data-comment-task-id'));
+            if (tinyMCE.activeEditor) {
+                formData.append("content", tinyMCE.activeEditor.getContent());
+            } else {
+                formData.append("content", $('#task_comment').val());
+            }
+        },
+        success: function(files, response) {
+            response = JSON.parse(response);
+            if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
+                _task_append_html(response.taskHtml);
+                tinymce.remove('#task_comment');
+            }
+        }
+    }));
+
+    var editorConfig = _simple_editor_config();
+    editorConfig.auto_focus = true;
+    var iOS = is_ios();
+    // Not working fine on iOs
+    if (!iOS) {
+        init_editor('#task_comment', editorConfig);
+    }
+}
+
 function init_ajax_search(type, selector, server_data, url) {
     var ajaxSelector = $('body').find(selector);
+
     if (ajaxSelector.length) {
         var options = {
             ajax: {
@@ -6821,7 +7210,7 @@ function init_ajax_search(type, selector, server_data, url) {
                         'text': processData[i].name,
                     };
                     if (processData[i].subtext) {
-                        tmp_data.data = { subtext: processData[i].subtext }
+                        tmp_data.data = { subtext: processData[i].subtext };
                     }
                     bs_data.push(tmp_data);
                 }
@@ -6829,7 +7218,7 @@ function init_ajax_search(type, selector, server_data, url) {
             },
             preserveSelectedPosition: 'after',
             preserveSelected: true
-        }
+        };
         if (ajaxSelector.data('empty-title')) {
             options.locale.emptyTitle = ajaxSelector.data('empty-title');
         }

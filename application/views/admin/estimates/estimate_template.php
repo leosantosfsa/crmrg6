@@ -9,7 +9,7 @@
             <div class="f_client_id">
              <div class="form-group select-placeholder">
                 <label for="clientid" class="control-label"><?php echo _l('estimate_select_customer'); ?></label>
-                <select id="clientid" name="clientid" data-live-search="true" data-width="100%" class="ajax-search" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
+                <select id="clientid" name="clientid" data-live-search="true" data-width="100%" class="ajax-search<?php if(isset($estimate) && empty($estimate->clientid)){echo ' customer-removed';} ?>" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                <?php $selected = (isset($estimate) ? $estimate->clientid : '');
                  if($selected == ''){
                    $selected = (isset($customer_id) ? $customer_id: '');
@@ -188,6 +188,11 @@
             </div>
             <div class="clearfix mbot15"></div>
             <?php $rel_id = (isset($estimate) ? $estimate->id : false); ?>
+            <?php
+                  if(isset($custom_fields_rel_transfer)) {
+                      $rel_id = $custom_fields_rel_transfer;
+                  }
+             ?>
             <?php echo render_custom_fields('estimate',$rel_id); ?>
          </div>
          <div class="col-md-6">
@@ -258,7 +263,7 @@
                   </div>
                </div>
                <?php $value = (isset($estimate) ? $estimate->adminnote : ''); ?>
-               <?php echo render_textarea('adminnote','estimate_add_edit_admin_note',$value,array(),array(),'mtop15'); ?>
+               <?php echo render_textarea('adminnote','estimate_add_edit_admin_note',$value); ?>
 
             </div>
          </div>

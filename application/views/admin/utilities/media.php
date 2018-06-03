@@ -153,8 +153,9 @@ define('elFinderConfig', {
           load = function() {
               require(
                   [
-                      'elfinder', 'extras/editors.default' // load text, image editors
-                      , 'elFinderConfig'
+                      'elfinder',
+                      'extras/editors.default', // load text, image editors
+                      'elFinderConfig'
                       //  , 'extras/quicklook.googledocs'  // optional preview for GoogleApps contents on the GoogleDrive volume
                   ],
                   start,

@@ -75,6 +75,8 @@
           <hr />
           <?php render_yes_no_option('show_tasks_on_calendar','show_tasks_on_calendar'); ?>
           <hr />
+          <?php render_yes_no_option('calendar_only_assigned_tasks','calendar_only_assigned_tasks'); ?>
+          <hr />
           <?php render_yes_no_option('show_projects_on_calendar','show_projects_on_calendar'); ?>
           <hr />
         </div>

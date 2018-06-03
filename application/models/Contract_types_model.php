@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Contract_types_model extends CRM_Model
 {
@@ -57,9 +58,9 @@ class Contract_types_model extends CRM_Model
 
         $types = $this->object_cache->get('contract-types');
 
-        if(!$types && !is_array($types)){
+        if (!$types && !is_array($types)) {
             $types = $this->db->get('tblcontracttypes')->result_array();
-            $this->object_cache->add('contract-types',$types);
+            $this->object_cache->add('contract-types', $types);
         }
 
         return $types;
@@ -73,9 +74,9 @@ class Contract_types_model extends CRM_Model
     public function delete($id)
     {
         if (is_reference_in_table('contract_type', 'tblcontracts', $id)) {
-            return array(
+            return [
                 'referenced' => true,
-            );
+            ];
         }
         $this->db->where('id', $id);
         $this->db->delete('tblcontracttypes');
@@ -94,14 +95,14 @@ class Contract_types_model extends CRM_Model
      */
     public function get_chart_data()
     {
-        $labels = array();
-        $totals = array();
+        $labels = [];
+        $totals = [];
         $types  = $this->get();
         foreach ($types as $type) {
-            $total_rows_where = array(
+            $total_rows_where = [
                 'contract_type' => $type['id'],
-                'trash' => 0,
-            );
+                'trash'         => 0,
+            ];
             if (is_client_logged_in()) {
                 $total_rows_where['client']                = get_client_user_id();
                 $total_rows_where['not_visible_to_client'] = 0;
@@ -117,18 +118,18 @@ class Contract_types_model extends CRM_Model
             array_push($labels, $type['name']);
             array_push($totals, $total_rows);
         }
-        $chart = array(
-            'labels' => $labels,
-            'datasets' => array(
-                array(
-                    'label' => _l('contract_summary_by_type'),
+        $chart = [
+            'labels'   => $labels,
+            'datasets' => [
+                [
+                    'label'           => _l('contract_summary_by_type'),
                     'backgroundColor' => 'rgba(3,169,244,0.2)',
-                    'borderColor' => "#03a9f4",
-                    'borderWidth' => 1,
-                    'data' => $totals,
-                ),
-            ),
-        );
+                    'borderColor'     => '#03a9f4',
+                    'borderWidth'     => 1,
+                    'data'            => $totals,
+                ],
+            ],
+        ];
 
         return $chart;
     }
@@ -139,19 +140,19 @@ class Contract_types_model extends CRM_Model
      */
     public function get_values_chart_data()
     {
-        $labels = array();
-        $totals = array();
+        $labels = [];
+        $totals = [];
         $types  = $this->get();
         foreach ($types as $type) {
             array_push($labels, $type['name']);
 
-            $where = array(
-                'where' => array(
+            $where = [
+                'where' => [
                     'contract_type' => $type['id'],
-                    'trash' => 0,
-                ),
+                    'trash'         => 0,
+                ],
                 'field' => 'contract_value',
-            );
+            ];
 
             if (!has_permission('contracts', '', 'view')) {
                 $where['where']['addedfrom'] = get_staff_user_id();
@@ -163,19 +164,19 @@ class Contract_types_model extends CRM_Model
             }
             array_push($totals, $total);
         }
-        $chart = array(
-            'labels' => $labels,
-            'datasets' => array(
-                array(
-                    'label' => _l('contract_summary_by_type_value'),
+        $chart = [
+            'labels'   => $labels,
+            'datasets' => [
+                [
+                    'label'           => _l('contract_summary_by_type_value'),
                     'backgroundColor' => 'rgba(37,155,35,0.2)',
-                    'borderColor' => "#84c529",
-                    'tension' => false,
-                    'borderWidth' => 1,
-                    'data' => $totals,
-                ),
-            ),
-        );
+                    'borderColor'     => '#84c529',
+                    'tension'         => false,
+                    'borderWidth'     => 1,
+                    'data'            => $totals,
+                ],
+            ],
+        ];
 
         return $chart;
     }

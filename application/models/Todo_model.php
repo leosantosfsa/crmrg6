@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Todo_model extends CRM_Model
 {
@@ -10,11 +11,13 @@ class Todo_model extends CRM_Model
         $this->todo_limit = do_action('todos_limit', 20);
     }
 
-    public function setTodosLimit($limit){
+    public function setTodosLimit($limit)
+    {
         $this->todo_limit = $limit;
     }
 
-    public function getTodosLimit(){
+    public function getTodosLimit()
+    {
         return $this->todo_limit;
     }
 
@@ -52,7 +55,7 @@ class Todo_model extends CRM_Model
         }
         $todos = $this->db->get()->result_array();
         // format date
-        $i     = 0;
+        $i = 0;
         foreach ($todos as $todo) {
             $todos[$i]['dateadded']    = _dt($todo['dateadded']);
             $todos[$i]['datefinished'] = _dt($todo['datefinished']);
@@ -97,10 +100,10 @@ class Todo_model extends CRM_Model
     public function update_todo_items_order($data)
     {
         for ($i = 0; $i < count($data['data']); $i++) {
-            $update = array(
+            $update = [
                 'item_order' => $data['data'][$i][1],
-                'finished' => $data['data'][$i][2]
-            );
+                'finished'   => $data['data'][$i][2],
+            ];
             if ($data['data'][$i][2] == 1) {
                 $update['datefinished'] = date('Y-m-d H:i:s');
             }
@@ -137,18 +140,18 @@ class Todo_model extends CRM_Model
         $this->db->where('todoid', $id);
         $this->db->where('staffid', get_staff_user_id());
         $date = date('Y-m-d H:i:s');
-        $this->db->update('tbltodoitems', array(
-            'finished' => $status,
-            'datefinished' => $date
-        ));
+        $this->db->update('tbltodoitems', [
+            'finished'     => $status,
+            'datefinished' => $date,
+        ]);
         if ($this->db->affected_rows() > 0) {
-            return array(
-                'success' => true
-            );
+            return [
+                'success' => true,
+            ];
         }
 
-        return array(
-            'success' => false
-        );
+        return [
+            'success' => false,
+        ];
     }
 }

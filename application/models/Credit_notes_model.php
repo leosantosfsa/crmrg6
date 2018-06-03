@@ -1,9 +1,10 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Credit_notes_model extends CRM_Model
 {
-    private $shipping_fields = array('shipping_street', 'shipping_city', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country');
+    private $shipping_fields = ['shipping_street', 'shipping_city', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country'];
 
     public function __construct()
     {
@@ -13,29 +14,29 @@ class Credit_notes_model extends CRM_Model
 
     public function get_statuses()
     {
-        $statuses = array(
-            array(
-                'id'=>1,
-                'color'=>'#03a9f4',
-                'name'=>_l('credit_note_status_open'),
-                'order'=>1,
-                'filter_default'=>true,
-                ),
-             array(
-                'id'=>2,
-                'color'=>'#84c529',
-                'name'=>_l('credit_note_status_closed'),
-                'order'=>2,
-                'filter_default'=>true,
-             ),
-             array(
-                'id'=>3,
-                'color'=>'#777',
-                'name'=>_l('credit_note_status_void'),
-                'order'=>3,
-                'filter_default'=>false,
-             ),
-        );
+        $statuses = [
+            [
+                'id'             => 1,
+                'color'          => '#03a9f4',
+                'name'           => _l('credit_note_status_open'),
+                'order'          => 1,
+                'filter_default' => true,
+                ],
+             [
+                'id'             => 2,
+                'color'          => '#84c529',
+                'name'           => _l('credit_note_status_closed'),
+                'order'          => 2,
+                'filter_default' => true,
+             ],
+             [
+                'id'             => 3,
+                'color'          => '#777',
+                'name'           => _l('credit_note_status_void'),
+                'order'          => 3,
+                'filter_default' => false,
+             ],
+        ];
 
         return do_action('before_get_credit_notes_statuses', $statuses);
     }
@@ -51,14 +52,14 @@ class Credit_notes_model extends CRM_Model
 
         $this->db->select('tblinvoices.id as id, status, total, date, symbol');
         $this->db->where('clientid', $credit_note->clientid);
-        $this->db->where('status IN ('.implode(', ', $invoices_statuses_available_for_credits).')');
+        $this->db->where('status IN (' . implode(', ', $invoices_statuses_available_for_credits) . ')');
         if (!$has_permission_view) {
             $this->db->where('addedfrom', get_staff_user_id());
         }
         $this->db->join('tblcurrencies', 'tblcurrencies.id = tblinvoices.currency');
         $invoices = $this->db->get('tblinvoices')->result_array();
 
-        foreach ($invoices as $key=>$invoice) {
+        foreach ($invoices as $key => $invoice) {
             $invoices[$key]['total_left_to_pay'] = get_invoice_total_left_to_pay($invoice['id'], $invoice['total']);
         }
 
@@ -80,14 +81,14 @@ class Credit_notes_model extends CRM_Model
         $this->emails_model->set_rel_type('credit_note');
 
         $credit_note = $this->get($id);
-        $template = 'credit-note-send-to-client';
-        $number = format_credit_note_number($credit_note->id);
+        $template    = 'credit-note-send-to-client';
+        $number      = format_credit_note_number($credit_note->id);
 
-        $sent                = false;
-        $sent_to             = $this->input->post('sent_to');
+        $sent    = false;
+        $sent_to = $this->input->post('sent_to');
         if ($manually === true) {
-            $sent_to  = array();
-            $contacts = $this->clients_model->get_contacts($credit_note->clientid, array('active'=>1, 'credit_note_emails'=>1));
+            $sent_to  = [];
+            $contacts = $this->clients_model->get_contacts($credit_note->clientid, ['active' => 1, 'credit_note_emails' => 1]);
             foreach ($contacts as $contact) {
                 array_push($sent_to, $contact['id']);
             }
@@ -102,11 +103,11 @@ class Credit_notes_model extends CRM_Model
             foreach ($sent_to as $contact_id) {
                 if ($contact_id != '') {
                     if ($attachpdf) {
-                        $this->emails_model->add_attachment(array(
+                        $this->emails_model->add_attachment([
                             'attachment' => $attach,
-                            'filename' => $number . '.pdf',
-                            'type' => 'application/pdf',
-                        ));
+                            'filename'   => $number . '.pdf',
+                            'type'       => 'application/pdf',
+                        ]);
                     }
 
                     $contact = $this->clients_model->get_contact($contact_id);
@@ -115,16 +116,16 @@ class Credit_notes_model extends CRM_Model
                         $_other_attachments = $this->input->post('email_attachments');
                         foreach ($_other_attachments as $attachment) {
                             $_attachment = $this->misc_model->get_file($attachment);
-                            $this->emails_model->add_attachment(array(
+                            $this->emails_model->add_attachment([
                                 'attachment' => get_upload_path_by_type('credit_note') . $id . '/' . $_attachment->file_name,
-                                'filename' => $_attachment->file_name,
-                                'type' => $_attachment->filetype,
-                                'read' => true,
-                            ));
+                                'filename'   => $_attachment->file_name,
+                                'type'       => $_attachment->filetype,
+                                'read'       => true,
+                            ]);
                         }
                     }
 
-                    $merge_fields = array();
+                    $merge_fields = [];
                     $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($credit_note->clientid, $contact_id));
                     $merge_fields = array_merge($merge_fields, get_credit_note_merge_fields($credit_note->id));
                     // Send cc only for the first contact
@@ -156,7 +157,7 @@ class Credit_notes_model extends CRM_Model
      * @param  array  $where perform where
      * @return mixed
      */
-    public function get($id = '', $where = array())
+    public function get($id = '', $where = [])
     {
         $this->db->select('*,tblcurrencies.id as currencyid, tblcreditnotes.id as id, tblcurrencies.name as currency_name');
         $this->db->from('tblcreditnotes');
@@ -167,12 +168,16 @@ class Credit_notes_model extends CRM_Model
             $this->db->where('tblcreditnotes.id', $id);
             $credit_note = $this->db->get()->row();
             if ($credit_note) {
-                $credit_note->applied_credits = $this->get_applied_credits($id);
+                $credit_note->applied_credits   = $this->get_applied_credits($id);
                 $credit_note->remaining_credits = $this->total_remaining_credits_by_credit_note($id);
-                $credit_note->credits_used = $this->total_credits_used_by_credit_note($id);
-                $credit_note->items = get_items_by_type('credit_note', $id);
-                $credit_note->client = $this->clients_model->get($credit_note->clientid);
-                $credit_note->attachments                           = $this->get_attachments($id);
+                $credit_note->credits_used      = $this->total_credits_used_by_credit_note($id);
+                $credit_note->items             = get_items_by_type('credit_note', $id);
+                $credit_note->client            = $this->clients_model->get($credit_note->clientid);
+                if(!$credit_note->client) {
+                    $credit_note->client = new stdClass();
+                    $credit_note->client->company = $credit_note->deleted_customer_name;
+                }
+                $credit_note->attachments       = $this->get_attachments($id);
             }
 
             return $credit_note;
@@ -189,10 +194,10 @@ class Credit_notes_model extends CRM_Model
 
         $data['prefix']        = get_option('credit_note_prefix');
         $data['number_format'] = get_option('credit_note_number_format');
-        $data['datecreated'] = date('Y-m-d H:i:s');
-        $data['addedfrom'] = get_staff_user_id();
+        $data['datecreated']   = date('Y-m-d H:i:s');
+        $data['addedfrom']     = get_staff_user_id();
 
-        $items               = array();
+        $items = [];
         if (isset($data['newitems'])) {
             $items = $data['newitems'];
             unset($data['newitems']);
@@ -205,9 +210,9 @@ class Credit_notes_model extends CRM_Model
 
         $data = $this->map_shipping_columns($data);
 
-        $hook_data = do_action('before_create_credit_note', array('data'=>$data, 'items'=>$items));
+        $hook_data = do_action('before_create_credit_note', ['data' => $data, 'items' => $items]);
 
-        $data = $hook_data['data'];
+        $data  = $hook_data['data'];
         $items = $hook_data['items'];
 
         $this->db->insert('tblcreditnotes', $data);
@@ -231,7 +236,7 @@ class Credit_notes_model extends CRM_Model
 
             update_sales_total_tax_column($insert_id, 'credit_note', 'tblcreditnotes');
 
-            logActivity('Credit Note Created [ID: '.$insert_id.']');
+            logActivity('Credit Note Created [ID: ' . $insert_id . ']');
 
             do_action('after_create_credit_note', $insert_id);
 
@@ -253,22 +258,22 @@ class Credit_notes_model extends CRM_Model
      */
     public function update($data, $id)
     {
-        $affectedRows     = 0;
+        $affectedRows  = 0;
         $save_and_send = isset($data['save_and_send']);
 
-        $items = array();
+        $items = [];
         if (isset($data['items'])) {
             $items = $data['items'];
             unset($data['items']);
         }
 
-        $newitems = array();
+        $newitems = [];
         if (isset($data['newitems'])) {
             $newitems = $data['newitems'];
             unset($data['newitems']);
         }
 
-         if (isset($data['custom_fields'])) {
+        if (isset($data['custom_fields'])) {
             $custom_fields = $data['custom_fields'];
             if (handle_custom_fields_post($id, $custom_fields)) {
                 $affectedRows++;
@@ -278,19 +283,19 @@ class Credit_notes_model extends CRM_Model
 
         $data = $this->map_shipping_columns($data);
 
-        $hook_data = do_action('before_update_credit_note', array(
-            'data'=>$data,
-            'id'=>$id,
-            'items'=>$items,
-            'newitems'=>$newitems,
-            'removed_items'=>isset($data['removed_items']) ? $data['removed_items'] : array(),
-        ));
+        $hook_data = do_action('before_update_credit_note', [
+            'data'          => $data,
+            'id'            => $id,
+            'items'         => $items,
+            'newitems'      => $newitems,
+            'removed_items' => isset($data['removed_items']) ? $data['removed_items'] : [],
+        ]);
 
-        $data = $hook_data['data'];
+        $data                  = $hook_data['data'];
         $data['removed_items'] = $hook_data['removed_items'];
 
         $newitems = $hook_data['newitems'];
-        $items = $hook_data['items'];
+        $items    = $hook_data['items'];
 
         // Delete items checked to be removed from database
         foreach ($data['removed_items'] as $remove_item_id) {
@@ -312,8 +317,8 @@ class Credit_notes_model extends CRM_Model
                 $affectedRows++;
             }
 
-            if(isset($item['custom_fields'])) {
-                if(handle_custom_fields_post($item['itemid'], $item['custom_fields'])) {
+            if (isset($item['custom_fields'])) {
+                if (handle_custom_fields_post($item['itemid'], $item['custom_fields'])) {
                     $affectedRows++;
                 }
             }
@@ -324,7 +329,7 @@ class Credit_notes_model extends CRM_Model
                 }
             } else {
                 $item_taxes        = get_credit_note_item_taxes($item['itemid']);
-                $_item_taxes_names = array();
+                $_item_taxes_names = [];
                 foreach ($item_taxes as $_item_tax) {
                     array_push($_item_taxes_names, $_item_tax['taxname']);
                 }
@@ -362,7 +367,7 @@ class Credit_notes_model extends CRM_Model
             update_sales_total_tax_column($id, 'credit_note', 'tblcreditnotes');
         }
 
-        if($affectedRows > 0){
+        if ($affectedRows > 0) {
             logActivity('Credit Note Updated [ID:' . $id . ']');
             do_action('after_update_credit_note', $id);
 
@@ -381,7 +386,7 @@ class Credit_notes_model extends CRM_Model
     {
         $attachment = $this->misc_model->get_file($id);
 
-        $deleted    = false;
+        $deleted = false;
         if ($attachment) {
             if (empty($attachment->external)) {
                 unlink(get_upload_path_by_type('credit_note') . $attachment->rel_id . '/' . $attachment->file_name);
@@ -390,7 +395,7 @@ class Credit_notes_model extends CRM_Model
             $this->db->delete('tblfiles');
             if ($this->db->affected_rows() > 0) {
                 $deleted = true;
-                logActivity('credit_note Attachment Deleted [Credite Note: ' . format_credit_note_number($attachment->rel_id) . ']');
+                logActivity('Credit Note Attachment Deleted [Credite Note: ' . format_credit_note_number($attachment->rel_id) . ']');
             }
             if (is_dir(get_upload_path_by_type('credit_note') . $attachment->rel_id)) {
                 // Check if no attachments left, so we can delete the folder also
@@ -418,7 +423,7 @@ class Credit_notes_model extends CRM_Model
     * @param  mixed $id credit note id
     * @return boolean
     */
-    public function delete($id)
+    public function delete($id, $simpleDelete = false)
     {
         do_action('before_credit_note_deleted', $id);
         $this->db->where('id', $id);
@@ -426,16 +431,18 @@ class Credit_notes_model extends CRM_Model
         if ($this->db->affected_rows() > 0) {
             $current_credit_note_number = get_option('next_credit_note_number');
 
-            if ($current_credit_note_number > 1 && is_last_credit_note($id)) {
+            if ($current_credit_note_number > 1 && is_last_credit_note($id) && $simpleDelete == false) {
                 // Decrement next credit note number
                 $this->db->where('name', 'next_credit_note_number');
                 $this->db->set('value', 'value-1', false);
                 $this->db->update('tbloptions');
             }
 
+            delete_tracked_emails($id, 'credit_note');
+
             // Delete the custom field values
-            $this->db->where('relid IN (SELECT id from tblitems_in WHERE rel_type="credit_note" AND rel_id="'.$id.'")');
-            $this->db->where('fieldto','items');
+            $this->db->where('relid IN (SELECT id from tblitems_in WHERE rel_type="credit_note" AND rel_id="' . $id . '")');
+            $this->db->where('fieldto', 'items');
             $this->db->delete('tblcustomfieldsvalues');
 
             $this->db->where('relid', $id);
@@ -458,6 +465,10 @@ class Credit_notes_model extends CRM_Model
                 $this->delete_attachment($attachment['id']);
             }
 
+            $this->db->where('rel_type', 'credit_note');
+            $this->db->where('rel_id', $id);
+            $this->db->delete('tblreminders');
+
             do_action('after_credit_note_deleted', $id);
 
             return true;
@@ -469,7 +480,7 @@ class Credit_notes_model extends CRM_Model
     public function mark($id, $status)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblcreditnotes', array('status'=>$status));
+        $this->db->update('tblcreditnotes', ['status' => $status]);
 
         return $this->db->affected_rows() > 0 ? true : false;
     }
@@ -503,8 +514,8 @@ class Credit_notes_model extends CRM_Model
 
     private function calc_remaining_credits($credits)
     {
-        $total = 0;
-        $credits_ids = array();
+        $total       = 0;
+        $credits_ids = [];
 
         $bcadd = function_exists('bcadd');
         foreach ($credits as $credit) {
@@ -517,9 +528,9 @@ class Credit_notes_model extends CRM_Model
         }
 
         if (count($credits_ids) > 0) {
-            $this->db->where('credit_id IN ('.implode(', ', $credits_ids).')');
+            $this->db->where('credit_id IN (' . implode(', ', $credits_ids) . ')');
             $applied_credits = $this->db->get('tblcredits')->result_array();
-            $bcsub = function_exists('bcsub');
+            $bcsub           = function_exists('bcsub');
             foreach ($applied_credits as $credit) {
                 if ($bcsub) {
                     $total = bcsub($total, $credit['amount'], get_decimal_places());
@@ -546,79 +557,77 @@ class Credit_notes_model extends CRM_Model
     {
         $_invoice = $this->invoices_model->get($invoice_id);
 
-        $new_credit_note_data             = array();
+        $new_credit_note_data             = [];
         $new_credit_note_data['clientid'] = $_invoice->clientid;
         $new_credit_note_data['number']   = get_option('next_credit_note_number');
         $new_credit_note_data['date']     = _d(date('Y-m-d'));
 
-        $new_credit_note_data['show_quantity_as']  = $_invoice->show_quantity_as;
-        $new_credit_note_data['currency']          = $_invoice->currency;
-        $new_credit_note_data['subtotal']          = $_invoice->subtotal;
-        $new_credit_note_data['total']             = $_invoice->total;
-        $new_credit_note_data['adminnote']         = $_invoice->adminnote;
-        $new_credit_note_data['adjustment']        = $_invoice->adjustment;
-        $new_credit_note_data['discount_percent']  = $_invoice->discount_percent;
-        $new_credit_note_data['discount_total']    = $_invoice->discount_total;
-        $new_credit_note_data['discount_type']     = $_invoice->discount_type;
+        $new_credit_note_data['show_quantity_as'] = $_invoice->show_quantity_as;
+        $new_credit_note_data['currency']         = $_invoice->currency;
+        $new_credit_note_data['subtotal']         = $_invoice->subtotal;
+        $new_credit_note_data['total']            = $_invoice->total;
+        $new_credit_note_data['adminnote']        = $_invoice->adminnote;
+        $new_credit_note_data['adjustment']       = $_invoice->adjustment;
+        $new_credit_note_data['discount_percent'] = $_invoice->discount_percent;
+        $new_credit_note_data['discount_total']   = $_invoice->discount_total;
+        $new_credit_note_data['discount_type']    = $_invoice->discount_type;
 
 
-        $new_credit_note_data['billing_street']    = clear_textarea_breaks($_invoice->billing_street);
-        $new_credit_note_data['billing_city']      = $_invoice->billing_city;
-        $new_credit_note_data['billing_state']     = $_invoice->billing_state;
-        $new_credit_note_data['billing_zip']       = $_invoice->billing_zip;
-        $new_credit_note_data['billing_country']   = $_invoice->billing_country;
-        $new_credit_note_data['shipping_street']   = clear_textarea_breaks($_invoice->shipping_street);
-        $new_credit_note_data['shipping_city']     = $_invoice->shipping_city;
-        $new_credit_note_data['shipping_state']    = $_invoice->shipping_state;
-        $new_credit_note_data['shipping_zip']      = $_invoice->shipping_zip;
-        $new_credit_note_data['shipping_country']  = $_invoice->shipping_country;
-        $new_credit_note_data['reference_no']  = format_invoice_number($_invoice->id);
+        $new_credit_note_data['billing_street']   = clear_textarea_breaks($_invoice->billing_street);
+        $new_credit_note_data['billing_city']     = $_invoice->billing_city;
+        $new_credit_note_data['billing_state']    = $_invoice->billing_state;
+        $new_credit_note_data['billing_zip']      = $_invoice->billing_zip;
+        $new_credit_note_data['billing_country']  = $_invoice->billing_country;
+        $new_credit_note_data['shipping_street']  = clear_textarea_breaks($_invoice->shipping_street);
+        $new_credit_note_data['shipping_city']    = $_invoice->shipping_city;
+        $new_credit_note_data['shipping_state']   = $_invoice->shipping_state;
+        $new_credit_note_data['shipping_zip']     = $_invoice->shipping_zip;
+        $new_credit_note_data['shipping_country'] = $_invoice->shipping_country;
+        $new_credit_note_data['reference_no']     = format_invoice_number($_invoice->id);
         if ($_invoice->include_shipping == 1) {
             $new_credit_note_data['include_shipping'] = $_invoice->include_shipping;
         }
         $new_credit_note_data['show_shipping_on_credit_note'] = $_invoice->show_shipping_on_invoice;
-        $new_credit_note_data['clientnote']               = get_option('predefined_clientnote_credit_note');
-        $new_credit_note_data['terms']             = get_option('predefined_terms_credit_note');
-        $new_credit_note_data['adminnote']                = '';
-        $new_credit_note_data['newitems']                 = array();
+        $new_credit_note_data['clientnote']                   = get_option('predefined_clientnote_credit_note');
+        $new_credit_note_data['terms']                        = get_option('predefined_terms_credit_note');
+        $new_credit_note_data['adminnote']                    = '';
+        $new_credit_note_data['newitems']                     = [];
 
         $custom_fields_items = get_custom_fields('items');
-        $key                                          = 1;
+        $key                 = 1;
         foreach ($_invoice->items as $item) {
             $new_credit_note_data['newitems'][$key]['description']      = $item['description'];
             $new_credit_note_data['newitems'][$key]['long_description'] = clear_textarea_breaks($item['long_description']);
             $new_credit_note_data['newitems'][$key]['qty']              = $item['qty'];
             $new_credit_note_data['newitems'][$key]['unit']             = $item['unit'];
-            $new_credit_note_data['newitems'][$key]['taxname']          = array();
-            $taxes                                                  = get_invoice_item_taxes($item['id']);
+            $new_credit_note_data['newitems'][$key]['taxname']          = [];
+            $taxes                                                      = get_invoice_item_taxes($item['id']);
             foreach ($taxes as $tax) {
                 // tax name is in format TAX1|10.00
                 array_push($new_credit_note_data['newitems'][$key]['taxname'], $tax['taxname']);
             }
             $new_credit_note_data['newitems'][$key]['rate']  = $item['rate'];
             $new_credit_note_data['newitems'][$key]['order'] = $item['item_order'];
-            foreach($custom_fields_items as $cf) {
+            foreach ($custom_fields_items as $cf) {
+                $new_credit_note_data['newitems'][$key]['custom_fields']['items'][$cf['id']] = get_custom_field_value($item['id'], $cf['id'], 'items', false);
 
-            $new_credit_note_data['newitems'][$key]['custom_fields']['items'][$cf['id']] = get_custom_field_value($item['id'],$cf['id'],'items',false);
-
-                if(!defined('COPY_CUSTOM_FIELDS_LIKE_HANDLE_POST')) {
-                    define('COPY_CUSTOM_FIELDS_LIKE_HANDLE_POST',true);
+                if (!defined('COPY_CUSTOM_FIELDS_LIKE_HANDLE_POST')) {
+                    define('COPY_CUSTOM_FIELDS_LIKE_HANDLE_POST', true);
                 }
-
             }
             $key++;
         }
         $id = $this->add($new_credit_note_data);
         if ($id) {
             if ($_invoice->status != 2) {
-                if ($this->apply_credits($id, array('invoice_id'=>$invoice_id, 'amount'=>$_invoice->total_left_to_pay))) {
+                if ($this->apply_credits($id, ['invoice_id' => $invoice_id, 'amount' => $_invoice->total_left_to_pay])) {
                     update_invoice_status($invoice_id, true);
                 }
             }
 
-            logActivity('Created Credit Note From Invoice [Invoice: ' . format_invoice_number($_invoice->id).', Credit Note: '.format_credit_note_number($id).']');
+            logActivity('Created Credit Note From Invoice [Invoice: ' . format_invoice_number($_invoice->id) . ', Credit Note: ' . format_credit_note_number($id) . ']');
 
-            do_action('created_credit_note_from_invoice', array('invoice_id'=>$invoice_id, 'credit_note_id'=>$id));
+            do_action('created_credit_note_from_invoice', ['invoice_id' => $invoice_id, 'credit_note_id' => $id]);
 
             return $id;
         }
@@ -632,14 +641,14 @@ class Credit_notes_model extends CRM_Model
             return false;
         }
 
-        $this->db->insert('tblcredits', array(
-            'invoice_id'=>$data['invoice_id'],
-            'credit_id'=>$id,
-            'staff_id'=>get_staff_user_id(),
-            'date'=>date('Y-m-d'),
-            'date_applied'=>date('Y-m-d H:i:s'),
-            'amount'=>$data['amount'],
-        ));
+        $this->db->insert('tblcredits', [
+            'invoice_id'   => $data['invoice_id'],
+            'credit_id'    => $id,
+            'staff_id'     => get_staff_user_id(),
+            'date'         => date('Y-m-d'),
+            'date_applied' => date('Y-m-d H:i:s'),
+            'amount'       => $data['amount'],
+        ]);
 
         $insert_id = $this->db->insert_id();
 
@@ -651,15 +660,15 @@ class Credit_notes_model extends CRM_Model
 
             $invoice = $this->db->get('tblinvoices')->row();
 
-            $inv_number = format_invoice_number($data['invoice_id']);
+            $inv_number         = format_invoice_number($data['invoice_id']);
             $credit_note_number = format_credit_note_number($id);
 
-            $this->invoices_model->log_invoice_activity($data['invoice_id'], 'invoice_activity_applied_credits', false, serialize(array(
+            $this->invoices_model->log_invoice_activity($data['invoice_id'], 'invoice_activity_applied_credits', false, serialize([
                    format_money($data['amount'], $invoice->symbol),
                    $credit_note_number,
-             )));
-            do_action('credits_applied', array('data'=>$data, 'credit_note_id'=>$id));
-            logActivity('Credit Applied to Invoice [ Invoice: '.$inv_number.', Credit: '.$credit_note_number.' ]');
+             ]));
+            do_action('credits_applied', ['data' => $data, 'credit_note_id' => $id]);
+            logActivity('Credit Applied to Invoice [ Invoice: ' . $inv_number . ', Credit: ' . $credit_note_number . ' ]');
         }
 
         return $insert_id;
@@ -667,10 +676,10 @@ class Credit_notes_model extends CRM_Model
 
     private function total_credits_used_by_credit_note($id)
     {
-        return sum_from_table('tblcredits', array(
-                'field'=>'amount',
-                'where'=>array('credit_id'=>$id),
-            ));
+        return sum_from_table('tblcredits', [
+                'field' => 'amount',
+                'where' => ['credit_id' => $id],
+            ]);
     }
 
     public function update_credit_note_status($id)
@@ -701,7 +710,7 @@ class Credit_notes_model extends CRM_Model
         }
 
         $this->db->where('id', $id);
-        $this->db->update('tblcreditnotes', array('status'=>$status));
+        $this->db->update('tblcreditnotes', ['status' => $status]);
 
         return $this->db->affected_rows() > 0 ? true : false;
     }
@@ -751,7 +760,7 @@ class Credit_notes_model extends CRM_Model
 
         $available_total = $credit_amount;
 
-        $bcsub = function_exists('bcsub');
+        $bcsub           = function_exists('bcsub');
         $applied_credits = $this->get_applied_credits($credit_id);
 
         foreach ($applied_credits as $credit) {
@@ -779,7 +788,7 @@ class Credit_notes_model extends CRM_Model
                 }
             }
             $data['show_shipping_on_credit_note'] = 1;
-            $data['include_shipping']          = 0;
+            $data['include_shipping']             = 0;
         } else {
             $data['include_shipping'] = 1;
             // set by default for the next time to be checked

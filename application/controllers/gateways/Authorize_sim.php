@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Authorize_sim extends CRM_Controller
@@ -20,13 +21,13 @@ class Authorize_sim extends CRM_Controller
                 check_invoice_restrictions($invoice->id, $invoice->hash);
                 load_client_language($invoice->clientid);
                 if ($data['x_response_code'] == '1') {
-
                     $success = $this->authorize_sim_gateway->addPayment(
-                    array(
-                      'amount'=>$data['x_amount'],
-                      'invoiceid'=>$invoice->id,
-                      'transactionid'=>$data['x_trans_id']
-                    ));
+                    [
+                      'amount'        => $data['x_amount'],
+                      'invoiceid'     => $invoice->id,
+                      'transactionid' => $data['x_trans_id'],
+                    ]
+                    );
 
                     if ($success) {
                         $message = _l('online_payment_recorded_success');
@@ -40,9 +41,9 @@ class Authorize_sim extends CRM_Controller
                 }
 
                 $this->db->where('id', $invoice->id);
-                $this->db->update('tblinvoices', array(
-                    'token' => ''
-                ));
+                $this->db->update('tblinvoices', [
+                    'token' => '',
+                ]);
             } else {
                 $success = false;
                 $message = 'Invoice not found';
@@ -60,13 +61,13 @@ class Authorize_sim extends CRM_Controller
             $message_styling = 'color:#ff6f00';
         }
         echo '<h1 style="' . $message_styling . '">' . $message . '</h1>';
-        do_action('after_authorize_sim_receipt_is_shown', array(
+        do_action('after_authorize_sim_receipt_is_shown', [
             'success' => $success,
             'invoice' => $invoice,
-            'message' => $message
-        ));
+            'message' => $message,
+        ]);
         if ($invoice) {
-            echo '<a href="' . site_url('viewinvoice/' . $invoice->id . '/' . $invoice->hash) . '">Back to invoice</a>';
+            echo '<a href="' . site_url('invoice/' . $invoice->id . '/' . $invoice->hash) . '">Back to invoice</a>';
         } else {
             echo '<a href="' . site_url() . '">Back to merchant</a>';
         }

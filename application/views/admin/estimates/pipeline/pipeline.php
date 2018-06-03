@@ -26,7 +26,7 @@ foreach ($estimate_statuses as $status) {
                         </li>
                         <?php } ?>
                         <li class="text-center not-sortable mtop30 kanban-empty<?php if($total_estimates > 0){echo ' hide';} ?>">
-                            <h4 class="text-muted">
+                            <h4>
                               <i class="fa fa-circle-o-notch" aria-hidden="true"></i><br /><br />
                               <?php echo _l('no_estimates_found'); ?></h4>
                           </li>

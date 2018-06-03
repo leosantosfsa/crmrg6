@@ -18,7 +18,6 @@
                             _l( 'reminder_date'),
                             _l( 'reminder_staff'),
                             _l( 'reminder_is_notified'),
-                            _l( 'options')
                             ), 'reminders'); ?>
                     </div>
                 </div>
@@ -34,9 +33,9 @@
     ); ?>
 <?php init_tail(); ?>
 <script>
-    $(function(){
-        initDataTable('.table-reminders', admin_url + 'misc/reminders_table', [5], [5],undefined,[2,'ASC']);
-    });
+        $(function(){
+            initDataTable('.table-reminders', admin_url + 'misc/reminders_table', undefined, undefined, undefined, [2,'asc']);
+        });
     </script>
 </body>
 </html>

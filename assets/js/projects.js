@@ -37,7 +37,7 @@
           $('#milestone').find('input[name="name"]').focus();
       });
 
-      initDataTable('.table-credit-notes', admin_url + 'credit_notes/table?project_id=' + project_id, ['undefined'], ['undefined'], undefined, [0, 'DESC']);
+      initDataTable('.table-credit-notes', admin_url + 'credit_notes/table?project_id=' + project_id, ['undefined'], ['undefined'], undefined, [0, 'desc']);
 
       if ($('#timesheetsChart').length > 0 && typeof(project_overview_chart) != 'undefined') {
           var chartOptions = {
@@ -168,7 +168,7 @@
       gantt = $("#gantt").gantt({
           source: gantt_data,
           itemsPerPage: 25,
-          months: JSON.parse(months_json),
+          months: JSON.parse(monthsJSON),
           navigate: 'scroll',
           onRender: function() {
               var rm = $('#gantt .leftPanel .name .fn-label:empty').parents('.name').css('background', 'initial');
@@ -193,14 +193,14 @@
           Expenses_ServerParams[$(this).attr('name')] = '[name="' + $(this).attr('name') + '"]';
       });
 
-      _table_api = initDataTable('.table-project-expenses', admin_url + 'projects/expenses/' + project_id, 'undefined', 'undefined', Expenses_ServerParams, [4, 'DESC']);
+      _table_api = initDataTable('.table-project-expenses', admin_url + 'projects/expenses/' + project_id, 'undefined', 'undefined', Expenses_ServerParams, [4, 'desc']);
 
       if (_table_api) {
           _table_api.column(0).visible(false, false).columns.adjust();
       }
 
       init_rel_tasks_table(project_id, 'project');
-      initDataTable('.table-notes', admin_url + 'projects/notes/' + project_id, [4], [4], 'undefined', [1, 'DESC']);
+      initDataTable('.table-notes', admin_url + 'projects/notes/' + project_id, [4], [4], 'undefined', [1, 'desc']);
 
 
       var Timesheets_ServerParams = {};
@@ -208,8 +208,8 @@
           Timesheets_ServerParams[$(this).attr('name')] = '[name="' + $(this).attr('name') + '"]';
       });
 
-      initDataTable('.table-timesheets', admin_url + 'projects/timesheets/' + project_id, [8], [8], Timesheets_ServerParams, [3, 'DESC']);
-      initDataTable('.table-project-discussions', admin_url + 'projects/discussions/' + project_id, [4], [4], 'undefined', [1, 'DESC']);
+      initDataTable('.table-timesheets', admin_url + 'projects/timesheets/' + project_id, [8], [8], Timesheets_ServerParams, [3, 'desc']);
+      initDataTable('.table-project-discussions', admin_url + 'projects/discussions/' + project_id, undefined, undefined, 'undefined', [1, 'desc']);
 
       _validate_form($('#milestone_form'), {
           name: 'required',
@@ -305,27 +305,6 @@
           });
       });
 
-      $('input[name="tasks"].copy').on('change', function() {
-          var checked = $(this).prop('checked');
-          if (checked) {
-              var copy_assignees = $('input[name="task_include_assignees"]').prop('checked');
-              var copy_followers = $('input[name="task_include_followers"]').prop('checked');
-              if (copy_assignees || copy_followers) {
-                  $('input[name="members"].copy').prop('checked', true);
-              }
-              $('.copy-project-tasks-status-wrapper').removeClass('hide');
-          } else {
-              $('.copy-project-tasks-status-wrapper').addClass('hide');
-          }
-      });
-
-      $('input[name="task_include_assignees"],input[name="task_include_followers"]').on('change', function() {
-          var checked = $(this).prop('checked');
-          if (checked == true) {
-              $('input[name="members"].copy').prop('checked', true);
-          }
-      });
-
       $('body').on('change', '#project_invoice_select_all_tasks,#project_invoice_select_all_expenses', function() {
           var checked = $(this).prop('checked');
           var name_selector;
@@ -371,7 +350,7 @@
       $('#milestones-table').toggleClass('hide');
       $('.project-milestones-kanban').toggleClass('hide');
       if (!$.fn.DataTable.isDataTable('.table-milestones')) {
-          initDataTable('.table-milestones', admin_url + 'projects/milestones/' + project_id, [2], [2]);
+          initDataTable('.table-milestones', admin_url + 'projects/milestones/' + project_id);
       }
   }
 

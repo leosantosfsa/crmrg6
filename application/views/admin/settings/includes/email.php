@@ -9,12 +9,23 @@
 <div class="tab-content">
 	<div role="tabpanel" class="tab-pane active" id="email_config">
 		<!-- fake fields are a workaround for chrome autofill getting the wrong fields -->
-		<input  type="text" class="fake-autofill-field" name="fakeusernameremembered" value='' tabindex="-1" />
-		<input  type="password" class="fake-autofill-field" name="fakepasswordremembered" value='' tabindex="-1" />
-		<h4 style="margin-top:-20px;"><?php echo _l('settings_smtp_settings_heading'); ?></h4>
-		<p class="text-muted"><?php echo _l('settings_smtp_settings_subheading'); ?></p>
+		<input type="text" class="fake-autofill-field" name="fakeusernameremembered" value='' tabindex="-1" />
+		<input type="password" class="fake-autofill-field" name="fakepasswordremembered" value='' tabindex="-1" />
+		<h4 style="margin-top:-20px;"><?php echo _l('settings_smtp_settings_heading'); ?> <small><?php echo _l('settings_smtp_settings_subheading'); ?></small></h4>
 		<hr />
 		<div class="form-group">
+
+			<label for="mail_engine"><?php echo _l('mail_engine'); ?></label><br />
+			<div class="radio radio-inline radio-primary">
+				<input type="radio" name="settings[mail_engine]" id="phpmailer" value="phpmailer" <?php if(get_option('mail_engine') == 'phpmailer'){echo 'checked';} ?>>
+				<label for="phpmailer">PHPMailer</label>
+			</div>
+
+			<div class="radio radio-inline radio-primary">
+				<input type="radio" name="settings[mail_engine]" id="codeigniter" value="codeigniter" <?php if(get_option('mail_engine') == 'codeigniter'){echo 'checked';} ?>>
+				<label for="codeigniter">CodeIgniter</label>
+			</div>
+			<hr />
 			<label for="email_protocol"><?php echo _l('email_protocol'); ?></label><br />
 			<div class="radio radio-inline radio-primary">
 				<input type="radio" name="settings[email_protocol]" id="smtp" value="smtp" <?php if(get_option('email_protocol') == 'smtp'){echo 'checked';} ?>>
@@ -42,7 +53,9 @@
 			</div>
 		<?php echo render_input('settings[smtp_host]','settings_email_host',get_option('smtp_host')); ?>
 		<?php echo render_input('settings[smtp_port]','settings_email_port',get_option('smtp_port')); ?>
+		</div>
 		<?php echo render_input('settings[smtp_email]','settings_email',get_option('smtp_email')); ?>
+		<div class="smtp-fields<?php if(get_option('email_protocol') == 'mail'){echo ' hide'; } ?>">
 		<i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-title="<?php echo _l('smtp_username_help'); ?>"></i>
 		<?php echo render_input('settings[smtp_username]','smtp_username',get_option('smtp_username')); ?>
 		<?php

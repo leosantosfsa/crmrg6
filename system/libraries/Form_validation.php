@@ -1236,6 +1236,7 @@ class CI_Form_validation {
 				: idn_to_ascii($matches[2]);
 			$str = $matches[1].'@'.$domain;
 		}
+
 		return (bool) filter_var($str, FILTER_VALIDATE_EMAIL);
 	}
 

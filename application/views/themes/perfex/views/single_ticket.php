@@ -19,15 +19,15 @@
                         <h4>
                             #<?php echo $ticket->ticketid; ?> - <?php echo $ticket->subject; ?>
                         </h4>
-                        <hr />
+                        <hr class="hr-10" />
                         <p>
                             <?php echo _l('clients_ticket_single_department', '<span class="pull-right bold">'.$ticket->department_name.'</span>'); ?>
                         </p>
-                        <hr />
+                        <hr class="hr-10" />
                         <p>
                             <?php echo _l('clients_ticket_single_submitted','<span class="pull-right bold">'._dt($ticket->date).'</span>'); ?>
                         </p>
-                        <hr />
+                        <hr class="hr-10" />
                         <div class="row">
                             <div class="col-md-4">
                                 <?php echo _l('clients_ticket_single_status'); ?>
@@ -58,14 +58,14 @@
                                         <?php } ?>
                                     </div>
                                 </div>
-                                <hr />
+                                <hr class="hr-10" />
                                 <p>
                                     <?php echo _l('clients_ticket_single_priority','<span class="pull-right bold">'.ticket_priority_translate($ticket->priorityid).'</span>'); ?>
                                 </p>
                                 <?php
                                 $custom_fields = get_custom_fields('tickets',array('show_on_client_portal'=>1));
                                 foreach($custom_fields as $field){ ?>
-                                <hr />
+                                <hr class="hr-10" />
                                 <p class="bold"><?php echo $field['name']; ?>: <span class="pull-right bold"><?php echo get_custom_field_value($ticket->ticketid,$field['id'],'tickets'); ?></span></p>
                                 <?php } ?>
                             </div>
@@ -78,7 +78,6 @@
             </div>
             <div class="col-md-8">
                 <?php echo form_open_multipart($this->uri->uri_string(),array('id'=>'ticket-reply')); ?>
-                <input type="hidden" name="userid" value="<?php echo $client->userid; ?>">
                 <div class="panel_s single-ticket-reply-area" <?php if (form_error('message') == ''){ ?>style="display:none;" <?php } ?>>
                     <div class="panel-heading">
                         <?php echo _l('clients_ticket_single_add_reply_heading'); ?>
@@ -103,12 +102,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12 mtop20 text-center">
-                    <button class="btn btn-info" type="submit" data-form="#ticket-reply" autocomplete="off" data-loading-text="<?php echo _l('wait_text'); ?>"><?php echo _l('ticket_single_add_reply'); ?></button>
+                <div class="row">
+                    <div class="col-md-12 mtop20 mbot20 text-center">
+                        <button class="btn btn-info" type="submit" data-form="#ticket-reply" autocomplete="off" data-loading-text="<?php echo _l('wait_text'); ?>"><?php echo _l('ticket_single_add_reply'); ?></button>
+                    </div>
                 </div>
             </div>
+
         </div>
         <?php echo form_close(); ?>
         <div class="panel_s">

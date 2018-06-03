@@ -227,9 +227,25 @@
                         </div>
                      </div>
                   </div>
-                  <div id="recurring_ends_on" class="<?php if(!isset($expense) || (isset($expense) && $expense->recurring == 0)){echo 'hide';}?>">
-                     <?php $value = (isset($expense) ? _d($expense->recurring_ends_on) : ''); ?>
-                     <?php echo render_date_input('recurring_ends_on','recurring_ends_on',$value); ?>
+                      <div id="cycles_wrapper" class="<?php if(!isset($expense) || (isset($expense) && $expense->recurring == 0)){echo ' hide';}?>">
+                        <?php $value = (isset($expense) ? $expense->cycles : 0); ?>
+                        <div class="form-group recurring-cycles">
+                          <label for="cycles"><?php echo _l('recurring_total_cycles'); ?>
+                            <?php if(isset($expense) && $expense->total_cycles > 0){
+                              echo '<small>' . _l('cycles_passed', $expense->total_cycles) . '</small>';
+                            }
+                            ?>
+                          </label>
+                          <div class="input-group">
+                            <input type="number" class="form-control"<?php if($value == 0){echo ' disabled'; } ?> name="cycles" id="cycles" value="<?php echo $value; ?>" <?php if(isset($expense) && $expense->total_cycles > 0){echo 'min="'.($expense->total_cycles).'"';} ?>>
+                            <div class="input-group-addon">
+                              <div class="checkbox">
+                                <input type="checkbox"<?php if($value == 0){echo ' checked';} ?> id="unlimited_cycles">
+                                <label for="unlimited_cycles"><?php echo _l('cycles_infinity'); ?></label>
+                              </div>
+                            </div>
+                        </div>
+                     </div>
                   </div>
                   <div>
                     <?php

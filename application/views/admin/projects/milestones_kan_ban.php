@@ -84,7 +84,7 @@ foreach ($milestones as $milestone) {
   </li>
   <?php } ?>
   <li class="text-center not-sortable mtop30 kanban-empty<?php if ($total_tasks > 0) { echo ' hide'; } ?>">
-   <h4 class="text-muted">
+   <h4>
     <i class="fa fa-circle-o-notch" aria-hidden="true"></i><br /><br />
     <?php echo _l('no_tasks_found'); ?>
   </h4>

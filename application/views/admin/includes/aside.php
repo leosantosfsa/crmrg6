@@ -64,10 +64,22 @@
               $item->permission = '';
             }
           } elseif($item->id == 'child-proposals'){
-           if((total_rows('tblproposals',array('assigned'=>get_staff_user_id())) > 0
+           if((staff_has_assigned_proposals()
              && get_option('allow_staff_view_proposals_assigned') == 1)
              && (!has_permission('proposals','','view')
                && !has_permission('proposals','','view_own'))){
+             $item->permission = '';
+         }
+         } elseif($item->id == 'child-invoices'){
+           if((staff_has_assigned_invoices() && get_option('allow_staff_view_invoices_assigned') == 1)
+             && (!has_permission('invoices','','view')
+               && !has_permission('invoices','','view_own'))){
+             $item->permission = '';
+         }
+         } elseif($item->id == 'child-estimates'){
+           if((staff_has_assigned_estimates() && get_option('allow_staff_view_estimates_assigned') == 1)
+             && (!has_permission('estimates','','view')
+               && !has_permission('estimates','','view_own'))){
              $item->permission = '';
          }
          }
@@ -87,13 +99,17 @@
           && ($_sub_menu_check->permission != 'payments'
             && $_sub_menu_check->permission != 'tickets'
             && $_sub_menu_check->permission != 'customers'
-            && $_sub_menu_check->permission != 'proposals')
+            && $_sub_menu_check->permission != 'proposals'
+            && $_sub_menu_check->permission != 'payments'
+            && $_sub_menu_check->permission != 'estimates'
+            && $_sub_menu_check->permission != 'invoices')
          ){
            if(!has_permission($_sub_menu_check->permission,'','view')
             && !has_permission($_sub_menu_check->permission, '', 'view_own')){
              $total_sub_items_removed++;
          }
-         } elseif($_sub_menu_check->permission == 'payments' && (!has_permission('payments','','view') && !has_permission('invoices','','view_own'))){
+         } elseif($_sub_menu_check->permission == 'payments' && (!has_permission('payments','','view') && !has_permission('invoices','','view_own') && (get_option('allow_staff_view_invoices_assigned') == 0
+           || (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices())))){
          $total_sub_items_removed++;
          } elseif($_sub_menu_check->id == 'tickets' && (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member())){
          $total_sub_items_removed++;
@@ -103,11 +119,25 @@
          }
          } elseif($_sub_menu_check->id == 'child-proposals'){
          if((get_option('allow_staff_view_proposals_assigned') == 0
-           || (get_option('allow_staff_view_proposals_assigned') == 1 && total_rows('tblproposals',array('assigned'=>get_staff_user_id())) == 0))
+           || (get_option('allow_staff_view_proposals_assigned') == 1 && !staff_has_assigned_proposals()))
            && !has_permission('proposals','','view')
            && !has_permission('proposals','','view_own')){
            $total_sub_items_removed++;
          }
+         } elseif($_sub_menu_check->id == 'child-invoices'){
+         if((get_option('allow_staff_view_invoices_assigned') == 0
+           || (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices()))
+           && !has_permission('invoices','','view')
+           && !has_permission('invoices','','view_own')){
+           $total_sub_items_removed++;
+         }
+         } elseif($_sub_menu_check->id == 'child-estimates'){
+           if((get_option('allow_staff_view_estimates_assigned') == 0
+             || (get_option('allow_staff_view_estimates_assigned') == 1 && !staff_has_assigned_estimates()))
+             && !has_permission('estimates','','view')
+             && !has_permission('estimates','','view_own')){
+             $total_sub_items_removed++;
+           }
          }
          }
          if($total_sub_items_removed == count($item->children)){
@@ -141,13 +171,16 @@
                 && ($submenu->permission != 'payments'
                   && $submenu->permission != 'tickets'
                   && $submenu->permission != 'proposals'
+                  && $submenu->permission != 'invoices'
+                  && $submenu->permission != 'estimates'
                   && $submenu->permission != 'customers')
                 && (!has_permission($submenu->permission,'','view') && !has_permission($submenu->permission, '', 'view_own'))
                ){
                 continue;
                } elseif(
                $submenu->permission == 'payments'
-               && (!has_permission('payments','','view') && !has_permission('invoices','','view_own'))
+               && (!has_permission('payments','','view') && !has_permission('invoices','','view_own') && (get_option('allow_staff_view_invoices_assigned') == 0
+               || (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices())))
                ){
                 continue;
                } elseif($submenu->id == 'tickets' && (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member())){
@@ -158,9 +191,23 @@
                }
                } elseif($submenu->id == 'child-proposals'){
                if((get_option('allow_staff_view_proposals_assigned') == 0
-                || (get_option('allow_staff_view_proposals_assigned') == 1 && total_rows('tblproposals',array('assigned'=>get_staff_user_id())) == 0))
+                || (get_option('allow_staff_view_proposals_assigned') == 1 && !staff_has_assigned_proposals()))
                 && !has_permission('proposals','','view')
                 && !has_permission('proposals','','view_own')){
+                continue;
+               }
+               } elseif($submenu->id == 'child-invoices'){
+               if((get_option('allow_staff_view_invoices_assigned') == 0
+                || (get_option('allow_staff_view_invoices_assigned') == 1 && !staff_has_assigned_invoices()))
+                && !has_permission('invoices','','view')
+                && !has_permission('invoices','','view_own')){
+                continue;
+               }
+               } elseif($submenu->id == 'child-estimates'){
+               if((get_option('allow_staff_view_estimates_assigned') == 0
+                || (get_option('allow_staff_view_estimates_assigned') == 1 && !staff_has_assigned_estimates()))
+                && !has_permission('estimates','','view')
+                && !has_permission('estimates','','view_own')){
                 continue;
                }
                }
@@ -191,8 +238,8 @@
       </li>
       <?php do_action('after_render_aside_menu'); ?>
       <?php
-      $pinnedProjects = get_user_pinned_projects();
-      if(count($pinnedProjects) > 0){ ?>
+         $pinnedProjects = get_user_pinned_projects();
+         if(count($pinnedProjects) > 0){ ?>
       <li class="pinned-separator"></li>
       <?php foreach($pinnedProjects as $pinnedProject){ ?>
       <li class="pinned_project">

@@ -6,7 +6,7 @@
                 <div class="panel_s">
                     <div class="panel-body tc-content">
                        <h4 class="bold no-margin"><?php echo $article->subject; ?></h4>
-                       <hr />
+                       <hr class="hr-panel-heading" />
                        <div class="clearfix"></div>
                        <?php echo $article->description; ?>
                        <hr />
@@ -25,7 +25,7 @@
           <div class="panel_s">
               <div class="panel-body">
                 <h4 class="bold no-margin"><?php echo _l('related_knowledgebase_articles'); ?></h4>
-                <hr />
+                 <hr class="hr-panel-heading" />
                 <ul class="mtop10 articles_list">
                 <?php foreach($related_articles as $rel_article_article) { ?>
                     <li>

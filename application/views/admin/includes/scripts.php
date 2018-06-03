@@ -10,9 +10,6 @@
 <?php if(get_option('dropbox_app_key') != ''){ ?>
 <script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="<?php echo get_option('dropbox_app_key'); ?>"></script>
 <?php } ?>
-<?php if(isset($form_builder_assets)){ ?>
-<script src="<?php echo base_url('assets/plugins/form-builder/form-builder.js'); ?>"></script>
-<?php } ?>
 <?php if(isset($media_assets)){ ?>
 <script src="<?php echo base_url('assets/plugins/elFinder/js/elfinder.min.js'); ?>"></script>
 <?php if(file_exists(FCPATH.'assets/plugins/elFinder/js/i18n/elfinder.'.get_media_locale($locale).'.js') && get_media_locale($locale) != 'en'){ ?>

@@ -3,13 +3,17 @@
   <div class="panel_s mtop20">
     <div class="panel-body">
       <?php
-      $where_all = array();
+      $where_all = '';
       $has_permission_view = has_permission('invoices','','view');
       if(isset($project)){
-       $where_all['project_id'] = $project->id;
+        $where_all .= 'project_id='.$project->id . ' AND ';
      }
-     if(!$has_permission_view){
-      $where_all['addedfrom'] = get_staff_user_id();
+    if(!$has_permission_view){
+        $where_all .= get_invoices_where_sql_for_staff(get_staff_user_id());
+    }
+    $where_all = trim($where_all);
+    if(endsWith($where_all,' AND')) {
+      $where_all = substr_replace($where_all, '', -4);
     }
     $total_invoices = total_rows('tblinvoices',$where_all);
     ?>

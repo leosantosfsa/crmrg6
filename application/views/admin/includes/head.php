@@ -18,9 +18,6 @@
     <?php if(isset($calendar_assets)){ ?>
     <link href='<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.css?v='.get_app_version()); ?>' rel='stylesheet' />
     <?php } ?>
-    <?php if(isset($form_builder_assets)){ ?>
-    <link href='<?php echo base_url('assets/plugins/form-builder/form-builder.min.css'); ?>' rel='stylesheet' />
-    <?php } ?>
     <?php if(isset($projects_assets)){ ?>
     <link href='<?php echo base_url('assets/plugins/jquery-comments/css/jquery-comments.css'); ?>' rel='stylesheet' />
     <link href='<?php echo base_url('assets/plugins/gantt/css/style.css'); ?>' rel='stylesheet' />
@@ -33,20 +30,19 @@
     <?php render_admin_js_variables(); ?>
     <script>
         appLang['datatables'] = <?php echo json_encode(get_datatables_language_array()); ?>;
-
-        var total_unread_notifications = <?php echo $current_user->total_unread_notifications; ?>,
-        proposal_templates = <?php echo json_encode(get_proposal_templates()); ?>,
-        contract_templates = <?php echo json_encode(get_contract_templates()); ?>,
+        var totalUnreadNotifications = <?php echo $current_user->total_unread_notifications; ?>,
+        proposalsTemplates = <?php echo json_encode(get_proposal_templates()); ?>,
+        contractsTemplates = <?php echo json_encode(get_contract_templates()); ?>,
         availableTags = <?php echo json_encode(get_tags_clean()); ?>,
         availableTagsIds = <?php echo json_encode(get_tags_ids()); ?>,
-        bs_fields = ['billing_street','billing_city','billing_state','billing_zip','billing_country','shipping_street','shipping_city','shipping_state','shipping_zip','shipping_country'],
+        billingAndShippingFields = ['billing_street','billing_city','billing_state','billing_zip','billing_country','shipping_street','shipping_city','shipping_state','shipping_zip','shipping_country'],
         locale = '<?php echo $locale; ?>',
         isRTL = '<?php echo $isRTL; ?>',
-        tinymce_lang = '<?php echo get_tinymce_language(get_locale_key($app_language)); ?>',
-        months_json = '<?php echo json_encode(array(_l('January'),_l('February'),_l('March'),_l('April'),_l('May'),_l('June'),_l('July'),_l('August'),_l('September'),_l('October'),_l('November'),_l('December'))); ?>',
-        _table_api,taskid,task_tracking_stats_data,taskAttachmentDropzone,leadAttachmentsDropzone,newsFeedDropzone,expensePreviewDropzone,task_track_chart,cfh_popover_templates = {};
+        tinymceLang = '<?php echo get_tinymce_language(get_locale_key($app_language)); ?>',
+        monthsJSON = '<?php echo json_encode(array(_l('January'),_l('February'),_l('March'),_l('April'),_l('May'),_l('June'),_l('July'),_l('August'),_l('September'),_l('October'),_l('November'),_l('December'))); ?>',
+        taskid,taskTrackingStatsData,taskAttachmentDropzone,taskCommentAttachmentDropzone,leadAttachmentsDropzone,newsFeedDropzone,expensePreviewDropzone,taskTrackingChart,cfh_popover_templates = {},_table_api;
     </script>
     <?php do_action('app_admin_head'); ?>
 </head>
-<body <?php if($isRTL === 'true'){ echo 'dir="rtl"';} ?> class="<?php echo 'page'.($this->uri->segment(2) ? '-'.$this->uri->segment(2) : '') . '-'.$this->uri->segment(1); ?> admin <?php if(isset($bodyclass)){echo $bodyclass . ' '; } ?><?php if($this->session->has_userdata('is_mobile') && $this->session->userdata('is_mobile') == true){echo 'mobile hide-sidebar ';} ?><?php if($isRTL === 'true'){echo 'rtl';} ?>">
-    <?php do_action('after_body_start'); ?>
+<body <?php echo admin_body_class(isset($bodyclass) ? $bodyclass : ''); ?><?php if($isRTL === 'true'){ echo 'dir="rtl"';}; ?>>
+<?php do_action('after_body_start'); ?>

@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Knowledge_base_model extends CRM_Model
 {
@@ -30,9 +31,9 @@ class Knowledge_base_model extends CRM_Model
         }
         if (is_numeric($id) || $slug != '') {
             return $this->db->get()->row();
-        } else {
-            return $this->db->get()->result_array();
         }
+
+        return $this->db->get()->result_array();
     }
 
     /**
@@ -135,10 +136,10 @@ class Knowledge_base_model extends CRM_Model
         $affectedRows = 0;
         foreach ($data['order'] as $o) {
             $this->db->where('articleid', $o[0]);
-            $this->db->update('tblknowledgebase', array(
+            $this->db->update('tblknowledgebase', [
                 'article_order' => $o[1],
-                'articlegroup' => $data['groupid']
-            ));
+                'articlegroup'  => $data['groupid'],
+            ]);
             if ($this->db->affected_rows() > 0) {
                 $affectedRows++;
             }
@@ -158,9 +159,9 @@ class Knowledge_base_model extends CRM_Model
     public function change_article_status($id, $status)
     {
         $this->db->where('articleid', $id);
-        $this->db->update('tblknowledgebase', array(
-            'active' => $status
-        ));
+        $this->db->update('tblknowledgebase', [
+            'active' => $status,
+        ]);
         logActivity('Article Status Changed [ArticleID: ' . $id . ' Status: ' . $status . ']');
     }
 
@@ -169,9 +170,9 @@ class Knowledge_base_model extends CRM_Model
         $data = $this->input->post();
         foreach ($data['order'] as $group) {
             $this->db->where('groupid', $group[0]);
-            $this->db->update('tblknowledgebasegroups', array(
-                'group_order' => $group[1]
-            ));
+            $this->db->update('tblknowledgebasegroups', [
+                'group_order' => $group[1],
+            ]);
         }
     }
 
@@ -234,6 +235,14 @@ class Knowledge_base_model extends CRM_Model
         } else {
             $data['active'] = 1;
         }
+
+        $data['group_slug']        = slug_it($data['name']);
+        $this->db->like('group_slug', $data['group_slug']);
+        $slug_total = $this->db->count_all_results('tblknowledgebasegroups');
+        if ($slug_total > 0) {
+            $data['group_slug'] .= '-' . ($slug_total + 1);
+        }
+
         $this->db->insert('tblknowledgebasegroups', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
@@ -290,18 +299,18 @@ class Knowledge_base_model extends CRM_Model
     public function change_group_status($id, $status)
     {
         $this->db->where('groupid', $id);
-        $this->db->update('tblknowledgebasegroups', array(
-            'active' => $status
-        ));
+        $this->db->update('tblknowledgebasegroups', [
+            'active' => $status,
+        ]);
         logActivity('Article Status Changed [GroupID: ' . $id . ' Status: ' . $status . ']');
     }
 
     public function change_group_color($data)
     {
         $this->db->where('groupid', $data['group_id']);
-        $this->db->update('tblknowledgebasegroups', array(
-            'color' => $data['color']
-        ));
+        $this->db->update('tblknowledgebasegroups', [
+            'color' => $data['color'],
+        ]);
     }
 
     /**
@@ -314,9 +323,9 @@ class Knowledge_base_model extends CRM_Model
         $current = $this->get_kbg_by_id($id);
         // Check if group already is using
         if (is_reference_in_table('articlegroup', 'tblknowledgebase', $id)) {
-            return array(
-                'referenced' => true
-            );
+            return [
+                'referenced' => true,
+            ];
         }
         $this->db->where('groupid', $id);
         $this->db->delete('tblknowledgebasegroups');
@@ -344,10 +353,10 @@ class Knowledge_base_model extends CRM_Model
             $last_answer    = strtotime($answer->date);
             $minus_24_hours = strtotime('-24 hours');
             if ($last_answer >= $minus_24_hours) {
-                return array(
+                return [
                     'success' => false,
-                    'message' => _l('clients_article_only_1_vote_today')
-                );
+                    'message' => _l('clients_article_only_1_vote_today'),
+                ];
             }
         }
         $data['answer']    = $data['answer'];
@@ -357,14 +366,14 @@ class Knowledge_base_model extends CRM_Model
         $this->db->insert('tblknowledgebasearticleanswers', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
-            return array(
+            return [
                 'success' => true,
-                'message' => _l('clients_article_voted_thanks_for_feedback')
-            );
+                'message' => _l('clients_article_voted_thanks_for_feedback'),
+            ];
         }
 
-        return array(
-            'success' => false
-        );
+        return [
+            'success' => false,
+        ];
     }
 }

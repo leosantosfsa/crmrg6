@@ -268,6 +268,7 @@
                             _l('clients_list_phone'),
                             _l('customer_active'),
                             _l('customer_groups'),
+                            _l('date_created'),
                             );
 
                            foreach($_table_data as $_t){
@@ -281,10 +282,10 @@
 
                         $table_data = do_action('customers_table_columns',$table_data);
 
-                        $_op = _l('options');
-
-                        array_push($table_data, $_op);
-                        render_datatable($table_data,'clients');
+                        render_datatable($table_data,'clients',[],[
+                                 'data-last-order-identifier' => 'customers',
+                                 'data-default-order'         => get_table_last_order('customers'),
+                        ]);
                         ?>
                     </div>
                 </div>
@@ -301,9 +302,7 @@
        });
         CustomersServerParams['exclude_inactive'] = '[name="exclude_inactive"]:checked';
 
-        var headers_clients = $('.table-clients').find('th');
-        var not_sortable_clients = (headers_clients.length - 1);
-        var tAPI = initDataTable('.table-clients', admin_url+'clients/table', [not_sortable_clients,0], [not_sortable_clients,0], CustomersServerParams,<?php echo do_action('customers_table_default_order',json_encode(array(2,'ASC'))); ?>);
+        var tAPI = initDataTable('.table-clients', admin_url+'clients/table', [0], [0], CustomersServerParams,<?php echo do_action('customers_table_default_order',json_encode(array(2,'asc'))); ?>);
         $('input[name="exclude_inactive"]').on('change',function(){
             tAPI.ajax.reload();
         });

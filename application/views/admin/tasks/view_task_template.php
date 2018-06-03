@@ -1,19 +1,19 @@
 <div class="modal-header task-single-header" data-task-single-id="<?php echo $task->id; ?>" data-status="<?php echo $task->status; ?>">
    <?php if($this->input->get('opened_from_lead_id')){ ?>
-   <a href="#" onclick="init_lead(<?php echo $this->input->get('opened_from_lead_id'); ?>); return false;" class="back-to-from-task" data-placement="left" data-toggle="tooltip" data-title="<?php echo _l('back_to_lead'); ?>">
+   <a href="#" onclick="init_lead(<?php echo $this->input->get('opened_from_lead_id'); ?>); return false;" class="back-to-from-task color-white" data-placement="left" data-toggle="tooltip" data-title="<?php echo _l('back_to_lead'); ?>">
       <i class="fa fa-tty" aria-hidden="true"></i>
    </a>
    <?php } ?>
    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
    <h4 class="modal-title"><?php echo $task->name; ?></h4>
       <?php if($task->billed == 1){ ?>
-   <?php  echo '<p class="no-margin">'._l('task_is_billed','<a href="'.admin_url('invoices/list_invoices/'.$task->invoice_id).'" target="_blank">'.format_invoice_number($task->invoice_id)). '</a></p>'; ?>
+   <?php  echo '<p class="no-margin">'._l('task_is_billed','<a href="'.admin_url('invoices/list_invoices/'.$task->invoice_id).'" target="_blank" class="color-white">'.format_invoice_number($task->invoice_id)). '</a></p>'; ?>
    <?php } ?>
    <?php if($task->is_public == 0){ ?>
-   <small class="no-margin">
+   <small class="no-margin color-white">
       <?php echo _l('task_is_private'); ?>
       <?php if(has_permission('tasks','','edit')) { ?> -
-      <a href="#" onclick="make_task_public(<?php echo $task->id; ?>); return false;">
+      <a href="#" class="color-white text-has-action"onclick="make_task_public(<?php echo $task->id; ?>); return false;">
          <?php echo _l('task_view_make_public'); ?>
       </a>
       <?php } ?>
@@ -96,7 +96,7 @@
          </p>
          <?php } else { ?>
          <p class="no-margin pull-left">
-            <a href="#" data-toggle="popover" data-html="true" data-trigger="manual" data-title="<?php echo _l('note'); ?>" data-content='<?php echo render_textarea('timesheet_note'); ?><button type="button" onclick="timer_action(this,<?php echo $task->id; ?>,<?php echo $this->tasks_model->get_last_timer($task->id)->id; ?>);" class="btn btn-info btn-xs"><?php echo _l('save'); ?></button>' class="btn mbot10 btn-danger<?php if(!$is_assigned){echo ' disabled';} ?>" onclick="return false;">
+            <a href="#" data-toggle="popover" data-placement="<?php echo is_mobile() ? 'bottom' : 'right'; ?>" data-html="true" data-trigger="manual" data-title="<?php echo _l('note'); ?>" data-content='<?php echo render_textarea('timesheet_note'); ?><button type="button" onclick="timer_action(this,<?php echo $task->id; ?>,<?php echo $this->tasks_model->get_last_timer($task->id)->id; ?>);" class="btn btn-info btn-xs"><?php echo _l('save'); ?></button>' class="btn mbot10 btn-danger<?php if(!$is_assigned){echo ' disabled';} ?>" onclick="return false;">
                <i class="fa fa-clock-o"></i> <?php echo _l('task_stop_timer'); ?>
             </a>
          </p>
@@ -113,7 +113,7 @@
            ?>
            <p class="no-margin"><?php echo _l((count($startedTimers) == 1 ? 'task_users_working_on_tasks_single' : 'task_users_working_on_tasks_multiple'),$usersWorking); ?></p>
            <?php } ?>
-           <hr />
+           <hr class="hr-10" />
            <div id="task_single_timesheets" class="<?php if(!$this->session->flashdata('task_single_timesheets_open')){echo 'hide';} ?>">
             <div class="table-responsive">
                <table class="table">
@@ -150,7 +150,9 @@
                               <td>
                                  <?php
                                  if(!$task_is_billed){
-                                  echo '<a href="'.admin_url('tasks/delete_timesheet/'.$timesheet['id']).'" class="task-single-delete-timesheet pull-right text-danger mtop5" data-task-id="'.$task->id.'"><i class="fa fa-remove"></i></a>';
+                                  if(has_permission('tasks','','delete') || (has_permission('projects','','delete') && $task->rel_type == 'project') || $timesheet['staff_id'] == get_staff_user_id()){
+                                    echo '<a href="'.admin_url('tasks/delete_timesheet/'.$timesheet['id']).'" class="task-single-delete-timesheet pull-right text-danger mtop5" data-task-id="'.$task->id.'"><i class="fa fa-remove"></i></a>';
+                                  }
                                }
                                if($timesheet['time_spent'] == NULL){
                                   echo _l('time_h').': '. seconds_to_time_format(time() - $timesheet['start_time']).'<br />';
@@ -259,7 +261,7 @@
                <?php echo _l('add_checklist_item'); ?>
             </span>
          </a>
-         <div class="form-group checklist-templates-wrapper simple-bootstrap-select task-single-checklist-templates<?php if(count($checklistTemplates) == 0){echo ' hide';}  ?>">
+         <div class="form-group no-mbot checklist-templates-wrapper simple-bootstrap-select task-single-checklist-templates<?php if(count($checklistTemplates) == 0){echo ' hide';}  ?>">
             <select id="checklist_items_templates" class="selectpicker checklist-items-template-select" data-none-selected-text="<?php echo _l('insert_checklist_templates') ?>" data-width="100%" data-live-search="true">
                <option value=""></option>
                <?php foreach($checklistTemplates as $chkTemplate){ ?>
@@ -290,12 +292,14 @@
                   <div class="row">
                      <?php
                      $i = 1;
-                                       // Store all url related data here
+                     // Store all url related data here
+                     $comments_attachments = array();
                      $attachments_data = array();
                      $show_more_link_task_attachments = do_action('show_more_link_task_attachments',2);
                      foreach($task->attachments as $attachment){ ?>
-                     <div data-commentid="<?php echo $attachment['comment_file_id']; ?>" data-task-attachment-id="<?php echo $attachment['id']; ?>" class="task-attachment-col col-md-6<?php if($i > $show_more_link_task_attachments){echo ' hide task-attachment-col-more';} ?>">
-                        <ul class="list-unstyled task-attachment-wrapper">
+                     <?php ob_start(); ?>
+                     <div data-num="<?php echo $i; ?>" data-commentid="<?php echo $attachment['comment_file_id']; ?>" data-comment-attachment="<?php echo $attachment['task_comment_id']; ?>" data-task-attachment-id="<?php echo $attachment['id']; ?>" class="task-attachment-col col-md-6<?php if($i > $show_more_link_task_attachments){echo ' hide task-attachment-col-more';} ?>">
+                        <ul class="list-unstyled task-attachment-wrapper" data-toggle="tooltip" data-title="<?php echo $attachment['file_name']; ?>" >
                            <li class="mbot10 task-attachment<?php if(strtotime($attachment['dateadded']) >= strtotime('-16 hours')){echo ' highlight-bg'; } ?>">
                               <div class="mbot10 pull-right task-attachment-user">
                                  <?php if($attachment['staffid'] == get_staff_user_id() || is_admin()){ ?>
@@ -306,7 +310,7 @@
                                  $externalPreview = false;
                                  $is_image = false;
                                  $path = get_upload_path_by_type('task') . $task->id . '/'. $attachment['file_name'];
-                                 $href_url = site_url('download/file/taskattachment/'. $attachment['id']);
+                                 $href_url = site_url('download/file/taskattachment/'. $attachment['attachment_key']);
                                  $isHtml5Video = is_html5_video($path);
                                  if(empty($attachment['external'])){
                                   $is_image = is_image($path);
@@ -332,7 +336,7 @@
                             ?>
                          </div>
                          <div class="clearfix"></div>
-                         <?php ob_start(); ?>
+
                          <div class="<?php if($is_image){echo 'preview-image';}else if(!$isHtml5Video){echo 'task-attachment-no-preview';} ?>">
                            <?php
                                  // Not link on video previews because on click on the video is opening new tab
@@ -353,15 +357,19 @@
                            </a>
                            <?php } ?>
                         </div>
-                        <?php
-                        $attachments_data[$attachment['id']] = ob_get_contents();
-                        ob_end_clean();
-                        echo $attachments_data[$attachment['id']];
-                        ?>
+
                         <div class="clearfix"></div>
                      </li>
                   </ul>
                </div>
+                <?php
+                 $attachments_data[$attachment['id']] = ob_get_contents();
+                 if($attachment['task_comment_id'] != 0) {
+                  $comments_attachments[$attachment['task_comment_id']][$attachment['id']] = $attachments_data[$attachment['id']];
+                }
+                ob_end_clean();
+                echo $attachments_data[$attachment['id']];
+                ?>
                <?php
                $i++;
             } ?>
@@ -370,21 +378,32 @@
       <div class="clearfix"></div>
       <?php if(($i - 1) > $show_more_link_task_attachments){ ?>
       <div class="col-md-12" id="show-more-less-task-attachments-col">
-         <a href="#" class="task-attachments-more" onclick="slideToggle('.task-attachment-col-more',task_attachments_toggle); return false;"><?php echo _l('show_more'); ?></a>
-         <a href="#" class="task-attachments-less hide" onclick="slideToggle('.task-attachment-col-more',task_attachments_toggle); return false;"><?php echo _l('show_less'); ?></a>
+         <a href="#" class="task-attachments-more" onclick="slideToggle('.task_attachments_wrapper .task-attachment-col-more', task_attachments_toggle); return false;"><?php echo _l('show_more'); ?></a>
+         <a href="#" class="task-attachments-less hide" onclick="slideToggle('.task_attachments_wrapper .task-attachment-col-more', task_attachments_toggle); return false;"><?php echo _l('show_less'); ?></a>
       </div>
       <?php } ?>
    </div>
    <?php } ?>
    <hr />
-   <a href="#" id="taskCommentSlide" onclick="slideToggle('.tasks-comments'); return false;" >
+   <a href="#" id="taskCommentSlide" onclick="slideToggle('.tasks-comments'); return false;">
       <h4 class="mbot20 font-medium"><?php echo _l('task_comments'); ?></h4>
    </a>
-   <div class="tasks-comments inline-block full-width simple-editor" <?php if(count($task->comments) == 0){echo 'style="display:none"';} ?>>
-      <textarea name="comment" placeholder="<?php echo _l('task_single_add_new_comment'); ?>" id="task_comment" rows="3" class="form-control ays-ignore"></textarea>
-      <button type="button" class="btn btn-info mtop30 pull-right" autocomplete="off" data-loading-text="<?php echo _l('wait_text'); ?>" onclick="add_task_comment('<?php echo $task->id; ?>');">
+   <div class="tasks-comments inline-block full-width simple-editor"<?php if(count($task->comments) == 0){echo ' style="display:none"';} ?>>
+     <?php echo form_open_multipart(admin_url('tasks/add_task_comment'),array('id'=>'task-comment-form','class'=>'dropzone dropzone-manual','style'=>'min-height:auto;background-color:#fff;')); ?>
+
+     <textarea name="comment" placeholder="<?php echo _l('task_single_add_new_comment'); ?>" id="task_comment" rows="3" class="form-control ays-ignore"></textarea>
+
+      <div id="dropzoneTaskComment" class="dropzoneDragArea dz-default dz-message hide task-comment-dropzone">
+            <span><?php echo _l('drop_files_here_to_upload'); ?></span>
+      </div>
+     <div class="dropzone-task-comment-previews dropzone-previews"></div>
+
+      <button type="button" class="btn btn-info mtop10 pull-right hide" id="addTaskCommentBtn" autocomplete="off" data-loading-text="<?php echo _l('wait_text'); ?>" onclick="add_task_comment('<?php echo $task->id; ?>');" data-comment-task-id="<?php echo $task->id; ?>">
          <?php echo _l('task_single_add_new_comment'); ?>
       </button>
+
+    <?php echo form_close(); ?>
+
       <div class="clearfix"></div>
       <?php if(count($task->comments) > 0){echo '<hr />';} ?>
       <div id="task-comments" class="mtop10">
@@ -417,15 +436,29 @@
        } elseif($comment['contact_id'] != 0) {
           $comments .= '<span class="label label-info mtop5 mbot5 inline-block">'._l('is_customer_indicator').'</span><br /><a href="' . admin_url('clients/client/'.get_user_id_by_contact_id($comment['contact_id']) .'?contactid='.$comment['contact_id'] ) . '" class="pull-left" target="_blank">' . get_contact_full_name($comment['contact_id']) . '</a> <br />';
        }
-       $comments .= '<div data-edit-comment="'.$comment['id'].'" class="hide edit-task-comment"><textarea rows="5" id="task_comment_'.$comment['id'].'" class="ays-ignore">'.$comment['content'].'</textarea>
+       $comments .= '<div data-edit-comment="'.$comment['id'].'" class="hide edit-task-comment"><textarea rows="5" id="task_comment_'.$comment['id'].'" class="ays-ignore form-control">'.str_replace('[task_attachment]', '', $comment['content']).'</textarea>
        <div class="clearfix mtop20"></div>
        <button type="button" class="btn btn-info pull-right" onclick="save_edited_comment('.$comment['id'].','.$task->id.')">'._l('submit').'</button>
        <button type="button" class="btn btn-default pull-right mright5" onclick="cancel_edit_comment('.$comment['id'].')">'._l('cancel').'</button>
        </div>';
-       if($comment['file_id'] != 0){
-        $comment['content'] = str_replace('[task_attachment]',$attachments_data[$comment['file_id']],$comment['content']);
-                           // Replace lightbox to prevent loading the image twice
+      if($comment['file_id'] != 0){
+        $comment['content'] = str_replace('[task_attachment]','<div class="clearfix"></div>'.$attachments_data[$comment['file_id']],$comment['content']);
+        // Replace lightbox to prevent loading the image twice
         $comment['content'] = str_replace('data-lightbox="task-attachment"','data-lightbox="task-attachment-comment"',$comment['content']);
+     } else if(count($comment['attachments']) > 0 && isset($comments_attachments[$comment['id']])) {
+          $comment_attachments_html = '';
+          foreach($comments_attachments[$comment['id']] as $comment_attachment) {
+              $comment_attachments_html .= trim($comment_attachment);
+          }
+          $comment['content'] = str_replace('[task_attachment]','<div class="clearfix"></div>'.$comment_attachments_html,$comment['content']);
+          // Replace lightbox to prevent loading the image twice
+          $comment['content'] = str_replace('data-lightbox="task-attachment"','data-lightbox="task-comment-files"',$comment['content']);
+          $comment['content'] .='<div class="clearfix"></div>';
+          $comment['content'] .='<div class="text-center download-all">
+          <hr class="hr-10" />
+          <a href="'.admin_url('tasks/download_comment_files/'.$task->id.'/'.$comment['id']).'" class="bold">'._l('download_all').' (.zip)
+          </a>
+          </div>';
      }
      $comments .= '<div class="comment-content mtop10">'.app_happy_text(check_for_links($comment['content'])) . '</div>';
      $comments .= '</div>';
@@ -553,7 +586,7 @@
    <h5><i class="fa task-info-icon fa-fw fa-lg fa-calendar-plus-o pull-left fa-margin"></i>
       <?php echo _l('task_single_start_date'); ?>:
       <?php if(has_permission('tasks','','edit') && $task->status !=5) { ?>
-      <input name="startdate" value="<?php echo _d($task->startdate); ?>" id="task-single-startdate" class="task-info-inline-input-edit datepicker pointer task-single-inline-field">
+      <input name="startdate" tabindex="-1" value="<?php echo _d($task->startdate); ?>" id="task-single-startdate" class="task-info-inline-input-edit datepicker pointer task-single-inline-field">
       <?php } else { ?>
       <?php echo _d($task->startdate); ?>
       <?php } ?>
@@ -563,7 +596,7 @@
    <h5><i class="fa fa-calendar-check-o task-info-icon fa-fw fa-lg pull-left"></i>
       <?php echo _l('task_single_due_date'); ?>:
       <?php if(has_permission('tasks','','edit') && $task->status !=5) { ?>
-      <input name="duedate" value="<?php echo _d($task->duedate); ?>" id="task-single-duedate" class="task-info-inline-input-edit datepicker pointer task-single-inline-field">
+      <input name="duedate" tabindex="-1" value="<?php echo _d($task->duedate); ?>" id="task-single-duedate" class="task-info-inline-input-edit datepicker pointer task-single-inline-field">
       <?php } else { ?>
       <?php echo _d($task->duedate); ?>
       <?php } ?>
@@ -645,6 +678,7 @@ foreach($custom_fields as $field){ ?>
 if($value == ''){continue;}?>
 <div class="task-info">
    <h5 class="task-info-custom-field task-info-custom-field-<?php echo $field['id']; ?>">
+    <i class="fa task-info-icon fa-fw fa-lg fa-square-o"></i>
      <?php echo $field['name']; ?>: <?php echo $value; ?>
    </h5>
 </div>
@@ -783,7 +817,7 @@ var taskPopoverMenus = [{
    },
    {
       selector: '.task-menu-status',
-      title: "<?php echo _l('task_status'); ?>",
+      title: "<?php echo _l('ticket_single_change_status'); ?>",
    },
    {
       selector: '.task-menu-priority',
@@ -844,4 +878,5 @@ taskAttachmentDropzone = new Dropzone("#task-attachment", $.extend({}, _dropzone
       }
    }
 }));
+
 </script>

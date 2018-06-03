@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Announcements_model extends CRM_Model
 {
@@ -14,7 +15,7 @@ class Announcements_model extends CRM_Model
      * @param  string $limit
      * @return mixed
      */
-    public function get($id = '', $where = array(), $limit = '')
+    public function get($id = '', $where = [], $limit = '')
     {
         $this->db->where($where);
 
@@ -50,22 +51,21 @@ class Announcements_model extends CRM_Model
      */
     public function get_total_undismissed_announcements()
     {
-        if(!is_logged_in()) {
+        if (!is_logged_in()) {
             return 0;
         }
 
-        $staff                         = is_client_logged_in() ? 0 : 1;
-        $userid                        = is_client_logged_in() ? get_client_user_id() : get_staff_user_id();
+        $staff  = is_client_logged_in() ? 0 : 1;
+        $userid = is_client_logged_in() ? get_client_user_id() : get_staff_user_id();
 
-        $sql = "SELECT COUNT(*) as total_undismissed FROM tblannouncements WHERE announcementid NOT IN (SELECT announcementid FROM tbldismissedannouncements WHERE staff=".$staff.' AND userid='.$userid.')';
-        if($staff == 1) {
-            $sql .=' AND showtostaff=1';
+        $sql = 'SELECT COUNT(*) as total_undismissed FROM tblannouncements WHERE announcementid NOT IN (SELECT announcementid FROM tbldismissedannouncements WHERE staff=' . $staff . ' AND userid=' . $userid . ')';
+        if ($staff == 1) {
+            $sql .= ' AND showtostaff=1';
         } else {
             $sql .= ' AND showtousers=1';
         }
 
         return $this->db->query($sql)->row()->total_undismissed;
-
     }
 
     /**
@@ -127,11 +127,11 @@ class Announcements_model extends CRM_Model
             $data['showtousers'] = 0;
         }
         $data['message'] = $data['message'];
-        $_data           = do_action('before_announcement_updated', array(
+        $_data           = do_action('before_announcement_updated', [
             'data' => $data,
-            'id' => $id,
-        ));
-        $data            = $_data['data'];
+            'id'   => $id,
+        ]);
+        $data = $_data['data'];
         $this->db->where('announcementid', $id);
         $this->db->update('tblannouncements', $data);
         if ($this->db->affected_rows() > 0) {

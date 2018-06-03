@@ -6,7 +6,7 @@
                <h3 class="no-mbot bold pull-left">
                   <?php if($project->settings->edit_tasks == 1 && $view_task->is_added_from_contact == 1 && $view_task->addedfrom == get_contact_user_id()){ ?>
                   <a href="<?php echo site_url('clients/project/'.$project->id.'?group=edit_task&taskid='.$view_task->id); ?>">
-                  <small><i class="fa fa-pencil-square-o"></i></small>
+                  <i class="fa fa-pencil-square-o"></i>
                   </a>
                   <?php } ?> <?php echo $view_task->name; ?>
                </h3>
@@ -138,7 +138,7 @@
                               $externalPreview = false;
                               $is_image = false;
                               $path = get_upload_path_by_type('task') . $view_task->id . '/'. $attachment['file_name'];
-                              $href_url = site_url('download/file/taskattachment/'. $attachment['id']);
+                              $href_url = site_url('download/file/taskattachment/'. $attachment['attachment_key']);
                               $isHtml5Video = is_html5_video($path);
                               if(empty($attachment['external'])){
                                 $is_image = is_image($path);
@@ -191,7 +191,9 @@
          <?php if(!empty($view_task->description)){ ?>
          <hr />
          <h4 class="bold"><?php echo _l('task_view_description'); ?></h4>
-         <?php echo $view_task->description; ?>
+         <div class="tc-content">
+            <?php echo $view_task->description; ?>
+         </div>
          <?php } ?>
          <?php if($project->settings->upload_files == 1){ ?>
          <hr />

@@ -84,7 +84,7 @@
                             <?php
                             if(count($expenses) > 0){ ?>
                             <hr />
-                            <a href="#" onclick="slideToggle('# '); return false;"><span class="label label-info font-medium-xs inline-block">
+                            <a href="#" onclick="slideToggle('#expenses_who_will_be_billed'); return false;"><span class="label label-info font-medium-xs inline-block">
                              <?php echo _l('invoice_project_see_billed_expenses'); ?>
                          </span></a>
                          <div style="display:none;" id="expenses_who_will_be_billed">

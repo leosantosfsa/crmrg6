@@ -1,12 +1,16 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Action_hooks
 // Instance of class
 {
     public static $hooks_instance;
+
     public static $actions;
+
     public static $current_action;
+
     public static $run_actions;
 
     public static function instance()
@@ -36,7 +40,7 @@ class Action_hooks
             }
         } elseif (is_array($function)) {
             // Class
-            if (isset(self::$actions[$name][$priority][get_class($function[0]).'-'.$function[1]])) {
+            if (isset(self::$actions[$name][$priority][get_class($function[0]) . '-' . $function[1]])) {
                 return true;
             }
         }
@@ -48,27 +52,27 @@ class Action_hooks
                 // Store the action hook in the $hooks array
                 if (is_string($function)) {
                     // Store the action hook in the $hooks array
-                    self::$actions[$name][$priority][$function] = array(
-                        "function" => $function
-                    );
+                    self::$actions[$name][$priority][$function] = [
+                        'function' => $function,
+                    ];
                 } elseif (is_array($function)) {
-                    self::$actions[$name][$priority][get_class($function[0]).'-'.$function[1]] = array(
-                        "class" => $function[0],
-                        "method" => $function[1]
-                    );
+                    self::$actions[$name][$priority][get_class($function[0]) . '-' . $function[1]] = [
+                        'class'  => $function[0],
+                        'method' => $function[1],
+                    ];
                 }
             }
         } else {
             if (is_string($function)) {
                 // Store the action hook in the $hooks array
-                self::$actions[$name][$priority][$function] = array(
-                    "function" => $function
-                );
+                self::$actions[$name][$priority][$function] = [
+                    'function' => $function,
+                ];
             } elseif (is_array($function)) {
-                self::$actions[$name][$priority][get_class($function[0]).'-'.$function[1]] = array(
-                    "class" => $function[0],
-                    "method" => $function[1]
-                );
+                self::$actions[$name][$priority][get_class($function[0]) . '-' . $function[1]] = [
+                    'class'  => $function[0],
+                    'method' => $function[1],
+                ];
             }
         }
 
@@ -84,7 +88,7 @@ class Action_hooks
      * @param mixed $arguments
      * @return mixed
      */
-    public function do_action($name, $arguments = "")
+    public function do_action($name, $arguments = '')
     {
         // Oh, no you didn't. Are you trying to run an action hook that doesn't exist?
         if (!isset(self::$actions[$name])) {
@@ -99,25 +103,24 @@ class Action_hooks
             if (is_array($names)) {
                 foreach ($names as $name) {
                     if (isset($name['function'])) {
-                        $return = call_user_func_array($name['function'], array(
-                            &$arguments
-                        ));
+                        $return = call_user_func_array($name['function'], [
+                            &$arguments,
+                        ]);
                         if ($return) {
                             $arguments = $return;
                         }
                         self::$run_actions[$name][$priority];
                     } else {
                         if (method_exists($name['class'], $name['method'])) {
-
-                            $return = call_user_func_array(array($name['class'], $name['method']), array(
-                                &$arguments
-                            ));
+                            $return = call_user_func_array([$name['class'], $name['method']], [
+                                &$arguments,
+                            ]);
 
                             if ($return) {
                                 $arguments = $return;
                             }
 
-                            self::$run_actions[get_class($name['class']).'-'.$name['method']][$priority];
+                            self::$run_actions[get_class($name['class']) . '-' . $name['method']][$priority];
                         }
                     }
                 }
@@ -139,20 +142,19 @@ class Action_hooks
      */
     public function remove_action($name, $function, $priority = 10)
     {
-        if(!is_array($function)){
-        // If the action hook doesn't, just return true
-        if (!isset(self::$actions[$name][$priority][$function])) {
-            return true;
-        }
-        // Remove the action hook from our hooks array
-        unset(self::$actions[$name][$priority][$function]);
-
-        } else if(is_array($function)){
-            if (!isset(self::$actions[$name][$priority][$function[0].'-'.$function[1]])) {
+        if (!is_array($function)) {
+            // If the action hook doesn't, just return true
+            if (!isset(self::$actions[$name][$priority][$function])) {
                 return true;
             }
             // Remove the action hook from our hooks array
-            unset(self::$actions[$name][$priority][$function[0].'-'.$function[1]]);
+            unset(self::$actions[$name][$priority][$function]);
+        } elseif (is_array($function)) {
+            if (!isset(self::$actions[$name][$priority][$function[0] . '-' . $function[1]])) {
+                return true;
+            }
+            // Remove the action hook from our hooks array
+            unset(self::$actions[$name][$priority][$function[0] . '-' . $function[1]]);
         }
     }
 
@@ -179,9 +181,9 @@ class Action_hooks
     {
         if (isset(self::$actions[$action][$priority])) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -195,9 +197,9 @@ class Action_hooks
     {
         if (isset(self::$actions[$name])) {
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 }
 /**
@@ -218,7 +220,7 @@ function add_action($name, $function, $priority = 10)
  * @param mixed $arguments
  * @return mixed
  */
-function do_action($name, $arguments = "")
+function do_action($name, $arguments = '')
 {
     return Action_hooks::instance()->do_action($name, $arguments);
 }

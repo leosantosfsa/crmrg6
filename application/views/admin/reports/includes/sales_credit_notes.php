@@ -3,8 +3,7 @@
          <div class="col-md-4">
             <div class="form-group">
                <label for="credit_note_status"><?php echo _l('credit_note_status'); ?></label>
-               <select name="credit_note_status" class="selectpicker" multiple data-width="100%">
-                  <option value="" selected><?php echo _l('invoice_status_report_all'); ?></option>
+               <select name="credit_note_status" class="selectpicker" multiple data-width="100%" data-none-selected-text="<?php echo _l('invoice_status_report_all'); ?>">
                   <?php foreach($credit_notes_statuses as $status){ ?>
                   <option value="<?php echo $status['id']; ?>"><?php echo format_credit_note_status($status['id'],false) ?></option>
                   <?php } ?>
@@ -12,7 +11,6 @@
             </div>
          </div>
       </div>
-
       <table class="table table-credit-notes-report scroll-responsive">
         <thead>
            <tr>

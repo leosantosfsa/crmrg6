@@ -22,7 +22,7 @@ define('APP_BASE_URL','');
 /*
 |--------------------------------------------------------------------------
 | Encryption Key
-| IMPORTANT: Don't change this EVER
+| IMPORTANT: Do not change this ever!
 |--------------------------------------------------------------------------
 |
 | If you use the Encryption class, you must set an encryption key.
@@ -34,9 +34,9 @@ define('APP_BASE_URL','');
 */
 
 define('APP_ENC_KEY','');
-
-/* Database credentials - Auto added on install */
-
+/**
+ * Database Credentials
+ */
 /* The hostname of your database server. */
 define('APP_DB_HOSTNAME','localhost');
 /* The username used to connect to the database */
@@ -53,11 +53,16 @@ define('APP_DB_NAME','');
  * By default the database driver will be used.
  *
  * For files session use this config:
- * define('SESS_DRIVER','files');
- * define('SESS_SAVE_PATH',NULL);
+ * define('SESS_DRIVER', 'files');
+ * define('SESS_SAVE_PATH', NULL);
  * In case you are having problem with the SESS_SAVE_PATH consult with your hosting provider to set "session.save_path" value to php.ini
  *
  */
 
 define('SESS_DRIVER','database');
 define('SESS_SAVE_PATH','tblsessions');
+
+/**
+ * Enables CSRF Protection
+ */
+define('APP_CSRF_PROTECTION',true);

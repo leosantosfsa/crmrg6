@@ -32,13 +32,15 @@ use Twilio\Version;
  */
 class ParticipantInstance extends InstanceResource {
     protected $_publishedTracks = null;
+    protected $_subscribedTracks = null;
 
     /**
      * Initialize the ParticipantInstance
      * 
      * @param \Twilio\Version $version Version that contains the resource
      * @param mixed[] $payload The response payload
-     * @param string $roomSid The room_sid
+     * @param string $roomSid A system-generated 34-character string that uniquely
+     *                        identifies.
      * @param string $sid The sid
      * @return \Twilio\Rest\Video\V1\Room\ParticipantInstance 
      */
@@ -61,7 +63,7 @@ class ParticipantInstance extends InstanceResource {
             'links' => Values::array_get($payload, 'links'),
         );
 
-        $this->solution = array('roomSid' => $roomSid, 'sid' => $sid ?: $this->properties['sid']);
+        $this->solution = array('roomSid' => $roomSid, 'sid' => $sid ?: $this->properties['sid'], );
     }
 
     /**
@@ -109,6 +111,15 @@ class ParticipantInstance extends InstanceResource {
      */
     protected function getPublishedTracks() {
         return $this->proxy()->publishedTracks;
+    }
+
+    /**
+     * Access the subscribedTracks
+     * 
+     * @return \Twilio\Rest\Video\V1\Room\Participant\SubscribedTrackList 
+     */
+    protected function getSubscribedTracks() {
+        return $this->proxy()->subscribedTracks;
     }
 
     /**

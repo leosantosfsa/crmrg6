@@ -27,11 +27,11 @@ $(function() {
         $('body').find('.nav-tabs [href="#' + tab_active + '"]').click();
     }
 
-    $('a[href="#contacts"],a[href="#customer_admins"]').on('click', function() {
+    $('a[href="#customer_admins"]').on('click', function() {
         $('.btn-bottom-toolbar').addClass('hide');
     });
 
-    $('.profile-tabs a').not('a[href="#contacts"],a[href="#customer_admins"]').on('click', function() {
+    $('.profile-tabs a').not('a[href="#customer_admins"]').on('click', function() {
         $('.btn-bottom-toolbar').removeClass('hide');
     });
 
@@ -47,7 +47,17 @@ $(function() {
     var contact_id = get_url_param('contactid');
     if (contact_id) {
         contact(customer_id, contact_id);
-        $('a[href="#contacts"]').click();
+    }
+
+    // consents=CONTACT_ID
+    var consents = get_url_param('consents');
+    if(consents){
+        view_contact_consent(consents);
+    }
+
+    // If user clicked save and add new contact
+    if (get_url_param('new_contact')) {
+        contact(customer_id);
     }
 
     $('body').on('change', '.onoffswitch input.customer_file', function(event, state) {
@@ -63,12 +73,7 @@ $(function() {
             }
         }, 200);
     });
-    // If user clicked save and add new contact
-    var new_contact = get_url_param('new_contact');
-    if (new_contact) {
-        contact(customer_id);
-        $('a[href="#contacts"]').click();
-    }
+
     $('.customer-form-submiter').on('click', function() {
         var form = $('.client-form');
         if (form.valid()) {
@@ -97,69 +102,76 @@ $(function() {
         }));
     }
 
-    /* Custome profile tickets table */
-    var ticketsNotSortable = $('.table-tickets-single').find('th').length - 1;
-    _table_api = initDataTable('.table-tickets-single', admin_url + 'tickets/index/false/' + customer_id, [ticketsNotSortable], [ticketsNotSortable], 'undefined', [$('table thead .ticket_created_column').index(), 'DESC'])
-    if (_table_api) {
-        _table_api.column(5).visible(false, false).columns.adjust();
+    /* Customer profile tickets table */
+    $('.table-tickets-single').find('#th-submitter').removeClass('toggleable');
+
+    initDataTable('.table-tickets-single', admin_url + 'tickets/index/false/' + customer_id, undefined, undefined, 'undefined', [$('table thead .ticket_created_column').index(), 'desc']);
+
+    /* Customer profile contracts table */
+    initDataTable('.table-contracts-single-client', admin_url + 'contracts/table/' + customer_id, undefined,undefined, 'undefined', [6, 'desc']);
+
+    /* Custome profile contacts table */
+    var contactsNotSortable = [];
+    <?php if(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1'){ ?>
+        contactsNotSortable.push($('#th-consent').index());
+    <?php } ?>
+    _table_api = initDataTable('.table-contacts', admin_url + 'clients/contacts/' + customer_id, contactsNotSortable, contactsNotSortable);
+    if(_table_api) {
+          <?php if(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1'){ ?>
+        _table_api.on('draw', function () {
+            var tableData = $('.table-contacts').find('tbody tr');
+            $.each(tableData, function() {
+                $(this).find('td:eq(1)').addClass('bg-light-gray');
+            });
+        });
+        <?php } ?>
     }
-    /* Custome profile contacts table */
-    var contractsNotSortable = $('.table-contracts-single-client').find('th').length - 1;
-    _table_api = initDataTable('.table-contracts-single-client', admin_url + 'contracts/table/' + customer_id, [contractsNotSortable], [contractsNotSortable], 'undefined', [3, 'DESC']);
-
-    /* Custome profile contacts table */
-    var contactsNotSortable = $('.table-contacts').find('th').length - 1;
-    initDataTable('.table-contacts', admin_url + 'clients/contacts/' + customer_id, [contactsNotSortable], [contactsNotSortable]);
-
     /* Customer profile invoices table */
     initDataTable('.table-invoices-single-client',
         admin_url + 'invoices/table/' + customer_id,
         'undefined',
         'undefined',
         'undefined', [
-            [3, 'DESC'],
-            [0, 'DESC']
+            [3, 'desc'],
+            [0, 'desc']
         ]);
 
-   initDataTable('.table-credit-notes', admin_url+'credit_notes/table/'+customer_id, ['undefined'], ['undefined'], undefined, [0, 'DESC']);
+   initDataTable('.table-credit-notes', admin_url+'credit_notes/table/'+customer_id, ['undefined'], ['undefined'], undefined, [0, 'desc']);
 
-    /* Custome profile Estimates table */
+    /* Customer profile Estimates table */
     initDataTable('.table-estimates-single-client',
         admin_url + 'estimates/table/' + customer_id,
         'undefined',
         'undefined',
         'undefined', [
-            [3, 'DESC'],
-            [0, 'DESC']
+            [3, 'desc'],
+            [0, 'desc']
         ]);
 
-
-
-    /* Custome profile payments table */
+    /* Customer profile payments table */
     initDataTable('.table-payments-single-client',
-        admin_url + 'payments/table/' + customer_id, [7], [7],
-        'undefined', [6, 'DESC']);
+        admin_url + 'payments/table/' + customer_id, undefined, undefined,
+        'undefined', [0, 'desc']);
 
-    /* Custome profile reminders table */
-    initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + customer_id + '/' + 'customer', [4], [4], undefined, [1, 'ASC']);
+    /* Customer profile reminders table */
+    initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + customer_id + '/' + 'customer', undefined, undefined, undefined, [1, 'asc']);
 
-    /* Custome profile expenses table */
+    /* Customer profile expenses table */
     initDataTable('.table-expenses-single-client',
         admin_url + 'expenses/table/' + customer_id,
         'undefined',
         'undefined',
-        'undefined', [5, 'DESC']);
+        'undefined', [5, 'desc']);
 
-    /* Custome profile proposals table */
+    /* Customer profile proposals table */
     initDataTable('.table-proposals-client-profile',
         admin_url + 'proposals/proposal_relations/' + customer_id + '/customer',
         'undefined',
         'undefined',
-        'undefined', [6, 'DESC']);
+        'undefined', [6, 'desc']);
 
     /* Custome profile projects table */
-    var notSortableProjects = $('.table-projects-single-client').find('th').length - 1;
-    initDataTable('.table-projects-single-client', admin_url + 'projects/table/' + customer_id, [notSortableProjects], [notSortableProjects], 'undefined', <?php echo do_action('projects_table_default_order',json_encode(array(5,'ASC'))); ?>);
+    initDataTable('.table-projects-single-client', admin_url + 'projects/table/' + customer_id, undefined, undefined, 'undefined', <?php echo do_action('projects_table_default_order',json_encode(array(5,'asc'))); ?>);
 
     var vRules = {};
     if (app_company_is_required == 1) {
@@ -247,6 +259,13 @@ function contactFormHandler(form) {
     $('#contact input[name="is_primary"]').prop('disabled', false);
     var formURL = $(form).attr("action");
     var formData = new FormData($(form)[0]);
+
+    $("#contact input[type=file]").each(function() {
+        if($(this).val() === "") {
+            formData.delete($(this).attr("name"));
+        }
+    });
+
     $.ajax({
         type: 'POST',
         data: formData,
@@ -278,9 +297,6 @@ function contactFormHandler(form) {
             } else {
                 $('#contact').modal('hide');
             }
-            if(response.has_primary_contact == true){
-                $('#client-show-primary-contact-wrapper').removeClass('hide');
-            }
     }).fail(function(error){
         alert_float('danger', JSON.parse(error.responseText));
     });
@@ -291,7 +307,7 @@ function contact(client_id, contact_id) {
     if (typeof(contact_id) == 'undefined') {
         contact_id = '';
     }
-    $.post(admin_url + 'clients/contact/' + client_id + '/' + contact_id).done(function(response) {
+    requestGet('clients/contact/' + client_id + '/' + contact_id).done(function(response) {
         $('#contact_data').html(response);
         $('#contact').modal({
             show: true,

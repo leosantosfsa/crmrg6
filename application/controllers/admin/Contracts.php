@@ -1,5 +1,7 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Contracts extends Admin_controller
 {
     public function __construct()
@@ -31,9 +33,9 @@ class Contracts extends Admin_controller
             ajax_access_denied();
         }
 
-        $this->app->get_table_data('contracts', array(
+        $this->app->get_table_data('contracts', [
             'clientid' => $clientid,
-        ));
+        ]);
     }
 
     /* Edit contract or add new contract */
@@ -63,13 +65,13 @@ class Contracts extends Admin_controller
         if ($id == '') {
             $title = _l('add_new', _l('contract_lowercase'));
         } else {
-            $data['contract']                 = $this->contracts_model->get($id, array(), true);
+            $data['contract']                 = $this->contracts_model->get($id, [], true);
             $data['contract_renewal_history'] = $this->contracts_model->get_contract_renewal_history($id);
             if (!$data['contract'] || (!has_permission('contracts', '', 'view') && $data['contract']->addedfrom != get_staff_user_id())) {
                 blank_page(_l('contract_not_found'));
             }
             $contract_merge_fields  = get_available_merge_fields();
-            $_contract_merge_fields = array();
+            $_contract_merge_fields = [];
             foreach ($contract_merge_fields as $key => $val) {
                 foreach ($val as $type => $f) {
                     if ($type == 'contract') {
@@ -77,9 +79,11 @@ class Contracts extends Admin_controller
                             foreach ($available['available'] as $av) {
                                 if ($av == 'contract') {
                                     array_push($_contract_merge_fields, $f);
+
                                     break;
                                 }
                             }
+
                             break;
                         }
                     } elseif ($type == 'other') {
@@ -90,7 +94,7 @@ class Contracts extends Admin_controller
                 }
             }
             $data['contract_merge_fields'] = $_contract_merge_fields;
-            $title                         = _l('edit', _l('contract_lowercase'));
+            $title                         = $data['contract']->subject;
 
             $contact = $this->clients_model->get_contact(get_primary_contact_user_id($data['contract']->client));
             $email   = '';
@@ -107,30 +111,30 @@ class Contracts extends Admin_controller
             $template_result = $this->db->get('tblemailtemplates')->row();
 
             $data['template_system_name'] = $template_result->name;
-            $data['template_id'] = $template_result->emailtemplateid;
+            $data['template_id']          = $template_result->emailtemplateid;
 
             $data['template_disabled'] = false;
-            if (total_rows('tblemailtemplates', array('slug'=>$data['template_name'], 'active'=>0)) > 0) {
+            if (total_rows('tblemailtemplates', ['slug' => $data['template_name'], 'active' => 0]) > 0) {
                 $data['template_disabled'] = true;
             }
         }
 
         if ($this->input->get('customer_id')) {
-            $data['customer_id']        = $this->input->get('customer_id');
+            $data['customer_id'] = $this->input->get('customer_id');
         }
 
         $this->load->model('currencies_model');
         $data['base_currency'] = $this->currencies_model->get_base_currency();
         $data['types']         = $this->contracts_model->get_contract_types();
-        $data['title'] = $title;
-        $data['bodyclass'] = 'contract';
+        $data['title']         = $title;
+        $data['bodyclass']     = 'contract';
         $this->load->view('admin/contracts/contract', $data);
     }
 
     public function get_template()
     {
         $name = $this->input->get('name');
-        echo $this->load->view('admin/contracts/templates/' . $name, array(), true);
+        echo $this->load->view('admin/contracts/templates/' . $name, [], true);
     }
 
     public function pdf($id)
@@ -138,22 +142,30 @@ class Contracts extends Admin_controller
         if (!has_permission('contracts', '', 'view') && !has_permission('contracts', '', 'view_own')) {
             access_denied('contracts');
         }
+
         if (!$id) {
             redirect(admin_url('contracts'));
         }
+
         $contract = $this->contracts_model->get($id);
 
         try {
-            $pdf      = contract_pdf($contract);
+            $pdf = contract_pdf($contract);
         } catch (Exception $e) {
             echo $e->getMessage();
             die;
         }
 
-        $type     = 'D';
+        $type = 'D';
+
+        if ($this->input->get('output_type')) {
+            $type = $this->input->get('output_type');
+        }
+
         if ($this->input->get('print')) {
             $type = 'I';
         }
+
         $pdf->Output(slug_it($contract->subject) . '.pdf', $type);
     }
 
@@ -171,14 +183,23 @@ class Contracts extends Admin_controller
         redirect(admin_url('contracts/contract/' . $id));
     }
 
+    public function clear_signature($id)
+    {
+        if (has_permission('contracts', '', 'delete')) {
+            $this->contracts_model->clear_signature($id);
+        }
+
+        redirect(admin_url('contracts/contract/' . $id));
+    }
+
     public function save_contract_data()
     {
         if (!has_permission('contracts', '', 'edit') && !has_permission('contracts', '', 'create')) {
             header('HTTP/1.0 400 Bad error');
-            echo json_encode(array(
+            echo json_encode([
                 'success' => false,
                 'message' => _l('access_denied'),
-            ));
+            ]);
             die;
         }
 
@@ -186,19 +207,63 @@ class Contracts extends Admin_controller
         $message = '';
 
         $this->db->where('id', $this->input->post('contract_id'));
-        $this->db->update('tblcontracts', array(
+        $this->db->update('tblcontracts', [
                 'content' => $this->input->post('content', false),
-            ));
+        ]);
 
-        if ($this->db->affected_rows() > 0) {
-            $success = true;
-            $message = _l('updated_successfully', _l('contract'));
-        }
+        $success = $this->db->affected_rows() > 0;
+        $message = _l('updated_successfully', _l('contract'));
 
-        echo json_encode(array(
+        echo json_encode([
             'success' => $success,
             'message' => $message,
-        ));
+        ]);
+    }
+
+    public function add_comment()
+    {
+        if ($this->input->post()) {
+            echo json_encode([
+                'success' => $this->contracts_model->add_comment($this->input->post()),
+            ]);
+        }
+    }
+
+    public function edit_comment($id)
+    {
+        if ($this->input->post()) {
+            echo json_encode([
+                'success' => $this->contracts_model->edit_comment($this->input->post(), $id),
+                'message' => _l('comment_updated_successfully'),
+            ]);
+        }
+    }
+
+    public function get_comments($id)
+    {
+        $data['comments'] = $this->contracts_model->get_comments($id);
+        $this->load->view('admin/contracts/comments_template', $data);
+    }
+
+    public function remove_comment($id)
+    {
+        $this->db->where('id', $id);
+        $comment = $this->db->get('tblcontractcomments')->row();
+        if ($comment) {
+            if ($comment->staffid != get_staff_user_id() && !is_admin()) {
+                echo json_encode([
+                    'success' => false,
+                ]);
+                die;
+            }
+            echo json_encode([
+                'success' => $this->contracts_model->remove_comment($id),
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+            ]);
+        }
     }
 
     public function renew()
@@ -214,7 +279,7 @@ class Contracts extends Admin_controller
             } else {
                 set_alert('warning', _l('contract_renewed_fail'));
             }
-            redirect(admin_url('contracts/contract/' . $data['contractid'] . '?tab=tab_renewals'));
+            redirect(admin_url('contracts/contract/' . $data['contractid'] . '?tab=renewals'));
         }
     }
 
@@ -226,7 +291,7 @@ class Contracts extends Admin_controller
         } else {
             set_alert('warning', _l('contract_renewal_delete_fail'));
         }
-        redirect(admin_url('contracts/contract/' . $contractid . '?tab=tab_renewals'));
+        redirect(admin_url('contracts/contract/' . $contractid . '?tab=renewals'));
     }
 
     public function copy($id)
@@ -243,7 +308,7 @@ class Contracts extends Admin_controller
         } else {
             set_alert('warning', _l('contract_copied_fail'));
         }
-        redirect(admin_url('contracts/contract/'.$newId));
+        redirect(admin_url('contracts/contract/' . $newId));
     }
 
     /* Delete contract from database */
@@ -261,7 +326,11 @@ class Contracts extends Admin_controller
         } else {
             set_alert('warning', _l('problem_deleting', _l('contract_lowercase')));
         }
-        redirect(admin_url('contracts'));
+        if (strpos($_SERVER['HTTP_REFERER'], 'clients/') !== false) {
+            redirect($_SERVER['HTTP_REFERER']);
+        } else {
+            redirect(admin_url('contracts'));
+        }
     }
 
     /* Manage contract types Since Version 1.0.3 */
@@ -277,12 +346,12 @@ class Contracts extends Admin_controller
                     $success = true;
                     $message = _l('added_successfully', _l('contract_type'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
                     'message' => $message,
-                    'id'=>$id,
-                    'name'=>$this->input->post('name'),
-                ));
+                    'id'      => $id,
+                    'name'    => $this->input->post('name'),
+                ]);
             } else {
                 $data = $this->input->post();
                 $id   = $data['id'];
@@ -292,10 +361,10 @@ class Contracts extends Admin_controller
                 if ($success) {
                     $message = _l('updated_successfully', _l('contract_type'));
                 }
-                echo json_encode(array(
+                echo json_encode([
                     'success' => $success,
                     'message' => $message,
-                ));
+                ]);
             }
         }
     }
@@ -348,9 +417,9 @@ class Contracts extends Admin_controller
     {
         $file = $this->misc_model->get_file($attachment_id);
         if ($file->staffid == get_staff_user_id() || is_admin()) {
-            echo json_encode(array(
+            echo json_encode([
                 'success' => $this->contracts_model->delete_contract_attachment($attachment_id),
-            ));
+            ]);
         }
     }
 }

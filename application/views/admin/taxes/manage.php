@@ -40,6 +40,9 @@
 							<div class="alert alert-warning hide tax_is_used_in_expenses_warning">
 								<?php echo _l('tax_is_used_in_expenses_warning'); ?>
 							</div>
+							<div class="alert alert-warning hide tax_is_used_in_subscriptions_warning">
+								<?php echo _l('tax_is_used_in_subscriptions_warning'); ?>
+							</div>
 							<?php echo render_input('name','tax_add_edit_name'); ?>
 							<?php echo render_input('taxrate','tax_add_edit_rate','','number'); ?>
 						</div>
@@ -88,24 +91,32 @@
 				$('#tax_modal').on('show.bs.modal', function(event) {
 					var button = $(event.relatedTarget)
 					var id = button.data('id');
+					$(this).find('button[type="submit"]').prop('disabled',false);
 					$('#tax_modal input[name="name"]').val('').prop('disabled',false);
 					$('#tax_modal input[name="taxrate"]').val('').prop('disabled',false);
 					$('#tax_modal input[name="taxid"]').val('')
 					$('#tax_modal .add-title').removeClass('hide');
 					$('#tax_modal .edit-title').addClass('hide');
 					$('.tax_is_used_in_expenses_warning').addClass('hide');
+					$('.tax_is_used_in_subscriptions_warning').addClass('hide');
 					if (typeof(id) !== 'undefined') {
 						$('input[name="taxid"]').val(id);
 						var name = $(button).parents('tr').find('td').eq(0).text();
 						var rate = $(button).parents('tr').find('td').eq(1).text();
-						var is_referenced = $(button).data('is-referenced');
-						if(is_referenced == 1){
+						var is_referenced_expenses = $(button).data('is-referenced-expenses');
+						if(is_referenced_expenses == 1){
 							$('.tax_is_used_in_expenses_warning').removeClass('hide');
+						}
+
+						var is_referenced_subscriptions = $(button).data('is-referenced-subscriptions');
+						if(is_referenced_subscriptions == 1){
+							$('.tax_is_used_in_subscriptions_warning').removeClass('hide');
 						}
 						$('#tax_modal .add-title').addClass('hide');
 						$('#tax_modal .edit-title').removeClass('hide');
-						$('#tax_modal input[name="name"]').val(name).prop('disabled',(is_referenced == 1 ? true : false));
-						$('#tax_modal input[name="taxrate"]').val(rate).prop('disabled',(is_referenced == 1 ? true : false));
+						$('#tax_modal input[name="name"]').val(name).prop('disabled',(is_referenced_expenses == 1 || is_referenced_subscriptions == 1 ? true : false));
+						$('#tax_modal input[name="taxrate"]').val(rate).prop('disabled',(is_referenced_expenses == 1 || is_referenced_subscriptions == 1 ? true : false));
+						$(this).find('button[type="submit"]').prop('disabled', is_referenced_expenses == 1 || is_referenced_subscriptions == 1)
 					}
 				});
 			});

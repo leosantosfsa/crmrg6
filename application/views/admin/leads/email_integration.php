@@ -12,9 +12,15 @@
                    <?php echo form_open($this->uri->uri_string(),array('id'=>'leads-email-integration')); ?>
                    <hr class="hr-panel-heading no-mbot" />
                    <?php if(!function_exists('iconv')){ ?>
-                   <div class="alert alert-danger">
-                       You need to enable <b>iconv</b> php extension in order to use this feature. You can enable it via php.ini or contact your hosting provider to enable this extension.
-                   </div>
+                     <div class="alert alert-danger mtop15 no-mbot">
+                         You need to enable <b>iconv</b> php extension in order to use this feature. You can enable it via php.ini or contact your hosting provider to enable this extension.
+                     </div>
+                   <?php } ?>
+
+                     <?php if($mail->email != "" && total_rows('tbldepartments',array('email'=>$mail->email)) > 0){ ?>
+                     <div class="alert alert-danger mtop15 no-mbot">
+                         The email address <b><?php echo $mail->email; ?></b> is used <b>also</b> as a <b>support department</b> email. For leads email integration you must configure unique email if you want everything to work properly.
+                     </div>
                    <?php } ?>
 
                    <div class="btn-bottom-toolbar text-right">

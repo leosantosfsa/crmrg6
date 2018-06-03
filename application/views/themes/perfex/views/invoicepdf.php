@@ -13,7 +13,7 @@ if (get_option('show_status_on_pdf_ei') == 1) {
 
 if ($status != 2 && $status != 5 && get_option('show_pay_link_to_invoice_pdf') == 1
     && found_invoice_mode($payment_modes, $invoice->id, false)) {
-    $info_right_column .= ' - <a style="color:#84c529;text-decoration:none;text-transform:uppercase;" href="' . site_url('viewinvoice/' . $invoice->id . '/' . $invoice->hash) . '"><1b>' . _l('view_invoice_pdf_link_pay') . '</1b></a>';
+    $info_right_column .= ' - <a style="color:#84c529;text-decoration:none;text-transform:uppercase;" href="' . site_url('invoice/' . $invoice->id . '/' . $invoice->hash) . '"><1b>' . _l('view_invoice_pdf_link_pay') . '</1b></a>';
 }
 
 // write the first column
@@ -72,7 +72,7 @@ foreach ($pdf_custom_fields as $field) {
 $pdf->writeHTMLCell(($dimensions['wk'] / 2) - $dimensions['rm'], '', '', ($swap == '1' ? $y : ''), $invoice_info, 0, 1, false, true, ($swap == '1' ? 'J' : 'R'), true);
 
 // The Table
-$pdf->Ln(6);
+$pdf->Ln(do_action('pdf_info_and_table_separator', 6));
 $item_width = 38;
 
 // If show item taxes is disabled in PDF we should increase the item width table heading
@@ -244,9 +244,9 @@ if (count($invoice->payments) > 0 && get_option('show_transactions_on_invoice_pd
 
 if (found_invoice_mode($payment_modes, $invoice->id, true, true)) {
     $pdf->Ln(4);
-    $pdf->SetFont($font_name, 'B', 10);
+    $pdf->SetFont($font_name, 'B', $font_size);
     $pdf->Cell(0, 0, _l('invoice_html_offline_payment'), 0, 1, 'L', 0, '', 0);
-    $pdf->SetFont($font_name, '', 10);
+    $pdf->SetFont($font_name, '', $font_size);
 
     foreach ($payment_modes as $mode) {
         if (is_numeric($mode['id'])) {

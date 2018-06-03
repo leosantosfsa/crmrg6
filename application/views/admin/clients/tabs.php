@@ -1,7 +1,7 @@
 <?php
     $customer_tabs = get_customer_profile_tabs($client->userid);
 ?>
-<ul class="nav navbar-pills nav-tabs nav-stacked customer-tabs" role="tablist">
+<ul class="nav navbar-pills navbar-pills-flat nav-tabs nav-stacked customer-tabs" role="tablist">
    <?php
    $visible_customer_profile_tabs = get_option('visible_customer_profile_tabs');
    if($visible_customer_profile_tabs != 'all') {

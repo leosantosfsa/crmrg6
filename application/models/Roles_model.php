@@ -1,8 +1,9 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Roles_model extends CRM_Model
 {
-    private $perm_statements = array('view', 'view_own', 'edit', 'create', 'delete');
+    private $perm_statements = ['view', 'view_own', 'edit', 'create', 'delete'];
 
     public function __construct()
     {
@@ -15,7 +16,7 @@ class Roles_model extends CRM_Model
      */
     public function add($data)
     {
-        $permissions = array();
+        $permissions = [];
         if (isset($data['view'])) {
             $permissions['view'] = $data['view'];
             unset($data['view']);
@@ -43,15 +44,15 @@ class Roles_model extends CRM_Model
         if ($insert_id) {
             $_all_permissions = $this->roles_model->get_permissions();
             foreach ($_all_permissions as $permission) {
-                $this->db->insert('tblrolepermissions', array(
+                $this->db->insert('tblrolepermissions', [
                     'permissionid' => $permission['permissionid'],
-                    'roleid' => $insert_id,
-                    'can_view' => 0,
+                    'roleid'       => $insert_id,
+                    'can_view'     => 0,
                     'can_view_own' => 0,
-                    'can_edit' => 0,
-                    'can_create' => 0,
-                    'can_delete' => 0
-                ));
+                    'can_edit'     => 0,
+                    'can_create'   => 0,
+                    'can_delete'   => 0,
+                ]);
             }
 
             foreach ($this->perm_statements as $c) {
@@ -60,9 +61,9 @@ class Roles_model extends CRM_Model
                         foreach ($p as $perm) {
                             $this->db->where('roleid', $insert_id);
                             $this->db->where('permissionid', $perm);
-                            $this->db->update('tblrolepermissions', array(
-                                'can_' . $c => 1
-                            ));
+                            $this->db->update('tblrolepermissions', [
+                                'can_' . $c => 1,
+                            ]);
                         }
                     }
                 }
@@ -85,7 +86,7 @@ class Roles_model extends CRM_Model
     public function update($data, $id)
     {
         $affectedRows = 0;
-        $permissions  = array();
+        $permissions  = [];
         if (isset($data['view'])) {
             $permissions['view'] = $data['view'];
             unset($data['view']);
@@ -120,24 +121,24 @@ class Roles_model extends CRM_Model
 
 
         $all_permissions = $this->roles_model->get_permissions();
-        if (total_rows('tblrolepermissions', array(
-            'roleid' => $id
-        )) == 0) {
+        if (total_rows('tblrolepermissions', [
+            'roleid' => $id,
+        ]) == 0) {
             foreach ($all_permissions as $p) {
-                $_ins                 = array();
+                $_ins                 = [];
                 $_ins['roleid']       = $id;
                 $_ins['permissionid'] = $p['permissionid'];
                 $this->db->insert('tblrolepermissions', $_ins);
             }
-        } elseif (total_rows('tblrolepermissions', array(
-                'roleid' => $id
-            )) != count($all_permissions)) {
+        } elseif (total_rows('tblrolepermissions', [
+                'roleid' => $id,
+            ]) != count($all_permissions)) {
             foreach ($all_permissions as $p) {
-                if (total_rows('tblrolepermissions', array(
+                if (total_rows('tblrolepermissions', [
                     'roleid' => $id,
-                    'permissionid' => $p['permissionid']
-                )) == 0) {
-                    $_ins                 = array();
+                    'permissionid' => $p['permissionid'],
+                ]) == 0) {
+                    $_ins                 = [];
                     $_ins['roleid']       = $id;
                     $_ins['permissionid'] = $p['permissionid'];
                     $this->db->insert('tblrolepermissions', $_ins);
@@ -150,9 +151,9 @@ class Roles_model extends CRM_Model
             foreach ($this->perm_statements as $c) {
                 $this->db->where('roleid', $id);
                 $this->db->where('permissionid', $permission['permissionid']);
-                $this->db->update('tblrolepermissions', array(
-                    'can_' . $c => 0
-                ));
+                $this->db->update('tblrolepermissions', [
+                    'can_' . $c => 0,
+                ]);
                 if ($this->db->affected_rows() > 0) {
                     $_permission_restore_affected_rows++;
                 }
@@ -164,9 +165,9 @@ class Roles_model extends CRM_Model
             foreach ($val as $p) {
                 $this->db->where('roleid', $id);
                 $this->db->where('permissionid', $p);
-                $this->db->update('tblrolepermissions', array(
-                    'can_' . $key => 1
-                ));
+                $this->db->update('tblrolepermissions', [
+                    'can_' . $key => 1,
+                ]);
                 if ($this->db->affected_rows() > 0) {
                     $_new_permissions_added_affected_rows++;
                 }
@@ -178,9 +179,9 @@ class Roles_model extends CRM_Model
 
         if ($update_staff_permissions == true) {
             $this->load->model('staff_model');
-            $staff = $this->staff_model->get('', '', array(
-                'role' => $id
-            ));
+            $staff = $this->staff_model->get('', [
+                'role' => $id,
+            ]);
             foreach ($staff as $m) {
                 if ($this->staff_model->update_permissions($permissions, $m['staffid'])) {
                     $affectedRows++;
@@ -223,9 +224,9 @@ class Roles_model extends CRM_Model
         $current = $this->get($id);
         // Check first if role is used in table
         if (is_reference_in_table('role', 'tblstaff', $id)) {
-            return array(
-                'referenced' => true
-            );
+            return [
+                'referenced' => true,
+            ];
         }
         $affectedRows = 0;
         $this->db->where('roleid', $id);

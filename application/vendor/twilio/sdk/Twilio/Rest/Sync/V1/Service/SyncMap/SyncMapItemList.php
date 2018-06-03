@@ -23,15 +23,17 @@ class SyncMapItemList extends ListResource {
      * Construct the SyncMapItemList
      * 
      * @param Version $version Version that contains the resource
-     * @param string $serviceSid The service_sid
-     * @param string $mapSid The map_sid
+     * @param string $serviceSid The unique SID identifier of the Service Instance
+     *                           that hosts this Map object.
+     * @param string $mapSid The unique 34-character SID identifier of the Map
+     *                       containing this Item.
      * @return \Twilio\Rest\Sync\V1\Service\SyncMap\SyncMapItemList 
      */
     public function __construct(Version $version, $serviceSid, $mapSid) {
         parent::__construct($version);
 
         // Path Solution
-        $this->solution = array('serviceSid' => $serviceSid, 'mapSid' => $mapSid);
+        $this->solution = array('serviceSid' => $serviceSid, 'mapSid' => $mapSid, );
 
         $this->uri = '/Services/' . rawurlencode($serviceSid) . '/Maps/' . rawurlencode($mapSid) . '/Items';
     }

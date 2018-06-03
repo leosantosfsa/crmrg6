@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Statement_model extends CRM_Model
@@ -25,10 +26,10 @@ class Statement_model extends CRM_Model
         concat(tblinvoices.date, \' \', RIGHT(tblinvoices.datecreated,LOCATE(\' \',tblinvoices.datecreated) - 3)) as tmp_date,
         tblinvoices.duedate as duedate,
         tblinvoices.total as invoice_amount
-        FROM tblinvoices WHERE clientid ='.$customer_id;
+        FROM tblinvoices WHERE clientid =' . $customer_id;
 
         if ($from == $to) {
-            $sqlDate = 'date="'.$from.'"';
+            $sqlDate = 'date="' . $from . '"';
         } else {
             $sqlDate = '(date BETWEEN "' . $from . '" AND "' . $to . '")';
         }
@@ -46,7 +47,7 @@ class Statement_model extends CRM_Model
         tblcreditnotes.date as date,
         concat(tblcreditnotes.date, \' \', RIGHT(tblcreditnotes.datecreated,LOCATE(\' \',tblcreditnotes.datecreated) - 3)) as tmp_date,
         tblcreditnotes.total as credit_note_amount
-        FROM tblcreditnotes WHERE clientid ='.$customer_id .' AND status != 3';
+        FROM tblcreditnotes WHERE clientid =' . $customer_id . ' AND status != 3';
 
         $sql_credit_notes .= ' AND ' . $sqlDate;
 
@@ -65,7 +66,7 @@ class Statement_model extends CRM_Model
         ';
 
         $sql_credits_applied .= '
-        WHERE clientid ='.$customer_id;
+        WHERE clientid =' . $customer_id;
 
         $sqlDateCreditsAplied = str_replace('date', 'tblcredits.date', $sqlDate);
 
@@ -83,7 +84,7 @@ class Statement_model extends CRM_Model
         tblinvoicepaymentrecords.amount as payment_total
         FROM tblinvoicepaymentrecords
         JOIN tblinvoices ON tblinvoices.id = tblinvoicepaymentrecords.invoiceid
-        WHERE '.$sqlDatePayments.' AND tblinvoices.clientid = '.$customer_id.'
+        WHERE ' . $sqlDatePayments . ' AND tblinvoices.clientid = ' . $customer_id . '
         ORDER by tblinvoicepaymentrecords.date DESC';
 
         $payments = $this->db->query($sql_payments)->result_array();
@@ -98,7 +99,7 @@ class Statement_model extends CRM_Model
         });
 
         // Define final result variable
-        $result = array();
+        $result = [];
         // Store in result array key
         $result['result'] = $merged;
 
@@ -106,7 +107,7 @@ class Statement_model extends CRM_Model
         $result['invoiced_amount'] = $this->db->query('SELECT
         SUM(tblinvoices.total) as invoiced_amount
         FROM tblinvoices
-        WHERE clientid = '.$customer_id . '
+        WHERE clientid = ' . $customer_id . '
         AND ' . $sqlDate . ' AND status != 5 and status != 6')
             ->row()->invoiced_amount;
 
@@ -117,7 +118,7 @@ class Statement_model extends CRM_Model
         $result['credit_notes_amount'] = $this->db->query('SELECT
         SUM(tblcreditnotes.total) as credit_notes_amount
         FROM tblcreditnotes
-        WHERE clientid = '.$customer_id . '
+        WHERE clientid = ' . $customer_id . '
         AND ' . $sqlDate . ' AND status != 3')
             ->row()->credit_notes_amount;
 
@@ -125,14 +126,14 @@ class Statement_model extends CRM_Model
             $result['credit_notes_amount'] = 0;
         }
 
-        $result['invoiced_amount'] =  $result['invoiced_amount'] - $result['credit_notes_amount'];
+        $result['invoiced_amount'] = $result['invoiced_amount'] - $result['credit_notes_amount'];
 
         // Amount paid during the period
         $result['amount_paid'] = $this->db->query('SELECT
         SUM(tblinvoicepaymentrecords.amount) as amount_paid
         FROM tblinvoicepaymentrecords
         JOIN tblinvoices ON tblinvoices.id = tblinvoicepaymentrecords.invoiceid
-        WHERE '.$sqlDatePayments.' AND tblinvoices.clientid = '.$customer_id)
+        WHERE ' . $sqlDatePayments . ' AND tblinvoices.clientid = ' . $customer_id)
             ->row()->amount_paid;
 
         if ($result['amount_paid'] === null) {
@@ -148,18 +149,18 @@ class Statement_model extends CRM_Model
             FROM tblinvoicepaymentrecords
             JOIN tblinvoices ON tblinvoices.id = tblinvoicepaymentrecords.invoiceid
             WHERE tblinvoicepaymentrecords.date < "' . $from . '"
-            AND tblinvoices.clientid='.$customer_id.'
+            AND tblinvoices.clientid=' . $customer_id . '
             ) + (
                 SELECT COALESCE(SUM(tblcreditnotes.total),0)
                 FROM tblcreditnotes
                 WHERE tblcreditnotes.date < "' . $from . '"
-                AND tblcreditnotes.clientid='.$customer_id.'
+                AND tblcreditnotes.clientid=' . $customer_id . '
             )
         )
             )
             as beginning_balance FROM tblinvoices
             WHERE date < "' . $from . '"
-            AND clientid = '.$customer_id .'
+            AND clientid = ' . $customer_id . '
             AND status != 6
             AND status != 5')
               ->row()->beginning_balance;
@@ -179,9 +180,9 @@ class Statement_model extends CRM_Model
         }
 
         $result['client_id'] = $customer_id;
-        $result['client'] = $this->clients_model->get($customer_id);
-        $result['from'] = $from;
-        $result['to'] = $to;
+        $result['client']    = $this->clients_model->get($customer_id);
+        $result['from']      = $from;
+        $result['to']        = $to;
 
         $customer_currency = $this->clients_model->get_customer_default_currency($customer_id);
         $this->load->model('currencies_model');
@@ -214,23 +215,23 @@ class Statement_model extends CRM_Model
 
             $statement = $this->get_statement($customer_id, to_sql_date($from), to_sql_date($to));
 
-            $pdf    = statement_pdf($statement);
+            $pdf = statement_pdf($statement);
 
-            $pdf_file_name = slug_it(_l('customer_statement').'-'.$statement['client']->company);
+            $pdf_file_name = slug_it(_l('customer_statement') . '-' . $statement['client']->company);
 
             $attach = $pdf->Output($pdf_file_name . '.pdf', 'S');
 
-            $i              = 0;
+            $i = 0;
             foreach ($send_to as $contact_id) {
                 if ($contact_id != '') {
-                    $this->emails_model->add_attachment(array(
+                    $this->emails_model->add_attachment([
                             'attachment' => $attach,
-                            'filename' => $pdf_file_name . '.pdf',
-                            'type' => 'application/pdf',
-                        ));
+                            'filename'   => $pdf_file_name . '.pdf',
+                            'type'       => 'application/pdf',
+                        ]);
 
                     $contact      = $this->clients_model->get_contact($contact_id);
-                    $merge_fields = array();
+                    $merge_fields = [];
                     $merge_fields = array_merge(
                         $merge_fields,
                         get_client_contact_merge_fields(

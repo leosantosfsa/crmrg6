@@ -9,8 +9,10 @@ $(function() {
 function init_proposal_editor() {
 
     tinymce.remove('div.editable');
+
     var _templates = [];
-    $.each(proposal_templates, function(i, template) {
+
+    $.each(proposalsTemplates, function(i, template) {
         _templates.push({
             url: admin_url + 'proposals/get_template?name=' + template,
             title: template
@@ -20,84 +22,74 @@ function init_proposal_editor() {
     var settings = {
         selector: 'div.editable',
         inline: true,
-        theme: 'modern',
-        skin: 'perfex',
+        theme: 'inlite',
+        // skin: 'perfex',
         relative_urls: false,
         remove_script_host: false,
         inline_styles: true,
         verify_html: false,
         cleanup: false,
+        apply_source_formatting: false,
         valid_elements: '+*[*]',
         valid_children: "+body[style], +style[type]",
-        apply_source_formatting: false,
         file_browser_callback: elFinderBrowser,
-        table_class_list: [{
-            title: 'Flat',
-            value: 'table'
-        }, {
-            title: 'Table Bordered',
-            value: 'table table-bordered'
-        }, {
-            title: 'Items Table',
-            value: 'proposal-items table'
-        }, ],
         table_default_styles: {
             width: '100%'
         },
-        removed_menuitems: 'newdocument',
         fontsize_formats: '8pt 10pt 12pt 14pt 18pt 24pt 36pt',
+        pagebreak_separator: '<p pagebreak="true"></p>',
         plugins: [
-            'advlist pagebreak autolink autoresize lists link image charmap hr anchor',
-            'searchreplace wordcount visualblocks visualchars code',
-            'media nonbreaking save table contextmenu directionality',
+            'advlist pagebreak autolink autoresize lists link image charmap hr',
+            'searchreplace visualblocks visualchars code',
+            'media nonbreaking table contextmenu',
             'paste textcolor colorpicker'
         ],
         autoresize_bottom_margin: 50,
-        pagebreak_separator: '<p pagebreak="true"></p>',
-        toolbar1: 'save_button fontselect fontsizeselect insertfile | styleselect',
-        toolbar2: 'bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
-        toolbar3: 'media image | forecolor backcolor link ',
+        insert_toolbar: 'image media quicktable | bullist numlist | h2 h3 | hr',
+        selection_toolbar: 'save_button bold italic underline superscript | forecolor backcolor link | alignleft aligncenter alignright alignjustify | fontselect fontsizeselect h2 h3',
+        contextmenu: "image media inserttable | cell row column deletetable | paste pastetext searchreplace | visualblocks pagebreak charmap | code",
         setup: function(editor) {
+
+            editor.addCommand('mceSave', function(){
+                save_proposal_content(true);
+            });
+
+            editor.addShortcut('Meta+S', '', 'mceSave');
+
+            editor.on('MouseLeave blur', function() {
+                if(tinymce.activeEditor.isDirty()){
+                    save_proposal_content();
+                }
+            });
+
+            editor.on('MouseDown ContextMenu', function() {
+                  if(!is_mobile() && !$('#small-table').hasClass('hide')) {
+                      small_table_full_view();
+                  }
+            });
 
             editor.on('blur', function() {
                 $.Shortcuts.start();
             });
 
             editor.on('focus', function() {
-               $.Shortcuts.stop();
-            });
-
-            editor.addButton('save_button', {
-                text: appLang.proposal_save,
-                icon: false,
-                id: 'inline-editor-save-btn',
-                onclick: function() {
-                    var data = {};
-                    data.proposal_id = proposal_id;
-                    data.content = editor.getContent();
-                    $.post(admin_url + 'proposals/save_proposal_data', data).done(function(response) {
-                        response = JSON.parse(response);
-                        if (response.success == true) {
-                            alert_float('success', response.message);
-                        }
-                    }).fail(function(error) {
-                        var response = JSON.parse(error.responseText);
-                        alert_float('danger', response.message);
-                    });
-                }
+                $.Shortcuts.stop();
             });
         },
     };
+
     if (_templates.length > 0) {
         settings.templates = _templates;
         settings.plugins[3] = 'template ' + settings.plugins[3];
+        settings.contextmenu = settings.contextmenu.replace('inserttable', 'inserttable template')
     }
+
     tinymce.init(settings);
 }
 
 function add_proposal_comment() {
     var comment = $('#comment').val();
-    if (comment == '') { return;}
+    if (comment == '') { return; }
     var data = {};
     data.content = comment;
     data.proposalid = proposal_id;
@@ -114,14 +106,14 @@ function add_proposal_comment() {
 
 function get_proposal_comments() {
     if (typeof(proposal_id) == 'undefined') { return; }
-    requestGet('proposals/get_proposal_comments/' + proposal_id).done(function(response){
+    requestGet('proposals/get_proposal_comments/' + proposal_id).done(function(response) {
         $('body').find('#proposal-comments').html(response);
     });
 }
 
 function remove_proposal_comment(commentid) {
-    if(confirm_delete()){
-        requestGetJSON('proposals/remove_comment/' + commentid).done(function(response){
+    if (confirm_delete()) {
+        requestGetJSON('proposals/remove_comment/' + commentid).done(function(response) {
             if (response.success == true) {
                 $('[data-commentid="' + commentid + '"]').remove();
             }
@@ -158,12 +150,33 @@ function convert_template(invoker) {
     } else {
         return false;
     }
-    requestGet('proposals/get_' + html_helper_selector + '_convert_data/' + proposal_id).done(function(data){
-        if($('.proposal-pipeline-modal').is(':visible')) {
+
+    requestGet('proposals/get_' + html_helper_selector + '_convert_data/' + proposal_id).done(function(data) {
+        if ($('.proposal-pipeline-modal').is(':visible')) {
             $('.proposal-pipeline-modal').modal('hide');
         }
         $('#convert_helper').html(data);
         $('#convert_to_' + html_helper_selector).modal({ show: true, backdrop: 'static' });
         reorder_items();
+    });
+
+}
+
+function save_proposal_content(manual) {
+    var editor = tinyMCE.activeEditor;
+    var data = {};
+    data.proposal_id = proposal_id;
+    data.content = editor.getContent();
+    $.post(admin_url + 'proposals/save_proposal_data', data).done(function(response) {
+        response = JSON.parse(response);
+        if (typeof(manual) != 'undefined') {
+           // Show some message to the user if saved via CTRL + S
+           alert_float('success', response.message);
+        }
+        // Invokes to set dirty to false
+        editor.save();
+    }).fail(function(error) {
+        var response = JSON.parse(error.responseText);
+        alert_float('danger', response.message);
     });
 }

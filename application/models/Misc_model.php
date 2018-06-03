@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 class Misc_model extends CRM_Model
 {
@@ -22,12 +23,12 @@ class Misc_model extends CRM_Model
             // + is no longer used and is here for backward compatibilities
             if (is_array($taxname) || strpos($taxname, '+') !== false) {
                 if (!is_array($taxname)) {
-                    $__tax   = explode('+', $taxname);
+                    $__tax = explode('+', $taxname);
                 } else {
                     $__tax = $taxname;
                 }
                 // Multiple taxes found // possible option from default settings when invoicing project
-                $taxname = array();
+                $taxname = [];
                 foreach ($__tax as $t) {
                     $tax_array = explode('|', $t);
                     if (isset($tax_array[0]) && isset($tax_array[1])) {
@@ -58,13 +59,13 @@ class Misc_model extends CRM_Model
 
             // Lets check the items taxes in case of changes.
             // Separate functions exists to get item taxes for Invoice, Estimate, Proposal, Credit Note
-            $func_taxes = 'get_'.$type.'_item_taxes';
-            if(function_exists($func_taxes)){
+            $func_taxes = 'get_' . $type . '_item_taxes';
+            if (function_exists($func_taxes)) {
                 $item_taxes = call_user_func($func_taxes, $item_id);
             }
 
             foreach ($item_taxes as $item_tax) {
-                $new_tax            = array();
+                $new_tax            = [];
                 $new_tax['name']    = $item_tax['taxname'];
                 $new_tax['taxrate'] = $item_tax['taxrate'];
                 $taxes[]            = $new_tax;
@@ -83,23 +84,23 @@ class Misc_model extends CRM_Model
                 if (!value_exists_in_array_by_key($taxes, 'name', $tax)) {
                     if (!is_array($tax)) {
                         $tmp_taxname = $tax;
-                        $tax_array = explode('|', $tax);
+                        $tax_array   = explode('|', $tax);
                     } else {
-                        $tax_array = explode('|', $tax['taxname']);
+                        $tax_array   = explode('|', $tax['taxname']);
                         $tmp_taxname = $tax['taxname'];
                         if ($tmp_taxname == '') {
                             continue;
                         }
                     }
-                    $taxes[] = array('name'=>$tmp_taxname, 'taxrate'=>$tax_array[1]);
+                    $taxes[] = ['name' => $tmp_taxname, 'taxrate' => $tax_array[1]];
                 }
             }
         }
 
         // Clear the duplicates
-        $taxes            = array_map("unserialize", array_unique(array_map("serialize", $taxes)));
+        $taxes = array_map('unserialize', array_unique(array_map('serialize', $taxes)));
 
-        $select           = '<select class="selectpicker display-block tax" data-width="100%" name="' . $name . '" multiple data-none-selected-text="' . _l('no_tax') . '">';
+        $select = '<select class="selectpicker display-block tax" data-width="100%" name="' . $name . '" multiple data-none-selected-text="' . _l('no_tax') . '">';
 
         foreach ($taxes as $tax) {
             $selected = '';
@@ -138,11 +139,15 @@ class Misc_model extends CRM_Model
             $data['staffid'] = $attachment[0]['staffid'];
         }
 
+        if (isset($attachment[0]['task_comment_id'])) {
+            $data['task_comment_id'] = $attachment[0]['task_comment_id'];
+        }
+
         $data['rel_type'] = $rel_type;
         if (isset($attachment[0]['contact_id'])) {
             $data['contact_id']          = $attachment[0]['contact_id'];
             $data['visible_to_customer'] = 1;
-            if(isset($data['staffid'])){
+            if (isset($data['staffid'])) {
                 unset($data['staffid']);
             }
         }
@@ -168,19 +173,19 @@ class Misc_model extends CRM_Model
 
         if ($data['rel_type'] == 'customer' && isset($data['contact_id'])) {
             if (get_option('only_own_files_contacts') == 1) {
-                $this->db->insert('tblcustomerfiles_shares', array(
-                    'file_id' => $insert_id,
-                    'contact_id' => $data['contact_id']
-                ));
+                $this->db->insert('tblcustomerfiles_shares', [
+                    'file_id'    => $insert_id,
+                    'contact_id' => $data['contact_id'],
+                ]);
             } else {
                 $this->db->select('id');
                 $this->db->where('userid', $data['rel_id']);
                 $contacts = $this->db->get('tblcontacts')->result_array();
                 foreach ($contacts as $contact) {
-                    $this->db->insert('tblcustomerfiles_shares', array(
-                        'file_id' => $insert_id,
-                        'contact_id' => $contact['id']
-                    ));
+                    $this->db->insert('tblcustomerfiles_shares', [
+                        'file_id'    => $insert_id,
+                        'contact_id' => $contact['id'],
+                    ]);
                 }
             }
         }
@@ -198,8 +203,8 @@ class Misc_model extends CRM_Model
     public function get_staff_started_timers()
     {
         $this->db->select('tbltaskstimers.*,tblstafftasks.name as task_subject');
-        $this->db->join('tblstaff','tblstaff.staffid=tbltaskstimers.staff_id');
-        $this->db->join('tblstafftasks','tblstafftasks.id=tbltaskstimers.task_id','left');
+        $this->db->join('tblstaff', 'tblstaff.staffid=tbltaskstimers.staff_id');
+        $this->db->join('tblstafftasks', 'tblstafftasks.id=tbltaskstimers.task_id', 'left');
         $this->db->where('staff_id', get_staff_user_id());
         $this->db->where('end_time IS NULL');
 
@@ -229,10 +234,10 @@ class Misc_model extends CRM_Model
         if ($insert_id) {
             if ($data['rel_type'] == 'lead') {
                 $this->load->model('leads_model');
-                $this->leads_model->log_lead_activity($data['rel_id'], 'not_activity_new_reminder_created', false, serialize(array(
+                $this->leads_model->log_lead_activity($data['rel_id'], 'not_activity_new_reminder_created', false, serialize([
                     get_staff_full_name($data['staff']),
-                    _dt($data['date'])
-                    )));
+                    _dt($data['date']),
+                    ]));
             }
             logActivity('New Reminder Added [' . ucfirst($data['rel_type']) . 'ID: ' . $data['rel_id'] . ' Description: ' . $data['description'] . ']');
 
@@ -245,20 +250,19 @@ class Misc_model extends CRM_Model
     {
         if (isset($data['notify_by_email'])) {
             $data['notify_by_email'] = 1;
-        }
-        else {
+        } else {
             $data['notify_by_email'] = 0;
         }
 
         $data['date']        = to_sql_date($data['date'], true);
         $data['description'] = nl2br($data['description']);
 
-        $this->db->where('id',$id);
+        $this->db->where('id', $id);
         $this->db->update('tblreminders', $data);
 
-       if($this->db->affected_rows() > 0){
+        if ($this->db->affected_rows() > 0) {
             return true;
-       }
+        }
 
         return false;
     }
@@ -292,9 +296,9 @@ class Misc_model extends CRM_Model
     public function edit_note($data, $id)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblnotes', array(
-            'description' => nl2br($data['description'])
-        ));
+        $this->db->update('tblnotes', [
+            'description' => nl2br($data['description']),
+        ]);
         if ($this->db->affected_rows() > 0) {
             return true;
         }
@@ -307,7 +311,8 @@ class Misc_model extends CRM_Model
      * @deprecated 1.9.8 Use $this->app->get_current_db_version() instead
      * @return mixed
      */
-    public function get_current_db_version(){
+    public function get_current_db_version()
+    {
         return $this->app->get_current_db_version();
     }
 
@@ -387,7 +392,7 @@ class Misc_model extends CRM_Model
         $this->load->model('departments_model');
         $departments       = $this->departments_model->get();
         $staff_departments = $this->departments_model->get_staff_departments(false, true);
-        $ids               = array();
+        $ids               = [];
 
         // Check departments google calendar ids
         foreach ($departments as $department) {
@@ -396,8 +401,7 @@ class Misc_model extends CRM_Model
             }
             if ($is_admin) {
                 $ids[] = $department['calendar_id'];
-            }
-            else {
+            } else {
                 if (in_array($department['departmentid'], $staff_departments)) {
                     $ids[] = $department['calendar_id'];
                 }
@@ -418,37 +422,32 @@ class Misc_model extends CRM_Model
      * @param  boolean $read include and readed notifications
      * @return array
      */
-    public function get_user_notifications($read = 1)
+    public function get_user_notifications($read = false)
     {
+        $read = $read == false ? 0 : 1;
         $total        = $this->notifications_limit;
-        $total_unread = total_rows('tblnotifications', array(
-            'isread' => $read,
-            'touserid' => get_staff_user_id()
-        ));
+        $staff_id = get_staff_user_id();
 
-        $total_unread_inline = total_rows('tblnotifications', array(
-            'isread_inline' => $read,
-            'touserid' => get_staff_user_id()
-        ));
+        $sql = 'SELECT COUNT(*) as total FROM tblnotifications WHERE isread=' . $read . ' AND touserid=' . $staff_id;
+        $sql .= ' UNION ALL ';
+        $sql .= 'SELECT COUNT(*) as total FROM tblnotifications WHERE isread_inline=' . $read . ' AND touserid=' . $staff_id;
 
-        if (is_numeric($read)) {
-            $this->db->where('isread', $read);
-        } //is_numeric($read)
+        $res = $this->db->query($sql)->result();
+
+        $total_unread = $res[0]->total;
+        $total_unread_inline = $res[1]->total;
+
         if ($total_unread > $total) {
-            $_diff = $total_unread - $total;
-            $total = $_diff + $total;
+            $total = ($total_unread - $total) + $total;
         } elseif ($total_unread_inline > $total) {
-            $_diff = $total_unread_inline - $total;
-            $total = $_diff + $total;
+            $total = ($total_unread_inline - $total) + $total;
         }
 
         // In case user is not marking the notifications are read this process may be long because the script will always fetch the total from the not read notifications.
         // In this case we are limiting to 30
-        if($total > 30) {
-            $total = 30;
-        }
+        $total = $total > 30 ? 30 : $total;
 
-        $this->db->where('touserid', get_staff_user_id());
+        $this->db->where('touserid', $staff_id);
         $this->db->limit($total);
         $this->db->order_by('date', 'desc');
 
@@ -462,12 +461,13 @@ class Misc_model extends CRM_Model
     public function set_notifications_read()
     {
         $this->db->where('touserid', get_staff_user_id());
-        $this->db->update('tblnotifications', array(
-            'isread' => 1
-        ));
+        $this->db->update('tblnotifications', [
+            'isread' => 1,
+        ]);
         if ($this->db->affected_rows() > 0) {
             return true;
         }
+
         return false;
     }
 
@@ -475,27 +475,28 @@ class Misc_model extends CRM_Model
     {
         $this->db->where('touserid', get_staff_user_id());
         $this->db->where('id', $id);
-        $this->db->update('tblnotifications', array(
-            'isread_inline' => 1
-        ));
+        $this->db->update('tblnotifications', [
+            'isread_inline' => 1,
+        ]);
     }
 
-    public function set_desktop_notification_read($id){
+    public function set_desktop_notification_read($id)
+    {
         $this->db->where('touserid', get_staff_user_id());
         $this->db->where('id', $id);
-        $this->db->update('tblnotifications', array(
-            'isread' => 1,
-            'isread_inline'=>1
-        ));
+        $this->db->update('tblnotifications', [
+            'isread'        => 1,
+            'isread_inline' => 1,
+        ]);
     }
 
     public function mark_all_notifications_as_read_inline()
     {
         $this->db->where('touserid', get_staff_user_id());
-        $this->db->update('tblnotifications', array(
+        $this->db->update('tblnotifications', [
             'isread_inline' => 1,
-            'isread'=>1
-        ));
+            'isread'        => 1,
+        ]);
     }
 
     /**
@@ -531,7 +532,7 @@ class Misc_model extends CRM_Model
         $q = trim($q);
         $this->load->model('staff_model');
         $is_admin                       = is_admin();
-        $result                         = array();
+        $result                         = [];
         $limit                          = get_option('limit_top_search_bar_results_to');
         $have_assigned_customers        = have_assigned_customers();
         $have_permission_customers_view = has_permission('customers', '', 'view');
@@ -564,11 +565,11 @@ class Misc_model extends CRM_Model
                 )');
 
             $this->db->limit($limit);
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'clients',
-                'search_heading' => _l('clients')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'clients',
+                'search_heading' => _l('clients'),
+            ];
         }
 
 
@@ -638,11 +639,11 @@ class Misc_model extends CRM_Model
             // Surveys
             $this->db->select()->from('tblsurveys')->like('subject', $q)->or_like('slug', $q)->or_like('description', $q)->or_like('viewdescription', $q)->limit($limit);
             $this->db->order_by('subject', 'ASC');
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'surveys',
-                'search_heading' => _l('surveys')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'surveys',
+                'search_heading' => _l('surveys'),
+            ];
         }
 
         if (has_permission('knowledge_base', '', 'view')) {
@@ -651,11 +652,11 @@ class Misc_model extends CRM_Model
 
             $this->db->order_by('subject', 'ASC');
 
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'knowledge_base_articles',
-                'search_heading' => _l('kb_string')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'knowledge_base_articles',
+                'search_heading' => _l('kb_string'),
+            ];
         }
 
         // Tasks Search
@@ -686,18 +687,18 @@ class Misc_model extends CRM_Model
         $this->db->limit($limit);
         $this->db->order_by('name', 'ASC');
 
-        $result[] = array(
-            'result' => $this->db->get()->result_array(),
-            'type' => 'tasks',
-            'search_heading' => _l('tasks')
-        );
+        $result[] = [
+            'result'         => $this->db->get()->result_array(),
+            'type'           => 'tasks',
+            'search_heading' => _l('tasks'),
+        ];
 
 
         // Payments search
         $has_permission_view_payments     = has_permission('payments', '', 'view');
         $has_permission_view_invoices_own = has_permission('invoices', '', 'view_own');
 
-        if (has_permission('payments', '', 'view') || $has_permission_view_invoices_own) {
+        if (has_permission('payments', '', 'view') || $has_permission_view_invoices_own || get_option('allow_staff_view_invoices_assigned') == '1') {
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
@@ -713,7 +714,7 @@ class Misc_model extends CRM_Model
             $this->db->join('tblinvoices', 'tblinvoices.id = tblinvoicepaymentrecords.invoiceid');
 
             if (!$has_permission_view_payments) {
-                $this->db->where('invoiceid IN (SELECT id FROM tblinvoices WHERE addedfrom=' . get_staff_user_id() . ')');
+                $this->db->where('invoiceid IN (select id from tblinvoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
             }
 
             $this->db->where('(tblinvoicepaymentrecords.id LIKE "' . $q . '"
@@ -725,11 +726,11 @@ class Misc_model extends CRM_Model
 
             $this->db->order_by('tblinvoicepaymentrecords.date', 'ASC');
 
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'invoice_payment_records',
-                'search_heading' => _l('payments')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'invoice_payment_records',
+                'search_heading' => _l('payments'),
+            ];
         }
 
 
@@ -739,59 +740,63 @@ class Misc_model extends CRM_Model
 
             $this->db->order_by('subject', 'ASC');
 
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'goals',
-                'search_heading' => _l('goals')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'goals',
+                'search_heading' => _l('goals'),
+            ];
         }
 
         // Custom fields only admins
         if ($is_admin) {
             $this->db->select()->from('tblcustomfieldsvalues')->like('value', $q)->limit($limit);
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'custom_fields',
-                'search_heading' => _l('custom_fields')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'custom_fields',
+                'search_heading' => _l('custom_fields'),
+            ];
         }
 
-        // Invoice Items Searc
-        $has_permission_view_invoices     = has_permission('invoices', '', 'view');
-        $has_permission_view_invoices_own = has_permission('invoices', '', 'view_own');
-        if ($has_permission_view_invoices || $has_permission_view_invoices_own) {
+        // Invoice Items Search
+        $has_permission_view_invoices       = has_permission('invoices', '', 'view');
+        $has_permission_view_invoices_own   = has_permission('invoices', '', 'view_own');
+        $allow_staff_view_invoices_assigned = get_option('allow_staff_view_invoices_assigned');
+
+        if ($has_permission_view_invoices || $has_permission_view_invoices_own || $allow_staff_view_invoices_assigned == '1') {
             $this->db->select()->from('tblitems_in');
             $this->db->where('rel_type', 'invoice');
             $this->db->where('(description LIKE "%' . $q . '%" OR long_description LIKE "%' . $q . '%")');
 
             if (!$has_permission_view_invoices) {
-                $this->db->where('rel_id IN (select id from tblinvoices where addedfrom=' . get_staff_user_id() . ')');
+                $this->db->where('rel_id IN (select id from tblinvoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
             }
+
             $this->db->order_by('description', 'ASC');
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'invoice_items',
-                'search_heading' => _l('invoice_items')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'invoice_items',
+                'search_heading' => _l('invoice_items'),
+            ];
         }
 
         // Estimate Items Search
         $has_permission_view_estimates     = has_permission('estimates', '', 'view');
         $has_permission_view_estimates_own = has_permission('estimates', '', 'view_own');
-        if ($has_permission_view_estimates || $has_permission_view_estimates_own) {
+        $allow_staff_view_estimates_assigned = get_option('allow_staff_view_estimates_assigned');
+        if ($has_permission_view_estimates || $has_permission_view_estimates_own || $allow_staff_view_estimates_assigned) {
             $this->db->select()->from('tblitems_in');
             $this->db->where('rel_type', 'estimate');
 
             if (!$has_permission_view_estimates) {
-                $this->db->where('rel_id IN (select id from tblestimates where addedfrom=' . get_staff_user_id() . ')');
+                $this->db->where('rel_id IN (select id from tblestimates where ' . get_estimates_where_sql_for_staff(get_staff_user_id()) . ')');
             }
             $this->db->where('(description LIKE "%' . $q . '%" OR long_description LIKE "%' . $q . '%")');
             $this->db->order_by('description', 'ASC');
-            $result[] = array(
-                'result' => $this->db->get()->result_array(),
-                'type' => 'estimate_items',
-                'search_heading' => _l('estimate_items')
-            );
+            $result[] = [
+                'result'         => $this->db->get()->result_array(),
+                'type'           => 'estimate_items',
+                'search_heading' => _l('estimate_items'),
+            ];
         }
 
         return $result;
@@ -799,16 +804,16 @@ class Misc_model extends CRM_Model
 
     public function _search_proposals($q, $limit = 0)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'proposals',
-            'search_heading' => _l('proposals')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'proposals',
+            'search_heading' => _l('proposals'),
+        ];
 
         $has_permission_view_proposals     = has_permission('proposals', '', 'view');
         $has_permission_view_proposals_own = has_permission('proposals', '', 'view_own');
 
-        if ($has_permission_view_proposals || $has_permission_view_proposals_own) {
+        if ($has_permission_view_proposals || $has_permission_view_proposals_own || get_option('allow_staff_view_proposals_assigned') == '1') {
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
@@ -824,7 +829,7 @@ class Misc_model extends CRM_Model
             $this->db->join('tblcurrencies', 'tblcurrencies.id = tblproposals.currency');
 
             if (!$has_permission_view_proposals) {
-                $this->db->where('addedfrom', get_staff_user_id());
+                $this->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
             }
 
             $this->db->where('(
@@ -850,15 +855,15 @@ class Misc_model extends CRM_Model
         return $result;
     }
 
-    public function _search_leads($q, $limit = 0, $where = array())
+    public function _search_leads($q, $limit = 0, $where = [])
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'leads',
-            'search_heading' => _l('leads')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'leads',
+            'search_heading' => _l('leads'),
+        ];
 
-        $has_permission_view = has_permission('leads','','view');
+        $has_permission_view = has_permission('leads', '', 'view');
 
         if (is_staff_member()) {
             // Leads
@@ -903,11 +908,11 @@ class Misc_model extends CRM_Model
 
     public function _search_tickets($q, $limit = 0)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'tickets',
-            'search_heading' => _l('support_tickets')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'tickets',
+            'search_heading' => _l('support_tickets'),
+        ];
 
         if (is_staff_member() || (!is_staff_member() && get_option('access_tickets_to_none_staff_members') == 1)) {
             $is_admin = is_admin();
@@ -916,7 +921,7 @@ class Misc_model extends CRM_Model
             if (!$is_admin && get_option('staff_access_only_assigned_departments') == 1) {
                 $this->load->model('departments_model');
                 $staff_deparments_ids = $this->departments_model->get_staff_departments(get_staff_user_id(), true);
-                $departments_ids      = array();
+                $departments_ids      = [];
                 if (count($staff_deparments_ids) == 0) {
                     $departments = $this->departments_model->get();
                     foreach ($departments as $department) {
@@ -977,18 +982,18 @@ class Misc_model extends CRM_Model
 
     public function _search_contacts($q, $limit = 0, $where = '')
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'contacts',
-            'search_heading' => _l('customer_contacts')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'contacts',
+            'search_heading' => _l('customer_contacts'),
+        ];
 
         $have_assigned_customers        = have_assigned_customers();
         $have_permission_customers_view = has_permission('customers', '', 'view');
 
         if ($have_assigned_customers || $have_permission_customers_view) {
             // Contacts
-            $this->db->select(implode(',', prefixed_table_fields_array('tblcontacts')).',company');
+            $this->db->select(implode(',', prefixed_table_fields_array('tblcontacts')) . ',company');
             $this->db->from('tblcontacts');
 
             $this->db->join('tblclients', 'tblclients.userid=tblcontacts.userid', 'left');
@@ -1018,11 +1023,11 @@ class Misc_model extends CRM_Model
 
     public function _search_staff($q, $limit = 0)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'staff',
-            'search_heading' => _l('staff_members')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'staff',
+            'search_heading' => _l('staff_members'),
+        ];
 
         if (has_permission('staff', '', 'view')) {
             // Staff
@@ -1049,11 +1054,11 @@ class Misc_model extends CRM_Model
 
     public function _search_contracts($q, $limit = 0)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'contracts',
-            'search_heading' => _l('contracts')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'contracts',
+            'search_heading' => _l('contracts'),
+        ];
 
         $has_permission_view_contracts = has_permission('contracts', '', 'view');
         if ($has_permission_view_contracts || has_permission('contracts', '', 'view_own')) {
@@ -1061,7 +1066,7 @@ class Misc_model extends CRM_Model
             $this->db->select();
             $this->db->from('tblcontracts');
             if (!$has_permission_view_contracts) {
-                $this->db->where('addedfrom', get_staff_user_id());
+                $this->db->where('tblcontracts.addedfrom', get_staff_user_id());
             }
 
             $this->db->where('(description LIKE "%' . $q . '%" OR subject LIKE "%' . $q . '%")');
@@ -1078,11 +1083,11 @@ class Misc_model extends CRM_Model
 
     public function _search_projects($q, $limit = 0, $where = false)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'projects',
-            'search_heading' => _l('projects')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'projects',
+            'search_heading' => _l('projects'),
+        ];
 
         $projects = has_permission('projects', '', 'view');
         // Projects
@@ -1092,7 +1097,7 @@ class Misc_model extends CRM_Model
         if (!$projects) {
             $this->db->where('tblprojects.id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . get_staff_user_id() . ')');
         }
-        if($where != false){
+        if ($where != false) {
             $this->db->where($where);
         }
         if (!_startsWith($q, '#')) {
@@ -1127,15 +1132,15 @@ class Misc_model extends CRM_Model
 
     public function _search_invoices($q, $limit = 0)
     {
-        $result                           = array(
-            'result' => array(),
-            'type' => 'invoices',
-            'search_heading' => _l('invoices')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'invoices',
+            'search_heading' => _l('invoices'),
+        ];
         $has_permission_view_invoices     = has_permission('invoices', '', 'view');
         $has_permission_view_invoices_own = has_permission('invoices', '', 'view_own');
 
-        if ($has_permission_view_invoices || $has_permission_view_invoices_own) {
+        if ($has_permission_view_invoices || $has_permission_view_invoices_own || get_option('allow_staff_view_invoices_assigned') == '1') {
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
@@ -1147,17 +1152,17 @@ class Misc_model extends CRM_Model
             $invoice_fields = prefixed_table_fields_array('tblinvoices');
             $clients_fields = prefixed_table_fields_array('tblclients');
             // Invoices
-            $this->db->select(implode(',', $invoice_fields) . ',' . implode(',', $clients_fields) . ',tblinvoices.id as invoiceid,'.get_sql_select_client_company());
+            $this->db->select(implode(',', $invoice_fields) . ',' . implode(',', $clients_fields) . ',tblinvoices.id as invoiceid,' . get_sql_select_client_company());
             $this->db->from('tblinvoices');
-            $this->db->join('tblclients', 'tblclients.userid = tblinvoices.clientid');
+            $this->db->join('tblclients', 'tblclients.userid = tblinvoices.clientid', 'left');
             $this->db->join('tblcurrencies', 'tblcurrencies.id = tblinvoices.currency');
             $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
 
             if (!$has_permission_view_invoices) {
-                $this->db->where('addedfrom', get_staff_user_id());
+                $this->db->where(get_invoices_where_sql_for_staff(get_staff_user_id()));
             }
-             if (!_startsWith($q, '#')) {
-            $this->db->where('(
+            if (!_startsWith($q, '#')) {
+                $this->db->where('(
                 tblinvoices.number LIKE "' . $q . '"
                 OR
                 tblclients.company LIKE "%' . $q . '%"
@@ -1212,13 +1217,13 @@ class Misc_model extends CRM_Model
                 OR
                 tblclients.shipping_zip LIKE "%' . $q . '%"
                 )');
-        } else {
-              $this->db->where('tblinvoices.id IN
+            } else {
+                $this->db->where('tblinvoices.id IN
                 (SELECT rel_id FROM tbltags_in WHERE tag_id IN
                 (SELECT id FROM tbltags WHERE name="' . strafter($q, '#') . '")
                 AND tbltags_in.rel_type=\'invoice\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                 ');
-        }
+            }
 
 
             $this->db->order_by('number,YEAR(date)', 'desc');
@@ -1234,13 +1239,13 @@ class Misc_model extends CRM_Model
 
     public function _search_credit_notes($q, $limit = 0)
     {
-        $result                           = array(
-            'result' => array(),
-            'type' => 'credit_note',
-            'search_heading' => _l('credit_notes')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'credit_note',
+            'search_heading' => _l('credit_notes'),
+        ];
 
-        $has_permission_view_credit_notes    = has_permission('credit_notes', '', 'view');
+        $has_permission_view_credit_notes     = has_permission('credit_notes', '', 'view');
         $has_permission_view_credit_notes_own = has_permission('credit_notes', '', 'view_own');
 
         if ($has_permission_view_credit_notes || $has_permission_view_credit_notes_own) {
@@ -1253,16 +1258,16 @@ class Misc_model extends CRM_Model
                 $q = ltrim($q, '0');
             }
             $credit_note_fields = prefixed_table_fields_array('tblcreditnotes');
-            $clients_fields = prefixed_table_fields_array('tblclients');
+            $clients_fields     = prefixed_table_fields_array('tblclients');
             // Invoices
-            $this->db->select(implode(',', $credit_note_fields) . ',' . implode(',', $clients_fields) . ',tblcreditnotes.id as credit_note_id,'.get_sql_select_client_company());
+            $this->db->select(implode(',', $credit_note_fields) . ',' . implode(',', $clients_fields) . ',tblcreditnotes.id as credit_note_id,' . get_sql_select_client_company());
             $this->db->from('tblcreditnotes');
-            $this->db->join('tblclients', 'tblclients.userid = tblcreditnotes.clientid');
+            $this->db->join('tblclients', 'tblclients.userid = tblcreditnotes.clientid', 'left');
             $this->db->join('tblcurrencies', 'tblcurrencies.id = tblcreditnotes.currency');
             $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
 
             if (!$has_permission_view_credit_notes) {
-                $this->db->where('addedfrom', get_staff_user_id());
+                $this->db->where('tblcreditnotes.addedfrom', get_staff_user_id());
             }
 
             $this->db->where('(
@@ -1335,16 +1340,16 @@ class Misc_model extends CRM_Model
 
     public function _search_estimates($q, $limit = 0)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'estimates',
-            'search_heading' => _l('estimates')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'estimates',
+            'search_heading' => _l('estimates'),
+        ];
 
         $has_permission_view_estimates     = has_permission('estimates', '', 'view');
         $has_permission_view_estimates_own = has_permission('estimates', '', 'view_own');
 
-        if ($has_permission_view_estimates || $has_permission_view_estimates_own) {
+        if ($has_permission_view_estimates || $has_permission_view_estimates_own || get_option('allow_staff_view_estimates_assigned') == '1') {
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
@@ -1357,14 +1362,14 @@ class Misc_model extends CRM_Model
             $estimates_fields = prefixed_table_fields_array('tblestimates');
             $clients_fields   = prefixed_table_fields_array('tblclients');
 
-            $this->db->select(implode(',', $estimates_fields) . ',' . implode(',', $clients_fields) . ',tblestimates.id as estimateid,'.get_sql_select_client_company());
+            $this->db->select(implode(',', $estimates_fields) . ',' . implode(',', $clients_fields) . ',tblestimates.id as estimateid,' . get_sql_select_client_company());
             $this->db->from('tblestimates');
-            $this->db->join('tblclients', 'tblclients.userid = tblestimates.clientid');
+            $this->db->join('tblclients', 'tblclients.userid = tblestimates.clientid', 'left');
             $this->db->join('tblcurrencies', 'tblcurrencies.id = tblestimates.currency');
             $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
 
             if (!$has_permission_view_estimates) {
-                $this->db->where('addedfrom', get_staff_user_id());
+                $this->db->where(get_estimates_where_sql_for_staff(get_staff_user_id()));
             }
 
             $this->db->where('(
@@ -1433,11 +1438,11 @@ class Misc_model extends CRM_Model
 
     public function _search_expenses($q, $limit = 0)
     {
-        $result = array(
-            'result' => array(),
-            'type' => 'expenses',
-            'search_heading' => _l('expenses')
-        );
+        $result = [
+            'result'         => [],
+            'type'           => 'expenses',
+            'search_heading' => _l('expenses'),
+        ];
 
         $has_permission_expenses_view     = has_permission('expenses', '', 'view');
         $has_permission_expenses_view_own = has_permission('expenses', '', 'view_own');
@@ -1452,7 +1457,7 @@ class Misc_model extends CRM_Model
             $this->db->join('tblexpensescategories', 'tblexpensescategories.id = tblexpenses.category');
 
             if (!$has_permission_expenses_view) {
-                $this->db->where('addedfrom', get_staff_user_id());
+                $this->db->where('tblexpenses.addedfrom', get_staff_user_id());
             }
 
             $this->db->where('(company LIKE "%' . $q . '%"
@@ -1478,5 +1483,4 @@ class Misc_model extends CRM_Model
 
         return $result;
     }
-
 }

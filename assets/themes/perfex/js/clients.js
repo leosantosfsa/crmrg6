@@ -449,7 +449,7 @@ function initDataTable() {
         "pageLength": tables_pagination_limit,
         "lengthMenu": [length_options, length_options_names],
         "fnRowCallback": DataTablesOfflineLazyLoadImages,
-        "order": [0, 'DESC'],
+        "order": [0, 'asc'],
         "fnDrawCallback": function(oSettings) {
             if (oSettings.aoData.length == 0 || oSettings.aiDisplay.length == 0) {
                 $(oSettings.nTableWrapper).addClass('app_dt_empty');
@@ -521,9 +521,9 @@ function discussion_comments(selector, discussion_id, discussion_type) {
         enableDeleting: true,
         profilePictureURL: discussion_user_profile_image_url,
         enableUpvoting: false,
+        enableDeletingCommentWithReplies: false,
         enableAttachments: true,
         popularText: '',
-        enableDeletingCommentWithReplies: true,
         textareaPlaceholderText: discussions_lang.discussion_add_comment,
         newestText: discussions_lang.discussion_newest,
         oldestText: discussions_lang.discussion_oldest,

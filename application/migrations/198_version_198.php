@@ -48,10 +48,6 @@ class Migration_Version_198 extends CI_Migration
         $this->db->query("INSERT INTO `tblpermissions` (`name`, `shortname`) VALUES ('Leads', 'leads');");
         $this->db->query("ALTER TABLE `tblcreditnotes` ADD `number_format` INT NOT NULL DEFAULT '1' AFTER `prefix`;");
 
-        if(is_dir(APPPATH.'vendor/tecnickcom/tcpdf/fonts/') && is_dir(APPPATH.'third_party/tcpdf/fonts/')){
-            @xcopy(APPPATH.'third_party/tcpdf/fonts/',APPPATH.'vendor/tecnickcom/tcpdf/fonts/');
-        }
-
         if(file_exists(FCPATH.'pipe.php')){
             @chmod(FCPATH.'pipe.php', 0755);
         }
