@@ -48,6 +48,7 @@ function get_client_email_templates_slugs()
         'subscription-payment-failed',
         'subscription-payment-succeeded',
         'subscription-canceled',
+        'client-registration-confirmed',
     ];
 
     return do_action('client_email_templates', $client_email_templates_slugs);

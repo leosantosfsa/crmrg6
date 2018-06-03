@@ -453,7 +453,7 @@ if (!function_exists('render_form_builder_field')) {
 
         echo '<div class="' . $classNameCol . '">';
         if ($type == 'header' || $type == 'paragraph') {
-            echo '<' . $field->subtype . ' class="' . (isset($field->className) ? $field->className : '') . '">' . nl2br($field->label) . '</' . $field->subtype . '>';
+            echo '<' . $field->subtype . ' class="' . (isset($field->className) ? $field->className : '') . '">' . check_for_links(nl2br($field->label)) . '</' . $field->subtype . '>';
         } else {
             echo '<div class="form-group" data-type="' . $type . '" data-name="' . $field->name . '" data-required="' . (isset($field->required) ? true : 'false') . '">';
             echo '<label class="control-label" for="' . $field->name . '">' . (isset($field->required) ? ' <span class="text-danger">* </span> ': '') . $field->label . '' . (isset($field->description) ? ' <i class="fa fa-question-circle" data-toggle="tooltip" data-title="' . $field->description . '" data-placement="' . (is_rtl(true) ? 'left' : 'right') . '"></i>' : '') . '</label>';

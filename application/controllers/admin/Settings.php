@@ -151,16 +151,25 @@ class Settings extends Admin_controller
     }
 
     /* Remove company logo from settings / ajax */
-    public function remove_company_logo()
+    public function remove_company_logo($type = '')
     {
         do_action('before_remove_company_logo');
+
         if (!has_permission('settings', '', 'delete')) {
             access_denied('settings');
         }
-        if (file_exists(get_upload_path_by_type('company') . '/' . get_option('company_logo'))) {
-            unlink(get_upload_path_by_type('company') . '/' . get_option('company_logo'));
+
+        $logoName = get_option('company_logo');
+        if ($type == 'dark') {
+            $logoName = get_option('company_logo_dark');
         }
-        update_option('company_logo', '');
+
+        $path = get_upload_path_by_type('company') . '/' . $logoName;
+        if (file_exists($path)) {
+            unlink($path);
+        }
+
+        update_option('company_logo' . ($type == 'dark' ? '_dark' : ''), '');
         redirect($_SERVER['HTTP_REFERER']);
     }
 

@@ -465,11 +465,11 @@ class Tickets_model extends CRM_Model
             $this->db->where('ticketid', $id);
             $old_ticket_status = $this->db->get('tbltickets')->row()->status;
 
-           /**
-            * When a ticket is in status "In progress" and the customer reply to the ticket it changes the status to "Open" which is not normal.
-            * The ticket should keep the status "In progress"
-            */
-            if($old_ticket_status != 2) {
+            /**
+             * When a ticket is in status "In progress" and the customer reply to the ticket it changes the status to "Open" which is not normal.
+             * The ticket should keep the status "In progress"
+             */
+            if ($old_ticket_status != 2) {
                 $this->db->where('ticketid', $id);
                 $this->db->update('tbltickets', [
                     'lastreply'  => date('Y-m-d H:i:s'),
@@ -499,7 +499,7 @@ class Tickets_model extends CRM_Model
             if ($admin == null) {
                 $this->load->model('departments_model');
                 $this->load->model('staff_model');
-                $staff = $this->staff_model->get('', ['active'=>1]);
+                $staff = $this->staff_model->get('', ['active' => 1]);
                 foreach ($staff as $member) {
                     if (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member($member['staffid'])) {
                         continue;
@@ -573,22 +573,48 @@ class Tickets_model extends CRM_Model
             $attachments = $this->get_ticket_attachments($ticket_id, $reply_id);
             if (count($attachments) > 0) {
                 foreach ($attachments as $attachment) {
-                    if (unlink(get_upload_path_by_type('ticket') . $ticket_id . '/' . $attachment['file_name'])) {
-                        $this->db->where('id', $attachment['id']);
-                        $this->db->delete('tblticketattachments');
-                    }
-                }
-                // Check if no attachments left, so we can delete the folder also
-                $other_attachments = list_files(get_upload_path_by_type('ticket') . $ticket_id);
-                if (count($other_attachments) == 0) {
-                    delete_dir(get_upload_path_by_type('ticket') . $ticket_id);
+                    $this->delete_ticket_attachment($attachment['id']);
                 }
             }
-
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Remove ticket attachment by id
+     * @param  mixed $id attachment id
+     * @return boolean
+     */
+    public function delete_ticket_attachment($id)
+    {
+        $deleted = false;
+        $this->db->where('id', $id);
+        $attachment = $this->db->get('tblticketattachments')->row();
+        if ($attachment) {
+            if (unlink(get_upload_path_by_type('ticket') . $attachment->ticketid . '/' . $attachment->file_name)) {
+                $this->db->where('id', $attachment->id);
+                $this->db->delete('tblticketattachments');
+                $deleted = true;
+            }
+            // Check if no attachments left, so we can delete the folder also
+            $other_attachments = list_files(get_upload_path_by_type('ticket') . $attachment->ticketid);
+            if (count($other_attachments) == 0) {
+                delete_dir(get_upload_path_by_type('ticket') . $attachment->ticketid);
+            }
+        }
+        return $deleted;
+    }
+
+    /**
+     * Get ticket attachment by id
+     * @param  mixed $id attachment id
+     * @return mixed
+     */
+    public function get_ticket_attachment($id) {
+        $this->db->where('id', $id);
+        return $this->db->get('tblticketattachments')->row();
     }
 
     /**
@@ -737,7 +763,7 @@ class Tickets_model extends CRM_Model
             unset($data['tags']);
         }
 
-        $_data      = do_action('before_ticket_created', [
+        $_data = do_action('before_ticket_created', [
             'data'  => $data,
             'admin' => $admin,
         ]);
@@ -804,7 +830,7 @@ class Tickets_model extends CRM_Model
 
                 $this->load->model('departments_model');
                 $this->load->model('staff_model');
-                $staff = $this->staff_model->get('', ['active'=>1]);
+                $staff = $this->staff_model->get('', ['active' => 1]);
 
                 $notifiedUsers = [];
 

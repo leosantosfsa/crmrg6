@@ -257,6 +257,14 @@
 <h4>
     <b>Getting Started Guide - <a href="https://help.perfexcrm.com/quick-installation-getting-started-tutorial/" target="_blank">Read more</a></b>
 </h4>
+<hr />
+<h4>
+    <b>Looking for help? - <a href="https://support.perfexcrm.com/" target="_blank">Open Support Ticket</a></b>
+</h4>
+<hr />
+<h4>
+    <b>Community Forums - <a href="https://help.perfexcrm.com/forums" target="_blank">Visit our forums</a></b>
+</h4>
 <?php } ?>
 </div>
 </div>

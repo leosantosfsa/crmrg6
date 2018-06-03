@@ -20,7 +20,7 @@
                     </div>
                     <div class="form-group">
                         <label class="control-label" for="email"><?php echo _l('clients_email'); ?></label>
-                        <input type="text" class="form-control" name="email" id="email" value="<?php echo set_value('email'); ?>">
+                        <input type="email" class="form-control" name="email" id="email" value="<?php echo set_value('email'); ?>">
                         <?php echo form_error('email'); ?>
                     </div>
                     <div class="form-group">

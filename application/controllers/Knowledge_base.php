@@ -10,6 +10,7 @@ class Knowledge_base extends Clients_controller
         if (is_staff_logged_in() && get_option('use_knowledge_base') == 0) {
             set_alert('warning', 'Knowledge base is disabled, navigate to Setup->Settings->Customers and set Use Knowledge Base to YES.');
         }
+        do_action('customers_area_knowledge_construct');
     }
 
     public function index($slug = '')

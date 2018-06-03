@@ -154,7 +154,7 @@ class Clients_model extends CRM_Model
                 }
             }
             do_action('after_client_added', $userid);
-            $log = 'ID: ' .$userid;
+            $log = 'ID: ' . $userid;
 
             if ($log == '' && isset($contact_id)) {
                 $log = get_contact_full_name($contact_id);
@@ -427,6 +427,11 @@ class Clients_model extends CRM_Model
             $send_welcome_email = false;
         } elseif (strpos($_SERVER['HTTP_REFERER'], 'register') !== false) {
             $send_welcome_email = true;
+
+            // Do not send welcome email if confirmation for registration is enabled
+            if (get_option('customers_register_require_confirmation') == '1') {
+                $send_welcome_email = false;
+            }
             // If client register set this auto contact as primary
             $data['is_primary'] = 1;
         }
@@ -552,6 +557,8 @@ class Clients_model extends CRM_Model
                     ]);
                 }
             }
+
+
             if ($send_welcome_email == true) {
                 $this->load->model('emails_model');
                 $merge_fields = [];
@@ -770,7 +777,6 @@ class Clients_model extends CRM_Model
                 foreach ($credit_notes as $credit_note) {
                     $this->credit_notes_model->delete($credit_note['id'], true);
                 }
-
             } elseif (is_gdpr()) {
                 $this->db->where('clientid', $id);
                 $this->db->update('tblinvoices', ['deleted_customer_name' => $company]);
@@ -975,7 +981,7 @@ class Clients_model extends CRM_Model
                 $this->tasks_model->delete_task($task['id'], false);
             }
 
-               // Added from contact in customer profile
+            // Added from contact in customer profile
             $this->db->where('contact_id', $id);
             $this->db->where('rel_type', 'customer');
             $attachments = $this->db->get('tblfiles')->result_array();
@@ -1022,18 +1028,17 @@ class Clients_model extends CRM_Model
             $this->db->where('contact_id', $id);
             $this->db->delete('tblusermeta');
 
-            $this->db->where('(email="'.$result->email.'" OR bcc LIKE "%'.$result->email.'%" OR cc LIKE "%'.$result->email.'%")');
+            $this->db->where('(email="' . $result->email . '" OR bcc LIKE "%' . $result->email . '%" OR cc LIKE "%' . $result->email . '%")');
             $this->db->delete('tblemailqueue');
 
             $this->db->where('email', $result->email);
             $this->db->delete('tblsurveysemailsendcron');
 
             if (is_gdpr()) {
-
                 $this->db->where('email', $result->email);
                 $this->db->delete('tbllistemails');
 
-                if(!empty($result->last_ip)){
+                if (!empty($result->last_ip)) {
                     $this->db->where('ip', $result->last_ip);
                     $this->db->delete('tblknowledgebasearticleanswers');
 
@@ -1050,13 +1055,13 @@ class Clients_model extends CRM_Model
                 $this->db->where('contact_id', $id);
                 $this->db->delete('tblprojectactivity');
 
-                $this->db->where('(additional_data LIKE "%'.$result->email.'%" OR full_name LIKE "%'.$result->firstname . ' ' . $result->lastname.'%")');
+                $this->db->where('(additional_data LIKE "%' . $result->email . '%" OR full_name LIKE "%' . $result->firstname . ' ' . $result->lastname . '%")');
                 $this->db->where('additional_data != "" AND additional_data IS NOT NULL');
                 $this->db->delete('tblsalesactivity');
 
-                $whereActivityLog = '(description LIKE "%'.$result->email.'%" OR description LIKE "%'.$result->firstname . ' ' . $result->lastname.'%" OR description LIKE "%'.$result->firstname.'%" OR description LIKE "%'.$result->lastname.'%" OR description LIKE "%'.$result->phonenumber.'%"';
-                if(!empty($result->last_ip)) {
-                    $whereActivityLog .= ' OR description LIKE "%'.$result->last_ip.'%"';
+                $whereActivityLog = '(description LIKE "%' . $result->email . '%" OR description LIKE "%' . $result->firstname . ' ' . $result->lastname . '%" OR description LIKE "%' . $result->firstname . '%" OR description LIKE "%' . $result->lastname . '%" OR description LIKE "%' . $result->phonenumber . '%"';
+                if (!empty($result->last_ip)) {
+                    $whereActivityLog .= ' OR description LIKE "%' . $result->last_ip . '%"';
                 }
                 $whereActivityLog .= ')';
                 $this->db->where($whereActivityLog);
@@ -1382,6 +1387,47 @@ class Clients_model extends CRM_Model
     public function send_statement_to_email($customer_id, $send_to, $from, $to, $cc = '')
     {
         return $this->statement_model->send_statement_to_email($customer_id, $send_to, $from, $to, $cc);
+    }
+
+    /**
+     * When customer register, mark the contact and the customer as inactive and set the registration_confirmed field to 0
+     * @param  mixed $client_id  the customer id
+     * @return boolean
+     */
+    public function require_confirmation($client_id)
+    {
+        $contact_id = get_primary_contact_user_id($client_id);
+        $this->db->where('userid', $client_id);
+        $this->db->update('tblclients', ['active' => 0, 'registration_confirmed' => 0]);
+
+        $this->db->where('id', $contact_id);
+        $this->db->update('tblcontacts', ['active' => 0]);
+
+        return true;
+    }
+
+    public function confirm_registration($client_id)
+    {
+        $contact_id = get_primary_contact_user_id($client_id);
+        $this->db->where('userid', $client_id);
+        $this->db->update('tblclients', ['active' => 1, 'registration_confirmed' => 1]);
+
+        $this->db->where('id', $contact_id);
+        $this->db->update('tblcontacts', ['active' => 1]);
+
+        $this->db->where('id', $contact_id);
+        $contact = $this->db->get('tblcontacts')->row();
+
+        if ($contact) {
+            $this->load->model('emails_model');
+            $merge_fields = [];
+            $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($client_id, $contact_id));
+            $this->emails_model->send_email_template('client-registration-confirmed', $contact->email, $merge_fields);
+
+            return true;
+        }
+
+        return false;
     }
 
     public function get_clients_distinct_countries()

@@ -678,6 +678,22 @@ class Imap
     }
 
     /**
+     * Get Reply to Addresses
+     * @param  mixed $id email uid
+     * @return array
+     */
+    public function getReplyToAddresses($id)
+    {
+        $header       = $this->getMessageHeader($id);
+        $replyToArray = [];
+        if (isset($header->reply_toaddress) && '' != $header->reply_toaddress) {
+            $replyToArray = explode(', ', $header->reply_toaddress);
+        }
+
+        return $replyToArray;
+    }
+
+    /**
      * save email in sent
      *
      * @return void

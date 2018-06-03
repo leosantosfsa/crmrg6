@@ -1,6 +1,11 @@
 <div class="panel_s mtop25">
     <div class="panel-body">
         <div class="col-md-12">
+            <?php if(is_client_logged_in()){ ?>
+                <a href="<?php echo site_url('clients/gdpr'); ?>" class="btn btn-default pull-right">
+                    <?php echo _l('client_go_to_dashboard'); ?>
+                </a>
+            <?php } ?>
             <h1 class="mbot20"><?php echo do_action('consent_public_page_heading', get_option('companyname')); ?></h1>
             <div class="tc-content mbot20">
                 <?php echo get_option('gdpr_consent_public_page_top_block'); ?>

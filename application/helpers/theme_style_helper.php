@@ -96,7 +96,7 @@ function get_styling_areas($type = 'admin')
                 'name'                 => 'Navigation Background Color',
                 'id'                   => 'customers-navigation',
                 'target'               => '.customers .navbar-default',
-                'css'                  => 'background-color',
+                'css'                  => 'background',
                 'additional_selectors' => '',
             ],
             [

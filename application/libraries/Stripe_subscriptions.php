@@ -18,7 +18,7 @@ class Stripe_subscriptions extends Stripe_core
 
     public function get_plans()
     {
-        return \Stripe\Plan::all();
+        return \Stripe\Plan::all(['limit' => 100]);
     }
 
     public function get_plan($id)

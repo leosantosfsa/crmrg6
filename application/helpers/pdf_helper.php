@@ -51,11 +51,7 @@ function pdf_logo_url()
         } elseif (strpos($custom_pdf_logo_image_url, 'http') === false) {
             $cimg = FCPATH . $custom_pdf_logo_image_url;
         } else {
-            /*  $cimg = do_curl_pdf_image($custom_pdf_logo_image_url);
-            $formImage = imagecreatefromstring(base64_decode(strafter($cimg,'base64,')));
-            $w = imagesx($formImage);
-            $h = imagesy($formImage);
-            */
+
             if (_startsWith($custom_pdf_logo_image_url, site_url()) !== false) {
                 $temp = str_replace(site_url(), '/', $custom_pdf_logo_image_url);
                 $cimg = FCPATH . $temp;
@@ -67,12 +63,15 @@ function pdf_logo_url()
             }
         }
     } else {
-        if (get_option('company_logo') != '') {
+        if(get_option('company_logo_dark') != '' && file_exists(get_upload_path_by_type('company') . get_option('company_logo_dark'))) {
+            $cimg = get_upload_path_by_type('company') . get_option('company_logo_dark');
+        } else if (get_option('company_logo') != '' && file_exists(get_upload_path_by_type('company') . get_option('company_logo'))) {
             $cimg = get_upload_path_by_type('company') . get_option('company_logo');
         } else {
             $cimg = '';
         }
     }
+
     $logo_url = '';
     if ($cimg != '') {
         $logo_url = '<img width="' . $width . 'px" src="' . $cimg . '">';

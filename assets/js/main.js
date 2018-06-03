@@ -1,3 +1,4 @@
+/* v2.0.1 */
 /* jshint expr: true */
 /* jshint sub:true */
 /* jshint loopfunc:true */
@@ -137,8 +138,6 @@ $(window).on("load resize", function(e) {
 });
 
 $(function() {
-
-
 
     // Add notifications indicator on document title
     if (totalUnreadNotifications > 0) {
@@ -505,6 +504,11 @@ $(function() {
         }, 700);
     });
 
+    var qAdminSearchURL = get_url_param('q');
+    if (qAdminSearchURL) {
+        $('#search_input').val(qAdminSearchURL).trigger('keyup');
+    }
+
     // Format timesheet duration type and do necesary checkings
     $('body').on('blur', '#timesheet_duration', function() {
         var that = $(this);
@@ -580,33 +584,17 @@ $(function() {
     /* Insert new checklist items on enter press */
     $("body").on('keypress', 'textarea[name="checklist-description"]', function(event) {
         if (event.which == '13') {
-            $(this).focusout();
-            add_task_checklist_item($(this).attr('data-taskid'));
+            var that = $(this);
+            update_task_checklist_item(that).done(function() {
+                add_task_checklist_item(that.attr('data-taskid'));
+            });
             return false;
         }
     });
 
     /* Update tasks checklist items when focusing out */
     $("body").on('blur paste', 'textarea[name="checklist-description"]', function() {
-        var textArea = $(this);
-        setTimeout(function() {
-            var description = textArea.val();
-            description = description.trim();
-            var listid = textArea.parents('.checklist').data('checklist-id');
-
-            $.post(admin_url + 'tasks/update_checklist_item', {
-                description: description,
-                listid: listid
-            }).done(function(response) {
-                response = JSON.parse(response);
-                if (response.can_be_template === true) {
-                    textArea.parents('.checklist').find('.save-checklist-template').removeClass('hide');
-                }
-                if (description === '') {
-                    $('#checklist-items').find('.checklist[data-checklist-id="' + listid + '"]').remove();
-                }
-            });
-        }, 400);
+        update_task_checklist_item($(this));
     });
 
     $("body").on('show.bs.select', 'select.checklist-items-template-select', _make_task_checklist_items_deletable);
@@ -1443,6 +1431,35 @@ $(function() {
         }
         $bulkChange.toggleClass('hide');
         $('.mass_delete_separator').toggleClass('hide');
+    });
+
+    // Send test sms
+    $('.send-test-sms').on('click', function() {
+        var id = $(this).data('id');
+        var errorContainer = $('#sms_test_response[data-id="' + id + '"]');
+        var message = $('textarea[data-id="' + id + '"]').val();
+        var number = $('input.test-phone[data-id="' + id + '"]').val();
+        var that = $(this);
+        errorContainer.empty();
+        message = message.trim();
+        if (message != '' && number != '') {
+            that.prop('disabled', true);
+            $.post(window.location.href, {
+                message: message,
+                number: number,
+                id: id,
+                sms_gateway_test: true
+            }).done(function(response) {
+                response = JSON.parse(response);
+                if (response.success == true) {
+                    errorContainer.html('<div class="alert alert-success no-mbot mtop15">SMS Sent Successfully!</div>');
+                } else {
+                    errorContainer.html('<div class="alert alert-warning no-mbot mtop15">' + response.error + '</div>');
+                }
+            }).always(function() {
+                that.prop('disabled', false);
+            });
+        }
     });
 
     // Clear todo modal values when modal is hidden
@@ -2720,8 +2737,8 @@ function get_datatable_buttons(table) {
                 data = newTmpRow.html().trim();
             }
 
-            if (newTmpRow.find('.status-table-mark').length > 0) {
-                newTmpRow.find('.status-table-mark').remove();
+            if (newTmpRow.find('.table-export-exclude').length > 0) {
+                newTmpRow.find('.table-export-exclude').remove();
                 data = newTmpRow.html().trim();
             }
 
@@ -4439,7 +4456,7 @@ function _gen_lead_add_inline_on_select_field(type) {
     }
     html = "<div id=\"new_lead_" + type + "_inline\" class=\"form-group\"><label for=\"new_" + type + "_name\">" + $('label[for=\"' + type + '\"]').html().trim() + "</label><div class=\"input-group\"><input type=\"text\" id=\"new_" + type + "_name\" name=\"new_" + type + "_name\" class=\"form-control\"><div class=\"input-group-addon\"><a href=\"#\" onclick=\"lead_add_inline_select_submit('" + type + "'); return false;\" class=\"lead-add-inline-submit-" + type + "\"><i class=\"fa fa-check\"></i></a></div></div></div>";
     $('.form-group-select-input-' + type).after(html);
-    $('body').find('#new_'+type+'_name').focus();
+    $('body').find('#new_' + type + '_name').focus();
     $('.lead-save-btn,#form_info button[type="submit"],#leads-email-integration button[type="submit"],.btn-import-submit').prop('disabled', true);
     $(".inline-field-new").addClass('disabled').css('opacity', 0.5);
     $('.form-group-select-input-' + type).addClass('hide');
@@ -5133,6 +5150,30 @@ function add_task_checklist_item(task_id, description) {
     });
 }
 
+function update_task_checklist_item(textArea) {
+    var deferred = $.Deferred();
+    setTimeout(function() {
+        var description = textArea.val();
+        description = description.trim();
+        var listid = textArea.parents('.checklist').data('checklist-id');
+
+        $.post(admin_url + 'tasks/update_checklist_item', {
+            description: description,
+            listid: listid
+        }).done(function(response) {
+            deferred.resolve();
+            response = JSON.parse(response);
+            if (response.can_be_template === true) {
+                textArea.parents('.checklist').find('.save-checklist-template').removeClass('hide');
+            }
+            if (description === '') {
+                $('#checklist-items').find('.checklist[data-checklist-id="' + listid + '"]').remove();
+            }
+        });
+    }, 300);
+    return deferred.promise();
+}
+
 // Remove task checklist item from the task
 function delete_checklist_item(id, field) {
     requestGetJSON('tasks/delete_checklist_item/' + id).done(function(response) {
@@ -5239,9 +5280,26 @@ function remove_assignee(id, task_id) {
     }
 }
 
+// Check if is ios Device
 function is_ios() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
+
+// Check if is Microsoft Browser, Internet Explorer 10 od order, Internet Explorer 11 or Edge (any version)
+function is_ms_browser() {
+    if (/MSIE/i.test(navigator.userAgent) || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+        // this is internet explorer 10
+        return true;
+    }
+
+    if (/Edge/i.test(navigator.userAgent)) {
+        // this is Microsoft Edge
+        return true;
+    }
+
+    return false;
+}
+
 // Remove task follower
 function remove_follower(id, task_id) {
     if (confirm_delete()) {
@@ -5390,17 +5448,18 @@ function edit_task(task_id) {
 
 // Handles task add/edit form modal.
 function task_form_handler(form) {
+
     tinymce.triggerSave();
     $('#_task_modal').find('input[name="startdate"]').prop('disabled', false);
 
-    var formURL = form.action;
-    var formData = new FormData($(form)[0]);
-
     $("#_task_modal input[type=file]").each(function() {
         if ($(this).val() === "") {
-            formData.delete($(this).attr("name"));
+            $(this).prop('disabled', true);
         }
     });
+
+    var formURL = form.action;
+    var formData = new FormData($(form)[0]);
 
     $.ajax({
         type: $(form).attr('method'),
@@ -5598,6 +5657,22 @@ function edit_task_comment(id) {
         init_editor('#task_comment_' + id, editorConfig);
         tinymce.triggerSave();
     }
+}
+
+function _tinymce_mobile_toolbar() {
+    return [
+        'undo',
+        'redo',
+        'styleselect',
+        'bold',
+        'italic',
+        'link',
+        'image',
+        'bullist',
+        'numlist',
+        'forecolor',
+        'fontsizeselect',
+    ];
 }
 
 function _simple_editor_config() {

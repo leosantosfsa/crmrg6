@@ -312,6 +312,7 @@ function app_external_form_header($form)
     if (file_exists(FCPATH . 'assets/css/custom.css')) {
         echo '<link href="' . base_url('assets/css/custom.css') . '" rel="stylesheet">' . PHP_EOL;
     }
+
     render_custom_styles(['general', 'buttons']);
     do_action('app_external_form_head');
 }
@@ -340,13 +341,15 @@ function init_tail()
 }
 
 /**
- * Get company logo from company uploads folder
- * @param  string $url     href url of image
- * @param  string $href_class Additional classes on href
+ * Get company logo from uploads folder
+ * @param  string $uri        uri to append in the url
+ * @param  string $href_class additional href class
+ * @param  string $type       dark logo or light logo
+ * @return mixed             string
  */
-function get_company_logo($uri = '', $href_class = '')
+function get_company_logo($uri = '', $href_class = '', $type = '')
 {
-    $company_logo = get_option('company_logo');
+    $company_logo = get_option('company_logo' . ($type == 'dark' ? '_dark' : ''));
     $company_name = get_option('companyname');
 
     if ($uri == '') {
@@ -364,6 +367,20 @@ function get_company_logo($uri = '', $href_class = '')
     } else {
         echo '';
     }
+}
+/**
+ * Output company logo dark
+ * @param  string $uri        uri to append to url
+ * @param  string $href_class additional class for href
+ * @return string
+ */
+function get_dark_company_logo($uri = '', $href_class = '')
+{
+    if (get_option('company_logo_dark') == '') {
+        return get_company_logo($uri, $href_class);
+    }
+
+    return get_company_logo($uri, $href_class, 'dark');
 }
 
 /**

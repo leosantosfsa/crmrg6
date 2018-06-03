@@ -168,6 +168,7 @@ class Projects extends Admin_controller
                     if (human_to_unix($data['project']->start_date . ' 00:00') < time() && human_to_unix($data['project']->deadline . ' 00:00') > time()) {
                         $data['project_days_left']         = round((human_to_unix($data['project']->deadline . ' 00:00') - time()) / 3600 / 24);
                         $data['project_time_left_percent'] = $data['project_days_left'] / $data['project_total_days'] * 100;
+                        $data['project_time_left_percent'] = round($data['project_time_left_percent'], 2);
                     }
                     if (human_to_unix($data['project']->deadline . ' 00:00') < time()) {
                         $data['project_days_left']         = 0;
@@ -194,6 +195,7 @@ class Projects extends Admin_controller
                 $data['tasks_completed'] = total_rows('tblstafftasks', $where);
 
                 $data['tasks_not_completed_progress'] = ($total_tasks > 0 ? number_format(($data['tasks_completed'] * 100) / $total_tasks, 2) : 0);
+                $data['tasks_not_completed_progress'] = round($data['tasks_not_completed_progress'], 2);
 
                 @$percent_circle        = $percent / 100;
                 $data['percent_circle'] = $percent_circle;

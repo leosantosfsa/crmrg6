@@ -20,6 +20,32 @@ class CRM_Email extends App_mailer
         parent::__construct($config);
     }
 
+    public function set_smtp_user($value)
+    {
+        $value                         = (string) $value;
+        $this->properties['smtp_user'] = $value;
+        $this->_smtp_auth              = ($value != '' && $this->smtp_pass != '');
+        if ($this->mailer_engine == 'phpmailer') {
+            $this->phpmailer->Username = $value;
+            $this->phpmailer->SMTPAuth = $this->_smtp_auth;
+        }
+
+        return $this;
+    }
+
+    public function set_smtp_pass($value)
+    {
+        $value                         = (string) $value;
+        $this->properties['smtp_pass'] = $value;
+        $this->_smtp_auth              = ($this->smtp_user != '' && $value != '');
+        if ($this->mailer_engine == 'phpmailer') {
+            $this->phpmailer->Password = $value;
+            $this->phpmailer->SMTPAuth = $this->_smtp_auth;
+        }
+
+        return $this;
+    }
+
     public function set_status($status)
     {
         $this->status = $status;

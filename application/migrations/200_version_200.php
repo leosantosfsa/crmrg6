@@ -162,19 +162,20 @@ class Migration_Version_200 extends CI_Migration
 
 
         $this->db->query("CREATE TABLE `tblemailstracking` (
-          `id` int(11) NOT NULL,
-          `uid` varchar(32) CHARACTER SET utf32 NOT NULL,
-          `rel_id` int(11) NOT NULL,
-          `rel_type` varchar(40) NOT NULL,
-          `date` datetime NOT NULL,
-          `email` varchar(100) NOT NULL,
-          `opened` tinyint(1) NOT NULL DEFAULT '0',
-          `date_opened` datetime DEFAULT NULL,
-          `subject` varchar(300) DEFAULT NULL
-      ) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+              `id` int(11) NOT NULL,
+              `uid` varchar(32) NOT NULL,
+              `rel_id` int(11) NOT NULL,
+              `rel_type` varchar(40) NOT NULL,
+              `date` datetime NOT NULL,
+              `email` varchar(100) NOT NULL,
+              `opened` tinyint(1) NOT NULL DEFAULT '0',
+              `date_opened` datetime DEFAULT NULL,
+              `subject` varchar(300) DEFAULT NULL
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;");
 
         $this->db->query('ALTER TABLE `tblemailstracking`
           ADD PRIMARY KEY (`id`);');
+
         $this->db->query('ALTER TABLE `tblemailstracking`
           MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;');
 
@@ -419,7 +420,7 @@ class Migration_Version_200 extends CI_Migration
         $this->db->query('ALTER TABLE `tblconsents`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;');
         add_setup_menu_item([
-            'name'       => 'GDPR',
+            'name'       => 'gdpr_short',
             'permission' => 'is_admin',
             'icon'       => '',
             'url'        => 'gdpr',

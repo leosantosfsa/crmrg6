@@ -50,6 +50,7 @@
                         $download_indicator = 'attachment_key';
                     } else if($type == 'contract'){
                         $url = site_url() .'download/file/contract/';
+                        $download_indicator = 'attachment_key';
                     } else if($type == 'lead'){
                         $url = site_url() .'download/file/lead_attachment/';
                     } else if($type == 'task'){

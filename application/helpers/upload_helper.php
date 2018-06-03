@@ -529,49 +529,56 @@ function handle_ticket_attachments($ticketid, $index_name = 'attachments')
  */
 function handle_company_logo_upload()
 {
-    if (isset($_FILES['company_logo']) && _perfex_upload_error($_FILES['company_logo']['error'])) {
-        set_alert('warning', _perfex_upload_error($_FILES['company_logo']['error']));
+    $logoIndex = ['logo', 'logo_dark'];
+    $success = false;
+    foreach ($logoIndex as $logo) {
+        $index = 'company_' . $logo;
 
-        return false;
-    }
-    if (isset($_FILES['company_logo']['name']) && $_FILES['company_logo']['name'] != '') {
-        do_action('before_upload_company_logo_attachment');
-        $path = get_upload_path_by_type('company');
-        // Get the temp file path
-        $tmpFilePath = $_FILES['company_logo']['tmp_name'];
-        // Make sure we have a filepath
-        if (!empty($tmpFilePath) && $tmpFilePath != '') {
-            // Getting file extension
-            $path_parts         = pathinfo($_FILES['company_logo']['name']);
-            $extension          = $path_parts['extension'];
-            $extension          = strtolower($extension);
-            $allowed_extensions = [
+        if (isset($_FILES[$index]) && _perfex_upload_error($_FILES[$index]['error'])) {
+            set_alert('warning', _perfex_upload_error($_FILES[$index]['error']));
+
+            return false;
+        }
+        if (isset($_FILES[$index]['name']) && $_FILES[$index]['name'] != '') {
+            do_action('before_upload_company_logo_attachment');
+            $path = get_upload_path_by_type('company');
+            // Get the temp file path
+            $tmpFilePath = $_FILES[$index]['tmp_name'];
+            // Make sure we have a filepath
+            if (!empty($tmpFilePath) && $tmpFilePath != '') {
+                // Getting file extension
+                $path_parts         = pathinfo($_FILES[$index]['name']);
+                $extension          = $path_parts['extension'];
+                $extension          = strtolower($extension);
+                $allowed_extensions = [
                 'jpg',
                 'jpeg',
                 'png',
                 'gif',
             ];
 
-            if (!in_array($extension, $allowed_extensions)) {
-                set_alert('warning', 'Image extension not allowed.');
+                if (!in_array($extension, $allowed_extensions)) {
+                    set_alert('warning', 'Image extension not allowed.');
 
-                return false;
-            }
+                    continue;
+                }
 
-            // Setup our new file path
-            $filename    = 'logo' . '.' . $extension;
-            $newFilePath = $path . $filename;
-            _maybe_create_upload_path($path);
-            // Upload the file into the company uploads dir
-            if (move_uploaded_file($tmpFilePath, $newFilePath)) {
-                update_option('company_logo', $filename);
+                // Setup our new file path
+                $filename    = $logo . '.' . $extension;
+                $newFilePath = $path . $filename;
+                _maybe_create_upload_path($path);
+                // Upload the file into the company uploads dir
+                if (move_uploaded_file($tmpFilePath, $newFilePath)) {
+                    update_option($index, $filename);
+                    $success = true;
 
-                return true;
+                }
             }
         }
     }
 
-    return false;
+
+    return $success;
 }
 /**
  * Check for company logo upload

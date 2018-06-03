@@ -102,7 +102,7 @@
          <?php if(is_gdpr() && (get_option('gdpr_enable_lead_public_form') == '1' || get_option('gdpr_enable_consent_for_leads') == '1')) { ?>
             <li role="presentation">
               <a href="#gdpr" aria-controls="gdpr" role="tab" data-toggle="tab">
-              GDPR
+                <?php echo _l('gdpr_short'); ?>
               </a>
            </li>
          <?php } ?>

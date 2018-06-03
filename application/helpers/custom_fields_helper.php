@@ -159,7 +159,8 @@ function render_custom_fields($belongs_to, $rel_id = false, $where = [], $items_
                 $fields_html .= '<div class="form-group">';
                 $fields_html .= '<label for="' . $cf_name . '">' . $field_name . '</label>';
                 $fields_html .= '<select ' . $select_attrs . ' name="' . $select_name . '" class="' . ($items_add_edit_preview == false ? 'select-placeholder ': '') . 'selectpicker form-control' . ($field['type'] == 'multiselect' ? ' custom-field-multi-select' : '') . '" data-width="100%" data-none-selected-text="' . _l('dropdown_non_selected_tex') . '"  data-live-search="true">';
-                $fields_html .= '<option value="" class="hidden"></option>';
+
+                $fields_html .= '<option value=""' . ($field['type'] == 'multiselect' ? ' class="hidden"' : '') . '></option>';
 
                 $options = explode(',', $field['options']);
 

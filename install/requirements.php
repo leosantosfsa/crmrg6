@@ -73,7 +73,10 @@ if (!extension_loaded('zip')) {
 }
 
 $url_f_open = ini_get('allow_url_fopen');
-if ($url_f_open != "1" && $url_f_open != 'On') {
+if ($url_f_open != "1"
+	&& strcasecmp($url_f_open,'On') != 0
+	&& strcasecmp($url_f_open,'true') != 0
+	&& strcasecmp($url_f_open,'yes') != 0) {
 	$error = true;
 	$requirement11 = "<span class='label label-danger'>Allow_url_fopen is not enabled!</span>";
 } else {

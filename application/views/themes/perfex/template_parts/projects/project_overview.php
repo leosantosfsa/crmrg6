@@ -82,9 +82,8 @@
 <div class="col-md-12">
   <hr />
 </div>
+<?php if($project->settings->view_tasks == 1){ ?>
 <div class="col-md-<?php echo ($project->deadline ? 6 : 12); ?> project-progress-bars">
-  <?php $tasks_not_completed_progress = round($tasks_not_completed_progress,2); ?>
-  <?php $project_time_left_percent = round($project_time_left_percent,2); ?>
   <div class="row">
    <div class="col-md-9">
     <p class="text-uppercase bold text-dark font-medium">
@@ -103,6 +102,7 @@
 </div>
 </div>
 </div>
+<?php } ?>
 <?php if($project->deadline){ ?>
 <div class="col-md-6 project-progress-bars">
   <div class="row">

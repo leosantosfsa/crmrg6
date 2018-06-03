@@ -23,7 +23,7 @@ function check_contract_restrictions($id, $hash)
     // Do one more check
     if (!is_staff_logged_in()) {
         if (get_option('view_contract_only_logged_in') == 1) {
-            if ($contract->clientid != get_client_user_id()) {
+            if ($contract->client != get_client_user_id()) {
                 show_404();
             }
         }

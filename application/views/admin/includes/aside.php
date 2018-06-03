@@ -243,7 +243,7 @@
       <li class="pinned-separator"></li>
       <?php foreach($pinnedProjects as $pinnedProject){ ?>
       <li class="pinned_project">
-         <a href="<?php echo admin_url('projects/view/'.$pinnedProject['id']); ?>" data-toggle="tooltip" data-title="<?php echo _l('pinned_project'); ?>"><?php echo $pinnedProject['name']; ?><br><small><?php echo $pinnedProject["company"]; ?></small></a></a>
+         <a href="<?php echo admin_url('projects/view/'.$pinnedProject['id']); ?>" data-toggle="tooltip" data-title="<?php echo _l('pinned_project'); ?>"><?php echo $pinnedProject['name']; ?><br><small><?php echo $pinnedProject["company"]; ?></small></a>
          <div class="col-md-12">
             <div class="progress progress-bar-mini">
                <div class="progress-bar no-percent-text not-dynamic" role="progressbar" data-percent="<?php echo $pinnedProject['progress']; ?>" style="width: <?php echo $pinnedProject['progress']; ?>%;">

@@ -266,7 +266,11 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach($client as $client_template){ ?>
+                                            <?php foreach($client as $client_template){
+                                                if($client_template['slug'] == 'client-registration-confirmed' && get_option('customers_register_require_confirmation') == '0' && total_rows('tblclients','registration_confirmed=0') == 0) {
+                                                    continue;
+                                                }
+                                             ?>
                                             <tr>
                                                 <td class="<?php if($client_template['active'] == 0){echo 'text-throught';} ?>">
                                                     <a href="<?php echo admin_url('emails/email_template/'.$client_template['emailtemplateid']); ?>"><?php echo $client_template['name']; ?></a>

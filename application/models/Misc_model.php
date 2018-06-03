@@ -274,7 +274,9 @@ class Misc_model extends CRM_Model
         $this->db->where('rel_type', $rel_type);
         $this->db->order_by('dateadded', 'desc');
 
-        return $this->db->get('tblnotes')->result_array();
+        $notes = $this->db->get('tblnotes')->result_array();
+        $hookData = do_action('get_notes',['notes'=>$notes,'rel_id'=>$rel_id,'rel_type'=>$rel_type]);
+        return $hookData['notes'];
     }
 
     public function add_note($data, $rel_type, $rel_id)
@@ -295,6 +297,8 @@ class Misc_model extends CRM_Model
 
     public function edit_note($data, $id)
     {
+        do_action('before_update_note', ['data'=>$data,'id'=>$id]);
+
         $this->db->where('id', $id);
         $this->db->update('tblnotes', [
             'description' => nl2br($data['description']),
@@ -326,6 +330,8 @@ class Misc_model extends CRM_Model
 
     public function delete_note($note_id)
     {
+        do_action('before_delete_note', $note_id);
+
         $this->db->where('id', $note_id);
         $note = $this->db->get('tblnotes')->row();
         if ($note->addedfrom != get_staff_user_id() && !is_admin()) {

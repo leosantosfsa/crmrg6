@@ -12,7 +12,13 @@ function get_other_merge_fields()
     $fields['{logo_url}'] = base_url('uploads/company/' . get_option('company_logo'));
 
     $logo_width                      = do_action('merge_field_logo_img_width', '');
+
     $fields['{logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo')) . '"' . ($logo_width != '' ? ' width="' . $logo_width . '"' : '') . '></a>';
+
+    $fields['{dark_logo_image_with_url}'] = '';
+    if(get_option('company_logo_dark') != ''){
+     $fields['{dark_logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo_dark')) . '"' . ($logo_width != '' ? ' width="' . $logo_width . '"' : '') . '></a>';
+    }
 
     $fields['{crm_url}']     = site_url();
     $fields['{admin_url}']   = admin_url();
@@ -2297,6 +2303,26 @@ function get_available_merge_fields()
                 [
                     'name'        => 'Logo image with URL',
                     'key'         => '{logo_image_with_url}',
+                    'fromoptions' => true,
+                    'available'   => [
+                        'ticket',
+                        'client',
+                        'staff',
+                        'invoice',
+                        'estimate',
+                        'contract',
+                        'tasks',
+                        'proposals',
+                        'project',
+                        'leads',
+                        'credit_note',
+                        'subscriptions',
+                        'gdpr',
+                    ],
+                ],
+                [
+                    'name'        => 'Dark logo image with URL',
+                    'key'         => '{dark_logo_image_with_url}',
                     'fromoptions' => true,
                     'available'   => [
                         'ticket',

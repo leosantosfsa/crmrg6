@@ -2954,6 +2954,7 @@ body.rtl.hide-sidebar #wrapper {
 
 
 
+
 /* iPad Landscape */
 
 @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) {
@@ -2967,7 +2968,7 @@ body.rtl.hide-sidebar #wrapper {
         left: -24px;
         right: auto;
     }
-     .total-column,
+    .total-column,
     .top_stats_wrapper {
         margin-bottom: 10px;
     }
@@ -2975,6 +2976,7 @@ body.rtl.hide-sidebar #wrapper {
         margin-bottom: 0;
     }
 }
+
 
 
 
@@ -8003,7 +8005,6 @@ body.rtl .bootstrap-select.btn-group .dropdown-toggle .caret {
 
 body.rtl .ajax-remove-values-option .ajax-clear-values {
     left: 30px;
-    right: auto;
 }
 
 .hr-panel-heading {
@@ -8345,7 +8346,7 @@ body.rtl .task-table-related:before {
 }
 
 .mobile .checklist-item-completed-by {
-    display:none;
+    display: none;
 }
 
 body.system-popup {
@@ -8897,4 +8898,16 @@ body.media {
     margin-top: 0px !important;
     overflow: inherit;
     zoom: initial;
+}
+
+.tinymce-mobile-toolstrip .tinymce-mobile-toolbar:not(.tinymce-mobile-context-toolbar) .tinymce-mobile-toolbar-group:first-of-type,
+.tinymce-mobile-toolstrip .tinymce-mobile-toolbar:not(.tinymce-mobile-context-toolbar) .tinymce-mobile-toolbar-group:last-of-type {
+    background: #03a9f4 !important;
+}
+
+body.rtl .input-group-select .inner.open {
+        overflow-y: initial !important;
+}
+body.rtl .bs-searchbox input {
+    margin-bottom:10px;
 }

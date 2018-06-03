@@ -54,7 +54,7 @@ foreach ($rResult as $aRow) {
 
     if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1' && is_admin()) {
         $rowName .= ' | <a href="' . admin_url('clients/export/' . $aRow['id']) . '">
-             ' . _l('dt_button_export') . ' (GDPR)
+             ' . _l('dt_button_export') . ' ('._l('gdpr_short').')
           </a>';
     }
 
@@ -85,7 +85,7 @@ foreach ($rResult as $aRow) {
     $row[] = '<a href="tel:' . $aRow['phonenumber'] . '">' . $aRow['phonenumber'] . '</a>';
 
     $outputActive = '<div class="onoffswitch">
-                <input type="checkbox" data-switch-url="' . admin_url() . 'clients/change_contact_status" name="onoffswitch" class="onoffswitch-checkbox" id="c_' . $aRow['id'] . '" data-id="' . $aRow['id'] . '"' . ($aRow['active'] == 1 ? ' checked': '') . '>
+                <input type="checkbox"'.(total_rows('tblclients','registration_confirmed=0 AND userid='.$aRow['userid']) > 0 ? ' disabled' : '').' data-switch-url="' . admin_url() . 'clients/change_contact_status" name="onoffswitch" class="onoffswitch-checkbox" id="c_' . $aRow['id'] . '" data-id="' . $aRow['id'] . '"' . ($aRow['active'] == 1 ? ' checked': '') . '>
                 <label class="onoffswitch-label" for="c_' . $aRow['id'] . '"></label>
             </div>';
     // For exporting

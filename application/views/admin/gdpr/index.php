@@ -6,8 +6,8 @@
          <div class="panel_s">
             <div class="panel-body">
                <div class="col-md-12 text-center">
-                  <h4>GDPR not enabled.</h4>
-                  <a href="<?php echo admin_url('gdpr/enable'); ?>" class="btn btn-info">ENABLE GDPR</a>
+                  <h4><?php echo _l('gdpr_not_enabled'); ?></h4>
+                  <a href="<?php echo admin_url('gdpr/enable'); ?>" class="btn btn-info"><?php echo _l('enable_gdpr'); ?></a>
                </div>
             </div>
          </div>
@@ -18,35 +18,36 @@
          <div class="col-md-3">
             <ul class="nav navbar-pills navbar-pills-flat nav-tabs nav-stacked">
                <li<?php if($page == 'general'){echo ' class="active"'; } ?>>
-                  <a href="<?php echo admin_url('gdpr/index?page=general'); ?>">General</a>
+                  <a href="<?php echo admin_url('gdpr/index?page=general'); ?>"><?php echo _l('settings_group_general'); ?></a>
                </li>
                <li<?php if($page == 'portability'){echo ' class="active"'; } ?>>
-                  <a href="<?php echo admin_url('gdpr/index?page=portability'); ?>">Right to data portability</a>
+                  <a href="<?php echo admin_url('gdpr/index?page=portability'); ?>"><?php echo _l('gdpr_right_to_data_portability'); ?></a>
                </li>
                <li<?php if($page == 'forgotten'){echo ' class="active"'; } ?>>
-                  <a href="<?php echo admin_url('gdpr/index?page=forgotten'); ?>">Right to be forgotten</a>
+                  <a href="<?php echo admin_url('gdpr/index?page=forgotten'); ?>"><?php echo _l('gdpr_right_to_erasure'); ?></a>
                </li>
                <li<?php if($page == 'informed'){echo ' class="active"'; } ?>>
-                  <a href="<?php echo admin_url('gdpr/index?page=informed'); ?>">Right to be informed</a>
+                  <a href="<?php echo admin_url('gdpr/index?page=informed'); ?>"><?php echo _l('gdpr_right_to_be_informed'); ?></a>
                </li>
                <li<?php if($page == 'rectification'){echo ' class="active"'; } ?>>
-                  <a href="<?php echo admin_url('gdpr/index?page=rectification'); ?>">Right of access/right to rectification</a>
+                  <a href="<?php echo admin_url('gdpr/index?page=rectification'); ?>"><?php echo _l('gdpr_right_of_access'); ?>/<?php echo _l('gdpr_right_to_rectification'); ?></a>
                </li>
                <li<?php if($page == 'consent'){echo ' class="active"'; } ?>>
-                  <a href="<?php echo admin_url('gdpr/index?page=consent'); ?>">Consent</a>
+                  <a href="<?php echo admin_url('gdpr/index?page=consent'); ?>"><?php echo _l('gdpr_consent'); ?></a>
                </li>
             </ul>
          </div>
          <div class="col-md-9">
             <div class="panel_s">
                <div class="panel-body">
+                  <?php do_action('before_admin_gdpr_settings'); ?>
                   <?php $this->load->view('admin/gdpr/pages/'.$page); ?>
                </div>
             </div>
          </div>
          <?php if($save == true){ ?>
          <div class="btn-bottom-toolbar btn-toolbar-container-out text-right">
-            <button type="submit" class="btn btn-info">Save</button>
+            <button type="submit" class="btn btn-info"><?php echo _l('save'); ?></button>
          </div>
          <?php echo form_close(); ?>
          <?php } ?>

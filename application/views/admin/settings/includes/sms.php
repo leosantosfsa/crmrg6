@@ -31,11 +31,22 @@ if($total_gateways > 1) { ?>
 
         foreach($gateway['options'] as $g_option){
             echo render_input('settings['.$this->sms->option_name($gateway['id'],$g_option['name']).']',$g_option['label'],$this->sms->get_option($gateway['id'],$g_option['name']));
+            if(isset($g_option['info'])) {
+                echo $g_option['info'];
+            }
         }
         echo '<div class="sms_gateway_active">';
 
         echo render_yes_no_option($this->sms->option_name($gateway['id'],'active'),'Active');
         echo '</div>';
+            if(get_option($this->sms->option_name($gateway['id'],'active')) == '1') {
+                echo '<hr />';
+                echo '<h4 class="mbot15">'._l('test_sms_config').'</h4>';
+                echo '<div class="form-group"><input type="text" placeholder="'._l('staff_add_edit_phonenumber').'" class="form-control test-phone" data-id="'.$gateway['id'].'"></div>';
+                echo '<div class="form-group"><textarea class="form-control sms-gateway-test-message" placeholder="'._l('test_sms_message').'" data-id="'.$gateway['id'].'" rows="4"></textarea></div>';
+                echo '<button type="button" class="btn btn-info send-test-sms" data-id="'.$gateway['id'].'">'._l('send_test_sms').'</button>';
+                echo '<div id="sms_test_response" data-id="'.$gateway['id'].'"></div>';
+            }
         ?>
     </div>
 </div>
@@ -69,7 +80,7 @@ foreach($triggers as $trigger_name => $trigger_opts) {
         echo '<hr class="hr-10" />';
         echo '</div>';
     }
-    echo '<hr />';
+    echo '<hr class="hr-10" />';
 }
 ?>
 </div>

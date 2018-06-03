@@ -8,7 +8,7 @@
                  - <a href="<?php echo terms_url(); ?>"><?php echo _l('terms_and_conditions'); ?></a>
                 <?php } ?>
                 <?php if(is_gdpr() && is_client_logged_in() && get_option('show_gdpr_link_in_footer') == '1') { ?>
-                 - <a href="<?php echo site_url('clients/gdpr'); ?>">GDPR</a>
+                 - <a href="<?php echo site_url('clients/gdpr'); ?>"><?php echo _l('gdpr_short'); ?></a>
                 <?php } ?>
 			</div>
 		</div>

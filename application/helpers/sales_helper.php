@@ -773,13 +773,13 @@ if (!function_exists('get_table_items_and_taxes')) {
         $_calculated_taxes = [];
         $i                 = 1;
         foreach ($items as $item) {
-            $_item             = '';
-            $tr_attrs          = '';
-            $td_first_sortable = '';
+            $itemHTML        = '';
+            $trAttributes    = '';
+            $tdFirstSortable = '';
 
             if ($admin_preview == true) {
-                $tr_attrs          = ' class="sortable" data-item-id="' . $item['id'] . '"';
-                $td_first_sortable = ' class="dragger item_no"';
+                $trAttributes    = ' class="sortable" data-item-id="' . $item['id'] . '"';
+                $tdFirstSortable = ' class="dragger item_no"';
             }
 
             if (class_exists('pdf')) {
@@ -788,26 +788,39 @@ if (!function_exists('get_table_items_and_taxes')) {
                     $font_size = 10;
                 }
 
-                $tr_attrs .= ' style="font-size:' . ($font_size + 4) . 'px;"';
+                $trAttributes .= ' style="font-size:' . ($font_size + 4) . 'px;"';
             }
 
-            $_item .= '<tr' . $tr_attrs . '>';
-            $_item .= '<td' . $td_first_sortable . ' align="center">' . $i . '</td>';
-            $_item .= '<td class="description" align="left;"><span style="font-size:' . (isset($font_size) ? $font_size + 4 : '') . 'px;"><strong>' . $item['description'] . '</strong></span><br /><span style="color:#424242;">' . $item['long_description'] . '</span></td>';
+            $itemHTML .= '<tr' . $trAttributes . '>';
+            $itemHTML .= '<td' . $tdFirstSortable . ' align="center">' . $i . '</td>';
+
+            $itemHTML .= '<td class="description" align="left;">';
+            if (!empty($item['description'])) {
+                $itemHTML .= '<span style="font-size:' . (isset($font_size) ? $font_size + 4 : '') . 'px;"><strong>' . $item['description'] . '</strong></span>';
+
+                if (!empty($item['long_description'])) {
+                    $itemHTML .= '<br />';
+                }
+            }
+            if (!empty($item['long_description'])) {
+                $itemHTML .= '<span style="color:#424242;">' . $item['long_description'] . '</span>';
+            }
+
+            $itemHTML .= '</td>';
 
             foreach ($cf as $custom_field) {
-                $_item .= '<td align="left">' . get_custom_field_value($item['id'], $custom_field['id'], 'items') . '</td>';
+                $itemHTML .= '<td align="left">' . get_custom_field_value($item['id'], $custom_field['id'], 'items') . '</td>';
             }
 
-            $_item .= '<td align="right">' . floatVal($item['qty']);
+            $itemHTML .= '<td align="right">' . floatVal($item['qty']);
             if ($item['unit']) {
-                $_item .= ' ' . $item['unit'];
+                $itemHTML .= ' ' . $item['unit'];
             }
 
-            $_item .= '</td>';
-            $_item .= '<td align="right">' . _format_number($item['rate']) . '</td>';
+            $itemHTML .= '</td>';
+            $itemHTML .= '<td align="right">' . _format_number($item['rate']) . '</td>';
             if (get_option('show_tax_per_item') == 1) {
-                $_item .= '<td align="right">';
+                $itemHTML .= '<td align="right">';
             }
 
             $item_taxes = [];
@@ -861,19 +874,19 @@ if (!function_exists('get_table_items_and_taxes')) {
                         $hook_data = ['final_tax_html' => $item_tax, 'item_taxes' => $item_taxes, 'item_id' => $item['id']];
                         $hook_data = do_action('item_tax_table_row', $hook_data);
                         $item_tax  = $hook_data['final_tax_html'];
-                        $_item .= $item_tax;
+                        $itemHTML .= $item_tax;
                     }
                 }
             } else {
                 if (get_option('show_tax_per_item') == 1) {
                     $hook_data = ['final_tax_html' => '0%', 'item_taxes' => $item_taxes, 'item_id' => $item['id']];
                     $hook_data = do_action('item_tax_table_row', $hook_data);
-                    $_item .= $hook_data['final_tax_html'];
+                    $itemHTML .= $hook_data['final_tax_html'];
                 }
             }
 
             if (get_option('show_tax_per_item') == 1) {
-                $_item .= '</td>';
+                $itemHTML .= '</td>';
             }
 
             /**
@@ -890,9 +903,9 @@ if (!function_exists('get_table_items_and_taxes')) {
 
             $item_amount_with_quantity = _format_number($hook_data['amount']);
 
-            $_item .= '<td class="amount" align="right">' . $item_amount_with_quantity . '</td>';
-            $_item .= '</tr>';
-            $result['html'] .= $_item;
+            $itemHTML .= '<td class="amount" align="right">' . $item_amount_with_quantity . '</td>';
+            $itemHTML .= '</tr>';
+            $result['html'] .= $itemHTML;
             $i++;
         }
 

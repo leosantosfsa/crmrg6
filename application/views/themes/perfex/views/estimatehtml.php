@@ -20,9 +20,9 @@
                    <div class="visible-xs">
                     <div class="mtop10"></div>
                 </div>
-
                 <?php
-                if ($estimate->status != 4 && $estimate->status != 3) {
+                // Is not accepted, declined and expired
+                if ($estimate->status != 4 && $estimate->status != 3 && $estimate->status != 5) {
                     $can_be_accepted = true;
                     if($identity_confirmation_enabled == '0'){
                         echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
@@ -33,7 +33,7 @@
                         echo '<button type="button" id="accept_action" class="btn btn-success mright10 pull-right action-btn accept"><i class="fa fa-check"></i> '._l('clients_accept_estimate').'</button>';
                     }
                 } else if($estimate->status == 3){
-                    if ($estimate->expirydate >= date('Y-m-d') && $estimate->status != 5) {
+                    if (($estimate->expirydate >= date('Y-m-d') || !$estimate->expirydate) && $estimate->status != 5) {
                         $can_be_accepted = true;
                         if($identity_confirmation_enabled == '0'){
                             echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
@@ -45,8 +45,9 @@
                         }
                     }
                 }
-               if ($estimate->status != 4 && $estimate->status != 3) {
-                        echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
+                // Is not accepted, declined and expired
+               if ($estimate->status != 4 && $estimate->status != 3 && $estimate->status != 5) {
+                    echo form_open($this->uri->uri_string(),array('class'=>'pull-right mright10'));
                     echo form_hidden('estimate_action',3);
                     echo '<button type="submit" data-loading-text="'._l('wait_text').'" autocomplete="off" class="btn btn-default action-btn accept"><i class="fa fa-remove"></i> '._l('clients_decline_estimate').'</button>';
                     echo form_close();

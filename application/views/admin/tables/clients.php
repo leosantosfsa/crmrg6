@@ -28,8 +28,9 @@ $join = ['LEFT JOIN tblcontacts ON tblcontacts.userid=tblclients.userid AND tblc
 
 foreach ($custom_fields as $key => $field) {
     $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
-    array_push($customFieldsColumns, $selectAs);
-    array_push($aColumns, '(SELECT value FROM tblcustomfieldsvalues WHERE tblcustomfieldsvalues.relid=tblclients.userid AND tblcustomfieldsvalues.fieldid=' . $field['id'] . ' AND tblcustomfieldsvalues.fieldto="' . $field['fieldto'] . '" LIMIT 1) as ' . $selectAs);
+    array_push($customFieldsColumns,$selectAs);
+    array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
+    array_push($join, 'LEFT JOIN tblcustomfieldsvalues as ctable_' . $key . ' ON tblclients.userid = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
 }
 // Filter by custom groups
 $groups   = $this->ci->clients_model->get_groups();
@@ -129,6 +130,10 @@ if (count($customAdminIds) > 0) {
     array_push($filter, 'AND tblclients.userid IN (SELECT customer_id FROM tblcustomeradmins WHERE staff_id IN (' . implode(', ', $customAdminIds) . '))');
 }
 
+if($this->ci->input->post('requires_registration_confirmation')) {
+    array_push($filter,'AND tblclients.registration_confirmed=0');
+}
+
 if (count($filter) > 0) {
     array_push($where, 'AND (' . prepare_dt_filter($filter) . ')');
 }
@@ -138,7 +143,7 @@ if (!has_permission('customers', '', 'view')) {
 }
 
 if ($this->ci->input->post('exclude_inactive')) {
-    array_push($where, 'AND tblclients.active=1');
+    array_push($where, 'AND (tblclients.active = 1 OR tblclients.active=0 AND registration_confirmed = 0)');
 }
 
 if ($this->ci->input->post('my_customers')) {
@@ -155,6 +160,7 @@ if (count($custom_fields) > 4) {
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'tblcontacts.id as contact_id',
     'tblclients.zip as zip',
+    'registration_confirmed',
 ]);
 
 $output  = $result['output'];
@@ -188,6 +194,9 @@ foreach ($rResult as $aRow) {
     $company .= '<div class="row-options">';
     $company .= '<a href="' . $url . '">' . _l('view') . '</a>';
 
+    if($aRow['registration_confirmed'] == 0 && is_admin()) {
+        $company .= ' | <a href="'.admin_url('clients/confirm_registration/'. $aRow['userid']).'" class="text-success bold">'._l('confirm_registration').'</a>';
+    }
     if (!$isPerson) {
         $company .= ' | <a href="' . admin_url('clients/client/' . $aRow['userid'] . '?group=contacts') . '">' . _l('customer_contacts') . '</a>';
     }
@@ -210,7 +219,7 @@ foreach ($rResult as $aRow) {
 
     // Toggle active/inactive customer
     $toggleActive = '<div class="onoffswitch" data-toggle="tooltip" data-title="' . _l('customer_active_inactive_help') . '">
-        <input type="checkbox" data-switch-url="' . admin_url() . 'clients/change_client_status" name="onoffswitch" class="onoffswitch-checkbox" id="' . $aRow['userid'] . '" data-id="' . $aRow['userid'] . '" ' . ($aRow['tblclients.active'] == 1 ? 'checked' : '') . '>
+        <input type="checkbox"'.($aRow['registration_confirmed'] == 0 ? ' disabled' : '').' data-switch-url="' . admin_url() . 'clients/change_client_status" name="onoffswitch" class="onoffswitch-checkbox" id="' . $aRow['userid'] . '" data-id="' . $aRow['userid'] . '" ' . ($aRow['tblclients.active'] == 1 ? 'checked' : '') . '>
         <label class="onoffswitch-label" for="' . $aRow['userid'] . '"></label>
     </div>';
 
@@ -245,5 +254,10 @@ foreach ($rResult as $aRow) {
     $row = $hook['output'];
 
     $row['DT_RowClass'] = 'has-row-options';
+    if ($aRow['registration_confirmed'] == 0) {
+        $row['DT_RowClass'] .= ' alert-info requires-confirmation';
+        $row['Data_Title']  = _l('customer_requires_registration_confirmation');
+        $row['Data_Toggle'] = 'tooltip';
+    }
     $output['aaData'][] = $row;
 }

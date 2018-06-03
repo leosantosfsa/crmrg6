@@ -42,7 +42,7 @@
                </div>
                <p class="bold" id="signatureLabel"><?php echo _l('signature'); ?></p>
                <div class="signature-pad--body">
-                  <canvas id="signature" height="70" width="550"></canvas>
+                  <canvas id="signature" height="130" width="550"></canvas>
                </div>
                <input type="text" style="width:1px; height:1px; border:0px;" tabindex="-1" name="signature" id="signatureInput">
                <div class="dispay-block">

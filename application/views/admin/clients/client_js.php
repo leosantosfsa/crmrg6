@@ -257,14 +257,15 @@ function validate_contact_form() {
 
 function contactFormHandler(form) {
     $('#contact input[name="is_primary"]').prop('disabled', false);
-    var formURL = $(form).attr("action");
-    var formData = new FormData($(form)[0]);
 
     $("#contact input[type=file]").each(function() {
         if($(this).val() === "") {
-            formData.delete($(this).attr("name"));
+            $(this).prop('disabled', true);
         }
     });
+
+    var formURL = $(form).attr("action");
+    var formData = new FormData($(form)[0]);
 
     $.ajax({
         type: 'POST',

@@ -11,7 +11,7 @@ class Clients extends Admin_controller
     public function __construct()
     {
         parent::__construct();
-        $this->not_importable_clients_fields = do_action('not_importable_clients_fields', ['userid', 'id', 'is_primary', 'password', 'datecreated', 'last_ip', 'last_login', 'last_password_change', 'active', 'new_pass_key', 'new_pass_key_requested', 'leadid', 'default_currency', 'profile_image', 'default_language', 'direction', 'show_primary_contact', 'invoice_emails', 'estimate_emails', 'project_emails', 'task_emails', 'contract_emails', 'credit_note_emails', 'ticket_emails', 'addedfrom', 'last_active_time']);
+        $this->not_importable_clients_fields = do_action('not_importable_clients_fields', ['userid', 'id', 'is_primary', 'password', 'datecreated', 'last_ip', 'last_login', 'last_password_change', 'active', 'new_pass_key', 'new_pass_key_requested', 'leadid', 'default_currency', 'profile_image', 'default_language', 'direction', 'show_primary_contact', 'invoice_emails', 'estimate_emails', 'project_emails', 'task_emails', 'contract_emails', 'credit_note_emails', 'ticket_emails', 'addedfrom','registration_confirmed', 'last_active_time']);
         // last_active_time is from Chattr plugin, causing issue
     }
 
@@ -406,6 +406,15 @@ class Clients extends Admin_controller
         $data['customer_permissions'] = get_contact_permissions();
         $data['title']                = $title;
         $this->load->view('admin/clients/modals/contact', $data);
+    }
+
+    public function confirm_registration($client_id) {
+        if(!is_admin()){
+            access_denied('Customer Confirm Registration, ID: ' . $client_id);
+        }
+        $this->clients_model->confirm_registration($client_id);
+        set_alert('success', _l('customer_registration_successfully_confirmed'));
+        redirect($_SERVER['HTTP_REFERER']);
     }
 
     public function update_file_share_visibility()

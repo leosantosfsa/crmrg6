@@ -100,7 +100,7 @@
                               <div class="input-group">
                                  <input type="file" extension="<?php echo str_replace('.','',get_option('allowed_files')); ?>" filesize="<?php echo file_upload_max_size(); ?>" class="form-control" name="attachments[0]">
                                  <span class="input-group-btn">
-                                 <button class="btn btn-success add_more_attachments p8-half" type="button"><i class="fa fa-plus"></i></button>
+                                 <button class="btn btn-success add_more_attachments p8" type="button"><i class="fa fa-plus"></i></button>
                                  </span>
                               </div>
                            </div>

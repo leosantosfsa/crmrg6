@@ -1460,11 +1460,20 @@ class Cron_model extends CRM_Model
 
                 $data['subject']  = $email['subject'];
                 $data['body']     = $email['body'];
+                // To is the department name
+                $data['to'] = $e['email'];
+
+                // TODO, testing, beta
+                if(do_action('imap_fetch_from_email_by_reply_to_header', 'false') == 'true'){
+                    $replyTo = $imap->getReplyToAddresses($email['uid']);
+                    if(count($replyTo) === 1) {
+                        $email['from'] = $replyTo[0];
+                    }
+                }
+
                 $data['email']    = preg_replace('/(.*)<(.*)>/', '\\2', $email['from']);
                 $data['fromname'] = preg_replace('/(.*)<(.*)>/', '\\1', $email['from']);
                 $data['fromname'] = str_replace('"', '', $data['fromname']);
-                // To is the department name
-                $data['to'] = $e['email'];
 
                 $hookData = do_action('imap_auto_import_ticket_data', ['data' => $data, 'email_contents' => $email]);
                 $data     = $hookData['data'];

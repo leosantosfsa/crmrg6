@@ -70,7 +70,7 @@ class Auto_update extends Admin_controller
         curl_setopt($ch, CURLOPT_POSTFIELDS, [
             'base_url'      => site_url(),
             'buyer_version' => $this->app->get_current_db_version(),
-            'user_ip'       => $this->input->ip_address(),
+            // 'user_ip'       => $this->input->ip_address(),
             'server_ip'     => $_SERVER['SERVER_ADDR'],
             ]);
 

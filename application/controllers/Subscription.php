@@ -137,11 +137,6 @@ class Subscription extends Clients_controller
                 $params['items'][0]['quantity'] = $subscription->quantity;
             }
 
-        /*    $params['billing_cycle_anchor'] = strtotime('2018-05-10 15:55:00');
-
-            $future = true;
-            $anchor = $params['billing_cycle_anchor'];*/
-
             $stripeSubscription = $this->stripe_subscriptions->subscribe($stripe_customer_id, $params);
 
             $update = [

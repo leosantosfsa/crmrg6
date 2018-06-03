@@ -356,7 +356,7 @@ function alert_float(type, message) {
 
     setTimeout(function() {
         $('#' + aId).remove();
-    }, 3000);
+    }, 4500);
 }
 
 function new_discussion() {
@@ -419,6 +419,22 @@ function DataTablesOfflineLazyLoadImages(nRow, aData, iDisplayIndex) {
     return nRow;
 }
 
+$.fn.dataTable.ext.type.order['task-status-pre'] = function(d) {
+    switch (d) {
+        case '2':
+            return 1;
+        case '4':
+            return 2;
+        case '3':
+            return 3;
+        case '1':
+            return 4;
+        case '5':
+            return 6;
+    }
+    return 5;
+};
+
 function initDataTable() {
 
     var length_options = [10, 25, 50, 100];
@@ -442,7 +458,7 @@ function initDataTable() {
     length_options.push(-1);
     length_options_names.push(dt_length_menu_all);
 
-    var options, order_col, order_type;
+    var options, order_col, order_type, sTypeColumns;
     var _options = {
         "language": dt_lang,
         'paginate': true,
@@ -466,13 +482,36 @@ function initDataTable() {
         options = _options;
         order_col = $(this).attr('data-order-col');
         order_type = $(this).attr('data-order-type');
+        sTypeColumns = $(this).attr('data-s-type');
         if (order_col && order_type) {
             options.order = [
                 [order_col, order_type]
-            ]
+            ];
+        }
+        if (sTypeColumns) {
+            sTypeColumns = JSON.parse(sTypeColumns);
+            var columns = $(this).find('thead th');
+            var totalColumns = columns.length;
+            options.aoColumns = [];
+            for (var i = 0; i < totalColumns; i++) {
+                var column = $(columns[i]);
+                var sTypeColumnOption = sTypeColumns.find(function(v) {
+                    return v['column'] === column.index();
+                });
+                options.aoColumns.push(sTypeColumnOption ? { sType: sTypeColumnOption.type } : null);
+            }
         }
         $(this).DataTable(options);
     });
+}
+
+function dt_custom_view(table, column, val) {
+    var tableApi = $(table).DataTable();
+    if (Array.isArray(val)) {
+        tableApi.column(column).search(val.join('|'), true, false).draw();
+    } else {
+        tableApi.column(column).search(val).draw();
+    }
 }
 
 function get_url_param(param) {
@@ -506,11 +545,6 @@ function color(r, g, b) {
 function taskTable() {
     $('.tasks-table').toggleClass('hide');
     $('.tasks-phases').toggleClass('hide');
-}
-
-function dt_custom_view(table, column, val) {
-    var tableApi = $(table).DataTable();
-    tableApi.column(column).search(val).draw();
 }
 
 function discussion_comments(selector, discussion_id, discussion_type) {

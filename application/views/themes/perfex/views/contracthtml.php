@@ -1,8 +1,11 @@
 <div class="mtop30">
+   <div class="mbot30">
+      <?php echo get_dark_company_logo(); ?>
+   </div>
    <h4 class="pull-left no-mtop"><?php echo $contract->subject; ?><br />
       <small><?php echo $contract->type_name; ?></small>
    </h4>
-   <div class="xs-only">
+   <div class="visible-xs">
       <div class="clearfix"></div>
    </div>
    <?php if($contract->signed == 0) { ?>
@@ -34,11 +37,11 @@
             <ul class="nav nav-tabs nav-tabs-flat mbot15" role="tablist">
                <li role="presentation" class="<?php if(!$this->input->get('tab') || $this->input->get('tab') === 'summary'){echo 'active';} ?>">
                   <a href="#summary" aria-controls="summary" role="tab" data-toggle="tab">
-                  <?php echo _l('summary'); ?></a>
+                  <i class="fa fa-file-text-o" aria-hidden="true"></i> <?php echo _l('summary'); ?></a>
                </li>
                <li role="presentation" class="<?php if($this->input->get('tab') === 'discussion'){echo 'active';} ?>">
                   <a href="#discussion" aria-controls="discussion" role="tab" data-toggle="tab">
-                  <?php echo _l('discussion'); ?>
+                   <i class="fa fa-commenting-o" aria-hidden="true"></i> <?php echo _l('discussion'); ?>
                   </a>
                </li>
             </ul>
@@ -99,9 +102,9 @@
                      <hr />
                      <p class="bold mbot15"><?php echo _l('contract_files'); ?></p>
                      <?php foreach($contract->attachments as $attachment){
-                        $attachment_url = site_url('download/file/sales_attachment/'.$attachment['attachment_key']);
+                        $attachment_url = site_url('download/file/contract/'.$attachment['attachment_key']);
                         if(!empty($attachment['external'])){
-                          $attachment_url = $attachment['external_link'];
+                           $attachment_url = $attachment['external_link'];
                         }
                         ?>
                      <div class="col-md-12 row mbot15">

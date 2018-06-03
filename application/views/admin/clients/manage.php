@@ -6,6 +6,7 @@
                 <div class="_filters _hidden_inputs hidden">
                     <?php
                     echo form_hidden('my_customers');
+                    echo form_hidden('requires_registration_confirmation');
                     foreach($groups as $group){
                        echo form_hidden('customer_group_'.$group['id']);
                    }
@@ -53,6 +54,14 @@
                                         <ul class="dropdown-menu dropdown-menu-left" style="width:300px;">
                                             <li class="active"><a href="#" data-cview="all" onclick="dt_custom_view('','.table-clients',''); return false;"><?php echo _l('customers_sort_all'); ?></a>
                                             </li>
+                                            <?php if(get_option('customer_requires_registration_confirmation') == '1' || total_rows('tblclients','registration_confirmed=0') > 0) { ?>
+                                             <li class="divider"></li>
+                                             <li>
+                                                  <a href="#" data-cview="requires_registration_confirmation" onclick="dt_custom_view('requires_registration_confirmation','.table-clients','requires_registration_confirmation'); return false;">
+                                                           <?php echo _l('customer_requires_registration_confirmation'); ?>
+                                                        </a>
+                                             </li>
+                                             <?php } ?>
                                              <li class="divider"></li>
                                              <li>
                                                   <a href="#" data-cview="my_customers" onclick="dt_custom_view('my_customers','.table-clients','my_customers'); return false;">

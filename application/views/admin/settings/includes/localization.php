@@ -9,6 +9,7 @@ $date_formats = get_available_date_formats();
         <?php } ?>
     </select>
 </div>
+<hr />
 <div class="form-group">
     <label for="time_format" class="control-label"><?php echo _l('time_format'); ?></label>
     <select name="settings[time_format]" id="time_format" class="form-control selectpicker" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">

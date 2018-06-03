@@ -232,9 +232,9 @@
             </label>
         </div>
         <?php } else { ?>
-        <div class="form-group mtop15 select-placeholder">
+        <div class="form-group mtop15 select-placeholder project-available-features">
             <label for="available_features"><?php echo _l('visible_tabs'); ?></label>
-            <select name="settings[<?php echo $setting; ?>][]" id="<?php echo $setting; ?>" multiple="true" class="selectpicker" id="available_features" data-width="100%" data-actions-box="true">
+            <select name="settings[<?php echo $setting; ?>][]" id="<?php echo $setting; ?>" multiple="true" class="selectpicker" id="available_features" data-width="100%" data-actions-box="true" data-hide-disabled="true">
             <?php $tabs = get_project_tabs_admin(null); ?>
             <?php foreach($tabs as $tab) {
                 $selected = '';

@@ -125,18 +125,18 @@
   $('body').on('click', '.remove_attachment', function() {
     $(this).parents('.attachment').remove();
   });
-
   $(form_id).validate({
 
     submitHandler:function(form) {
-     var formURL = $(form).attr("action");
-     var formData = new FormData($(form)[0]);
 
-      $("input[type=file]").each(function() {
+     $("input[type=file]").each(function() {
           if($(this).val() === "") {
-              formData.delete($(this).attr("name"));
+              $(this).prop('disabled', true);
           }
       });
+
+     var formURL = $(form).attr("action");
+     var formData = new FormData($(form)[0]);
 
      $('#form_submit').prop('disabled', true);
 

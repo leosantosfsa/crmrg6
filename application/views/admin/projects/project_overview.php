@@ -196,8 +196,6 @@
 <div class="col-md-6 project-overview-right">
    <div class="row">
       <div class="col-md-<?php echo ($project->deadline ? 6 : 12); ?> project-progress-bars">
-         <?php $tasks_not_completed_progress = round($tasks_not_completed_progress,2); ?>
-         <?php $project_time_left_percent = round($project_time_left_percent,2); ?>
          <div class="row">
            <div class="project-overview-open-tasks">
             <div class="col-md-9">

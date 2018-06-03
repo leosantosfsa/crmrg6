@@ -725,6 +725,19 @@ function login_as_client($id)
     $CI->session->set_userdata($user_data);
 }
 
+function send_customer_registered_email_to_administrators($client_id)
+{
+    $CI = &get_instance();
+    $CI->load->model('staff_model');
+    $admins = $CI->staff_model->get('', ['active' => 1, 'admin' => 1]);
+
+    $CI->load->model('emails_model');
+    foreach ($admins as $admin) {
+        $merge_fields = get_client_contact_merge_fields($client_id, get_primary_contact_user_id($client_id));
+        $CI->emails_model->send_email_template('new-client-registered-to-admin', $admin['email'], $merge_fields);
+    }
+}
+
 /**
  * Return and perform additional checkings for contact consent url
  * @param  mixed $contact_id contact id

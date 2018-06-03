@@ -5,7 +5,7 @@
      [GDPR] The contact you removed has associated proposals using the email address of the contact and other personal information. You may want to re-check all proposals related to this customer and remove any personal data from proposals linked to this contact.
    </div>
 <?php } ?>
-<?php if(has_permission('customers','','create') || is_customer_admin($client->userid)){
+<?php if((has_permission('customers','','create') || is_customer_admin($client->userid)) && $client->registration_confirmed == '1'){
    $disable_new_contacts = false;
    if(is_empty_customer_company($client->userid) && total_rows('tblcontacts',array('userid'=>$client->userid)) == 1){
       $disable_new_contacts = true;
@@ -19,7 +19,7 @@
    $table_data = array(_l('clients_list_full_name'));
    if(is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1'){
          array_push($table_data, array(
-            'name'=>_l('gdpr_consent') .' (GDPR)',
+            'name'=>_l('gdpr_consent') .' ('._l('gdpr_short').')',
             'th_attrs'=>array('id'=>'th-consent', 'class'=>'not-export')
          ));
    }

@@ -1,28 +1,34 @@
 <?php echo form_hidden('finance_settings'); ?>
-<ul class="nav nav-tabs" role="tablist">
-   <li role="presentation" class="active">
-      <a href="#general" aria-controls="general" role="tab" data-toggle="tab"><?php echo _l('settings_sales_heading_general'); ?></a>
-   </li>
-   <li role="presentation">
-      <a href="#invoice" aria-controls="invoice" role="tab" data-toggle="tab"><?php echo _l('invoices'); ?></a>
-   </li>
-   <li role="presentation">
-      <a href="#credit_notes" aria-controls="credit_notes" role="tab" data-toggle="tab"><?php echo _l('credit_notes'); ?></a>
-   </li>
-   <li role="presentation">
-      <a href="#estimates" aria-controls="estimates" role="tab" data-toggle="tab"><?php echo _l('settings_sales_heading_estimates'); ?></a>
-   </li>
-   <li role="presentation">
-      <a href="#proposals" aria-controls="proposals" role="tab" data-toggle="tab"><?php echo _l('proposals'); ?></a>
-   </li>
-</ul>
+<div class="horizontal-scrollable-tabs">
+   <div class="scroller arrow-left"><i class="fa fa-angle-left"></i></div>
+   <div class="scroller arrow-right"><i class="fa fa-angle-right"></i></div>
+   <div class="horizontal-tabs">
+      <ul class="nav nav-tabs nav-tabs-horizontal" role="tablist">
+         <li role="presentation" class="active">
+            <a href="#general" aria-controls="general" role="tab" data-toggle="tab"><?php echo _l('settings_sales_heading_general'); ?></a>
+         </li>
+         <li role="presentation">
+            <a href="#invoice" aria-controls="invoice" role="tab" data-toggle="tab"><?php echo _l('invoices'); ?></a>
+         </li>
+         <li role="presentation">
+            <a href="#credit_notes" aria-controls="credit_notes" role="tab" data-toggle="tab"><?php echo _l('credit_notes'); ?></a>
+         </li>
+         <li role="presentation">
+            <a href="#estimates" aria-controls="estimates" role="tab" data-toggle="tab"><?php echo _l('settings_sales_heading_estimates'); ?></a>
+         </li>
+         <li role="presentation">
+            <a href="#proposals" aria-controls="proposals" role="tab" data-toggle="tab"><?php echo _l('proposals'); ?></a>
+         </li>
+      </ul>
+   </div>
+</div>
 <div class="tab-content">
    <div role="tabpanel" class="tab-pane active" id="general">
       <h4 class="bold">
          <?php echo _l('settings_sales_general'); ?>
       </h4>
       <p class="text-muted">
-      <p><?php echo _l('settings_sales_general_note'); ?></p>
+         <p><?php echo _l('settings_sales_general_note'); ?></p>
       </p>
       <hr />
       <div class="row">
@@ -48,7 +54,7 @@
             </div>
          </div>
       </div>
-        <hr />
+      <hr />
       <div class="form-group">
          <label for="currency_placement" class="control-label clearfix"><?php echo _l('settings_sales_currency_placement'); ?></label>
          <div class="radio radio-primary radio-inline">
@@ -68,9 +74,9 @@
       <hr />
       <?php render_yes_no_option('remove_tax_name_from_item_table','remove_tax_name_from_item_table','remove_tax_name_from_item_table_help'); ?>
       <hr />
-        <?php
-         $default_tax = unserialize(get_option('default_tax'));
-         ?>
+      <?php
+      $default_tax = unserialize(get_option('default_tax'));
+      ?>
       <div class="form-group">
          <label for="default_tax"><?php echo _l('settings_default_tax'); ?></label>
          <?php echo $this->misc_model->get_taxes_dropdown_template('settings[default_tax][]',$default_tax); ?>
@@ -120,7 +126,7 @@
       <hr />
       <?php render_yes_no_option('show_total_paid_on_invoice','show_total_paid_on_invoice'); ?>
       <hr />
-       <?php render_yes_no_option('show_credits_applied_on_invoice','show_credits_applied_on_invoice'); ?>
+      <?php render_yes_no_option('show_credits_applied_on_invoice','show_credits_applied_on_invoice'); ?>
       <hr />
       <?php render_yes_no_option('show_amount_due_on_invoice','show_amount_due_on_invoice'); ?>
       <hr />
@@ -156,7 +162,7 @@
       <i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-title="<?php echo _l('settings_sales_next_invoice_number_tooltip'); ?>"></i>
       <?php echo render_input('settings[next_credit_note_number]','settings_sales_next_credit_note_number',get_option('next_credit_note_number')); ?>
       <hr />
-         <div class="form-group">
+      <div class="form-group">
          <label for="credit_note_number_format" class="control-label clearfix"><?php echo _l('settings_sales_credit_note_number_format'); ?></label>
          <div class="radio radio-primary radio-inline">
             <input type="radio" name="settings[credit_note_number_format]" value="1" id="cn_number_based" <?php if(get_option('credit_note_number_format') == '1'){echo 'checked';} ?>>
@@ -166,11 +172,11 @@
             <input type="radio" name="settings[credit_note_number_format]" value="2" id="cn_year_based" <?php if(get_option('credit_note_number_format') == '2'){echo 'checked';} ?>>
             <label for="cn_year_based"><?php echo _l('settings_sales_invoice_number_format_year_based'); ?> (YYYY/000001)</label>
          </div>
-           <div class="radio radio-primary radio-inline">
+         <div class="radio radio-primary radio-inline">
             <input type="radio" name="settings[credit_note_number_format]" value="3" id="cn_short_year_based" <?php if(get_option('credit_note_number_format') == '3'){echo 'checked';} ?>>
             <label for="cn_short_year_based">000001-YY</label>
          </div>
-          <div class="radio radio-primary radio-inline">
+         <div class="radio radio-primary radio-inline">
             <input type="radio" name="settings[credit_note_number_format]" value="4" id="cn_year_month_based" <?php if(get_option('credit_note_number_format') == '4'){echo 'checked';} ?>>
             <label for="cn_year_month_based">000001/MM/YYYY</label>
          </div>
@@ -178,7 +184,7 @@
       <hr />
       <?php render_yes_no_option('credit_note_number_decrement_on_delete','credit_note_number_decrement_on_delete','credit_note_number_decrement_on_delete_help'); ?>
       <hr />
-         <?php render_yes_no_option('show_project_on_credit_note','show_project_on_credit_note'); ?>
+      <?php render_yes_no_option('show_project_on_credit_note','show_project_on_credit_note'); ?>
       <hr />
       <?php echo render_textarea('settings[predefined_clientnote_credit_note]','settings_predefined_clientnote',get_option('predefined_clientnote_credit_note'),array('rows'=>6)); ?>
       <?php echo render_textarea('settings[predefined_terms_credit_note]','settings_predefined_predefined_term',get_option('predefined_terms_credit_note'),array('rows'=>6)); ?>
@@ -223,11 +229,11 @@
             <input type="radio" name="settings[estimate_number_format]" value="2" id="e_year_based" <?php if(get_option('estimate_number_format') == '2'){echo 'checked';} ?>>
             <label for="e_year_based"><?php echo _l('settings_sales_estimate_number_format_year_based'); ?> (YYYY/000001)</label>
          </div>
-           <div class="radio radio-primary radio-inline">
+         <div class="radio radio-primary radio-inline">
             <input type="radio" name="settings[estimate_number_format]" value="3" id="e_short_year_based" <?php if(get_option('estimate_number_format') == '3'){echo 'checked';} ?>>
             <label for="e_short_year_based">000001-YY</label>
          </div>
-           <div class="radio radio-primary radio-inline">
+         <div class="radio radio-primary radio-inline">
             <input type="radio" name="settings[estimate_number_format]" value="4" id="e_year_month_based" <?php if(get_option('estimate_number_format') == '4'){echo 'checked';} ?>>
             <label for="e_year_month_based">000001/MM/YYYY</label>
          </div>
@@ -316,20 +322,20 @@
          <a href="#" class="settings-textarea-merge-field" data-to="proposal_info_format">{email}</a>
       </p>
       <?php $custom_fields = get_custom_fields('proposal');
-         if(count($custom_fields) > 0){
-         	echo '<hr />';
-         	echo '<p class="no-mbot font-medium"><b>'._l('custom_fields').'</b></p>';
-         	if(total_rows('tblcustomfields',array('fieldto'=>'proposal','show_on_client_portal'=>1)) == 0){
-         		echo '<p>' . _l('custom_field_pdf_html_help'). '</p>';
-         		echo '<hr />';
-         	}
-         	echo '<ul class="list-group">';
-         	foreach($custom_fields as $field){
-         		echo '<li class="list-group-item"><b>'.$field['name']. '</b>: ' . '<a href="#" class="settings-textarea-merge-field" data-to="proposal_info_format">{cf_'.$field['id'].'}</a></li>';
-         	}
-         	echo '</ul>';
-         	echo '<hr />';
-         }
-         ?>
-   </div>
+      if(count($custom_fields) > 0){
+        echo '<hr />';
+        echo '<p class="no-mbot font-medium"><b>'._l('custom_fields').'</b></p>';
+        if(total_rows('tblcustomfields',array('fieldto'=>'proposal','show_on_client_portal'=>1)) == 0){
+          echo '<p>' . _l('custom_field_pdf_html_help'). '</p>';
+          echo '<hr />';
+       }
+       echo '<ul class="list-group">';
+       foreach($custom_fields as $field){
+          echo '<li class="list-group-item"><b>'.$field['name']. '</b>: ' . '<a href="#" class="settings-textarea-merge-field" data-to="proposal_info_format">{cf_'.$field['id'].'}</a></li>';
+       }
+       echo '</ul>';
+       echo '<hr />';
+    }
+    ?>
+ </div>
 </div>

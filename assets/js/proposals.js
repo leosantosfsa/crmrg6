@@ -50,22 +50,22 @@ function init_proposal_editor() {
         contextmenu: "image media inserttable | cell row column deletetable | paste pastetext searchreplace | visualblocks pagebreak charmap | code",
         setup: function(editor) {
 
-            editor.addCommand('mceSave', function(){
+            editor.addCommand('mceSave', function() {
                 save_proposal_content(true);
             });
 
             editor.addShortcut('Meta+S', '', 'mceSave');
 
             editor.on('MouseLeave blur', function() {
-                if(tinymce.activeEditor.isDirty()){
+                if (tinymce.activeEditor.isDirty()) {
                     save_proposal_content();
                 }
             });
 
             editor.on('MouseDown ContextMenu', function() {
-                  if(!is_mobile() && !$('#small-table').hasClass('hide')) {
-                      small_table_full_view();
-                  }
+                if (!is_mobile() && !$('#small-table').hasClass('hide')) {
+                    small_table_full_view();
+                }
             });
 
             editor.on('blur', function() {
@@ -77,6 +77,22 @@ function init_proposal_editor() {
             });
         },
     };
+
+    if (is_mobile()) {
+
+        settings.theme = 'modern';
+        settings.mobile = {};
+        settings.mobile.theme = 'mobile';
+        settings.mobile.toolbar = _tinymce_mobile_toolbar();
+
+        settings.inline = false;
+
+        window.addEventListener("beforeunload", function(event) {
+            if (tinymce.activeEditor.isDirty()) {
+                save_proposal_content();
+            }
+        });
+    }
 
     if (_templates.length > 0) {
         settings.templates = _templates;
@@ -170,8 +186,8 @@ function save_proposal_content(manual) {
     $.post(admin_url + 'proposals/save_proposal_data', data).done(function(response) {
         response = JSON.parse(response);
         if (typeof(manual) != 'undefined') {
-           // Show some message to the user if saved via CTRL + S
-           alert_float('success', response.message);
+            // Show some message to the user if saved via CTRL + S
+            alert_float('success', response.message);
         }
         // Invokes to set dirty to false
         editor.save();

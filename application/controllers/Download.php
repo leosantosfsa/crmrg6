@@ -112,35 +112,26 @@ class Download extends CRM_Controller
                 $path = get_upload_path_by_type('newsfeed') . $attachment->rel_id . '/' . $attachment->file_name;
             }
         } elseif ($folder_indicator == 'contract') {
-            if (is_logged_in()) {
-                if (!$attachmentid) {
-                    show_404();
-                }
-                $this->db->where('id', $attachmentid);
-                $attachment = $this->db->get('tblfiles')->row();
-                if (!$attachment) {
-                    show_404();
-                }
-                $this->load->model('contracts_model');
-                $contract = $this->contracts_model->get($attachment->rel_id);
-                if (is_client_logged_in()) {
-                    if ($contract->not_visible_to_client == 1) {
-                        if (!is_staff_logged_in()) {
-                            show_404();
-                        }
-                    }
-                }
-                if (!is_staff_logged_in()) {
-                    if ($contract->client != get_client_user_id()) {
-                        show_404();
-                    }
-                } else {
-                    if (!has_permission('contracts', '', 'view') && !has_permission('contracts', '', 'view_own')) {
-                        access_denied('contracts');
-                    }
-                }
-                $path = get_upload_path_by_type('contract') . $attachment->rel_id . '/' . $attachment->file_name;
+            if (!$attachmentid) {
+                show_404();
             }
+
+            $this->db->where('attachment_key', $attachmentid);
+            $attachment = $this->db->get('tblfiles')->row();
+            if (!$attachment) {
+                show_404();
+            }
+
+            if(!is_staff_logged_in()) {
+                $this->db->select('not_visible_to_client');
+                $this->db->where('id', $attachment->rel_id);
+                $contract = $this->db->get('tblcontracts')->row();
+                if($contract->not_visible_to_client == 1) {
+                    show_404();
+                }
+            }
+
+            $path = get_upload_path_by_type('contract') . $attachment->rel_id . '/' . $attachment->file_name;
         } elseif ($folder_indicator == 'taskattachment') {
             if (!is_logged_in()) {
                 show_404();

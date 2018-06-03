@@ -51,7 +51,6 @@
         </div>
     </div>
 </div>
-</div>
 <script>
     google_api = '<?php echo get_option('google_api_key'); ?>';
     calendarIDs = '<?php echo json_encode($google_ids_calendars); ?>';

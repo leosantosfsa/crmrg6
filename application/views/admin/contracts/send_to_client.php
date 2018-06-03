@@ -51,7 +51,7 @@
                             <?php foreach($contract->attachments as $attachment) { ?>
                                 <div class="checkbox checkbox-primary">
                                     <input type="checkbox" <?php if(!empty($attachment['external'])){echo 'disabled';}; ?> value="<?php echo $attachment['id']; ?>" name="email_attachments[]">
-                                    <label for=""><a href="<?php echo site_url('download/file/contract/'.$attachment['id']); ?>"><?php echo $attachment['file_name']; ?></a></label>
+                                    <label for=""><a href="<?php echo site_url('download/file/contract/'.$attachment['attachment_key']); ?>"><?php echo $attachment['file_name']; ?></a></label>
                                 </div>
                                 <?php } ?>
                             </div>

@@ -20,9 +20,9 @@ class Clients extends Clients_controller
         $data['payments_years'] = $this->reports_model->get_distinct_customer_invoices_years();
 
         $data['project_statuses'] = $this->projects_model->get_project_statuses();
-        $data['title'] = get_company_name(get_client_user_id());
-        $this->data    = $data;
-        $this->view    = 'home';
+        $data['title']            = get_company_name(get_client_user_id());
+        $this->data               = $data;
+        $this->view               = 'home';
         $this->layout();
     }
 
@@ -343,9 +343,8 @@ class Clients extends Clients_controller
         $data['project_status'] = get_project_status_by_id($data['project']->status);
         if ($group != 'edit_task') {
             if ($group == 'project_overview') {
-
-                $percent                = $this->projects_model->calc_progress($id);
-                @$data['percent']       = $percent / 100;
+                $percent          = $this->projects_model->calc_progress($id);
+                @$data['percent'] = $percent / 100;
                 $this->load->helper('date');
                 $data['project_total_days']        = round((human_to_unix($data['project']->deadline . ' 00:00') - human_to_unix($data['project']->start_date . ' 00:00')) / 3600 / 24);
                 $data['project_days_left']         = $data['project_total_days'];
@@ -353,7 +352,9 @@ class Clients extends Clients_controller
                 if ($data['project']->deadline) {
                     if (human_to_unix($data['project']->start_date . ' 00:00') < time() && human_to_unix($data['project']->deadline . ' 00:00') > time()) {
                         $data['project_days_left']         = round((human_to_unix($data['project']->deadline . ' 00:00') - time()) / 3600 / 24);
+
                         $data['project_time_left_percent'] = $data['project_days_left'] / $data['project_total_days'] * 100;
+                        $data['project_time_left_percent'] = round($data['project_time_left_percent'], 2);
                     }
                     if (human_to_unix($data['project']->deadline . ' 00:00') < time()) {
                         $data['project_days_left']         = 0;
@@ -382,6 +383,7 @@ class Clients extends Clients_controller
 
                 $data['total_tasks']                  = $total_tasks;
                 $data['tasks_not_completed_progress'] = ($total_tasks > 0 ? number_format(($data['tasks_completed'] * 100) / $total_tasks, 2) : 0);
+                $data['tasks_not_completed_progress'] = round($data['tasks_not_completed_progress'], 2);
             } elseif ($group == 'new_task') {
                 if ($project->settings->create_tasks == 0) {
                     redirect(site_url('clients/project/' . $project->id));
@@ -973,7 +975,9 @@ class Clients extends Clients_controller
         if ($this->input->post('profile')) {
             $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
             $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
-            $this->form_validation->set_rules('email', _l('clients_email'), 'required|valid_email');
+
+            $this->form_validation->set_message('contact_email_profile_unique', _l('form_validation_is_unique'));
+            $this->form_validation->set_rules('email', _l('clients_email'), 'required|valid_email|callback_contact_email_profile_unique');
 
             $custom_fields = get_custom_fields('contacts', [
                 'show_on_client_portal'  => 1,
@@ -1149,6 +1153,15 @@ class Clients extends Clients_controller
                 $clientid = $this->clients_model->add($data, true);
                 if ($clientid) {
                     do_action('after_client_register', $clientid);
+
+                    if (get_option('customers_register_require_confirmation') == '1') {
+                        send_customer_registered_email_to_administrators($clientid);
+
+                        $this->clients_model->require_confirmation($clientid);
+                        set_alert('success', _l('customer_register_account_confirmation_approval_notice'));
+                        redirect(site_url('clients/login'));
+                    }
+
                     $this->load->model('authentication_model');
                     $logged_in = $this->authentication_model->login($this->input->post('email'), $this->input->post('password', false), false, false);
 
@@ -1162,15 +1175,7 @@ class Clients extends Clients_controller
                         $redUrl = site_url('clients/login');
                     }
 
-                    $this->load->model('staff_model');
-                    $admins = $this->staff_model->get('', ['active' => 1, 'admin' => 1]);
-
-                    $this->load->model('emails_model');
-                    foreach ($admins as $admin) {
-                        $merge_fields = get_client_contact_merge_fields($clientid, get_primary_contact_user_id($clientid));
-                        $this->emails_model->send_email_template('new-client-registered-to-admin', $admin['email'], $merge_fields);
-                    }
-
+                    send_customer_registered_email_to_administrators($clientid);
                     redirect($redUrl);
                 }
             }
@@ -1604,6 +1609,11 @@ class Clients extends Clients_controller
             }
             echo json_encode($chart);
         }
+    }
+
+    public function contact_email_profile_unique($email)
+    {
+        return total_rows('tblcontacts', 'id !=' . get_contact_user_id() . ' AND email="' . $email . '"') > 0 ? false : true;
     }
 
     public function recaptcha($str = '')

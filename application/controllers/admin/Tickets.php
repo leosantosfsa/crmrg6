@@ -80,14 +80,14 @@ class Tickets extends Admin_controller
         $data['predefined_replies'] = $this->tickets_model->get_predefined_reply();
         $data['priorities']         = $this->tickets_model->get_priority();
         $data['services']           = $this->tickets_model->get_service();
-        $whereStaff = array();
-        if(get_option('access_tickets_to_none_staff_members') == 0) {
+        $whereStaff                 = [];
+        if (get_option('access_tickets_to_none_staff_members') == 0) {
             $whereStaff['is_not_staff'] = 0;
         }
-        $data['staff']              = $this->staff_model->get('', $whereStaff);
-        $data['articles']           = $this->knowledge_base_model->get();
-        $data['bodyclass']          = 'ticket';
-        $data['title']              = _l('new_ticket');
+        $data['staff']     = $this->staff_model->get('', $whereStaff);
+        $data['articles']  = $this->knowledge_base_model->get();
+        $data['bodyclass'] = 'ticket';
+        $data['title']     = _l('new_ticket');
 
         if ($this->input->get('project_id') && $this->input->get('project_id') > 0) {
             // request from project area to create new ticket
@@ -130,6 +130,28 @@ class Tickets extends Admin_controller
         } else {
             redirect($_SERVER['HTTP_REFERER']);
         }
+    }
+
+    public function delete_attachment($id)
+    {
+        if (is_admin() || (!is_admin() && get_option('allow_non_admin_staff_to_delete_ticket_attachments') == '1')) {
+            if (get_option('staff_access_only_assigned_departments') == 1 && !is_admin()) {
+
+                $attachment = $this->tickets_model->get_ticket_attachment($id);
+                $ticket = $this->tickets_model->get_ticket_by_id($attachment->ticketid);
+
+                $this->load->model('departments_model');
+                $staff_departments = $this->departments_model->get_staff_departments(get_staff_user_id(), true);
+                if (!in_array($ticket->department, $staff_departments)) {
+                    set_alert('danger', _l('ticket_access_by_department_denied'));
+                    redirect(admin_url('access_denied'));
+                }
+            }
+
+            $this->tickets_model->delete_ticket_attachment($id);
+        }
+
+        redirect($_SERVER['HTTP_REFERER']);
     }
 
     public function ticket($id)
@@ -184,15 +206,15 @@ class Tickets extends Admin_controller
         $data['statuses']                       = $this->tickets_model->get_ticket_status();
         $data['statuses']['callback_translate'] = 'ticket_status_translate';
 
-        $data['departments']          = $this->departments_model->get();
-        $data['predefined_replies']   = $this->tickets_model->get_predefined_reply();
-        $data['priorities']           = $this->tickets_model->get_priority();
-        $data['services']             = $this->tickets_model->get_service();
-        $whereStaff = array();
-        if(get_option('access_tickets_to_none_staff_members') == 0) {
+        $data['departments']        = $this->departments_model->get();
+        $data['predefined_replies'] = $this->tickets_model->get_predefined_reply();
+        $data['priorities']         = $this->tickets_model->get_priority();
+        $data['services']           = $this->tickets_model->get_service();
+        $whereStaff                 = [];
+        if (get_option('access_tickets_to_none_staff_members') == 0) {
             $whereStaff['is_not_staff'] = 0;
         }
-        $data['staff']              = $this->staff_model->get('', $whereStaff);
+        $data['staff']                = $this->staff_model->get('', $whereStaff);
         $data['articles']             = $this->knowledge_base_model->get();
         $data['ticket_replies']       = $this->tickets_model->get_ticket_replies($id);
         $data['bodyclass']            = 'top-tabs ticket single-ticket';

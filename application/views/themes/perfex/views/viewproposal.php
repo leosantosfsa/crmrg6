@@ -95,6 +95,11 @@
       ?>
    <div class="mtop30">
       <div class="row">
+        <div class="col-md-12">
+         <div class="mbot30">
+          <?php echo get_dark_company_logo(); ?>
+        </div>
+        </div>
          <div class="col-md-12">
             <div class="pull-left">
                <h4 class="bold no-mtop"># <?php echo format_proposal_number($proposal->id); ?><br />
@@ -154,12 +159,12 @@
                <ul class="nav nav-tabs nav-tabs-flat mbot15" role="tablist">
                   <li role="presentation" class="<?php if(!$this->input->get('tab') || $this->input->get('tab') === 'summary'){echo 'active';} ?>">
                      <a href="#summary" aria-controls="summary" role="tab" data-toggle="tab">
-                     <?php echo _l('summary'); ?></a>
+                     <i class="fa fa-file-text-o" aria-hidden="true"></i> <?php echo _l('summary'); ?></a>
                   </li>
                   <?php if($proposal->allow_comments == 1){ ?>
                   <li role="presentation" class="<?php if($this->input->get('tab') === 'discussion'){echo 'active';} ?>">
                      <a href="#discussion" aria-controls="discussion" role="tab" data-toggle="tab">
-                     <?php echo _l('discussion'); ?>
+                      <i class="fa fa-commenting-o" aria-hidden="true"></i> <?php echo _l('discussion'); ?>
                      </a>
                   </li>
                   <?php } ?>

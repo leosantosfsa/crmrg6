@@ -217,7 +217,7 @@
                               );
                               if(is_gdpr() && get_option('gdpr_enable_consent_for_leads') == '1') {
                                 $_table_data[] = array(
-                                    'name'=>_l('gdpr_consent') .' (GDPR)',
+                                    'name'=>_l('gdpr_consent') .' ('._l('gdpr_short').')',
                                     'th_attrs'=>array('id'=>'th-consent', 'class'=>'not-export')
                                  );
                               }

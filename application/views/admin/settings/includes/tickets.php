@@ -21,6 +21,8 @@
     <hr />
     <?php render_yes_no_option('access_tickets_to_none_staff_members','access_tickets_to_none_staff_members'); ?>
     <hr />
+    <?php render_yes_no_option('allow_non_admin_staff_to_delete_ticket_attachments','allow_non_admin_staff_to_delete_ticket_attachments'); ?>
+    <hr />
     <?php render_yes_no_option('allow_customer_to_change_ticket_status','allow_customer_to_change_ticket_status'); ?>
     <hr />
     <?php render_yes_no_option('only_show_contact_tickets','only_show_contact_tickets'); ?>

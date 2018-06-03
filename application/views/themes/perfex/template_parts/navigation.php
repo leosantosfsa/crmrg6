@@ -45,7 +45,7 @@
         <?php if(is_gdpr() && is_client_logged_in() && get_option('show_gdpr_in_customers_menu') == '1') { ?>
         <li class="customers-nav-item-tickets">
             <a href="<?php echo site_url('clients/gdpr'); ?>">
-                GDPR
+                <?php echo _l('gdpr_short'); ?>
             </a>
         </li>
         <?php } ?>

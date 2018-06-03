@@ -13,16 +13,16 @@ if (is_gdpr() && $consentContacts == '1') {
 
 $aColumns = array_merge($aColumns, [
     'email',
-    '(SELECT company FROM tblclients WHERE tblclients.userid=tblcontacts.userid) as company',
-    'phonenumber',
+    'company',
+    'tblcontacts.phonenumber as phonenumber',
     'title',
     'last_login',
-    'active',
+    'tblcontacts.active as active',
 ]);
 
 $sIndexColumn = 'id';
 $sTable       = 'tblcontacts';
-$join         = [];
+$join         = ['JOIN tblclients ON tblclients.userid=tblcontacts.userid'];
 
 $custom_fields = get_table_custom_fields('contacts');
 
@@ -51,7 +51,7 @@ if (count($custom_fields) > 4) {
     @$this->ci->db->query('SET SQL_BIG_SELECTS=1');
 }
 
-$result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, ['tblcontacts.id as id', 'userid', 'is_primary', '(SELECT count(*) FROM tblcontacts c WHERE c.userid=tblcontacts.userid) as total_contacts']);
+$result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, ['tblcontacts.id as id', 'tblcontacts.userid as userid', 'is_primary', '(SELECT count(*) FROM tblcontacts c WHERE c.userid=tblcontacts.userid) as total_contacts','tblclients.registration_confirmed as registration_confirmed']);
 
 $output  = $result['output'];
 $rResult = $result['rResult'];
@@ -67,7 +67,7 @@ foreach ($rResult as $aRow) {
 
     if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1' && is_admin()) {
         $rowName .= ' | <a href="' . admin_url('clients/export/' . $aRow['id']) . '">
-             ' . _l('dt_button_export') . ' (GDPR)
+             ' . _l('dt_button_export') . ' ('._l('gdpr_short').')
           </a>';
     }
 
@@ -107,7 +107,7 @@ foreach ($rResult as $aRow) {
     $row[] = (!empty($aRow['last_login']) ? '<span class="text-has-action" data-toggle="tooltip" data-title="' . _dt($aRow['last_login']) . '">' . time_ago($aRow['last_login']) . '</span>' : '');
 
     $outputActive = '<div class="onoffswitch">
-                <input type="checkbox" data-switch-url="' . admin_url() . 'clients/change_contact_status" name="onoffswitch" class="onoffswitch-checkbox" id="c_' . $aRow['id'] . '" data-id="' . $aRow['id'] . '"' . ($aRow['active'] == 1 ? ' checked': '') . '>
+                <input type="checkbox"'.($aRow['registration_confirmed'] == 0 ? ' disabled' : '').' data-switch-url="' . admin_url() . 'clients/change_contact_status" name="onoffswitch" class="onoffswitch-checkbox" id="c_' . $aRow['id'] . '" data-id="' . $aRow['id'] . '"' . ($aRow['active'] == 1 ? ' checked': '') . '>
                 <label class="onoffswitch-label" for="c_' . $aRow['id'] . '"></label>
             </div>';
     // For exporting
@@ -121,5 +121,10 @@ foreach ($rResult as $aRow) {
 
     $row['DT_RowClass'] = 'has-row-options';
 
+    if ($aRow['registration_confirmed'] == 0) {
+        $row['DT_RowClass'] .= ' alert-info requires-confirmation';
+        $row['Data_Title']  = _l('customer_requires_registration_confirmation');
+        $row['Data_Toggle'] = 'tooltip';
+    }
     $output['aaData'][] = $row;
 }

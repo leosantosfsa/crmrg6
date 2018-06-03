@@ -40,8 +40,8 @@ $join = [
 foreach ($custom_fields as $key => $field) {
     $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
     array_push($customFieldsColumns, $selectAs);
-    array_push($aColumns, '(SELECT value FROM tblcustomfieldsvalues WHERE tblcustomfieldsvalues.relid=tblleads.id AND tblcustomfieldsvalues.fieldid=
-        ' . $field['id'] . ' AND tblcustomfieldsvalues.fieldto="' . $field['fieldto'] . '" LIMIT 1) as ' . $selectAs);
+    array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
+    array_push($join, 'LEFT JOIN tblcustomfieldsvalues as ctable_' . $key . ' ON tblleads.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
 }
 
 $where  = [];
@@ -102,7 +102,7 @@ $additionalColumns = do_action('leads_table_additional_columns_sql', [
     'assigned',
     'lastname as assigned_lastname',
     'tblleads.addedfrom as addedfrom',
-    '(SELECT leadid FROM tblclients WHERE leadid=tblleads.id) as is_converted',
+    '(SELECT count(leadid) FROM tblclients WHERE tblclients.leadid=tblleads.id) as is_converted',
     'zip',
 ]);
 
@@ -126,7 +126,7 @@ foreach ($rResult as $aRow) {
 
     $locked = false;
 
-    if ($aRow['is_converted']) {
+    if ($aRow['is_converted'] > 0) {
         $locked = ((!is_admin() && $lockAfterConvert == 1) ? true : false);
     }
 
@@ -182,7 +182,7 @@ foreach ($rResult as $aRow) {
     } else {
         $outputStatus = '<span class="inline-block label label-' . (empty($aRow['color']) ? 'default': '') . '" style="color:' . $aRow['color'] . ';border:1px solid ' . $aRow['color'] . '">' . $aRow['status_name'];
         if (!$locked) {
-            $outputStatus .= '<div class="dropdown inline-block mleft5 status-table-mark">';
+            $outputStatus .= '<div class="dropdown inline-block mleft5 table-export-exclude">';
             $outputStatus .= '<a href="#" style="font-size:14px;vertical-align:middle;" class="dropdown-toggle text-dark" id="tableLeadsStatus-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
             $outputStatus .= '<span data-toggle="tooltip" title="' . _l('ticket_single_change_status') . '"><i class="fa fa-caret-down" aria-hidden="true"></i></span>';
             $outputStatus .= '</a>';

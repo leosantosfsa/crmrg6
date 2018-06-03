@@ -3,7 +3,13 @@
    <div class="content">
       <div class="row">
          <div class="col-md-12">
-            <?php if(isset($client) && $client->active == 0){ ?>
+            <?php if(isset($client) && $client->registration_confirmed == 0 && is_admin()){ ?>
+               <div class="alert alert-warning">
+                  <?php echo _l('customer_requires_registration_confirmation'); ?>
+                  <br />
+                  <a href="<?php echo admin_url('clients/confirm_registration/'.$client->userid); ?>"><?php echo _l('confirm_registration'); ?></a>
+               </div>
+            <?php } else if(isset($client) && $client->active == 0 && $client->registration_confirmed == 1){ ?>
             <div class="alert alert-warning">
                <?php echo _l('customer_inactive_message'); ?>
                <br />

@@ -4,6 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 $hasPermissionEdit   = has_permission('tasks', '', 'edit');
 $hasPermissionDelete = has_permission('tasks', '', 'delete');
+$tasksPriorities = get_tasks_priorities();
 
 $aColumns = [
     '1', // bulk actions
@@ -140,8 +141,7 @@ foreach ($rResult as $aRow) {
 */
 
     if ($canChangeStatus) {
-
-        $outputStatus .= '<div class="dropdown inline-block mleft5 status-table-mark">';
+        $outputStatus .= '<div class="dropdown inline-block mleft5 table-export-exclude">';
         $outputStatus .= '<a href="#" style="font-size:14px;vertical-align:middle;" class="dropdown-toggle text-dark" id="tableTaskStatus-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
         $outputStatus .= '<span data-toggle="tooltip" title="' . _l('ticket_single_change_status') . '"><i class="fa fa-caret-down" aria-hidden="true"></i></span>';
         $outputStatus .= '</a>';
@@ -172,7 +172,32 @@ foreach ($rResult as $aRow) {
 
     $row[] = render_tags($aRow['tags']);
 
-    $row[] = '<span style="color:' . task_priority_color($aRow['priority']) . ';" class="inline-block">' . task_priority($aRow['priority']) . '</span>';
+    $outputPriority = '<span style="color:' . task_priority_color($aRow['priority']) . ';" class="inline-block">' . task_priority($aRow['priority']);
+
+    if (has_permission('tasks', '', 'edit') && $aRow['status'] != 5) {
+        $outputPriority .= '<div class="dropdown inline-block mleft5 table-export-exclude">';
+        $outputPriority .= '<a href="#" style="font-size:14px;vertical-align:middle;" class="dropdown-toggle text-dark" id="tableTaskPriority-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
+        $outputPriority .= '<span data-toggle="tooltip" title="' . _l('task_single_priority') . '"><i class="fa fa-caret-down" aria-hidden="true"></i></span>';
+        $outputPriority .= '</a>';
+
+        $outputPriority .= '<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="tableTaskPriority-' . $aRow['id'] . '">';
+        foreach($tasksPriorities as $priority){
+            if ($aRow['priority'] != $priority['id']) {
+                $outputPriority .= '<li>
+                  <a href="#" onclick="task_change_priority(' . $priority['id'] . ',' . $aRow['id'] . '); return false;">
+                     ' . $priority['name'] . '
+                  </a>
+               </li>';
+            }
+        }
+        $outputPriority .= '</ul>';
+        $outputPriority .= '</div>';
+    }
+
+    $outputPriority .= '</span>';
+    $row[] = $outputPriority;
+
+
 
     // Custom fields add values
     foreach ($customFieldsColumns as $customFieldColumn) {

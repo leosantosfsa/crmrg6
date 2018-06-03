@@ -259,7 +259,7 @@
                            <?php
                               $data = '<div class="row">';
                               foreach($contract->attachments as $attachment) {
-                                $href_url = site_url('download/file/contract/'.$attachment['id']);
+                                $href_url = site_url('download/file/contract/'.$attachment['attachment_key']);
                                 if(!empty($attachment['external'])){
                                   $href_url = $attachment['external_link'];
                                 }
@@ -430,7 +430,6 @@
        selector: 'div.editable',
        inline: true,
        theme: 'inlite',
-       // skin: 'perfex',
        relative_urls: false,
        remove_script_host: false,
        inline_styles: true,
@@ -457,7 +456,6 @@
        contextmenu: "image media inserttable | cell row column deletetable | paste pastetext searchreplace | visualblocks pagebreak charmap | code",
        setup: function (editor) {
 
-
           editor.addCommand('mceSave', function () {
              save_contract_content(true);
           });
@@ -480,19 +478,12 @@
              $.Shortcuts.start();
           });
 
+
           editor.on('focus', function () {
              $.Shortcuts.stop();
           });
-          /*
-                 editor.addButton('save_button', {
-                   text: appLang.contract_save,
-                   icon: false,
-                   id: 'inline-editor-save-btn',
-                   onclick: function() {
-                   save_contract_content();
-                }
-              });*/
-       },
+
+       }
     }
 
     if (_templates.length > 0) {
@@ -501,7 +492,23 @@
        editor_settings.contextmenu = editor_settings.contextmenu.replace('inserttable', 'inserttable template');
     }
 
+     if(is_mobile()) {
+
+          editor_settings.theme = 'modern';
+          editor_settings.mobile    = {};
+          editor_settings.mobile.theme = 'mobile';
+          editor_settings.mobile.toolbar = _tinymce_mobile_toolbar();
+
+          editor_settings.inline = false;
+          window.addEventListener("beforeunload", function (event) {
+            if (tinymce.activeEditor.isDirty()) {
+               save_contract_content();
+            }
+         });
+     }
+
     tinymce.init(editor_settings);
+
    });
 
    function save_contract_content(manual) {
