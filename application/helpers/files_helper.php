@@ -219,54 +219,6 @@ function unique_filename($dir, $filename)
  */
 function sanitize_file_name($filename)
 {
-    $special_chars = [
-        '?',
-        '[',
-        ']',
-        '/',
-        '\\',
-        '=',
-        '<',
-        '>',
-        ':',
-        ';',
-        ',',
-        "'",
-        '"',
-        '&',
-        '$',
-        '#',
-        '*',
-        '(',
-        ')',
-        '|',
-        '~',
-        '`',
-        '!',
-        '{',
-        '}',
-        '%',
-        '+',
-        chr(0),
-    ];
-    $filename = str_replace($special_chars, '', $filename);
-    $filename = str_replace([
-        '%20',
-        '+',
-    ], '-', $filename);
-    $filename = preg_replace('/[\r\n\t -]+/', '-', $filename);
-    $filename = trim($filename, '.-_');
-    // Split the filename into a base and extension[s]
-    $parts = explode('.', $filename);
-    // Return if only one extension
-    if (count($parts) <= 2) {
-        return $filename;
-    }
-    // Process multiple extensions
-    $filename  = array_shift($parts);
-    $extension = array_pop($parts);
-
-    $filename .= '.' . $extension;
     $CI       = & get_instance();
     $filename = $CI->security->sanitize_filename($filename);
 
@@ -533,4 +485,42 @@ function project_file_url($file, $preview = false)
     }
 
     return $url;
+}
+
+/**
+ * Check if filename/path is markdown file
+ * @param  string  $path full path with filename
+ * @return boolean
+ */
+function is_markdown_file($path)
+{
+    $extensions = ['.markdown', '.mdown', '.mkdn', '.md', '.mkd', '.mdwn', '.mdtxt', '.mdtext', '.text', '.Rmd'];
+    $extensions = do_action('markdown_extensions', $extensions);
+
+    foreach ($extensions as $markdownExtension) {
+        if (endsWith($path, $markdownExtension)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+/**
+ * Parse markdown preview
+ * @param  string $path full markdown file path
+ * @return mixed
+ */
+function markdown_parse_preview($path)
+{
+    $Parsedown = new Parsedown();
+
+    $markDownSafeMode = do_action('mark_down_safe_mode', 'true');
+    $Parsedown->setSafeMode($markDownSafeMode == 'true' ? true : false);
+
+    $contents = @file_get_contents($path);
+    if (!$contents) {
+        return false;
+    }
+
+    return $Parsedown->text($contents);
 }

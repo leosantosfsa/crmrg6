@@ -6,12 +6,16 @@
             <h4><?php echo _l('additional_action_required'); ?></h4>
         </div>
         <div class="modal-body">
+          <?php if(project_has_recurring_tasks($project->id)) { ?>
+            <div class="alert alert-warning recurring-tasks-notice hide" data-notice-text="<?php echo _l('project_changing_status_recurring_tasks_notice'); ?>">
+            </div>
+        <?php } ?>
           <div class="checkbox checkbox-primary">
             <input type="checkbox" name="notify_project_members_status_change" id="notify_project_members_status_change">
             <label for="notify_project_members_status_change"><?php echo _l('notify_project_members_status_change'); ?></label>
         </div>
         <div class="checkbox checkbox-primary">
-            <input type="checkbox" name="mark_all_tasks_as_completed" checked id="mark_all_tasks_as_completed">
+            <input type="checkbox" name="mark_all_tasks_as_completed" id="mark_all_tasks_as_completed">
             <label for="mark_all_tasks_as_completed"><?php echo _l('project_mark_all_tasks_as_completed'); ?></label>
         </div>
         <?php if(total_rows('tblemailtemplates',array('slug'=>'project-finished-to-customer','active'=>0)) == 0 && total_rows('tblcontacts',array('userid'=>$project->clientid,'active'=>1)) > 0){ ?>

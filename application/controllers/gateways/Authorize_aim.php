@@ -10,6 +10,7 @@ class Authorize_aim extends CRM_Controller
 
     public function complete_purchase()
     {
+
         if ($this->input->post()) {
             $data = $this->input->post();
             $this->load->model('invoices_model');
@@ -117,21 +118,27 @@ class Authorize_aim extends CRM_Controller
                                 </div>
                              </div>
                              <div>
-                               <div class="form-group">
+                              <div class="row">
+                                <div class="col-md-6">
+                                      <div class="form-group">
                                 <label class="control-label" for="expMonth">
                                  <?php echo _l('card_expiration_month'); ?> (MM)
                                </label>
                                <input class="form-control" name="expMonth" id="expMonth" type="number" maxlength="2" required />
                              </div>
-                             <div class="form-group">
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="form-group">
                               <label class="control-label" for="expYear">
                                <?php echo _l('card_expiration_year'); ?> (YYYY)
                              </label>
                              <input class="form-control" name="expYear" id="expYear" type="number" maxlength="4" required />
                            </div>
+                                </div>
+                              </div>
                              </div>
                              <div>
-                                <div class="form-group mtop15">
+                                <div class="form-group">
                                    <label class="control-label">
                                    CVC
                                    </label>

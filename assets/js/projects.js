@@ -21,10 +21,11 @@
       }
 
       // Fix for shortcuts in discussions textarea/contenteditable - jquery-comments plugin
-      var $discussionsContentEditable = $('#project_file_data,#discussion-comments');
+      var $discussionsContentEditable = $('#project_file_data, #discussion-comments');
       $discussionsContentEditable.on('focus', '[contenteditable="true"]', function() {
           $.Shortcuts.stop();
       });
+
       $discussionsContentEditable.on('focusout', '[contenteditable="true"]', function() {
           $.Shortcuts.start();
       });
@@ -171,7 +172,7 @@
           months: JSON.parse(monthsJSON),
           navigate: 'scroll',
           onRender: function() {
-              var rm = $('#gantt .leftPanel .name .fn-label:empty').parents('.name').css('background', 'initial');
+              $('#gantt .leftPanel .name .fn-label:empty').parents('.name').css('background', 'initial');
               $('#gantt .leftPanel .spacer').html('<span class="gantt_project_name"><i class="fa fa-cubes"></i> ' + $('.project-name').text() + '</span>');
               var _percent = $('input[name="project_percent"]').val();
               $('#gantt .leftPanel .spacer').append('<div style="padding:10px 20px 10px 20px;"><div class="progress mtop5 progress-bar-mini"><div class="progress-bar progress-bar-success no-percent-text" role="progressbar" aria-valuenow="' + _percent + '" aria-valuemin="0" aria-valuemax="100" style="width: 0%" data-percent="' + _percent + '"></div></div></div>');
@@ -201,7 +202,6 @@
 
       init_rel_tasks_table(project_id, 'project');
       initDataTable('.table-notes', admin_url + 'projects/notes/' + project_id, [4], [4], 'undefined', [1, 'desc']);
-
 
       var Timesheets_ServerParams = {};
       $.each($('._hidden_inputs._filters.timesheets_filters input'), function() {
@@ -545,20 +545,34 @@
       $.post(admin_url + 'projects/update_file_data/', data);
   }
 
-  function project_mark_as_modal(status_id, $project_id) {
+  function project_mark_as_modal(status_id, $project_id, target) {
       $('#mark_tasks_finished_modal').modal('show');
       $('#project_mark_status_confirm').attr('data-status-id', status_id);
       $('#project_mark_status_confirm').attr('data-project-id', project_id);
-      var $projectMarkedasFinishedInput = $('#project_marked_as_finished_email_to_contacts');
+      var $projectMarkedAsFinishedInput = $('#project_marked_as_finished_email_to_contacts');
       if (status_id == 4) {
-          if ($projectMarkedasFinishedInput.length > 0) {
-              $projectMarkedasFinishedInput.parents('.project_marked_as_finished').removeClass('hide');
+          if ($projectMarkedAsFinishedInput.length > 0) {
+              $projectMarkedAsFinishedInput.parents('.project_marked_as_finished').removeClass('hide');
           }
       } else {
-          if ($projectMarkedasFinishedInput.length > 0) {
-              $projectMarkedasFinishedInput.prop('checked', false);
-              $projectMarkedasFinishedInput.parents('.project_marked_as_finished').addClass('hide');
+          if ($projectMarkedAsFinishedInput.length > 0) {
+              $projectMarkedAsFinishedInput.prop('checked', false);
+              $projectMarkedAsFinishedInput.parents('.project_marked_as_finished').addClass('hide');
           }
+      }
+      var noticeWrapper = $('.recurring-tasks-notice');
+      if (status_id == 4 || status_id == 5 || status_id == 3) {
+          if(noticeWrapper.length) {
+              var notice = noticeWrapper.data('notice-text');
+              notice = notice.replace('{0}', $(target).data('name'));
+              noticeWrapper.html(notice);
+              noticeWrapper.append('<input type="hidden" name="cancel_recurring_tasks" value="true">');
+              noticeWrapper.removeClass('hide');
+          }
+          $('#mark_all_tasks_as_completed').prop('checked', true);
+      } else {
+          noticeWrapper.html('').addClass('hide');
+          $('#mark_all_tasks_as_completed').prop('checked', false);
       }
   }
 
@@ -588,7 +602,6 @@
               $.post(admin_url + 'projects/bulk_action_files', data).done(function() {
                   window.location.reload();
               });
-
           }, 200);
       }
 
@@ -608,17 +621,30 @@
 
   function confirm_project_status_change(e) {
       var data = {};
+
       $(e).attr('disabled', true);
+
       data.project_id = $(e).data('project-id');
       data.status_id = $(e).data('status-id');
+
       if (data.status_id == 4) {
-          var $projectMarkedasFinishedInput = $('#project_marked_as_finished_email_to_contacts');
-          if ($projectMarkedasFinishedInput.length > 0) {
-              data.send_project_marked_as_finished_email_to_contacts = $projectMarkedasFinishedInput.prop('checked') === true ? 1 : 0;
+          var $projectMarkedAsFinishedInput = $('#project_marked_as_finished_email_to_contacts');
+          if ($projectMarkedAsFinishedInput.length > 0) {
+              data.send_project_marked_as_finished_email_to_contacts = $projectMarkedAsFinishedInput.prop('checked') === true ? 1 : 0;
           }
       }
+
       data.mark_all_tasks_as_completed = $('#mark_all_tasks_as_completed').prop('checked') === true ? 1 : 0;
+      data.cancel_recurring_tasks = $('input[name="cancel_recurring_tasks"]').val();
+
+      if (!data.cancel_recurring_tasks) {
+          data.cancel_recurring_tasks = false;
+      } else {
+          data.cancel_recurring_tasks = true;
+      }
+
       data.notify_project_members_status_change = $('#notify_project_members_status_change').prop('checked') === true ? 1 : 0;
+
       $.post(admin_url + 'projects/mark_as', data).done(function(response) {
           response = JSON.parse(response);
           alert_float(response.success === true ? 'success' : 'warning', response.message);

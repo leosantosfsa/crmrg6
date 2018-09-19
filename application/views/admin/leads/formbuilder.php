@@ -8,8 +8,7 @@
          <div class="col-md-12">
             <div class="panel_s">
                <div class="panel-body">
-               <?php if (isset($form)) {
-    ?>
+               <?php if (isset($form)) { ?>
                   <ul class="nav nav-tabs" role="tablist">
                      <li role="presentation" class="active">
                         <a href="#tab_form_build" aria-controls="tab_form_build" role="tab" data-toggle="tab">
@@ -27,11 +26,9 @@
                         </a>
                      </li>
                   </ul>
-                  <?php
-} ?>
+                  <?php } ?>
                   <div class="tab-content">
-                     <?php if (isset($form)) {
-        ?>
+                     <?php if (isset($form)) { ?>
                      <div role="tabpanel" class="tab-pane active" id="tab_form_build">
                         <div id="build-wrap"></div>
                      </div>
@@ -39,25 +36,19 @@
                         <p><?php echo _l('form_integration_code_help'); ?></p>
                         <textarea readonly class="form-control" rows="5"><iframe width="600" height="850" src="<?php echo site_url('forms/wtl/'.$form->form_key); ?>" frameborder="0" allowfullscreen></iframe></textarea>
                      </div>
-                     <?php
-    } ?>
-                     <div role="tabpanel" class="tab-pane<?php if (!isset($form)) {
-        echo ' active';
-    } ?>" id="tab_form_information">
-                        <?php if (!isset($form)) {
-        ?>
+                     <?php } ?>
+                     <div role="tabpanel" class="tab-pane<?php if (!isset($form)) { echo ' active'; } ?>" id="tab_form_information">
+                        <?php if (!isset($form)) { ?>
                         <h4 class="font-medium-xs bold no-mtop"><?php echo _l('form_builder_create_form_first'); ?></h4>
                         <hr />
-                        <?php
-    } ?>
+                        <?php } ?>
                         <?php echo form_open($this->uri->uri_string(), array('id'=>'form_info')); ?>
                         <div class="row">
                            <div class="col-md-6">
                               <?php $value = (isset($form) ? $form->name : ''); ?>
                               <?php echo render_input('name', 'form_name', $value); ?>
                               <?php
-                                 if (get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '') {
-                                     ?>
+                                 if (get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '') { ?>
                               <div class="form-group">
                                  <label for=""><?php echo _l('form_recaptcha'); ?></label><br />
                                  <div class="radio radio-inline radio-danger">
@@ -73,8 +64,7 @@
                                     <label for="recaptcha_1"><?php echo _l('settings_yes'); ?></label>
                                  </div>
                               </div>
-                              <?php
-                                 } ?>
+                              <?php } ?>
                               <div class="form-group select-placeholder">
                                  <label for="language" class="control-label"><i class="fa fa-question-circle" data-toggle="tooltip" data-title="<?php echo _l('form_lang_validation_help'); ?>"></i> <?php echo _l('form_lang_validation'); ?></label>
                                  <select name="language" id="language" class="form-control selectpicker" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
@@ -84,8 +74,7 @@
                                     <option value="<?php echo $language; ?>"<?php if ((isset($form) && $form->language == $language) || (!isset($form) && get_option('active_language') == $language)) {
                                          echo ' selected';
                                      } ?>><?php echo ucfirst($language); ?></option>
-                                    <?php
-                                 } ?>
+                                    <?php } ?>
                                  </select>
                               </div>
                               <?php $value = (isset($form) ? $form->submit_btn_name : 'Submit'); ?>
@@ -104,7 +93,7 @@
                                  <input type="checkbox" name="allow_duplicate" id="allow_duplicate" <?php if (isset($form) && $form->allow_duplicate == 1 || !isset($form)) {
                                      echo 'checked';
                                  } ?>>
-                                 <label for="allow_duplicate"><?php echo _l('form_allow_duplicate', _l('leads')); ?></label>
+                                 <label for="allow_duplicate"><?php echo _l('form_allow_duplicate', _l('lead_lowercase')); ?></label>
                               </div>
                               <div class="duplicate-settings-wrapper row<?php if (isset($form) && $form->allow_duplicate == 1 || !isset($form)) {
                                      echo ' hide';
@@ -125,8 +114,7 @@
                                      if (isset($form) && $form->track_duplicate_field_and == $field->name) {
                                          echo 'disabled';
                                      } ?>><?php echo $field->label; ?></option>
-                                          <?php
-                                 } ?>
+                                          <?php } ?>
                                        </select>
                                     </div>
                                  </div>
@@ -143,14 +131,13 @@
                                      if (isset($form) && $form->track_duplicate_field == $field->name) {
                                          echo 'disabled';
                                      } ?>><?php echo $field->label; ?></option>
-                                          <?php
-                                 } ?>
+                                          <?php } ?>
                                        </select>
                                     </div>
                                  </div>
                                  <div class="col-md-12">
                                     <div class="checkbox checkbox-primary">
-                                       <input type="checkbox" name="create_task_on_duplicate" id="create_task_on_duplicate" <?php if (isset($form) && $form->create_task_on_duplicate == 1) {
+                                       <input type="checkbox" name="create_task_on_duplicate" id="create_task_on_duplicate" <?php if (isset($form) && $form->create_task_on_duplicate == 1 || !isset($form)) {
                                      echo 'checked';
                                  } ?>>
                                        <label for="create_task_on_duplicate"><i class="fa fa-question-circle" data-toggle="tooltip" data-title="<?php echo _l('create_the_duplicate_form_data_as_task_help'); ?>"></i> <?php echo _l('create_the_duplicate_form_data_as_task', _l('lead_lowercase')); ?></label>
@@ -247,11 +234,24 @@
 <script>
 var buildWrap = document.getElementById('build-wrap');
 var formData = <?php echo json_encode($formData); ?>;
+
+if(formData.length){
+  // If user paste with styling eq from some editor word and the Codeigniter XSS feature remove and apply xss=remove, may break the json.
+  formData = formData.replace(/=\\>/gm, ">");
+}
 </script>
 <?php $this->load->view('admin/includes/_form_js_formatter'); ?>
 <script>
 
    $(function(){
+
+    $('body').on('blur', '.form-field.editing', function () {
+        $.Shortcuts.start();
+    });
+
+    $('body').on('focus', '.form-field.editing', function () {
+        $.Shortcuts.stop();
+    });
 
      var formBuilder = $(buildWrap).formBuilder(fbOptions);
      var $create_task_on_duplicate = $('#create_task_on_duplicate');
@@ -267,7 +267,10 @@ var formData = <?php echo json_encode($formData); ?>;
      $('#track_duplicate_field,#track_duplicate_field_and').on('change',function(){
        var selector = ($(this).hasClass('track_duplicate_field') ? 'track_duplicate_field_and' : 'track_duplicate_field')
          $('#'+selector+' option').removeAttr('disabled',true);
-         $('#'+selector+' option[value="'+$(this).val()+'"]').attr('disabled',true);
+         var val = $(this).val();
+         if(val !== ''){
+            $('#'+selector+' option[value="'+val+'"]').attr('disabled',true);
+         }
          $('#'+selector+'').selectpicker('refresh');
      });
 
@@ -326,6 +329,7 @@ var formData = <?php echo json_encode($formData); ?>;
      });
 
      $create_task_on_duplicate.trigger('change');
+
    });
 
 </script>

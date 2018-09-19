@@ -63,7 +63,12 @@ class PDF_Signature
                 $width = $dimensions['wk'] - ($dimensions['rm'] + $dimensions['lm']);
                 $this->PDFinstance->ln(13);
             }
+
+            $hookData = ['pdfInstance' => $this->PDFinstance, 'type' => $this->PDFtype,'signatureCellWidth'=>$width];
+
+            do_action('before_customer_pdf_signature', $hookData);
             $this->PDFinstance->MultiCell($width, 0, $customerSignature, 0, 'R', 0, 1, '', '', true, 0, true, false, 0);
+            do_action('after_customer_pdf_signature', $hookData);
         }
     }
 }

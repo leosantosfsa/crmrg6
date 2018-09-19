@@ -4,8 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
 
-// require_once(APPPATH . 'third_party/omnipay/vendor/autoload.php');
-
 class Authorize_sim_gateway extends App_gateway
 {
     public function __construct()

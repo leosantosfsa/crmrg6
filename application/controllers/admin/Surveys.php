@@ -133,7 +133,7 @@ class Surveys extends Admin_controller
                         $whereConsent = '';
                         $where        = 'active=1';
 
-                        if ($this->input->post('contacts_consent')) {
+                        if ($this->input->post('contacts_consent') && is_array($this->input->post('contacts_consent'))) {
                             $whereConsent = ' AND tblcontacts.id IN (SELECT contact_id FROM tblconsents WHERE purpose_id IN (' . implode(',', $this->input->post('contacts_consent')) . ') and action="opt-in" AND date IN (SELECT MAX(date) FROM tblconsents WHERE purpose_id IN (' . implode(', ', $this->input->post('contacts_consent')) . ') AND contact_id=tblcontacts.id))';
                         }
                         if ($this->input->post('ml_customers_all')) {
@@ -162,7 +162,7 @@ class Surveys extends Admin_controller
                         $this->load->model('leads_model');
                         if ($this->input->post('leads_status')) {
                             $whereConsent = '';
-                            if ($this->input->post('leads_consent')) {
+                            if ($this->input->post('leads_consent') && is_array($this->input->post('leads_consent'))) {
                                 $whereConsent = ' AND tblleads.id IN (SELECT lead_id FROM tblconsents WHERE purpose_id IN (' . implode(',', $this->input->post('leads_consent')) . ') and action="opt-in" AND date IN (SELECT MAX(date) FROM tblconsents WHERE purpose_id IN (' . implode(', ', $this->input->post('leads_consent')) . ') AND lead_id=tblleads.id))';
                             }
 

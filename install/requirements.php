@@ -2,7 +2,7 @@
 
 $error = false;
 
-if (phpversion() < "5.5") {
+if (phpversion() < "5.6") {
 	$error = true;
 	$requirement1 = "<span class='label label-danger'>Your PHP version is " . phpversion() . "</span>";
 } else {
@@ -93,7 +93,7 @@ if ($url_f_open != "1"
 	</thead>
 	<tbody>
 		<tr>
-			<td>PHP 5.5+ </td>
+			<td>PHP 5.6+ </td>
 			<td><?php echo $requirement1; ?></td>
 		</tr>
 		<tr>

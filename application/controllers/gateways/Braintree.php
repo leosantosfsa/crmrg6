@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Braintree extends CRM_Controller
@@ -8,45 +9,38 @@ class Braintree extends CRM_Controller
         parent::__construct();
     }
 
-    public function complete_purchase()
+    public function complete_purchase($invoice_id, $invoice_hash)
     {
         if ($this->input->post()) {
-            $data  = $this->input->post();
-            $total = $this->input->post('amount');
+            check_invoice_restrictions($invoice_id, $invoice_hash);
+
+            $data = $this->input->post();
+
             $this->load->model('invoices_model');
-            $invoice = $this->invoices_model->get($this->input->post('invoiceid'));
-            check_invoice_restrictions($invoice->id, $invoice->hash);
+            $invoice = $this->invoices_model->get($invoice_id);
 
             load_client_language($invoice->clientid);
-            $data['amount']   = $total;
-            $data['nonce']    = $this->input->post('payment_method_nonce');
             $data['currency'] = $invoice->currency_name;
-            $oResponse        = $this->paypal_braintree_gateway->finish_payment($data);
+
+            $oResponse = $this->paypal_braintree_gateway->finish_payment($data);
+
             if ($oResponse->isSuccessful()) {
                 $transactionid   = $oResponse->getTransactionReference();
                 $paymentResponse = $this->paypal_braintree_gateway->fetch_payment($transactionid);
                 $paymentData     = $paymentResponse->getData();
 
                 $success = $this->paypal_braintree_gateway->addPayment(
-                    [
-                      'amount'        => $data['amount'],
-                      'invoiceid'     => $invoice->id,
-                      'paymentmethod' => $paymentData->paymentInstrumentType,
-                      'transactionid' => $transactionid,
-                 ]
+                  [
+                        'amount'        => $data['amount'],
+                        'invoiceid'     => $invoice->id,
+                        'paymentmethod' => $paymentData->paymentInstrumentType,
+                        'transactionid' => $transactionid,
+                  ]
                 );
 
-                if ($success) {
-                    set_alert('success', _l('online_payment_recorded_success'));
-                } else {
-                    set_alert('danger', _l('online_payment_recorded_success_fail_database'));
-                }
-                redirect(site_url('invoice/' . $invoice->id . '/' . $invoice->hash));
-            } elseif ($oResponse->isRedirect()) {
-                $oResponse->redirect();
+                set_alert($success ? 'success' : 'danger', _l($success ? 'online_payment_recorded_success' : 'online_payment_recorded_success_fail_database'));
             } else {
                 set_alert('danger', $oResponse->getMessage());
-                redirect(site_url('invoice/' . $invoice->id . '/' . $invoice->hash));
             }
         }
     }
@@ -62,10 +56,8 @@ class Braintree extends CRM_Controller
         $data['client_token'] = $this->paypal_braintree_gateway->generate_token();
         echo $this->get_view($data);
     }
-
     public function get_view($data = [])
-    {
-        ?>
+    { ?>
   <?php echo payment_gateway_head(_l('payment_for_invoice') . ' ' . format_invoice_number($data['invoice']->id)); ?>
   <body class="gateway-braintree">
     <div class="container">
@@ -88,29 +80,78 @@ class Braintree extends CRM_Controller
                 <?php echo _l('payment_total', format_money($data['total'], $data['invoice']->symbol)); ?>
               </span>
             </p>
-            <form method="post" id="payment-form" action="<?php echo site_url('gateways/braintree/complete_purchase'); ?>">
-              <section>
-                <div class="bt-drop-in-wrapper">
+              <div class="bt-drop-in-wrapper">
                   <div id="bt-dropin"></div>
-                </div>
-                <input id="amount" name="amount" type="hidden" value="<?php echo number_format($data['total'], 2, '.', ''); ?>">
-                <input type="hidden" name="invoiceid" value="<?php echo $data['invoice']->id; ?>">
-              </section>
-              <div class="text-center" style="margin-top:15px;">
-                <button class="btn btn-info" type="submit"><?php echo _l('submit_payment'); ?></button>
               </div>
-            </form>
+              <div class="text-center" style="margin-top:15px;">
+                  <button class="btn btn-info" type="button" id="submit-button" style="display:none;">
+                    <?php echo _l('submit_payment'); ?>
+                  </button>
+              </div>
           </div>
         </div>
       </div>
     </div>
-    <script src="https://js.braintreegateway.com/js/braintree-2.30.0.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/dropin/1.11.0/js/dropin.min.js"></script>
+    <?php echo payment_gateway_scripts(); ?>
     <script>
-      braintree.setup('<?php echo $data['client_token']; ?>', 'dropin', {
-        container: 'bt-dropin'
+
+      var invoiceUrl = '<?php echo site_url('invoice/'.$data['invoice']->id.'/'. $data['invoice']->hash); ?>';
+      var completePaymentUrl = '<?php echo site_url('gateways/braintree/complete_purchase/'.$data['invoice']->id.'/'. $data['invoice']->hash); ?>';
+      var amount = <?php echo number_format($data['total'], 2, '.', ''); ?>;
+      var currencyName = "<?php echo $data['invoice']->currency_name; ?>";
+      var clientToken = "<?php echo $data['client_token']; ?>";
+      var button = document.querySelector('#submit-button');
+      var locale = '';
+      var paypalEnabled = "<?php echo $this->paypal_braintree_gateway->getSetting('paypal_enabled'); ?>";
+
+      if(typeof(window.navigator.language) != 'undefined') {
+          locale = window.navigator.language;
+          locale = locale.replace('-','_');
+      }
+
+     var dropInOptions = {
+        authorization: clientToken,
+        container: '#bt-dropin',
+        locale: locale,
+      };
+      if(paypalEnabled == '1') {
+          dropInOptions.paypal = {
+              flow: 'checkout',
+              amount: amount,
+              currency: currencyName
+          };
+      }
+
+     braintree.dropin.create(dropInOptions, function (createErr, instance) {
+
+      button.addEventListener('click', function () {
+
+        instance.requestPaymentMethod(function (requestPaymentMethodErr, payload) {
+
+          if(payload) {
+                button.disabled = true;
+                button.innerHTML = "<?php echo _l('wait_text'); ?>";
+
+                $.post(completePaymentUrl, {
+                  amount: amount,
+                  payment_method_nonce:payload.nonce,
+                }).done(function(){
+                  window.location.href = invoiceUrl;
+                });
+          }
+        });
       });
+
+      instance.on('paymentMethodRequestable', function(){
+        button.style.display = '';
+      });
+
+      instance.on('noPaymentMethodRequestable', function(){
+        button.style.display = 'none';
+      });
+    });
     </script>
-    <?php echo payment_gateway_footer(); ?>
-  <?php
+    <?php echo payment_gateway_footer();
     }
 }

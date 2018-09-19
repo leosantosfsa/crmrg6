@@ -2,9 +2,9 @@
     <?php if(has_permission('projects','','create')){ ?>
     <div class="_filters _hidden_inputs timesheets_filters hidden">
         <?php
-        foreach($timesheets_staff_ids as $t_staff_id){
-            echo form_hidden('staff_id_'.$t_staff_id['staff_id'],$t_staff_id['staff_id']);
-        }
+            foreach($timesheets_staff_ids as $t_staff_id){
+                echo form_hidden('staff_id_'.$t_staff_id['staff_id'],$t_staff_id['staff_id']);
+            }
         ?>
     </div>
     <?php if(count($timesheets_staff_ids) > 0){ ?>

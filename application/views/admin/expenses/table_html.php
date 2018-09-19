@@ -1,6 +1,6 @@
 <?php
    $table_data = [
-     '#',
+     _l('the_number_sign'),
      _l('expense_dt_table_heading_category'),
      _l('expense_dt_table_heading_amount'),
      _l('expense_name'),

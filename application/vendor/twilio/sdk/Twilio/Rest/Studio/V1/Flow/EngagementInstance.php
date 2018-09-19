@@ -16,8 +16,6 @@ use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- * 
  * @property string sid
  * @property string accountSid
  * @property string flowSid
@@ -39,8 +37,8 @@ class EngagementInstance extends InstanceResource {
      * 
      * @param \Twilio\Version $version Version that contains the resource
      * @param mixed[] $payload The response payload
-     * @param string $flowSid The flow_sid
-     * @param string $sid The sid
+     * @param string $flowSid Flow Sid.
+     * @param string $sid Engagement Sid.
      * @return \Twilio\Rest\Studio\V1\Flow\EngagementInstance 
      */
     public function __construct(Version $version, array $payload, $flowSid, $sid = null) {
@@ -87,9 +85,20 @@ class EngagementInstance extends InstanceResource {
      * Fetch a EngagementInstance
      * 
      * @return EngagementInstance Fetched EngagementInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         return $this->proxy()->fetch();
+    }
+
+    /**
+     * Deletes the EngagementInstance
+     * 
+     * @return boolean True if delete succeeds, false otherwise
+     * @throws TwilioException When an HTTP error occurs.
+     */
+    public function delete() {
+        return $this->proxy()->delete();
     }
 
     /**

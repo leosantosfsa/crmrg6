@@ -12,23 +12,25 @@ define('PHPASS_HASH_PORTABLE', false);
 class Install
 {
     private $error = '';
-    private $passed_steps = array();
+
+    private $passed_steps = [];
+
     private $config_path = '../application/config/app-config-sample.php';
 
     public function __construct()
     {
-        $this->passed_steps = array(
+        $this->passed_steps = [
             1 => false,
             2 => false,
             3 => false,
-            4 => false
-        );
+            4 => false,
+        ];
     }
 
     public function go()
     {
-        $debug       = '';
-        $step        = 1;
+        $debug = '';
+        $step  = 1;
 
         if (isset($_POST) && !empty($_POST)) {
             if (isset($_POST['step']) && $_POST['step'] == 2) {
@@ -56,14 +58,14 @@ class Install
                     $p = trim($_POST['password']);
                     $d = trim($_POST['database']);
 
-                    $link                  = @mysqli_connect($h, $u, $p, $d);
+                    $link = @mysqli_connect($h, $u, $p, $d);
                     if (!$link) {
-                        $this->error .= "Error: Unable to connect to MySQL." . PHP_EOL;
-                        $this->error .= "Debugging errno: " . mysqli_connect_errno() . PHP_EOL;
-                        $this->error .= "Debugging error: " . mysqli_connect_error() . PHP_EOL;
+                        $this->error .= 'Error: Unable to connect to MySQL.' . PHP_EOL;
+                        $this->error .= 'Debugging errno: ' . mysqli_connect_errno() . PHP_EOL;
+                        $this->error .= 'Debugging error: ' . mysqli_connect_error() . PHP_EOL;
                     } else {
-                        $debug .= "Success: A proper connection to MySQL was made! The " . $_POST['database'] . " database is great." . PHP_EOL;
-                        $debug .= "Host information: " . mysqli_get_host_info($link) . PHP_EOL;
+                        $debug .= 'Success: A proper connection to MySQL was made! The ' . $_POST['database'] . ' database is great.' . PHP_EOL;
+                        $debug .= 'Host information: ' . mysqli_get_host_info($link) . PHP_EOL;
                         $step = 4;
                         mysqli_close($link);
                     }
@@ -96,7 +98,6 @@ class Install
                 $step                  = 4;
             }
             if ($this->error === '' && isset($_POST['step']) && $_POST['step'] == 4) {
-
                 include_once('sqlparser.php');
                 $parser = new SqlScriptParser();
 
@@ -107,8 +108,8 @@ class Install
                 $p = trim($_POST['password']);
                 $d = trim($_POST['database']);
 
-                $link     = mysqli_connect($h, $u, $p, $d);
-                mysqli_set_charset($link, "utf8");
+                $link = mysqli_connect($h, $u, $p, $d);
+                mysqli_set_charset($link, 'utf8');
 
                 foreach ($sqlStatements as $statement) {
                     $distilled = $parser->removeComments($statement);
@@ -125,11 +126,11 @@ class Install
 
                 require_once('phpass.php');
 
-                $hasher      = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-                $password    = $hasher->HashPassword($_POST['admin_passwordr']);
-                $email       = $_POST['admin_email'];
+                $hasher    = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
+                $password  = $hasher->HashPassword($_POST['admin_passwordr']);
+                $email     = $_POST['admin_email'];
                 $firstname = $_POST['firstname'];
-                $lastname = $_POST['lastname'];
+                $lastname  = $_POST['lastname'];
 
                 $datecreated = date('Y-m-d H:i:s');
 
@@ -137,11 +138,11 @@ class Install
                 $sql      = "UPDATE tbloptions SET value='$timezone' WHERE name='default_timezone'";
                 mysqli_query($link, $sql);
 
-                $di = time();
-                $sql      = "UPDATE tbloptions SET value='$di' WHERE name='di'";
+                $di  = time();
+                $sql = "UPDATE tbloptions SET value='$di' WHERE name='di'";
                 mysqli_query($link, $sql);
 
-                $sql = "INSERT INTO tblstaff (firstname, lastname, password, email, datecreated, admin, active) VALUES('$firstname', '$lastname', '$password', '$email', '$datecreated', 1, 1)";
+                $sql = "INSERT INTO tblstaff (`firstname`, `lastname`, `password`, `email`, `datecreated`, `admin`, `active`) VALUES('$firstname', '$lastname', '$password', '$email', '$datecreated', 1, 1)";
                 mysqli_query($link, $sql);
 
                 $this->passed_steps[1] = true;
@@ -153,11 +154,11 @@ class Install
                     fopen('../.htaccess', 'w');
                     $fp = fopen('../.htaccess', 'a+');
                     if ($fp) {
-                        fwrite($fp, 'RewriteEngine on'.PHP_EOL.'RewriteCond $1 !^(index\.php|resources|robots\.txt)'.PHP_EOL.'RewriteCond %{REQUEST_FILENAME} !-f'.PHP_EOL.'RewriteCond %{REQUEST_FILENAME} !-d'.PHP_EOL.'RewriteRule ^(.*)$ index.php?/$1 [L,QSA]'.PHP_EOL.'AddDefaultCharset utf-8');
+                        fwrite($fp, 'RewriteEngine on' . PHP_EOL . 'RewriteCond $1 !^(index\.php|resources|robots\.txt)' . PHP_EOL . 'RewriteCond %{REQUEST_FILENAME} !-f' . PHP_EOL . 'RewriteCond %{REQUEST_FILENAME} !-d' . PHP_EOL . 'RewriteRule ^(.*)$ index.php?/$1 [L,QSA]' . PHP_EOL . 'AddDefaultCharset utf-8');
                         fclose($fp);
                     }
                 }
-                $step                  = 5;
+                $step = 5;
             } else {
                 $error = $this->error;
             }
@@ -168,10 +169,10 @@ class Install
 
     public function is_localhost()
     {
-        $whitelist = array(
+        $whitelist = [
             '127.0.0.1',
-            '::1'
-        );
+            '::1',
+        ];
 
         if (in_array($_SERVER['REMOTE_ADDR'], $whitelist)) {
             return true;
@@ -182,13 +183,13 @@ class Install
 
     private function write_app_config()
     {
-        $hostname       = trim($_POST['hostname']);
-        $database       = trim($_POST['database']);
-        $username       = trim($_POST['username']);
-        $password       = trim($_POST['password']);
+        $hostname = trim($_POST['hostname']);
+        $database = trim($_POST['database']);
+        $username = trim($_POST['username']);
+        $password = trim($_POST['password']);
 
         $base_url = trim($_POST['base_url']);
-        $base_url       = rtrim($base_url, '/') . '/';
+        $base_url = rtrim($base_url, '/') . '/';
 
         $encryption_key = bin2hex($this->create_key(16));
         $config_path    = $this->config_path;
@@ -198,13 +199,13 @@ class Install
         $config_file = file_get_contents($config_path);
         $config_file = trim($config_file);
 
-        $config_file = str_replace("define('APP_DB_HOSTNAME','localhost')", "define('APP_DB_HOSTNAME','" . $hostname . "')", $config_file);
+        $config_file = str_replace('[db_hostname]', $hostname, $config_file);
 
-        $config_file = str_replace("define('APP_DB_USERNAME','')", "define('APP_DB_USERNAME','" . $username . "')", $config_file);
-        $config_file = str_replace("define('APP_DB_PASSWORD','')", "define('APP_DB_PASSWORD','" . $password . "')", $config_file);
-        $config_file = str_replace("define('APP_DB_NAME','')", "define('APP_DB_NAME','" . $database . "')", $config_file);
-        $config_file = str_replace("define('APP_ENC_KEY','')", "define('APP_ENC_KEY','" . $encryption_key . "')", $config_file);
-        $config_file = str_replace("define('APP_BASE_URL','')", "define('APP_BASE_URL','" . $base_url . "')", $config_file);
+        $config_file = str_replace('[db_username]', $username, $config_file);
+        $config_file = str_replace('[db_password]', $password, $config_file);
+        $config_file = str_replace('[db_name]', $database, $config_file);
+        $config_file = str_replace('[encryption_key]', $encryption_key, $config_file);
+        $config_file = str_replace('[base_url]', $base_url, $config_file);
 
         if (!$fp = fopen($config_path, FOPEN_WRITE_CREATE_DESTRUCTIVE)) {
             return false;
@@ -251,7 +252,7 @@ class Install
     public function guess_base_url()
     {
         $base_url = isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == 'on' ? 'https' : 'http';
-        $base_url .= '://'. $_SERVER['HTTP_HOST'];
+        $base_url .= '://' . $_SERVER['HTTP_HOST'];
         $base_url .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
         $base_url = preg_replace('/install.*/', '', $base_url);
 
@@ -260,18 +261,18 @@ class Install
 
     public function get_timezones_list()
     {
-        return array(
-        'EUROPE'=>DateTimeZone::listIdentifiers(DateTimeZone::EUROPE),
-        'AMERICA'=>DateTimeZone::listIdentifiers(DateTimeZone::AMERICA),
-        'INDIAN'=>DateTimeZone::listIdentifiers(DateTimeZone::INDIAN),
-        'AUSTRALIA'=>DateTimeZone::listIdentifiers(DateTimeZone::AUSTRALIA),
-        'ASIA'=>DateTimeZone::listIdentifiers(DateTimeZone::ASIA),
-        'AFRICA'=>DateTimeZone::listIdentifiers(DateTimeZone::AFRICA),
-        'ANTARCTICA'=>DateTimeZone::listIdentifiers(DateTimeZone::ANTARCTICA),
-        'ARCTIC'=>DateTimeZone::listIdentifiers(DateTimeZone::ARCTIC),
-        'ATLANTIC'=>DateTimeZone::listIdentifiers(DateTimeZone::ATLANTIC),
-        'PACIFIC'=>DateTimeZone::listIdentifiers(DateTimeZone::PACIFIC),
-        'UTC'=>DateTimeZone::listIdentifiers(DateTimeZone::UTC),
-        );
+        return [
+        'EUROPE'     => DateTimeZone::listIdentifiers(DateTimeZone::EUROPE),
+        'AMERICA'    => DateTimeZone::listIdentifiers(DateTimeZone::AMERICA),
+        'INDIAN'     => DateTimeZone::listIdentifiers(DateTimeZone::INDIAN),
+        'AUSTRALIA'  => DateTimeZone::listIdentifiers(DateTimeZone::AUSTRALIA),
+        'ASIA'       => DateTimeZone::listIdentifiers(DateTimeZone::ASIA),
+        'AFRICA'     => DateTimeZone::listIdentifiers(DateTimeZone::AFRICA),
+        'ANTARCTICA' => DateTimeZone::listIdentifiers(DateTimeZone::ANTARCTICA),
+        'ARCTIC'     => DateTimeZone::listIdentifiers(DateTimeZone::ARCTIC),
+        'ATLANTIC'   => DateTimeZone::listIdentifiers(DateTimeZone::ATLANTIC),
+        'PACIFIC'    => DateTimeZone::listIdentifiers(DateTimeZone::PACIFIC),
+        'UTC'        => DateTimeZone::listIdentifiers(DateTimeZone::UTC),
+        ];
     }
 }

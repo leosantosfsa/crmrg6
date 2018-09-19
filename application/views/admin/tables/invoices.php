@@ -122,6 +122,7 @@ $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'symbol',
     'project_id',
     'hash',
+    'recurring',
     'deleted_customer_name',
     ]);
 $output  = $result['output'];
@@ -139,6 +140,9 @@ foreach ($rResult as $aRow) {
         $numberOutput = '<a href="' . admin_url('invoices/list_invoices/' . $aRow['id']) . '" onclick="init_invoice(' . $aRow['id'] . '); return false;">' . format_invoice_number($aRow['id']) . '</a>';
     }
 
+    if($aRow['recurring'] > 0) {
+        $numberOutput .= '<br /><span class="label label-primary inline-block mtop4"> ' . _l('invoice_recurring_indicator') . '</span>';
+    }
 
     $numberOutput .= '<div class="row-options">';
 

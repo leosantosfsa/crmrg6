@@ -1,6 +1,6 @@
 <?php init_head(); ?>
 <div id="wrapper">
-   <div class="content accounting-template">
+   <div class="content accounting-template proposal">
       <div class="row">
          <?php
             if(isset($proposal)){

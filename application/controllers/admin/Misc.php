@@ -462,6 +462,7 @@ class Misc extends Admin_controller
     public function change_maximum_number_of_digits_to_decimal_fields($digits)
     {
         if (is_admin()) {
+            do_action('before_change_maximum_number_of_digits_to_decimal_fields');
             $tables = $this->db->query("SELECT *
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='" . APP_DB_NAME . "'")->result_array();
@@ -503,6 +504,9 @@ class Misc extends Admin_controller
         $notChangableFields = ['estimated_hours'];
 
         if (is_admin()) {
+
+            do_action('before_change_decimal_places');
+
             $tables = $this->db->query("SELECT *
                 FROM INFORMATION_SCHEMA.TABLES
                 WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA='" . APP_DB_NAME . "'")->result_array();

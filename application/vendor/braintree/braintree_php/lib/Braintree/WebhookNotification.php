@@ -23,6 +23,7 @@ class WebhookNotification extends Base
     const PARTNER_MERCHANT_CONNECTED = 'partner_merchant_connected';
     const PARTNER_MERCHANT_DISCONNECTED = 'partner_merchant_disconnected';
     const PARTNER_MERCHANT_DECLINED = 'partner_merchant_declined';
+    const OAUTH_ACCESS_REVOKED = 'oauth_access_revoked';
     const CHECK = 'check';
     const ACCOUNT_UPDATER_DAILY_REPORT = 'account_updater_daily_report';
     const CONNECTED_MERCHANT_STATUS_TRANSITIONED = 'connected_merchant_status_transitioned';
@@ -50,6 +51,10 @@ class WebhookNotification extends Base
     {
         $this->_attributes = $attributes;
 
+        if (!isset($attributes['sourceMerchantId'])) {
+            $this->_set('sourceMerchantId', null);
+        }
+
         if (isset($attributes['subject']['apiErrorResponse'])) {
             $wrapperNode = $attributes['subject']['apiErrorResponse'];
         } else {
@@ -74,6 +79,10 @@ class WebhookNotification extends Base
 
         if (isset($wrapperNode['partnerMerchant'])) {
             $this->_set('partnerMerchant', PartnerMerchant::factory($wrapperNode['partnerMerchant']));
+        }
+
+        if (isset($wrapperNode['oauthApplicationRevocation'])) {
+            $this->_set('oauthAccessRevocation', OAuthAccessRevocation::factory($wrapperNode['oauthApplicationRevocation']));
         }
 
         if (isset($wrapperNode['connectedMerchantStatusTransitioned'])) {

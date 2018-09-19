@@ -1,6 +1,9 @@
 <?php echo form_open_multipart('clients/open_ticket',array('id'=>'open-new-ticket-form')); ?>
 <div class="row">
    <div class="col-md-12">
+
+      <?php do_action('before_client_open_ticket_form_start'); ?>
+
       <div class="panel_s">
          <div class="panel-heading text-uppercase">
             <?php echo _l('clients_ticket_open_subject'); ?>
@@ -45,7 +48,9 @@
                            <select data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" name="priority" id="priority" class="form-control selectpicker">
                               <option value=""></option>
                               <?php foreach($priorities as $priority){ ?>
-                              <option value="<?php echo $priority['priorityid']; ?>" <?php echo set_select('priority',$priority['priorityid']); ?>><?php echo ticket_priority_translate($priority['priorityid']); ?></option>
+                              <option value="<?php echo $priority['priorityid']; ?>" <?php echo set_select('priority', $priority['priorityid'], do_action('new_ticket_priority_selected',2) == $priority['priorityid']); ?>>
+                                    <?php echo ticket_priority_translate($priority['priorityid']); ?>
+                                 </option>
                               <?php } ?>
                            </select>
                            <?php echo form_error('priority'); ?>

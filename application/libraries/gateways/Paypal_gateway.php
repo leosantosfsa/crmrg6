@@ -4,8 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
 
-// require_once(APPPATH . 'third_party/omnipay/vendor/autoload.php');
-
 class Paypal_gateway extends App_gateway
 {
     public function __construct()
@@ -89,7 +87,13 @@ class Paypal_gateway extends App_gateway
         $gateway->setSignature($this->decryptSetting('signature'));
 
         $gateway->setTestMode($this->getSetting('test_mode_enabled'));
-        $gateway->setlogoImageUrl(do_action('paypal_logo_url', site_url('uploads/company/logo.png')));
+
+        $logoURL = payment_gateway_logo_url();
+
+        if ($logoURL != '' && _startsWith(site_url(), 'https://')) {
+            $gateway->setlogoImageUrl(do_action('paypal_logo_url', $logoURL));
+        }
+
         $gateway->setbrandName(get_option('companyname'));
 
         $request_data = [

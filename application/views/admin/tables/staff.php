@@ -37,7 +37,6 @@ $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'profile_image',
     'lastname',
     'staffid',
-    'admin',
     ]);
 
 $output  = $result['output'];

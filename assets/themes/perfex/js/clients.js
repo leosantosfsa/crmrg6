@@ -305,11 +305,6 @@ $(function() {
         $(this).parents('.attachment').remove();
     });
 
-    $('.single-ticket-add-reply').on('click', function(e) {
-        e.preventDefault()
-        var reply_area = $('.single-ticket-reply-area');
-        reply_area.slideToggle();
-    });
     // User cant add more money then the invoice total remaining
     $('body.viewinvoice input[name="amount"]').on('keyup', function() {
         var original_total = $(this).data('total');

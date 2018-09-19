@@ -7,11 +7,11 @@
   <title><?php echo do_action('ticket_form_title',_l('new_ticket')); ?></title>
   <?php app_external_form_header($form); ?>
   <style>
-    .g-recaptcha > div{
-      margin:0 auto;
-    }
-  </style>
-  <?php do_action('app_ticket_form_head'); ?>
+  .g-recaptcha > div{
+    margin:0 auto;
+  }
+</style>
+<?php do_action('app_ticket_form_head'); ?>
 </head>
 <body class="ticket_form"<?php if(is_rtl(true)){ echo ' dir="rtl"';} ?>>
   <div class="container-fluid">
@@ -34,16 +34,23 @@
            <?php do_action('ticket_form_after_email'); ?>
          </div>
        </div>
-
-       <?php echo render_select('department',$departments,array('departmentid','name'),'ticket_form_department',(count($departments) == 1 ? $departments[0]['departmentid'] : ''),array('required'=>'true')); ?>
+       <?php
+       $selectedDepartment = (count($departments) == 1 ? $departments[0]['departmentid'] : '');
+       if($this->input->get('department_id')) {
+        $selectedDepartment = $this->input->get('department_id');
+       }
+       echo '<div class="'.($this->input->get('department_id') ? 'hide' : '').'">';
+       echo render_select('department',$departments,array('departmentid','name'),'ticket_form_department',$selectedDepartment,array('required'=>'true'));
+       echo '</div>';
+       ?>
        <?php do_action('ticket_form_after_department'); ?>
 
        <?php echo render_select('priority',$priorities,array('priorityid','name'),'ticket_form_priority',do_action('new_ticket_priority_selected',2),array('required'=>'true')); ?>
        <?php do_action('ticket_form_after_priority'); ?>
 
        <?php if(get_option('services') == 1 && count($services) > 0){ ?>
-       <?php echo render_select('service',$services,array('serviceid','name'),'ticket_form_service',(count($services) == 1 ? $services[0]['serviceid'] : '')); ?>
-       <?php do_action('ticket_form_after_service'); ?>
+         <?php echo render_select('service',$services,array('serviceid','name'),'ticket_form_service',(count($services) == 1 ? $services[0]['serviceid'] : '')); ?>
+         <?php do_action('ticket_form_after_service'); ?>
        <?php } ?>
 
        <?php echo render_custom_fields('tickets',false,array('show_on_ticket_form'=>1)); ?>
@@ -68,15 +75,15 @@
     <?php do_action('ticket_form_after_attachments'); ?>
 
     <?php if(get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '' && $form->recaptcha == 1){ ?>
-    <div class="row">
-      <div class="col-md-12">
-       <div class="form-group"><div class="g-recaptcha" data-sitekey="<?php echo get_option('recaptcha_site_key'); ?>"></div>
-       <div id="recaptcha_response_field" class="text-danger"></div></div>
+      <div class="row">
+        <div class="col-md-12">
+         <div class="form-group"><div class="g-recaptcha" data-sitekey="<?php echo get_option('recaptcha_site_key'); ?>"></div>
+         <div id="recaptcha_response_field" class="text-danger"></div></div>
+       </div>
      </div>
-   </div>
    <?php } ?>
 
-     <?php if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_ticket_form') == 1) { ?>
+   <?php if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_ticket_form') == 1) { ?>
      <div class="col-md-12">
       <div class="text-center">
         <div class="checkbox chk">
@@ -87,9 +94,9 @@
         </div>
       </div>
     </div>
-        <?php } ?>
-   <div class="clearfix"></div>
-   <div class="text-center">
+  <?php } ?>
+  <div class="clearfix"></div>
+  <div class="text-center submit-btn-wrapper">
     <button class="btn btn-success" id="form_submit" type="submit"><?php echo _l('ticket_form_submit'); ?></button>
   </div>
 
@@ -130,10 +137,10 @@
     submitHandler:function(form) {
 
      $("input[type=file]").each(function() {
-          if($(this).val() === "") {
-              $(this).prop('disabled', true);
-          }
-      });
+      if($(this).val() === "") {
+        $(this).prop('disabled', true);
+      }
+    });
 
      var formURL = $(form).attr("action");
      var formData = new FormData($(form)[0]);

@@ -53,7 +53,9 @@
                     <p><a href="#" class="font-medium" onclick="init_report(this,'customers-group'); return false;"><i class="fa fa-caret-down" aria-hidden="true"></i> <?php echo _l('report_by_customer_groups'); ?></a></p>
                  </div>
                  <div class="col-md-4">
-                  <?php if(isset($currencies)){ ?>
+                      <div class="bg-light-gray border-radius-4">
+                        <div class="p8">
+                             <?php if(isset($currencies)){ ?>
                   <div id="currency" class="form-group hide">
                      <label for="currency"><i class="fa fa-question-circle" data-toggle="tooltip" title="<?php echo _l('report_sales_base_currency_select_explanation'); ?>"></i> <?php echo _l('currency'); ?></label><br />
                      <select class="selectpicker" name="currency" data-width="100%" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
@@ -114,6 +116,8 @@
                            </div>
                         </div>
                      </div>
+                        </div>
+                      </div>
                   </div>
                </div>
                <div id="report" class="hide">

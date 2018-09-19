@@ -265,7 +265,7 @@ class Tickets_model extends CRM_Model
 
     public function get($id = '', $where = [])
     {
-        $this->db->select('*,tbltickets.userid,tbltickets.name as from_name,tbltickets.email as ticket_email, tbldepartments.name as department_name, tblpriorities.name as priority_name, statuscolor, tbltickets.admin, tblservices.name as service_name, service, tblticketstatus.name as status_name,tbltickets.ticketid,subject,tblcontacts.firstname as user_firstname,.tblcontacts.lastname as user_lastname,tblstaff.firstname as staff_firstname, tblstaff.lastname as staff_lastname,lastreply,message,tbltickets.status,subject,department,priority,tblcontacts.email,adminread,clientread,date');
+        $this->db->select('*,tbltickets.userid,tbltickets.name as from_name,tbltickets.email as ticket_email, tbldepartments.name as department_name, tblpriorities.name as priority_name, statuscolor, tbltickets.admin, tblservices.name as service_name, service, tblticketstatus.name as status_name,tbltickets.ticketid, tblcontacts.firstname as user_firstname, tblcontacts.lastname as user_lastname,tblstaff.firstname as staff_firstname, tblstaff.lastname as staff_lastname,lastreply,message,tbltickets.status,subject,department,priority,tblcontacts.email,adminread,clientread,date');
         $this->db->join('tbldepartments', 'tbldepartments.departmentid = tbltickets.department', 'left');
         $this->db->join('tblticketstatus', 'tblticketstatus.ticketstatusid = tbltickets.status', 'left');
         $this->db->join('tblservices', 'tblservices.serviceid = tbltickets.service', 'left');
@@ -292,7 +292,7 @@ class Tickets_model extends CRM_Model
      */
     public function get_ticket_by_id($id, $userid = '')
     {
-        $this->db->select('*,tbltickets.userid,tbltickets.name as from_name,tbltickets.email as ticket_email, tbldepartments.name as department_name, tblpriorities.name as priority_name, statuscolor, tbltickets.admin, tblservices.name as service_name, service, tblticketstatus.name as status_name,tbltickets.ticketid,subject,tblcontacts.firstname as user_firstname,.tblcontacts.lastname as user_lastname,tblstaff.firstname as staff_firstname, tblstaff.lastname as staff_lastname,lastreply,message,tbltickets.status,subject,department,priority,tblcontacts.email,adminread,clientread,date');
+        $this->db->select('*, tbltickets.userid, tbltickets.name as from_name, tbltickets.email as ticket_email, tbldepartments.name as department_name, tblpriorities.name as priority_name, statuscolor, tbltickets.admin, tblservices.name as service_name, service, tblticketstatus.name as status_name, tbltickets.ticketid, tblcontacts.firstname as user_firstname, tblcontacts.lastname as user_lastname, tblstaff.firstname as staff_firstname, tblstaff.lastname as staff_lastname, lastreply, message, tbltickets.status, subject, department, priority, tblcontacts.email, adminread, clientread, date');
         $this->db->from('tbltickets');
         $this->db->join('tbldepartments', 'tbldepartments.departmentid = tbltickets.department', 'left');
         $this->db->join('tblticketstatus', 'tblticketstatus.ticketstatusid = tbltickets.status', 'left');
@@ -422,7 +422,7 @@ class Tickets_model extends CRM_Model
             $data['message'] = preg_replace('/\v+/u', '<br>', $data['message']);
         }
 
-        // adminn can have html
+        // admin can have html
         if ($admin == null) {
             $data['message'] = _strip_tags($data['message']);
             $data['message'] = nl2br_save_html($data['message']);
@@ -469,22 +469,22 @@ class Tickets_model extends CRM_Model
              * When a ticket is in status "In progress" and the customer reply to the ticket it changes the status to "Open" which is not normal.
              * The ticket should keep the status "In progress"
              */
-            if ($old_ticket_status != 2) {
-                $this->db->where('ticketid', $id);
-                $this->db->update('tbltickets', [
+
+            $this->db->where('ticketid', $id);
+            $this->db->update('tbltickets', [
                     'lastreply'  => date('Y-m-d H:i:s'),
-                    'status'     => $status,
+                    'status'     => ($old_ticket_status == 2 && $admin == null ? $old_ticket_status : $status),
                     'adminread'  => 0,
                     'clientread' => 0,
                 ]);
 
-                if ($old_ticket_status != $status) {
-                    do_action('after_ticket_status_changed', [
+            if ($old_ticket_status != $status) {
+                do_action('after_ticket_status_changed', [
                         'id'     => $id,
                         'status' => $status,
                     ]);
-                }
             }
+
 
             $this->load->model('emails_model');
             $ticket    = $this->get_ticket_by_id($id);
@@ -500,13 +500,17 @@ class Tickets_model extends CRM_Model
                 $this->load->model('departments_model');
                 $this->load->model('staff_model');
                 $staff = $this->staff_model->get('', ['active' => 1]);
+
+                $notifiedUsers                           = [];
+                $notificationForStaffMemberOnTicketReply = get_option('receive_notification_on_new_ticket_replies') == 1;
+
                 foreach ($staff as $member) {
                     if (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member($member['staffid'])) {
                         continue;
                     }
 
-
                     $staff_departments = $this->departments_model->get_staff_departments($member['staffid'], true);
+
                     if (in_array($ticket->department, $staff_departments)) {
                         foreach ($_attachments as $at) {
                             $this->emails_model->add_attachment([
@@ -521,8 +525,25 @@ class Tickets_model extends CRM_Model
                         $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($ticket->userid, $ticket->contactid));
                         $merge_fields = array_merge($merge_fields, get_ticket_merge_fields('ticket-reply-to-admin', $id));
                         $this->emails_model->send_email_template('ticket-reply-to-admin', $member['email'], $merge_fields, $id);
+
+                        if ($notificationForStaffMemberOnTicketReply) {
+                            $notified = add_notification([
+                                    'description'     => 'not_new_ticket_reply',
+                                    'touserid'        => $member['staffid'],
+                                    'fromcompany'     => 1,
+                                    'fromuserid'      => null,
+                                    'link'            => 'tickets/ticket/' . $id,
+                                    'additional_data' => serialize([
+                                        $ticket->subject,
+                                    ]),
+                                ]);
+                            if ($notified) {
+                                array_push($notifiedUsers, $member['staffid']);
+                            }
+                        }
                     }
                 }
+                pusher_trigger_notification($notifiedUsers);
             } else {
                 $sendEmail = true;
                 if ($isContact && total_rows('tblcontacts', ['ticket_emails' => 1, 'id' => $ticket->contactid]) == 0) {
@@ -576,6 +597,7 @@ class Tickets_model extends CRM_Model
                     $this->delete_ticket_attachment($attachment['id']);
                 }
             }
+
             return true;
         }
 
@@ -604,6 +626,7 @@ class Tickets_model extends CRM_Model
                 delete_dir(get_upload_path_by_type('ticket') . $attachment->ticketid);
             }
         }
+
         return $deleted;
     }
 
@@ -612,8 +635,10 @@ class Tickets_model extends CRM_Model
      * @param  mixed $id attachment id
      * @return mixed
      */
-    public function get_ticket_attachment($id) {
+    public function get_ticket_attachment($id)
+    {
         $this->db->where('id', $id);
+
         return $this->db->get('tblticketattachments')->row();
     }
 
@@ -658,7 +683,7 @@ class Tickets_model extends CRM_Model
         // backward compatibility for the action hook
         $ticket_replies_order = do_action('ticket_replies_order', $ticket_replies_order);
 
-        $this->db->select('tblticketreplies.id,tblticketreplies.name as from_name,tblticketreplies.email as reply_email, tblticketreplies.admin, tblticketreplies.userid,tblstaff.firstname as staff_firstname,.tblstaff.lastname as staff_lastname,tblcontacts.firstname as user_firstname,.tblcontacts.lastname as user_lastname,message,date,contactid');
+        $this->db->select('tblticketreplies.id,tblticketreplies.name as from_name,tblticketreplies.email as reply_email, tblticketreplies.admin, tblticketreplies.userid,tblstaff.firstname as staff_firstname, tblstaff.lastname as staff_lastname,tblcontacts.firstname as user_firstname,tblcontacts.lastname as user_lastname,message,date,contactid');
         $this->db->from('tblticketreplies');
         $this->db->join('tblclients', 'tblclients.userid = tblticketreplies.userid', 'left');
         $this->db->join('tblstaff', 'tblstaff.staffid = tblticketreplies.admin', 'left');
@@ -832,7 +857,8 @@ class Tickets_model extends CRM_Model
                 $this->load->model('staff_model');
                 $staff = $this->staff_model->get('', ['active' => 1]);
 
-                $notifiedUsers = [];
+                $notifiedUsers                              = [];
+                $notificationForStaffMemberOnTicketCreation = get_option('receive_notification_on_new_ticket') == 1;
 
                 foreach ($staff as $member) {
                     if (get_option('access_tickets_to_none_staff_members') == 0 && !is_staff_member($member['staffid'])) {
@@ -856,7 +882,7 @@ class Tickets_model extends CRM_Model
 
                         $this->emails_model->send_email_template('new-ticket-created-staff', $member['email'], $merge_fields, $ticketid);
 
-                        if (get_option('receive_notification_on_new_ticket') == 1) {
+                        if ($notificationForStaffMemberOnTicketCreation) {
                             $notified = add_notification([
                                     'description'     => 'not_new_ticket_created',
                                     'touserid'        => $member['staffid'],

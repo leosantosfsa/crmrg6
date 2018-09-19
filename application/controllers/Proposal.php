@@ -13,9 +13,13 @@ class Proposal extends Clients_controller
     {
         check_proposal_restrictions($id, $hash);
         $proposal = $this->proposals_model->get($id);
+
         if ($proposal->rel_type == 'customer' && !is_client_logged_in()) {
             load_client_language($proposal->rel_id);
+        } else if($proposal->rel_type == 'lead') {
+            load_lead_language($proposal->rel_id);
         }
+
         $identity_confirmation_enabled = get_option('proposal_accept_identity_confirmation');
         if ($this->input->post()) {
             $action = $this->input->post('action');

@@ -35,7 +35,7 @@
   <div role="tabpanel" class="tab-pane active" id="set_invoice">
     <?php if(!is_invoices_overdue_reminders_enabled()){ ?>
     <div class="alert alert-warning">
-      The system was not able to find sources to send overdue notices, if you want overdue notices to be sent, make sure that in <a href="<?php echo admin_url('emails'); ?>">email templates</a> the overdue notice email for invoices is enabled or at least you have configured <a href="<?php echo admin_url('settings?group=sms'); ?>">SMS</a> overdue notice.
+      The system was not able to find sources to send overdue notices, if you want overdue notices to be sent, make sure that in <a href="<?php echo admin_url('emails'); ?>">email templates</a> the overdue notice email for invoices is enabled or at least you have configured <a href="<?php echo admin_url('settings?group=sms'); ?>">SMS</a> overdue notice. If you don't need to send overdue notices for invoices, simply ignore this message.
     </div>
     <?php } ?>
     <i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-title="<?php echo _l('inv_hour_of_day_perform_auto_operations_help'); ?>"></i>

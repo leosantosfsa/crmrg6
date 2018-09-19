@@ -310,7 +310,7 @@
      if ($.fn.DataTable.isDataTable('.table-invoices-report')) {
        $('.table-invoices-report').DataTable().destroy();
      }
-     _table_api = initDataTable('.table-invoices-report', admin_url + 'reports/invoices_report', false, false, fnServerParams, [
+     initDataTable('.table-invoices-report', admin_url + 'reports/invoices_report', false, false, fnServerParams, [
        [2, 'desc'],
        [0, 'desc']
        ]).column(2).visible(false, false).columns.adjust();
@@ -321,7 +321,7 @@
      if ($.fn.DataTable.isDataTable('.table-credit-notes-report')) {
        $('.table-credit-notes-report').DataTable().destroy();
      }
-     _table_api = initDataTable('.table-credit-notes-report', admin_url + 'reports/credit_notes', false, false, fnServerParams,[1, 'desc']);
+     initDataTable('.table-credit-notes-report', admin_url + 'reports/credit_notes', false, false, fnServerParams,[1, 'desc']);
 
    }
 
@@ -329,7 +329,7 @@
      if ($.fn.DataTable.isDataTable('.table-estimates-report')) {
        $('.table-estimates-report').DataTable().destroy();
      }
-     _table_api = initDataTable('.table-estimates-report', admin_url + 'reports/estimates_report', false, false, fnServerParams, [
+     initDataTable('.table-estimates-report', admin_url + 'reports/estimates_report', false, false, fnServerParams, [
        [3, 'desc'],
        [0, 'desc']
        ]).column(3).visible(false, false).columns.adjust();

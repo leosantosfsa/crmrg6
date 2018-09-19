@@ -8,12 +8,12 @@ $info_right_column = '<div style="color:#424242;">';
 $info_right_column .= format_organization_info();
 $info_right_column .= '</div>';
 
-// write the first column
+// Add logo
 $info_left_column .= pdf_logo_url();
-$pdf->MultiCell(($dimensions['wk'] / 2) - $dimensions['lm'], 0, $info_left_column, 0, 'J', 0, 0, '', '', true, 0, true, true, 0);
-// write the second column
-$pdf->MultiCell(($dimensions['wk'] / 2) - $dimensions['rm'], 0, $info_right_column, 0, 'R', 0, 1, '', '', true, 0, true, false, 0);
-$pdf->ln(12);
+// Write top left logo and right column info/text
+pdf_multi_row($info_left_column, $info_right_column, $pdf, ($dimensions['wk'] / 2) - $dimensions['lm']);
+
+$pdf->ln(10);
 
 // Get Y position for the separation
 $y = $pdf->getY();

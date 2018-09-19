@@ -13,10 +13,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
  * @param  string $sGroupBy group results
  * @return array
  */
-function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where = [], $additionalSelect = [], $sGroupBy = '')
+function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where = [], $additionalSelect = [], $sGroupBy = '', $searchAs = [])
 {
-    $CI     = & get_instance();
-    $__post = $CI->input->post();
+    $CI          = & get_instance();
+    $__post      = $CI->input->post();
+    $havingCount = '';
     /*
      * Paging
      */
@@ -108,6 +109,9 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
             if (stripos($columnName, 'AVG(') !== false || stripos($columnName, 'SUM(') !== false) {
             } else {
                 if (($__post['columns'][$i]) && $__post['columns'][$i]['searchable'] == 'true') {
+                    if(isset($searchAs[$i])) {
+                        $columnName = $searchAs[$i];
+                    }
                     $sWhere .= 'convert(' . $columnName . ' USING utf8)' . " LIKE '%" . $search_value . "%' OR ";
                 }
             }
@@ -215,6 +219,7 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
     $sQuery = '
     SELECT COUNT(' . $sTable . '.' . $sIndexColumn . ")
     FROM $sTable " . $join . ' ' . $where;
+
     $_query = $CI->db->query($sQuery)->result_array();
     $iTotal = $_query[0]['COUNT(' . $sTable . '.' . $sIndexColumn . ')'];
     /*
@@ -357,6 +362,7 @@ function prepare_dt_filter($filter)
  * @param  string $tableID table unique identifier id
  * @return string
  */
-function get_table_last_order($tableID) {
-    return htmlentities(get_staff_meta(get_staff_user_id(),$tableID . '-table-last-order'));
+function get_table_last_order($tableID)
+{
+    return htmlentities(get_staff_meta(get_staff_user_id(), $tableID . '-table-last-order'));
 }

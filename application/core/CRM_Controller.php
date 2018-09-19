@@ -8,7 +8,7 @@ class CRM_Controller extends CI_Controller
     {
         parent::__construct();
 
-        /*if(!$this->input->is_ajax_request()){
+      /*  if(!$this->input->is_ajax_request()){
             $this->output->enable_profiler(TRUE);
         }*/
 

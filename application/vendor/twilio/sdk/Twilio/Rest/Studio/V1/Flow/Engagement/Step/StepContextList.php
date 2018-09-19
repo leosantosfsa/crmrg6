@@ -12,17 +12,14 @@ namespace Twilio\Rest\Studio\V1\Flow\Engagement\Step;
 use Twilio\ListResource;
 use Twilio\Version;
 
-/**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- */
 class StepContextList extends ListResource {
     /**
      * Construct the StepContextList
      * 
      * @param Version $version Version that contains the resource
-     * @param string $flowSid The flow_sid
-     * @param string $engagementSid The engagement_sid
-     * @param string $stepSid The step_sid
+     * @param string $flowSid Flow Sid.
+     * @param string $engagementSid Engagement Sid.
+     * @param string $stepSid Step Sid.
      * @return \Twilio\Rest\Studio\V1\Flow\Engagement\Step\StepContextList 
      */
     public function __construct(Version $version, $flowSid, $engagementSid, $stepSid) {

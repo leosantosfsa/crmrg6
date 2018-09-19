@@ -80,6 +80,26 @@ function get_media_locale($locale)
     return $lng;
 }
 /**
+ * Replace google drive links with actual a tag
+ * @param  string $text
+ * @return string
+ */
+function handle_google_drive_links_in_text($text)
+{
+    $pattern = '#\bhttps?://drive.google.com[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#';
+    preg_match_all($pattern, $text, $matchGoogleDriveLinks);
+
+    if (isset($matchGoogleDriveLinks[0]) && is_array($matchGoogleDriveLinks[0])) {
+        foreach ($matchGoogleDriveLinks[0] as $driveLink) {
+            $link = '<a href="' . $driveLink . '">' . $driveLink . '</a>';
+            $text = str_replace($driveLink, $link, $text);
+            $text = str_replace('<' . $link . '>', $link, $text);
+        }
+    }
+
+    return $text;
+}
+/**
  * Get system favourite colors
  * @return array
  */
@@ -165,17 +185,15 @@ function format_goal_type($key)
     return $type;
 }
 
-function process_digital_signature_image($base64, $path)
+function process_digital_signature_image($partBase64, $path)
 {
-    if (empty($base64)) {
+    if (empty($partBase64)) {
         return false;
     }
 
     $filename = 'signature.png';
 
-    $encoded_image = explode(',', $base64);
-    $encoded_image = $encoded_image[1];
-    $decoded_image = base64_decode($encoded_image);
+    $decoded_image = base64_decode($partBase64);
 
     $retval = false;
     _maybe_create_upload_path($path);

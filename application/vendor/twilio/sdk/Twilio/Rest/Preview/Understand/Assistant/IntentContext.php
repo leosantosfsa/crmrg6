@@ -13,6 +13,7 @@ use Twilio\Exceptions\TwilioException;
 use Twilio\InstanceContext;
 use Twilio\Options;
 use Twilio\Rest\Preview\Understand\Assistant\Intent\FieldList;
+use Twilio\Rest\Preview\Understand\Assistant\Intent\IntentStatisticsList;
 use Twilio\Rest\Preview\Understand\Assistant\Intent\SampleList;
 use Twilio\Values;
 use Twilio\Version;
@@ -22,12 +23,15 @@ use Twilio\Version;
  * 
  * @property \Twilio\Rest\Preview\Understand\Assistant\Intent\FieldList fields
  * @property \Twilio\Rest\Preview\Understand\Assistant\Intent\SampleList samples
+ * @property \Twilio\Rest\Preview\Understand\Assistant\Intent\IntentStatisticsList statistics
  * @method \Twilio\Rest\Preview\Understand\Assistant\Intent\FieldContext fields(string $sid)
  * @method \Twilio\Rest\Preview\Understand\Assistant\Intent\SampleContext samples(string $sid)
+ * @method \Twilio\Rest\Preview\Understand\Assistant\Intent\IntentStatisticsContext statistics()
  */
 class IntentContext extends InstanceContext {
     protected $_fields = null;
     protected $_samples = null;
+    protected $_statistics = null;
 
     /**
      * Initialize the IntentContext
@@ -50,6 +54,7 @@ class IntentContext extends InstanceContext {
      * Fetch a IntentInstance
      * 
      * @return IntentInstance Fetched IntentInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         $params = Values::of(array());
@@ -73,6 +78,7 @@ class IntentContext extends InstanceContext {
      * 
      * @param array|Options $options Optional Arguments
      * @return IntentInstance Updated IntentInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function update($options = array()) {
         $options = new Values($options);
@@ -101,6 +107,7 @@ class IntentContext extends InstanceContext {
      * Deletes the IntentInstance
      * 
      * @return boolean True if delete succeeds, false otherwise
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function delete() {
         return $this->version->delete('delete', $this->uri);
@@ -138,6 +145,23 @@ class IntentContext extends InstanceContext {
         }
 
         return $this->_samples;
+    }
+
+    /**
+     * Access the statistics
+     * 
+     * @return \Twilio\Rest\Preview\Understand\Assistant\Intent\IntentStatisticsList 
+     */
+    protected function getStatistics() {
+        if (!$this->_statistics) {
+            $this->_statistics = new IntentStatisticsList(
+                $this->version,
+                $this->solution['assistantSid'],
+                $this->solution['sid']
+            );
+        }
+
+        return $this->_statistics;
     }
 
     /**

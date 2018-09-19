@@ -68,7 +68,7 @@
       </div>
       <hr class="no-mtop" />
       <i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-title="<?php echo _l('invoices').', '. _l('estimates').', '._l('proposals') ?>"></i>
-      <?php echo render_input('settings[number_padding_prefixes]','settings_number_padding_prefix',get_option('number_padding_prefixes')); ?>
+      <?php echo render_input('settings[number_padding_prefixes]','settings_number_padding_prefix',get_option('number_padding_prefixes'),'number', ['required'=>true]); ?>
       <hr />
       <?php render_yes_no_option('show_tax_per_item','settings_show_tax_per_item'); ?>
       <hr />
@@ -84,9 +84,7 @@
       <div class="clearfix"></div>
       <hr />
       <?php render_yes_no_option('remove_decimals_on_zero','remove_decimals_on_zero'); ?>
-
       <hr />
-
       <h4 class="bold"><?php echo _l('settings_amount_to_words'); ?></h4>
       <p class="text-muted"><?php echo _l('settings_amount_to_words_desc') .'/'.mb_strtolower(_l('proposal')); ?></p>
       <div class="row">

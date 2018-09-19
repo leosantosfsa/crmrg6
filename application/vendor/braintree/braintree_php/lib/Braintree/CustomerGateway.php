@@ -9,7 +9,7 @@ use InvalidArgumentException;
  *
  * <b>== More information ==</b>
  *
- * For more detailed information on Customers, see {@link http://www.braintreepayments.com/gateway/customer-api http://www.braintreepaymentsolutions.com/gateway/customer-api}
+ * For more detailed information on Customers, see {@link https://developers.braintreepayments.com/reference/response/customer/php https://developers.braintreepayments.com/reference/response/customer/php}
  *
  * @package    Braintree
  * @category   Resources
@@ -221,14 +221,19 @@ class CustomerGateway
      *
      * @access public
      * @param string id customer Id
+     * @param string associationFilterId association filter Id
      * @return Customer|boolean The customer object or false if the request fails.
      * @throws Exception\NotFound
      */
-    public function find($id)
+    public function find($id, $associationFilterId = null)
     {
         $this->_validateId($id);
         try {
-            $path = $this->_config->merchantPath() . '/customers/' . $id;
+            $queryParams = '';
+            if ($associationFilterId) {
+                $queryParams = '?association_filter_id=' . $associationFilterId;
+            }
+            $path = $this->_config->merchantPath() . '/customers/' . $id . $queryParams;
             $response = $this->_http->get($path);
             return Customer::factory($response['customer']);
         } catch (Exception\NotFound $e) {
@@ -326,7 +331,7 @@ class CustomerGateway
      *
      * If <b>query</b> is a string, the search will be a basic search.
      * If <b>query</b> is a hash, the search will be an advanced search.
-     * For more detailed information and examples, see {@link http://www.braintreepayments.com/gateway/customer-api#searching http://www.braintreepaymentsolutions.com/gateway/customer-api}
+     * For more detailed information and examples, see {@link https://developers.braintreepayments.com/reference/request/customer/search/php https://developers.braintreepayments.com/reference/request/customer/search/php}
      *
      * @param mixed $query search query
      * @return ResourceCollection

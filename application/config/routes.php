@@ -107,7 +107,7 @@ $route['knowledge-base/category']  = "knowledge_base/index";
 $route['knowledge-base/category/(:any)']  = "knowledge_base/category/$1";
 
 // Deprecated
-if(strpos($_SERVER['REQUEST_URI'],'add_kb_answer') === false) {
+if(isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'],'add_kb_answer') === false) {
     $route['knowledge-base/(:any)']  = "knowledge_base/article/$1";
     $route['knowledge_base/(:any)']  = "knowledge_base/article/$1";
     $route['clients/knowledge_base/(:any)']  = "knowledge_base/article/$1";

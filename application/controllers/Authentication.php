@@ -7,9 +7,11 @@ class Authentication extends CRM_Controller
     public function __construct()
     {
         parent::__construct();
+
         if ($this->app->is_db_upgrade_required()) {
             redirect(admin_url());
         }
+
         load_admin_language();
         $this->load->model('Authentication_model');
         $this->load->library('form_validation');

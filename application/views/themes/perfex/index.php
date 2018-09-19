@@ -15,6 +15,7 @@ if($use_navigation == true){
 			<?php get_template_part('knowledge_base/search'); ?>
 		<?php } ?>
 		<div class="container">
+			<?php do_action('customers_content_container_start'); ?>
 			<div class="row">
 				<?php
 				// Don't show calendar for invoices,estimates,proposals etc.. views where no navigation is included or in kb area

@@ -269,6 +269,7 @@ class Contracts_model extends CRM_Model
                     }
 
                     $merge_fields = [];
+                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract->client));
                     $merge_fields = array_merge($merge_fields, get_contract_merge_fields($contract->id));
                     $merge_fields = array_merge($merge_fields, get_staff_merge_fields($member['staffid']));
                     // Send email/sms to admin that client commented
@@ -431,6 +432,11 @@ class Contracts_model extends CRM_Model
             foreach ($attachments as $attachment) {
                 $this->delete_contract_attachment($attachment['id']);
             }
+
+            $this->db->where('rel_id', $id);
+            $this->db->where('rel_type', 'contract');
+            $this->db->delete('tblnotes');
+
 
             $this->db->where('contractid', $id);
             $this->db->delete('tblcontractrenewals');

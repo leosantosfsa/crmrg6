@@ -35,7 +35,9 @@
                   <video width="100%" height="100%" src="<?php echo site_url('download/preview_video?path='.protected_file_url_by_path($path).'&type='.$file->filetype); ?>" controls>
                      Your browser does not support the video tag.
                   </video>
-                  <?php } else {
+                  <?php } else if(is_markdown_file($path) && $previewMarkdown = markdown_parse_preview($path)) {
+                     echo $previewMarkdown;
+                  } else {
                      echo '<a href="'.site_url('uploads/projects/'.$file->project_id.'/'.$file->file_name).'" download>'.$file->file_name.'</a>';
                      echo '<p class="text-muted">'._l('no_preview_available_for_file').'</p>';
                      } ?>

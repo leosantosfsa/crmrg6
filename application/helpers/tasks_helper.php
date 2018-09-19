@@ -233,7 +233,39 @@ function task_rel_link($rel_id, $rel_type)
 
     return $link;
 }
+/**
+ * Prepares task array gantt data to be used in the gantt chart
+ * @param  array $task task array
+ * @return array
+ */
+function get_task_array_gantt_data($task)
+{
+    $data           = [];
+    $data['values'] = [];
+    $values         = [];
 
+    $data['desc'] = $task['name'];
+    $data['name'] = '';
+
+    $values['from']  = strftime('%Y/%m/%d', strtotime($task['startdate']));
+    $values['to']    = strftime('%Y/%m/%d', strtotime($task['duedate']));
+    $values['desc']  = $task['name'] . ' - ' . _l('task_total_logged_time') . ' ' . seconds_to_time_format($task['total_logged_time']);
+    $values['label'] = $task['name'];
+    if ($task['duedate'] && date('Y-m-d') > $task['duedate'] && $task['status'] != 5) {
+        $values['customClass'] = 'ganttRed';
+    } elseif ($task['status'] == 5) {
+        $values['label']       = ' <i class="fa fa-check"></i> ' . $values['label'];
+        $values['customClass'] = 'ganttGreen';
+    }
+
+    $values['dataObj'] = [
+        'task_id' => $task['id'],
+    ];
+
+    $data['values'][] = $values;
+
+    return $data;
+}
 /**
  * Common function used to select task relation name
  * @return string
@@ -296,8 +328,8 @@ function init_relation_tasks_table($table_attributes = [])
     ];
 
     array_unshift($table_data, [
-        'name'=>'<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="rel-tasks"><label></label></div>',
-        'th_attrs'=>['class'=>($table_attributes['data-new-rel-type'] !== 'project' ? 'not_visible' : '')]
+        'name'     => '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="rel-tasks"><label></label></div>',
+        'th_attrs' => ['class' => ($table_attributes['data-new-rel-type'] !== 'project' ? 'not_visible' : '')],
     ]);
 
     $custom_fields = get_custom_fields('tasks', [
@@ -397,9 +429,10 @@ function init_relation_tasks_table($table_attributes = [])
     // If new column is added on tasks relations table this will not work fine
     // In this case we need to add new identifier eq task-relation
     $table_attributes['data-last-order-identifier'] = 'tasks';
-    $table_attributes['data-default-order'] = get_table_last_order('tasks');
+    $table_attributes['data-default-order']         = get_table_last_order('tasks');
 
     $table .= render_datatable($table_data, $name, [], $table_attributes);
+
     return $table;
 }
 

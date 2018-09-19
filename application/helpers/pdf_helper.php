@@ -51,7 +51,6 @@ function pdf_logo_url()
         } elseif (strpos($custom_pdf_logo_image_url, 'http') === false) {
             $cimg = FCPATH . $custom_pdf_logo_image_url;
         } else {
-
             if (_startsWith($custom_pdf_logo_image_url, site_url()) !== false) {
                 $temp = str_replace(site_url(), '/', $custom_pdf_logo_image_url);
                 $cimg = FCPATH . $temp;
@@ -63,9 +62,9 @@ function pdf_logo_url()
             }
         }
     } else {
-        if(get_option('company_logo_dark') != '' && file_exists(get_upload_path_by_type('company') . get_option('company_logo_dark'))) {
+        if (get_option('company_logo_dark') != '' && file_exists(get_upload_path_by_type('company') . get_option('company_logo_dark'))) {
             $cimg = get_upload_path_by_type('company') . get_option('company_logo_dark');
-        } else if (get_option('company_logo') != '' && file_exists(get_upload_path_by_type('company') . get_option('company_logo'))) {
+        } elseif (get_option('company_logo') != '' && file_exists(get_upload_path_by_type('company') . get_option('company_logo'))) {
             $cimg = get_upload_path_by_type('company') . get_option('company_logo');
         } else {
             $cimg = '';
@@ -709,4 +708,39 @@ function _bulk_pdf_export_maybe_tag($tag, &$pdf)
         $pdf->setX(10);
         $pdf->setY(10);
     }
+}
+function pdf_multi_row($left, $right, $pdf, $left_width = 40)
+{
+    // MultiCell($w, $h, $txt, $border=0, $align='J', $fill=0, $ln=1, $x='', $y='', $reseth=true, $stretch=0)
+
+    $page_start = $pdf->getPage();
+    $y_start    = $pdf->GetY();
+
+    // write the left cell
+    $pdf->MultiCell($left_width, 0, $left, 0, 'L', 0, 2, '', '', true, 0, true);
+
+    $page_end_1 = $pdf->getPage();
+    $y_end_1    = $pdf->GetY();
+
+    $pdf->setPage($page_start);
+
+    // write the right cell
+    $pdf->MultiCell(0, 0, $right, 0, 'R', 0, 1, $pdf->GetX(), $y_start, true, 0, true);
+
+    $page_end_2 = $pdf->getPage();
+    $y_end_2    = $pdf->GetY();
+
+    // set the new row position by case
+    if (max($page_end_1, $page_end_2) == $page_start) {
+        $ynew = max($y_end_1, $y_end_2);
+    } elseif ($page_end_1 == $page_end_2) {
+        $ynew = max($y_end_1, $y_end_2);
+    } elseif ($page_end_1 > $page_end_2) {
+        $ynew = $y_end_1;
+    } else {
+        $ynew = $y_end_2;
+    }
+
+    $pdf->setPage(max($page_end_1, $page_end_2));
+    $pdf->SetXY($pdf->GetX(), $ynew);
 }

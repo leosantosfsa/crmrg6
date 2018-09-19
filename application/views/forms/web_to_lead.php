@@ -37,7 +37,7 @@
         </div>
         <?php } ?>
          <div class="clearfix"></div>
-         <div class="text-left col-md-12">
+         <div class="text-left col-md-12 submit-btn-wrapper">
           <button class="btn btn-success" id="form_submit" type="submit"><?php echo $form->submit_btn_name; ?></button>
         </div>
       </div>

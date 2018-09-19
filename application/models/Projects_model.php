@@ -86,6 +86,11 @@ class Projects_model extends CRM_Model
         return $this->db->query('SELECT DISTINCT staff_id FROM tbltaskstimers LEFT JOIN tblstafftasks ON tblstafftasks.id = tbltaskstimers.task_id WHERE rel_type="project" AND rel_id=' . $project_id)->result_array();
     }
 
+    public function get_distinct_projects_members()
+    {
+        return $this->db->query('SELECT staff_id, firstname, lastname FROM tblprojectmembers JOIN tblstaff ON tblstaff.staffid=tblprojectmembers.staff_id GROUP by staff_id order by firstname ASC')->result_array();
+    }
+
     public function get_most_used_billing_type()
     {
         return $this->db->query('SELECT billing_type, COUNT(*) AS total_usage
@@ -344,8 +349,17 @@ class Projects_model extends CRM_Model
                     )');
             }
         }
-        $this->db->order_by('milestone_order', 'asc');
+
         $this->db->where($where);
+
+        // Milestones kanban order
+        // Request is admin/projects/milestones_kanban
+        if ($this->uri->segment(3) == 'milestones_kanban') {
+            $this->db->order_by('milestone_order', 'asc');
+        } else {
+            $orderByString = do_action('project_tasks_array_default_order', 'FIELD(status, 5), duedate IS NULL ASC, duedate');
+            $this->db->order_by($orderByString, '', false);
+        }
 
         if ($count == false) {
             $tasks = $this->db->get('tblstafftasks')->result_array();
@@ -354,6 +368,23 @@ class Projects_model extends CRM_Model
         }
 
         return $tasks;
+    }
+
+    public function cancel_recurring_tasks($id)
+    {
+        $this->db->where('rel_type', 'project');
+        $this->db->where('rel_id', $id);
+        $this->db->where('recurring', 1);
+        $this->db->where('(cycles != total_cycles OR cycles=0)');
+
+        $this->db->update('tblstafftasks', [
+                    'recurring_type'      => null,
+                    'repeat_every'        => 0,
+                    'cycles'              => 0,
+                    'recurring'           => 0,
+                    'custom_recurring'    => 0,
+                    'last_recurring_date' => null,
+            ]);
     }
 
     public function do_milestones_kanban_query($milestone_id, $project_id, $page = 1, $where = [], $count = false)
@@ -713,59 +744,70 @@ class Projects_model extends CRM_Model
             }
 
             if (count($tasks) > 0) {
-                $data           = [];
-                $data['values'] = [];
-                $values         = [];
-                $data['desc']   = $tasks[0]['name'];
-                $data['name']   = $name;
-                $class          = '';
-                if ($tasks[0]['status'] == 5) {
-                    $class = 'line-throught';
-                }
+                $data         = get_task_array_gantt_data($tasks[0]);
+                $data['name'] = $name;
 
-                $values['from']  = strftime('%Y/%m/%d', strtotime($tasks[0]['startdate']));
-                $values['to']    = strftime('%Y/%m/%d', strtotime($tasks[0]['duedate']));
-                $values['desc']  = $tasks[0]['name'] . ' - ' . _l('task_total_logged_time') . ' ' . seconds_to_time_format($tasks[0]['total_logged_time']);
-                $values['label'] = $tasks[0]['name'];
-                if ($tasks[0]['duedate'] && date('Y-m-d') > $tasks[0]['duedate'] && $tasks[0]['status'] != 5) {
-                    $values['customClass'] = 'ganttRed';
-                } elseif ($tasks[0]['status'] == 5) {
-                    $values['label']       = ' <i class="fa fa-check"></i> ' . $values['label'];
-                    $values['customClass'] = 'ganttGreen';
-                }
-                $values['dataObj'] = [
-                    'task_id' => $tasks[0]['id'],
-                ];
-                $data['values'][] = $values;
-                $gantt_data[]     = $data;
+                $gantt_data[] = $data;
                 unset($tasks[0]);
+
                 foreach ($tasks as $task) {
-                    $data           = [];
-                    $data['values'] = [];
-                    $values         = [];
-                    $class          = '';
-                    if ($task['status'] == 5) {
-                        $class = 'line-throught';
-                    }
-                    $data['desc'] = $task['name'];
-                    $data['name'] = '';
+                    $gantt_data[] = get_task_array_gantt_data($task);
+                }
+            }
+        }
 
-                    $values['from']  = strftime('%Y/%m/%d', strtotime($task['startdate']));
-                    $values['to']    = strftime('%Y/%m/%d', strtotime($task['duedate']));
-                    $values['desc']  = $task['name'] . ' - ' . _l('task_total_logged_time') . ' ' . seconds_to_time_format($task['total_logged_time']);
-                    $values['label'] = $task['name'];
-                    if ($task['duedate'] && date('Y-m-d') > $task['duedate'] && $task['status'] != 5) {
-                        $values['customClass'] = 'ganttRed';
-                    } elseif ($task['status'] == 5) {
-                        $values['label']       = ' <i class="fa fa-check"></i> ' . $values['label'];
-                        $values['customClass'] = 'ganttGreen';
-                    }
+        return $gantt_data;
+    }
 
-                    $values['dataObj'] = [
-                        'task_id' => $task['id'],
+    public function get_all_projects_gantt_data($filters = [])
+    {
+        $statuses   = $this->get_project_statuses();
+        $gantt_data = [];
+
+        $statusesIds = [];
+        foreach ($statuses as $status) {
+
+            if(!in_array($status['id'], $filters['status'])) {
+                continue;
+            }
+
+            if (!has_permission('projects', '', 'view')) {
+                $this->db->where('tblprojects.id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . get_staff_user_id() . ')');
+            }
+
+            if($filters['member']) {
+                $this->db->where('tblprojects.id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . $filters['member'] . ')');
+            }
+
+            $this->db->where('status', $status['id']);
+            $this->db->order_by('deadline IS NULL ASC, deadline', '', false);
+            $projects = $this->db->get('tblprojects')->result_array();
+
+            foreach ($projects as $project) {
+                $tasks = $this->get_tasks($project['id'], [], true);
+
+                $data             = [];
+                $data['values']   = [];
+                $values           = [];
+                $data['desc']     = ' '; // right white background
+                    $data['name'] = $project['name']; // the heading
+
+                    $values['from'] = strftime('%Y/%m/%d', strtotime($project['start_date']));
+                $values['to']       = strftime('%Y/%m/%d', strtotime($project['deadline']));
+                $values['desc']     = '';
+                $values['label']    = $project['name'];
+
+                $values['dataObj'] = [
+                        'project_id' => $project['id'],
                     ];
-                    $data['values'][] = $values;
-                    $gantt_data[]     = $data;
+                $values['customClass'] = 'ganttProject';
+                $data['values'][]      = $values;
+                $gantt_data[]          = $data;
+
+                if (count($tasks) > 0) {
+                    foreach ($tasks as $task) {
+                        $gantt_data[] = get_task_array_gantt_data($task);
+                    }
                 }
             }
         }
@@ -1230,6 +1272,11 @@ class Projects_model extends CRM_Model
             unset($data['tags']);
         }
 
+        if (isset($data['cancel_recurring_tasks'])) {
+            unset($data['cancel_recurring_tasks']);
+            $this->cancel_recurring_tasks($id);
+        }
+
         $_data['data'] = $data;
         $_data['id']   = $id;
 
@@ -1333,6 +1380,7 @@ class Projects_model extends CRM_Model
                 'project_id' => $data['project_id'],
             ]);
 
+
             if ($data['status_id'] == 4) {
                 $this->log_activity($data['project_id'], 'project_marked_as_finished');
                 $this->db->where('id', $data['project_id']);
@@ -1347,11 +1395,17 @@ class Projects_model extends CRM_Model
             if ($data['notify_project_members_status_change'] == 1) {
                 $this->_notify_project_members_status_change($data['project_id'], $old_status, $data['status_id']);
             }
+
             if ($data['mark_all_tasks_as_completed'] == 1) {
                 $this->_mark_all_project_tasks_as_completed($data['project_id']);
             }
 
-            if (isset($data['send_project_marked_as_finished_email_to_contacts']) && $data['send_project_marked_as_finished_email_to_contacts'] == 1) {
+            if (isset($data['cancel_recurring_tasks']) && $data['cancel_recurring_tasks'] == 'true') {
+                $this->cancel_recurring_tasks($data['project_id']);
+            }
+
+            if (isset($data['send_project_marked_as_finished_email_to_contacts'])
+                && $data['send_project_marked_as_finished_email_to_contacts'] == 1) {
                 $this->send_project_customer_email($data['project_id'], 'project-finished-to-customer');
             }
 

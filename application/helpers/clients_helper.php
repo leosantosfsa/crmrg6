@@ -592,6 +592,9 @@ function load_client_language($customer_id = '')
         }
     }
 
+    $CI->lang->is_loaded = [];
+    $CI->lang->language  = [];
+
     $CI->lang->load($language . '_lang', $language);
     if (file_exists(APPPATH . 'language/' . $language . '/custom_lang.php')) {
         $CI->lang->load('custom_lang', $language);
@@ -680,6 +683,19 @@ function get_contact_permissions()
     ];
 
     return do_action('get_contact_permissions', $permissions);
+}
+
+function get_contact_permission($name)
+{
+    $permissions = get_contact_permissions();
+
+    foreach ($permissions as $permission) {
+        if ($permission['short_name'] == $name) {
+            return $permission;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -1003,13 +1019,13 @@ function get_all_customer_attachments($id)
 
     $has_permission_invoices_view = has_permission('invoices', '', 'view');
     $has_permission_invoices_own  = has_permission('invoices', '', 'view_own');
-    if ($has_permission_invoices_view || $has_permission_invoices_own) {
+    if ($has_permission_invoices_view || $has_permission_invoices_own || get_option('allow_staff_view_invoices_assigned') == 1) {
         // Invoices
         $CI->db->select('clientid,id');
         $CI->db->where('clientid', $id);
 
         if (!$has_permission_invoices_view) {
-            $CI->db->where('addedfrom', get_staff_user_id());
+            $CI->db->where(get_invoices_where_sql_for_staff(get_staff_user_id()));
         }
 
         $CI->db->from('tblinvoices');
@@ -1055,12 +1071,12 @@ function get_all_customer_attachments($id)
     $permission_estimates_view = has_permission('estimates', '', 'view');
     $permission_estimates_own  = has_permission('estimates', '', 'view_own');
 
-    if ($permission_estimates_view || $permission_estimates_own) {
+    if ($permission_estimates_view || $permission_estimates_own || get_option('allow_staff_view_proposals_assigned') == 1) {
         // Estimates
         $CI->db->select('clientid,id');
         $CI->db->where('clientid', $id);
         if (!$permission_estimates_view) {
-            $CI->db->where('addedfrom', get_staff_user_id());
+            $CI->db->where(get_estimates_where_sql_for_staff(get_staff_user_id()));
         }
         $CI->db->from('tblestimates');
         $estimates = $CI->db->get()->result_array();
@@ -1080,13 +1096,13 @@ function get_all_customer_attachments($id)
     $has_permission_proposals_view = has_permission('proposals', '', 'view');
     $has_permission_proposals_own  = has_permission('proposals', '', 'view_own');
 
-    if ($has_permission_proposals_view || $has_permission_proposals_own) {
+    if ($has_permission_proposals_view || $has_permission_proposals_own || get_option('allow_staff_view_proposals_assigned') == 1) {
         // Proposals
         $CI->db->select('rel_id,id');
         $CI->db->where('rel_id', $id);
         $CI->db->where('rel_type', 'customer');
         if (!$has_permission_proposals_view) {
-            $CI->db->where('addedfrom', get_staff_user_id());
+            $CI->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
         }
         $CI->db->from('tblproposals');
         $proposals = $CI->db->get()->result_array();

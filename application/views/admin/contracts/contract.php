@@ -96,21 +96,41 @@
                            <li role="presentation" class="<?php if($this->input->get('tab') == 'attachments'){echo 'active';} ?>">
                               <a href="#attachments" aria-controls="attachments" role="tab" data-toggle="tab">
                               <?php echo _l('contract_attachments'); ?>
+                              <?php if($totalAttachments = count($contract->attachments)) { ?>
+                                  <span class="badge attachments-indicator"><?php echo $totalAttachments; ?></span>
+                              <?php } ?>
                               </a>
                            </li>
                            <li role="presentation">
                               <a href="#tab_comments" aria-controls="tab_comments" role="tab" data-toggle="tab" onclick="get_contract_comments(); return false;">
                               <?php echo _l('contract_comments'); ?>
+                              <?php
+                              $totalComments = total_rows('tblcontractcomments','contract_id='.$contract->id)
+                              ?>
+                              <span class="badge comments-indicator<?php echo $totalComments == 0 ? ' hide' : ''; ?>"><?php echo $totalComments; ?></span>
                               </a>
                            </li>
                            <li role="presentation" class="<?php if($this->input->get('tab') == 'renewals'){echo 'active';} ?>">
                               <a href="#renewals" aria-controls="renewals" role="tab" data-toggle="tab">
                               <?php echo _l('no_contract_renewals_history_heading'); ?>
+                              <?php if($totalRenewals = count($contract_renewal_history)) { ?>
+                                 <span class="badge"><?php echo $totalRenewals; ?></span>
+                              <?php } ?>
                               </a>
                            </li>
                            <li role="presentation" class="tab-separator">
                               <a href="#tab_tasks" aria-controls="tab_tasks" role="tab" data-toggle="tab" onclick="init_rel_tasks_table(<?php echo $contract->id; ?>,'contract'); return false;">
                               <?php echo _l('tasks'); ?>
+                              </a>
+                           </li>
+                           <li role="presentation" class="tab-separator">
+                              <a href="#tab_notes" onclick="get_sales_notes(<?php echo $contract->id; ?>,'contracts'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
+                                 <?php echo _l('contract_notes'); ?>
+                                 <span class="notes-total">
+                                    <?php if($totalNotes > 0){ ?>
+                                       <span class="badge"><?php echo $totalNotes; ?></span>
+                                    <?php } ?>
+                                 </span>
                               </a>
                            </li>
                            <li role="presentation" data-toggle="tooltip" title="<?php echo _l('emails_tracking'); ?>" class="tab-separator">
@@ -238,6 +258,17 @@
                            </div>
                         </div>
                         <?php } ?>
+                     </div>
+                     <div role="tabpanel" class="tab-pane" id="tab_notes">
+                        <?php echo form_open(admin_url('contracts/add_note/'.$contract->id),array('id'=>'sales-notes','class'=>'contract-notes-form')); ?>
+                        <?php echo render_textarea('description'); ?>
+                        <div class="text-right">
+                           <button type="submit" class="btn btn-info mtop15 mbot15"><?php echo _l('contract_add_note'); ?></button>
+                        </div>
+                        <?php echo form_close(); ?>
+                        <hr />
+                        <div class="panel_s mtop20 no-shadow" id="sales_notes_area">
+                        </div>
                      </div>
                      <div role="tabpanel" class="tab-pane" id="tab_comments">
                         <div class="row contract-comments mtop15">
@@ -535,6 +566,14 @@
        $.get(admin_url + 'contracts/delete_contract_attachment/' + id, function (response) {
           if (response.success == true) {
              $(wrapper).parents('.contract-attachment-wrapper').remove();
+
+             var totalAttachmentsIndicator = $('.attachments-indicator');
+             var totalAttachments = totalAttachmentsIndicator.text().trim();
+             if(totalAttachments == 1) {
+               totalAttachmentsIndicator.remove();
+             } else {
+               totalAttachmentsIndicator.text(totalAttachments-1);
+             }
           } else {
              alert_float('danger', response.message);
           }
@@ -580,6 +619,14 @@
     }
     requestGet('contracts/get_comments/' + contract_id).done(function (response) {
        $('#contract-comments').html(response);
+       var totalComments = $('[data-commentid]').length;
+       var commentsIndicator = $('.comments-indicator');
+       if(totalComments == 0) {
+            commentsIndicator.addClass('hide');
+       } else {
+         commentsIndicator.removeClass('hide');
+         commentsIndicator.text(totalComments);
+       }
     });
    }
 
@@ -587,7 +634,18 @@
     if (confirm_delete()) {
        requestGetJSON('contracts/remove_comment/' + commentid).done(function (response) {
           if (response.success == true) {
+
+            var totalComments = $('[data-commentid]').length;
+
              $('[data-commentid="' + commentid + '"]').remove();
+
+             var commentsIndicator = $('.comments-indicator');
+             if(totalComments-1 == 0) {
+               commentsIndicator.addClass('hide');
+            } else {
+               commentsIndicator.removeClass('hide');
+               commentsIndicator.text(totalComments-1);
+            }
           }
        });
     }

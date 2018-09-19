@@ -23,8 +23,16 @@ class Pdf extends TCPDF
      */
     private $pdf_type = '';
 
-    public function __construct($orientation = 'P', $unit = 'mm', $format = 'A4', $unicode = true, $encoding = 'UTF-8', $diskcache = false, $pdfa = false, $pdf_type = '')
-    {
+    public function __construct(
+        $orientation = 'P',
+        $unit = 'mm',
+        $format = 'A4',
+        $unicode = true,
+        $encoding = 'UTF-8',
+        $diskcache = false,
+        $pdfa = false,
+        $pdf_type = ''
+    ) {
         parent::__construct($orientation, $unit, $format, $unicode, $encoding, $diskcache, $pdfa);
 
         $this->pdf_type       = $pdf_type;
@@ -40,6 +48,7 @@ class Pdf extends TCPDF
     public function Close()
     {
         include_once(APPPATH . 'libraries/PDF_Signature.php');
+
         $signature = new PDF_Signature($this, $this->pdf_type);
         $signature->process();
 

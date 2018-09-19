@@ -13,16 +13,13 @@ use Twilio\InstanceContext;
 use Twilio\Values;
 use Twilio\Version;
 
-/**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- */
 class EngagementContextContext extends InstanceContext {
     /**
      * Initialize the EngagementContextContext
      * 
      * @param \Twilio\Version $version Version that contains the resource
-     * @param string $flowSid The flow_sid
-     * @param string $engagementSid The engagement_sid
+     * @param string $flowSid Flow Sid.
+     * @param string $engagementSid Engagement Sid.
      * @return \Twilio\Rest\Studio\V1\Flow\Engagement\EngagementContextContext 
      */
     public function __construct(Version $version, $flowSid, $engagementSid) {
@@ -38,6 +35,7 @@ class EngagementContextContext extends InstanceContext {
      * Fetch a EngagementContextInstance
      * 
      * @return EngagementContextInstance Fetched EngagementContextInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         $params = Values::of(array());

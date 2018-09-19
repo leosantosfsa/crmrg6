@@ -7,7 +7,7 @@
 <div class="row">
    <div class="col-md-12">
          <div class="bg-stripe mbot15">
-        <div class="form-group select-placeholder">
+         <div class="form-group select-placeholder">
          <label for="stripe_plan_id"><?php echo _l('billing_plan'); ?></label>
          <select id="stripe_plan_id" name="stripe_plan_id" class="selectpicker" data-live-search="true" data-width="100%" data-none-selected-text="Select Stripe Plan">
             <option value=""></option>
@@ -17,8 +17,14 @@
                if(isset($subscription) && $subscription->stripe_plan_id == $plan->id) {
                  $selected = ' selected';
                }
+               $subtext = format_money($plan->amount / 100, strtoupper($plan->currency));
+               if($plan->interval_count == 1) {
+                  $subtext .= ' / ' . $plan->interval;
+               } else {
+                  $subtext .= ' (every '.$plan->interval_count.' '.$plan->interval.'s)';
+               }
                ?>
-            <option value="<?php echo $plan->id; ?>" data-amount="<?php echo $plan->amount; ?>" data-subtext="<?php echo format_money($plan->amount / 100, strtoupper($plan->currency)); ?> (<?php echo $plan->interval; ?>)"<?php echo $selected; ?>>
+            <option value="<?php echo $plan->id; ?>" data-interval-count="<?php echo $plan->interval_count; ?>" data-interval="<?php echo $plan->interval; ?>" data-amount="<?php echo $plan->amount; ?>" data-subtext="<?php echo $subtext; ?>"<?php echo $selected; ?>>
                <?php
                   if(empty($plan->nickname)) {
                     echo '[Plan Name Not Set in Stripe, ID:'.$plan->id.']';
@@ -33,15 +39,16 @@
       </div>
       <?php echo render_input('quantity',_l('item_quantity_placeholder'),isset($subscription) ? $subscription->quantity : 1,'number'); ?>
       <?php
-        $params = array('data-date-min-date'=>date('Y-m-d',strtotime('+1 days',strtotime(date('Y-m-d')))));
+        $params = array('data-lazy'=>'false','data-date-min-date'=>date('Y-m-d',strtotime('+1 days',strtotime(date('Y-m-d')))));
         if(isset($subscription) && !empty($subscription->stripe_subscription_id)){
-          $params['disabled'] = true;
+            $params['disabled'] = true;
         }
-
+       echo '<div id="first_billing_date_wrapper">';
         if(!isset($params['disabled'])){
-          echo '<i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-title="Leave blank to use date when the customer is subscribed to the subscription. This field must be future date, if you select date and the date is passed but customer is not yet subscribed, the date when the customer will subscribe will be used."></i>';
+          echo '<i class="fa fa-question-circle pull-left" data-toggle="tooltip" data-placement="right" data-title="Leave blank to use date when the customer is subscribed to the subscription. This field must be future date, if you select date and the date is passed but customer is not yet subscribed, the date when the customer will subscribe will be used."></i>';
         }
         echo render_date_input('date', 'first_billing_date', isset($subscription) ? _d($subscription->date) : '', $params);
+        echo '</div>';
         if(isset($subscription) && !empty($subscription->stripe_subscription_id) && $subscription->status != 'canceled' && $subscription->status != 'future') { ?>
            <div class="checkbox checkbox-info hide" id="prorateWrapper">
                 <input type="checkbox" id="prorate" class="ays-ignore" checked name="prorate">

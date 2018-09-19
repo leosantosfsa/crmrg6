@@ -17,7 +17,8 @@ use Twilio\Values;
  */
 abstract class FieldValueOptions {
     /**
-     * @param string $language The language
+     * @param string $language An ISO language-country string of the value. For
+     *                         example: en-US
      * @return ReadFieldValueOptions Options builder
      */
     public static function read($language = Values::NONE) {
@@ -25,7 +26,8 @@ abstract class FieldValueOptions {
     }
 
     /**
-     * @param string $synonymOf The synonym_of
+     * @param string $synonymOf A value that indicates this field value is a
+     *                          synonym of. Empty if the value is not a synonym.
      * @return CreateFieldValueOptions Options builder
      */
     public static function create($synonymOf = Values::NONE) {
@@ -35,16 +37,18 @@ abstract class FieldValueOptions {
 
 class ReadFieldValueOptions extends Options {
     /**
-     * @param string $language The language
+     * @param string $language An ISO language-country string of the value. For
+     *                         example: en-US
      */
     public function __construct($language = Values::NONE) {
         $this->options['language'] = $language;
     }
 
     /**
-     * The language
+     * An ISO language-country string of the value. For example: *en-US*
      * 
-     * @param string $language The language
+     * @param string $language An ISO language-country string of the value. For
+     *                         example: en-US
      * @return $this Fluent Builder
      */
     public function setLanguage($language) {
@@ -70,16 +74,18 @@ class ReadFieldValueOptions extends Options {
 
 class CreateFieldValueOptions extends Options {
     /**
-     * @param string $synonymOf The synonym_of
+     * @param string $synonymOf A value that indicates this field value is a
+     *                          synonym of. Empty if the value is not a synonym.
      */
     public function __construct($synonymOf = Values::NONE) {
         $this->options['synonymOf'] = $synonymOf;
     }
 
     /**
-     * The synonym_of
+     * A value that indicates this field value is a synonym of. Empty if the value is not a synonym.
      * 
-     * @param string $synonymOf The synonym_of
+     * @param string $synonymOf A value that indicates this field value is a
+     *                          synonym of. Empty if the value is not a synonym.
      * @return $this Fluent Builder
      */
     public function setSynonymOf($synonymOf) {

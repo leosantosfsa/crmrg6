@@ -22,10 +22,13 @@ abstract class AuthorizationDocumentOptions {
      * @param string $email Email.
      * @param string $ccEmails A list of emails.
      * @param string $status The Status of this AuthorizationDocument.
+     * @param string $contactTitle Title of signee of this Authorization Document.
+     * @param string $contactPhoneNumber Authorization Document's signee's phone
+     *                                   number.
      * @return UpdateAuthorizationDocumentOptions Options builder
      */
-    public static function update($hostedNumberOrderSids = Values::NONE, $addressSid = Values::NONE, $email = Values::NONE, $ccEmails = Values::NONE, $status = Values::NONE) {
-        return new UpdateAuthorizationDocumentOptions($hostedNumberOrderSids, $addressSid, $email, $ccEmails, $status);
+    public static function update($hostedNumberOrderSids = Values::NONE, $addressSid = Values::NONE, $email = Values::NONE, $ccEmails = Values::NONE, $status = Values::NONE, $contactTitle = Values::NONE, $contactPhoneNumber = Values::NONE) {
+        return new UpdateAuthorizationDocumentOptions($hostedNumberOrderSids, $addressSid, $email, $ccEmails, $status, $contactTitle, $contactPhoneNumber);
     }
 
     /**
@@ -53,13 +56,18 @@ class UpdateAuthorizationDocumentOptions extends Options {
      * @param string $email Email.
      * @param string $ccEmails A list of emails.
      * @param string $status The Status of this AuthorizationDocument.
+     * @param string $contactTitle Title of signee of this Authorization Document.
+     * @param string $contactPhoneNumber Authorization Document's signee's phone
+     *                                   number.
      */
-    public function __construct($hostedNumberOrderSids = Values::NONE, $addressSid = Values::NONE, $email = Values::NONE, $ccEmails = Values::NONE, $status = Values::NONE) {
+    public function __construct($hostedNumberOrderSids = Values::NONE, $addressSid = Values::NONE, $email = Values::NONE, $ccEmails = Values::NONE, $status = Values::NONE, $contactTitle = Values::NONE, $contactPhoneNumber = Values::NONE) {
         $this->options['hostedNumberOrderSids'] = $hostedNumberOrderSids;
         $this->options['addressSid'] = $addressSid;
         $this->options['email'] = $email;
         $this->options['ccEmails'] = $ccEmails;
         $this->options['status'] = $status;
+        $this->options['contactTitle'] = $contactTitle;
+        $this->options['contactPhoneNumber'] = $contactPhoneNumber;
     }
 
     /**
@@ -114,6 +122,29 @@ class UpdateAuthorizationDocumentOptions extends Options {
      */
     public function setStatus($status) {
         $this->options['status'] = $status;
+        return $this;
+    }
+
+    /**
+     * The title of the person authorized to sign the Authorization Document for this phone number.
+     * 
+     * @param string $contactTitle Title of signee of this Authorization Document.
+     * @return $this Fluent Builder
+     */
+    public function setContactTitle($contactTitle) {
+        $this->options['contactTitle'] = $contactTitle;
+        return $this;
+    }
+
+    /**
+     * The contact phone number of the person authorized to sign the Authorization Document.
+     * 
+     * @param string $contactPhoneNumber Authorization Document's signee's phone
+     *                                   number.
+     * @return $this Fluent Builder
+     */
+    public function setContactPhoneNumber($contactPhoneNumber) {
+        $this->options['contactPhoneNumber'] = $contactPhoneNumber;
         return $this;
     }
 
@@ -190,7 +221,7 @@ class CreateAuthorizationDocumentOptions extends Options {
     }
 
     /**
-     * A list of emails that this AuthorizationDocument will be carbon copied to.
+     * Email recipients who will be informed when an Authorization Document has been sent and signed.
      * 
      * @param string $ccEmails A list of emails.
      * @return $this Fluent Builder

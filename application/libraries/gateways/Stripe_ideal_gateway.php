@@ -53,7 +53,7 @@ class Stripe_ideal_gateway extends App_gateway
                 'name'             => 'webhook_key',
                 'label'            => 'Stripe Webhook Key',
                 'default_value'    => app_generate_hash(),
-                'after'            => '<p class="mbot15">Secret key to protect your webhook, webhook URL: ' . site_url('gateways/stripe_ideal/YOUR_WEBHOOK_KEY</p>'),
+                'after'            => '<p class="mbot15">Secret key to protect your webhook, webhook URL: ' . site_url('gateways/stripe_ideal/webhook/YOUR_WEBHOOK_KEY</p>'),
                 'field_attributes' => ['required' => true],
             ],
             [

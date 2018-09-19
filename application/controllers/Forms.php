@@ -417,6 +417,9 @@ class Forms extends Clients_controller
                 unset($post_data['g-recaptcha-response']);
             }
 
+            if (isset($post_data['accept_terms_and_conditions'])) {
+                unset($post_data['accept_terms_and_conditions']);
+            }
 
             $success = false;
 

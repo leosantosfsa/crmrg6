@@ -20,8 +20,8 @@ class Admin_controller extends CRM_Controller
             die;
         }
 
-        if (CI_VERSION != '3.1.8') {
-            echo '<h2>Additionally you will need to replace the <b>system</b> folder. We updated Codeigniter to 3.1.8.</h2>';
+        if (CI_VERSION != '3.1.9') {
+            echo '<h2>Additionally you will need to replace the <b>system</b> folder. We updated Codeigniter to 3.1.9.</h2>';
             echo '<p>From the newest downloaded files upload the <b>system</b> folder to your Perfex CRM installation directory.';
             die;
         }

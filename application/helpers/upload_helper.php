@@ -47,17 +47,20 @@ function handle_newsfeed_post_attachments($postid)
         // Make sure we have a filepath
         if (!empty($tmpFilePath) && $tmpFilePath != '') {
             _maybe_create_upload_path($path);
-            $filename    = unique_filename($path, $_FILES['file']['name']);
-            $newFilePath = $path . $filename;
-            // Upload the file into the temp dir
-            if (move_uploaded_file($tmpFilePath, $newFilePath)) {
-                $file_uploaded = true;
-                $attachment    = [];
-                $attachment[]  = [
+            $filename = unique_filename($path, $_FILES['file']['name']);
+            // In case client side validation is bypassed
+            if (_upload_extension_allowed($filename)) {
+                $newFilePath = $path . $filename;
+                // Upload the file into the temp dir
+                if (move_uploaded_file($tmpFilePath, $newFilePath)) {
+                    $file_uploaded = true;
+                    $attachment    = [];
+                    $attachment[]  = [
                     'file_name' => $filename,
                     'filetype'  => $_FILES['file']['type'],
                     ];
-                $CI->misc_model->add_attachment_to_database($postid, 'newsfeed_post', $attachment);
+                    $CI->misc_model->add_attachment_to_database($postid, 'newsfeed_post', $attachment);
+                }
             }
         }
         if ($file_uploaded == true) {
@@ -109,7 +112,13 @@ function handle_project_file_uploads($project_id)
             // Make sure we have a filepath
             if (!empty($tmpFilePath) && $tmpFilePath != '') {
                 _maybe_create_upload_path($path);
-                $filename    = unique_filename($path, $_FILES['file']['name'][$i]);
+                $filename = unique_filename($path, $_FILES['file']['name'][$i]);
+
+                // In case client side validation is bypassed
+                if (!_upload_extension_allowed($filename)) {
+                    continue;
+                }
+
                 $newFilePath = $path . $filename;
                 // Upload the file into the company uploads dir
                 if (move_uploaded_file($tmpFilePath, $newFilePath)) {
@@ -530,7 +539,7 @@ function handle_ticket_attachments($ticketid, $index_name = 'attachments')
 function handle_company_logo_upload()
 {
     $logoIndex = ['logo', 'logo_dark'];
-    $success = false;
+    $success   = false;
     foreach ($logoIndex as $logo) {
         $index = 'company_' . $logo;
 
@@ -571,7 +580,6 @@ function handle_company_logo_upload()
                 if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                     update_option($index, $filename);
                     $success = true;
-
                 }
             }
         }
@@ -820,6 +828,7 @@ function handle_project_discussion_comment_attachments($discussion_id, $post_dat
     if (isset($_FILES['file']['name'])) {
         do_action('before_upload_project_discussion_comment_attachment');
         $path = PROJECT_DISCUSSION_ATTACHMENT_FOLDER . $discussion_id . '/';
+
         // Check for all cases if this extension is allowed
         if (!_upload_extension_allowed($_FILES['file']['name'])) {
             header('HTTP/1.0 400 Bad error');

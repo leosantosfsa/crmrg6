@@ -863,6 +863,19 @@ class Imap
     }
 
     /**
+     * Get email plain text
+     * @param  mixed $uid email uid
+     * @return mied
+     */
+    public function getPlainTextBody($uid)
+    {
+        list($body, $charset) = $this->get_part($this->imap, $uid, 'TEXT/PLAIN');
+        $body                 = $this->convertToUtf8($body, $charset);
+
+        return $body;
+    }
+
+    /**
      * convert to utf8 if necessary.
      *
      * @return true or false

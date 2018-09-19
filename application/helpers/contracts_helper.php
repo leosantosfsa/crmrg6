@@ -80,3 +80,49 @@ function prepare_contracts_for_export($customer_id)
 
     return $contracts;
 }
+
+function send_contract_signed_notification_to_staff($contract_id)
+{
+    $CI = &get_instance();
+    $CI->db->where('id', $contract_id);
+    $contract = $CI->db->get('tblcontracts')->row();
+
+    if (!$contract) {
+        return false;
+    }
+
+    // Get creator
+    $CI->db->select('staffid, email');
+    $CI->db->where('staffid', $contract->addedfrom);
+    $staff_contract = $CI->db->get('tblstaff')->result_array();
+
+    $CI->load->model('emails_model');
+
+    $CI->emails_model->set_rel_id($contract->id);
+    $CI->emails_model->set_rel_type('contract');
+    $notifiedUsers = [];
+    foreach ($staff_contract as $member) {
+        $notified = add_notification([
+                        'description'     => 'not_contract_signed',
+                        'touserid'        => $member['staffid'],
+                        'fromcompany'     => 1,
+                        'fromuserid'      => null,
+                        'link'            => 'contracts/contract/' . $contract->id,
+                        'additional_data' => serialize([
+                            '<b>' . $contract->subject . '</b>',
+                        ]),
+                    ]);
+
+        if ($notified) {
+            array_push($notifiedUsers, $member['staffid']);
+        }
+
+        $merge_fields = [];
+        $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract->client));
+        $merge_fields = array_merge($merge_fields, get_contract_merge_fields($contract->id));
+        $merge_fields = array_merge($merge_fields, get_staff_merge_fields($member['staffid']));
+        $CI->emails_model->send_email_template('contract-signed-to-staff', $member['email'], $merge_fields);
+    }
+
+    pusher_trigger_notification($notifiedUsers);
+}

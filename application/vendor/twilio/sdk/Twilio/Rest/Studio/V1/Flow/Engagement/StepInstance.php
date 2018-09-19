@@ -16,8 +16,6 @@ use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- * 
  * @property string sid
  * @property string accountSid
  * @property string flowSid
@@ -39,9 +37,9 @@ class StepInstance extends InstanceResource {
      * 
      * @param \Twilio\Version $version Version that contains the resource
      * @param mixed[] $payload The response payload
-     * @param string $flowSid The flow_sid
-     * @param string $engagementSid The engagement_sid
-     * @param string $sid The sid
+     * @param string $flowSid Flow Sid.
+     * @param string $engagementSid Engagement Sid.
+     * @param string $sid Step Sid.
      * @return \Twilio\Rest\Studio\V1\Flow\Engagement\StepInstance 
      */
     public function __construct(Version $version, array $payload, $flowSid, $engagementSid, $sid = null) {
@@ -94,6 +92,7 @@ class StepInstance extends InstanceResource {
      * Fetch a StepInstance
      * 
      * @return StepInstance Fetched StepInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         return $this->proxy()->fetch();

@@ -4,8 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
 
-// require_once(APPPATH . 'third_party/omnipay/vendor/autoload.php');
-
 class Mollie_gateway extends App_gateway
 {
     public function __construct()
@@ -47,6 +45,7 @@ class Mollie_gateway extends App_gateway
                 'name'          => 'currencies',
                 'label'         => 'currency',
                 'default_value' => 'EUR',
+                'field_attributes'=>['disabled'=>true],
             ],
             [
                 'name'          => 'test_mode_enabled',
@@ -68,13 +67,20 @@ class Mollie_gateway extends App_gateway
         $gateway = Omnipay::create('Mollie');
         $gateway->setApiKey($this->decryptSetting('api_key'));
 
+        $webhookKey = app_generate_hash();
+        $invoiceNumber = format_invoice_number($data['invoice']->id);
+        $description = str_replace('{invoice_number}', $invoiceNumber, $this->getSetting('description_dashboard'));
+        $returnUrl = site_url('gateways/mollie/verify_payment?invoiceid=' . $data['invoice']->id . '&hash=' . $data['invoice']->hash);
+        $webhookUrl = site_url('gateways/mollie/webhook/'.$webhookKey);
+
         $oResponse = $gateway->purchase([
             'amount'      => number_format($data['amount'], 2, '.', ''),
-            'description' => str_replace('{invoice_number}', format_invoice_number($data['invoice']->id), $this->getSetting('description_dashboard')),
-            'returnUrl'   => site_url('gateways/mollie/verify_payment?invoiceid=' . $data['invoice']->id . '&hash=' . $data['invoice']->hash),
-            'notifyUrl'   => site_url('gateways/mollie/webhook'),
+            'description' => $description,
+            'returnUrl'   => $returnUrl,
+            'notifyUrl'   => $webhookUrl,
             'metadata'    => [
                 'order_id' => $data['invoice']->id,
+                'webhookKey'=>$webhookKey,
             ],
         ])->send();
 
@@ -86,6 +92,7 @@ class Mollie_gateway extends App_gateway
 
         if ($oResponse->isRedirect()) {
             $oResponse->redirect();
+            exit;
         } elseif ($oResponse->isPending()) {
             echo 'Pending, Reference: ' . $oResponse->getTransactionReference();
         } else {

@@ -28,14 +28,14 @@
                     <?php if($dropdown){ ?> <span class="caret"></span> <?php } ?>
                 </a>
                 <?php if($dropdown){ ?>
+                    <?php if(!is_rtl()){ ?>
                     <div class="tabs-submenu-wrapper">
+                    <?php } ?>
                        <ul class="dropdown-menu" aria-labelledby="dropdown_<?php echo $tab['name']; ?>">
                         <?php
-
                         usort($tab['dropdown'], function($a, $b) {
                             return $a['order'] - $b['order'];
                         });
-
                         foreach($tab['dropdown'] as $d){
                             if((isset($d['visible']) && $d['visible'] == true) || !isset($d['visible'])){
                                 echo '<li class="'.(isset($project->settings->available_features[$d['name']]) && $project->settings->available_features[$d['name']] == 0 ? 'hide': '').' nav-tabs-submenu-child"><a href="'.$d['url'].'" data-group="'.$d['name'].'">'.$d['lang'].'</a></li>';
@@ -43,7 +43,9 @@
                         }
                         ?>
                     </ul>
+                <?php if(!is_rtl()){ ?>
                 </div>
+                <?php } ?>
                 <?php } ?>
             </li>
             <?php } ?>

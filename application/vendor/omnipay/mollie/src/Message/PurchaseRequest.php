@@ -8,7 +8,6 @@ namespace Omnipay\Mollie\Message;
  */
 class PurchaseRequest extends AbstractRequest
 {
-
     public function getMetadata()
     {
         return $this->getParameter('metadata');
@@ -17,6 +16,26 @@ class PurchaseRequest extends AbstractRequest
     public function setMetadata($value)
     {
         return $this->setParameter('metadata', $value);
+    }
+
+    public function getLocale()
+    {
+        return $this->getParameter('locale');
+    }
+
+    public function setLocale($value)
+    {
+        return $this->setParameter('locale', $value);
+    }
+
+    public function getBillingEmail()
+    {
+        return $this->getParameter('billingEmail');
+    }
+
+    public function setBillingEmail($value)
+    {
+        return $this->setParameter('billingEmail', $value);
     }
 
     public function getData()
@@ -29,11 +48,12 @@ class PurchaseRequest extends AbstractRequest
         $data['redirectUrl'] = $this->getReturnUrl();
         $data['method']      = $this->getPaymentMethod();
         $data['metadata']    = $this->getMetadata();
+
         if ($this->getTransactionId()) {
             $data['metadata']['transactionId'] = $this->getTransactionId();
         }
-        $issuer = $this->getIssuer();
-        if ($issuer) {
+
+        if ($issuer = $this->getIssuer()) {
             $data['issuer'] = $issuer;
         }
 
@@ -42,13 +62,21 @@ class PurchaseRequest extends AbstractRequest
             $data['webhookUrl'] = $webhookUrl;
         }
 
+        if ($locale = $this->getLocale()) {
+            $data['locale'] = $locale;
+        }
+
+        if ($billingEmail = $this->getBillingEmail()) {
+            $data['billingEmail'] = $billingEmail;
+        }
+
         return $data;
     }
 
     public function sendData($data)
     {
-        $httpResponse = $this->sendRequest('POST', '/payments', $data);
+        $response = $this->sendRequest('POST', '/payments', $data);
 
-        return $this->response = new PurchaseResponse($this, $httpResponse->json());
+        return $this->response = new PurchaseResponse($this, $response);
     }
 }

@@ -163,6 +163,9 @@ function load_lead_language($lead_id)
         return false;
     }
 
+    $CI->lang->is_loaded = [];
+    $CI->lang->language  = [];
+
     $CI->lang->load($language . '_lang', $language);
     if (file_exists(APPPATH . 'language/' . $language . '/custom_lang.php')) {
         $CI->lang->load('custom_lang', $language);

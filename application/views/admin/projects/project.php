@@ -83,6 +83,11 @@
                             </div>
                         </div>
                     </div>
+                    <?php if(isset($project) && project_has_recurring_tasks($project->id)) { ?>
+                    <div class="alert alert-warning recurring-tasks-notice hide">
+
+                    </div>
+                    <?php } ?>
                     <?php if(total_rows('tblemailtemplates',array('slug'=>'project-finished-to-customer','active'=>0)) == 0){ ?>
                     <div class="form-group project_marked_as_finished hide">
                         <div class="checkbox checkbox-primary">
@@ -323,15 +328,29 @@
                 mark_all_tasks_completed.removeClass('hide');
                 if(typeof(original_project_status) != 'undefined'){
                     if(original_project_status != status){
+
                         mark_all_tasks_completed.removeClass('hide');
-                        mark_all_tasks_completed.find('input').prop('checked',true);
                         notify_project_members_status_change.removeClass('hide');
+
+                        if(status == 4 || status == 5 || status == 3) {
+                            $('.recurring-tasks-notice').removeClass('hide');
+                            var notice = "<?php echo _l('project_changing_status_recurring_tasks_notice'); ?>";
+                            notice = notice.replace('{0}', $(this).find('option[value="'+status+'"]').text().trim());
+                            $('.recurring-tasks-notice').html(notice);
+                            $('.recurring-tasks-notice').append('<input type="hidden" name="cancel_recurring_tasks" value="true">');
+                            mark_all_tasks_completed.find('input').prop('checked',true);
+                        } else {
+                            $('.recurring-tasks-notice').html('').addClass('hide');
+                            mark_all_tasks_completed.find('input').prop('checked',false);
+                        }
                     } else {
                         mark_all_tasks_completed.addClass('hide');
                         mark_all_tasks_completed.find('input').prop('checked',false);
                         notify_project_members_status_change.addClass('hide');
+                        $('.recurring-tasks-notice').html('').addClass('hide');
                     }
                 }
+
                 if(status == 4){
                     $('.project_marked_as_finished').removeClass('hide');
                 } else {

@@ -85,9 +85,18 @@ class Goals_model extends CRM_Model
         $data['staff_id']      = $data['staff_id'] == '' ? 0 : $data['staff_id'];
         $data['start_date']    = to_sql_date($data['start_date']);
         $data['end_date']      = to_sql_date($data['end_date']);
+
+        $goal = $this->get($id);
+
+        if($goal->notified == 1 && date('Y-m-d') < $data['end_date']) {
+            // After goal finished, user changed/extended date? If yes, set this goal to be notified
+            $data['notified'] = 0;
+        }
+
         $this->db->where('id', $id);
         $this->db->update('tblgoals', $data);
         if ($this->db->affected_rows() > 0) {
+
             logActivity('Goal Updated [ID:' . $id . ']');
 
             return true;

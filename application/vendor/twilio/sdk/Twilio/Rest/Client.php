@@ -511,7 +511,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique recording Sid
+     * @param string $sid Fetch by unique recording SID
      * @return \Twilio\Rest\Api\V2010\Account\RecordingContext 
      */
     protected function contextRecordings($sid) {
@@ -570,7 +570,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique transcription Sid
+     * @param string $sid Fetch by unique transcription SID
      * @return \Twilio\Rest\Api\V2010\Account\TranscriptionContext 
      */
     protected function contextTranscriptions($sid) {
@@ -823,5 +823,19 @@ class Client {
      */
     public function __toString() {
         return '[Client ' . $this->getAccountSid() . ']';
+    }
+
+    /**
+     * Validates connection to new SSL certificate endpoint
+     * 
+     * @param CurlClient $client 
+     * @throws TwilioException if request fails
+     */
+    public function validateSslCertificate($client) {
+        $response = $client->request('GET', 'https://api.twilio.com:8443');
+
+        if ($response->getStatusCode() < 200 || $response->getStatusCode() > 300) {
+            throw new TwilioException("Failed to validate SSL certificate");
+        }
     }
 }

@@ -425,7 +425,7 @@
                         <tr>
                            <td width="50%">
                               <div data-note-description="<?php echo $note['id']; ?>">
-                                 <?php echo $note['description']; ?>
+                                 <?php echo check_for_links($note['description']); ?>
                               </div>
                               <div data-note-edit-textarea="<?php echo $note['id']; ?>" class="hide inline-block full-width">
                                  <textarea name="description" class="form-control" rows="4"><?php echo clear_textarea_breaks($note['description']); ?></textarea>

@@ -19,7 +19,7 @@ class Proposals extends Admin_controller
     {
         close_setup_menu();
 
-        if (!has_permission('proposals', '', 'view') && !has_permission('proposals', '', 'view_own') && get_option('allow_staff_view_proposals_assigned') == 0) {
+        if (!has_permission('proposals', '', 'view') && !has_permission('proposals', '', 'view_own') && get_option('allow_staff_view_estimates_assigned') == 0) {
             access_denied('proposals');
         }
 
@@ -340,10 +340,27 @@ class Proposals extends Admin_controller
         $data['members']               = $this->staff_model->get('', ['active' => 1]);
         $data['proposal_merge_fields'] = $_proposal_merge_fields;
         $data['proposal']              = $proposal;
+        $data['totalNotes']            = total_rows('tblnotes', ['rel_id' => $id, 'rel_type' => 'proposal']);
         if ($to_return == false) {
             $this->load->view('admin/proposals/proposals_preview_template', $data);
         } else {
             return $this->load->view('admin/proposals/proposals_preview_template', $data, true);
+        }
+    }
+
+    public function add_note($rel_id)
+    {
+        if ($this->input->post() && user_can_view_proposal($rel_id)) {
+            $this->misc_model->add_note($this->input->post(), 'proposal', $rel_id);
+            echo $rel_id;
+        }
+    }
+
+    public function get_notes($id)
+    {
+        if (user_can_view_proposal($id)) {
+            $data['notes'] = $this->misc_model->get_notes($id, 'proposal');
+            $this->load->view('admin/includes/sales_notes_template', $data);
         }
     }
 
@@ -523,7 +540,6 @@ class Proposals extends Admin_controller
                 }
                 die;
             }
-
 
             if ($success) {
                 set_alert('success', _l('proposal_sent_to_email_success'));
@@ -740,5 +756,19 @@ class Proposals extends Admin_controller
         }
 
         return false;
+    }
+
+    public function get_due_date()
+    {
+        if ($this->input->post()) {
+            $date    = $this->input->post('date');
+            $duedate = '';
+            if (get_option('proposal_due_after') != 0) {
+                $date    = to_sql_date($date);
+                $d       = date('Y-m-d', strtotime('+' . get_option('proposal_due_after') . ' DAY', strtotime($date)));
+                $duedate = _d($d);
+                echo $duedate;
+            }
+        }
     }
 }

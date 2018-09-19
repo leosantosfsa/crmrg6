@@ -10,6 +10,7 @@ class Tasks_model extends CRM_Model
         $this->load->model('staff_model');
     }
 
+    // Not used?
     public function get_user_tasks_assigned()
     {
         $this->db->where('id IN (SELECT taskid FROM tblstafftaskassignees WHERE staffid = ' . get_staff_user_id() . ')');

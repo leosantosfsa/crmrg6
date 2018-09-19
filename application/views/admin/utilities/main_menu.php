@@ -16,6 +16,7 @@
           $menu_active = json_decode($menu_active);
           $menu_inactive = get_option('aside_menu_inactive');
           $menu_inactive = json_decode($menu_inactive);
+          $childrenAvailable = ['reports', 'utilities','sales'];
           ?>
           <div class="clearfix"></div>
           <div class="row">
@@ -31,7 +32,7 @@
                 <?php }
                 foreach($menu_active->aside_menu_active as $item){
                   ?>
-                  <li class="dd-item dd3-item main" data-id="<?php echo $item->id; ?>" data-permission="<?php echo $item->permission; ?>">
+                  <li class="dd-item dd3-item main<?php echo (!in_array($item->id, $childrenAvailable) ? ' dd-nochildren' : ''); ?>" data-id="<?php echo $item->id; ?>" data-permission="<?php echo $item->permission; ?>">
                    <div class="dd-handle dd3-handle"></div>
                    <div class="dd3-content"><?php echo _l($item->name); ?>
                     <?php if($item->permission == 'is_admin'){ ?>
@@ -125,7 +126,7 @@
       <?php
       foreach($menu_inactive->aside_menu_inactive as $item){
         ?>
-        <li class="dd-item dd3-item main" data-id="<?php echo $item->id; ?>" data-permission="<?php echo $item->permission; ?>">
+        <li class="dd-item dd3-item main<?php echo (!in_array($item->id, $childrenAvailable) ? ' dd-nochildren' : ''); ?>" data-id="<?php echo $item->id; ?>" data-permission="<?php echo $item->permission; ?>">
          <div class="dd-handle dd3-handle"></div>
          <div class="dd3-content"><?php echo _l($item->name); ?>
           <a href="#" class="text-muted toggle-menu-options main-item-options pull-right"><i class="fa fa-cog"></i></a>

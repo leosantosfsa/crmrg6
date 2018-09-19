@@ -118,9 +118,9 @@ class UpdateCustomerRequest extends AbstractRequest
      */
     public function sendData($data)
     {
-        $httpResponse = $this->sendRequest('POST', '/customers/'.$this->getCustomerReference(), $data);
+        $response = $this->sendRequest('POST', '/customers/'.$this->getCustomerReference(), $data);
 
-        return $this->response = new UpdateCustomerResponse($this, $httpResponse->json());
+        return $this->response = new UpdateCustomerResponse($this, $response);
     }
 
     /**

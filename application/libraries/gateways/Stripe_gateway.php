@@ -2,10 +2,6 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-use Omnipay\Omnipay;
-
-// require_once(APPPATH . 'third_party/omnipay/vendor/autoload.php');
-
 class Stripe_gateway extends App_gateway
 {
     public function __construct()
@@ -82,17 +78,42 @@ class Stripe_gateway extends App_gateway
 
     public function process_payment($data)
     {
-        redirect(site_url('gateways/stripe/make_payment?invoiceid=' . $data['invoiceid'] . '&total=' . $data['amount'] . '&hash=' . $data['invoice']->hash));
+        $redirectGatewayURI = 'gateways/stripe/make_payment';
+
+        $redirectPath = $redirectGatewayURI . '?invoiceid='
+        . $data['invoiceid']
+        . '&total='
+        . $data['amount']
+        . '&hash='
+        . $data['invoice']->hash;
+
+        redirect(site_url($redirectPath));
     }
 
     public function finish_payment($data)
     {
         $this->ci->load->library('stripe_core');
 
-        $client = $this->ci->clients_model->get($data['clientid']);
+        $client           = $this->ci->clients_model->get($data['clientid']);
         $stripeCustomerId = $client->stripe_id;
-        if(empty($stripeCustomerId)) {
 
+        $charge = [
+            'amount'   => $data['amount'] * 100,
+            'metadata' => [
+                'ClientID' => $data['clientid'],
+            ],
+            'customer'    => $stripeCustomerId,
+            'description' => $data['description'],
+            'currency'    => $data['currency'],
+        ];
+
+        // If isset pay with card, process via default source
+        // If isset stripeToken but is empty customer, create customer, process payment
+        // if isset stripeToken but not empty customer, user entered new card
+
+        if (isset($data['pay_with_card'])) {
+            // Normal charge from default source
+        } elseif (isset($data['stripeToken']) && empty($stripeCustomerId)) {
             $stripeCustomer = $this->ci->stripe_core->create_customer([
                 'email'       => $data['email'],
                 'source'      => $data['stripeToken'],
@@ -100,26 +121,37 @@ class Stripe_gateway extends App_gateway
             ]);
 
             $this->ci->db->where('userid', $client->userid);
-            $this->ci->db->update('tblclients', ['stripe_id'=>$stripeCustomer->id]);
-            $stripeCustomerId = $stripeCustomer->id;
+            $this->ci->db->update('tblclients', ['stripe_id' => $stripeCustomer->id]);
+            $charge['customer'] = $stripeCustomer->id;
+        } elseif (isset($data['stripeToken']) && !empty($stripeCustomerId)) {
 
-        } else if(!empty($stripeCustomerId)) {
             $stripeCustomer = $this->ci->stripe_core->get_customer($stripeCustomerId);
+            $token          = $this->ci->stripe_core->retrieve_token($data['stripeToken']);
+            $sourceFound    = false;
+
+            foreach ($stripeCustomer->sources->data as $source) {
+                if ($source->fingerprint == $token->card->fingerprint) {
+                    $sourceFound = $source;
+
+                    break;
+                }
+            }
+
+            $charge['source'] = !$sourceFound
+                ? $stripeCustomer->sources->create(['source' => $data['stripeToken']])
+                : $sourceFound;
+        }
+
+        if (!empty($stripeCustomerId) && isset($data['stripeToken'])) {
+            $stripeCustomer = $this->ci->stripe_core->get_customer($stripeCustomerId);
+            // Source deleted, expired?
             if (empty($stripeCustomer->default_source)) {
                 $stripeCustomer->source = $data['stripeToken'];
                 $stripeCustomer->save();
             }
         }
 
-        $result = $this->ci->stripe_core->charge([
-            'amount'   => $data['amount'] * 100,
-            'metadata' => [
-                'ClientID' => $data['clientid'],
-            ],
-            'customer' => $stripeCustomerId,
-            'description' => $data['description'],
-            'currency'    => $data['currency'],
-        ]);
+        $result = $this->ci->stripe_core->charge($charge);
 
         return $result;
     }

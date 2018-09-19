@@ -142,6 +142,11 @@ function get_relation_data($type, $rel_id = '', $connection_type = '', $connecti
             $search = $CI->misc_model->_search_staff($q);
             $data   = $search['result'];
         }
+    } elseif ($type == 'tasks') {
+        // Tasks only have relation with custom fields when searching on top
+        if ($rel_id != '') {
+            $data = $CI->tasks_model->get($rel_id);
+        }
     }
 
     return $data;
@@ -370,7 +375,7 @@ function init_relation_options($data, $type, $rel_id = '')
                 }
             }
         } elseif ($type == 'lead') {
-            if (!$is_admin) {
+            if (!has_permission('leads', '', 'view')) {
                 if ($relation['assigned'] != get_staff_user_id() && $relation['addedfrom'] != get_staff_user_id() && $relation['is_public'] != 1 && $rel_id != $relation_values['id']) {
                     continue;
                 }

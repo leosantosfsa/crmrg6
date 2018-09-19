@@ -23,7 +23,9 @@ class Contracts extends Admin_controller
         $data['chart_types_values'] = json_encode($this->contracts_model->get_contracts_types_values_chart_data());
         $data['contract_types']     = $this->contracts_model->get_contract_types();
         $data['years']              = $this->contracts_model->get_contracts_years();
-        $data['title']              = _l('contracts');
+        $this->load->model('currencies_model');
+        $data['base_currency'] = $this->currencies_model->get_base_currency();
+        $data['title']         = _l('contracts');
         $this->load->view('admin/contracts/manage', $data);
     }
 
@@ -67,6 +69,7 @@ class Contracts extends Admin_controller
         } else {
             $data['contract']                 = $this->contracts_model->get($id, [], true);
             $data['contract_renewal_history'] = $this->contracts_model->get_contract_renewal_history($id);
+            $data['totalNotes']            = total_rows('tblnotes', ['rel_id' => $id, 'rel_type' => 'contract']);
             if (!$data['contract'] || (!has_permission('contracts', '', 'view') && $data['contract']->addedfrom != get_staff_user_id())) {
                 blank_page(_l('contract_not_found'));
             }
@@ -181,6 +184,22 @@ class Contracts extends Admin_controller
             set_alert('danger', _l('contract_sent_to_client_fail'));
         }
         redirect(admin_url('contracts/contract/' . $id));
+    }
+
+    public function add_note($rel_id)
+    {
+        if ($this->input->post() && (has_permission('contracts', '', 'view') || has_permission('contracts', '', 'view_own'))) {
+            $this->misc_model->add_note($this->input->post(), 'contract', $rel_id);
+            echo $rel_id;
+        }
+    }
+
+    public function get_notes($id)
+    {
+        if ((has_permission('contracts', '', 'view') || has_permission('contracts', '', 'view_own'))) {
+            $data['notes'] = $this->misc_model->get_notes($id, 'contract');
+            $this->load->view('admin/includes/sales_notes_template', $data);
+        }
     }
 
     public function clear_signature($id)

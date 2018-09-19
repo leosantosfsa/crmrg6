@@ -19,10 +19,11 @@ abstract class LastMonthOptions {
      *                             this date.
      * @param \DateTime $endDate Only include usage that has occurred on or before
      *                           this date.
+     * @param boolean $includeSubaccounts The include_subaccounts
      * @return ReadLastMonthOptions Options builder
      */
-    public static function read($category = Values::NONE, $startDate = Values::NONE, $endDate = Values::NONE) {
-        return new ReadLastMonthOptions($category, $startDate, $endDate);
+    public static function read($category = Values::NONE, $startDate = Values::NONE, $endDate = Values::NONE, $includeSubaccounts = Values::NONE) {
+        return new ReadLastMonthOptions($category, $startDate, $endDate, $includeSubaccounts);
     }
 }
 
@@ -33,15 +34,17 @@ class ReadLastMonthOptions extends Options {
      *                             this date.
      * @param \DateTime $endDate Only include usage that has occurred on or before
      *                           this date.
+     * @param boolean $includeSubaccounts The include_subaccounts
      */
-    public function __construct($category = Values::NONE, $startDate = Values::NONE, $endDate = Values::NONE) {
+    public function __construct($category = Values::NONE, $startDate = Values::NONE, $endDate = Values::NONE, $includeSubaccounts = Values::NONE) {
         $this->options['category'] = $category;
         $this->options['startDate'] = $startDate;
         $this->options['endDate'] = $endDate;
+        $this->options['includeSubaccounts'] = $includeSubaccounts;
     }
 
     /**
-     * Only include usage of this [usage category](https://www.twilio.com/docs/api/rest/usage-records#usage-categories).
+     * The category of usage.  See [Usage Categories](https://www.twilio.com/docs/api/rest/usage-records#usage-categories) below.
      * 
      * @param string $category Only include usage of this usage category.
      * @return $this Fluent Builder
@@ -72,6 +75,17 @@ class ReadLastMonthOptions extends Options {
      */
     public function setEndDate($endDate) {
         $this->options['endDate'] = $endDate;
+        return $this;
+    }
+
+    /**
+     * The include_subaccounts
+     * 
+     * @param boolean $includeSubaccounts The include_subaccounts
+     * @return $this Fluent Builder
+     */
+    public function setIncludeSubaccounts($includeSubaccounts) {
+        $this->options['includeSubaccounts'] = $includeSubaccounts;
         return $this;
     }
 

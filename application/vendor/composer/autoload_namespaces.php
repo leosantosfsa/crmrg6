@@ -6,9 +6,8 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Omnipay\\Common\\' => array($vendorDir . '/omnipay/common/src'),
-    'Guzzle\\Tests' => array($vendorDir . '/guzzle/guzzle/tests'),
-    'Guzzle' => array($vendorDir . '/guzzle/guzzle/src'),
+    'Twocheckout' => array($vendorDir . '/2checkout/2checkout-php/lib'),
+    'Parsedown' => array($vendorDir . '/erusev/parsedown'),
     'ForceUTF8\\' => array($vendorDir . '/neitanod/forceutf8/src'),
     'Braintree' => array($vendorDir . '/braintree/braintree_php/lib'),
 );

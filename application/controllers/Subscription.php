@@ -41,11 +41,13 @@ class Subscription extends Clients_controller
 
         $upcomingInvoice->lines         = new stdClass();
         $upcomingInvoice->lines->data   = [];
+
         $upcomingInvoice->lines->data[] = [
             'description' => $product->name . ' (' . format_money($plan->amount / 100, strtoupper($subscription->symbol)) . ' / ' . $plan->interval . ')',
             'amount'      => $plan->amount * $subscription->quantity,
             'quantity'    => $subscription->quantity,
         ];
+
         $this->use_navigation = false;
         $this->use_submenu    = false;
         $data['child_invoices'] = $this->subscriptions_model->get_child_invoices($subscription->id);

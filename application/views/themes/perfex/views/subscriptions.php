@@ -11,11 +11,15 @@
                   <th><?php echo _l('subscription_name'); ?></th>
                   <th><?php echo _l('subscription_status'); ?></th>
                   <th><?php echo _l('next_billing_cycle'); ?></th>
+                  <?php if($show_projects) { ?>
+                    <th><?php echo _l('project'); ?></th>
+                  <?php } ?>
                   <th><?php echo _l('options'); ?></th>
                </tr>
             </thead>
             <tbody>
-               <?php foreach($subscriptions as $subscription){ ?>
+               <?php foreach($subscriptions as $subscription){
+                ?>
                <tr>
                   <td>
                     <?php
@@ -45,6 +49,13 @@
                   <td data-order="<?php echo $subscription['next_billing_cycle']; ?>">
                     <?php echo $subscription['next_billing_cycle'] ? _d(date('Y-m-d', $subscription['next_billing_cycle'])) : '-'; ?>
                   </td>
+                   <?php if($show_projects) { ?>
+                    <td>
+                        <a href="<?php echo site_url('clients/project/'.$subscription['project_id']); ?>">
+                            <?php echo get_project_name_by_id($subscription['project_id']); ?>
+                        </a>
+                    </td>
+                   <?php } ?>
                   <td>
                     <?php if(empty($subscription['stripe_subscription_id'])){ ?>
                         <a href="<?php echo site_url('subscription/'.$subscription['hash']); ?>" class="btn btn-success btn-xs">

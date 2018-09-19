@@ -35,9 +35,9 @@ class Cron_model extends CRM_Model
 
     public function run($manually = false)
     {
-        update_option('last_cron_run', time());
-
         if ($this->can_cron_run()) {
+            update_option('last_cron_run', time());
+
             if ($manually == true) {
                 $this->manually = true;
 
@@ -48,7 +48,6 @@ class Cron_model extends CRM_Model
                 logActivity('Cron Invoked Manually');
             }
 
-            $this->make_backup_db();
             $this->staff_reminders();
             $this->events();
             $this->tasks_reminders();
@@ -81,6 +80,8 @@ class Cron_model extends CRM_Model
             }
 
             $this->_maybe_fix_duplicate_tasks_assignees_and_followers();
+
+            $this->make_backup_db();
         }
     }
 
@@ -351,7 +352,7 @@ class Cron_model extends CRM_Model
                     'recurring'           => 0,
                     'custom_recurring'    => 0,
                     'last_recurring_date' => null,
-                    'is_recurring_from' => $task['id'],
+                    'is_recurring_from'   => $task['id'],
                 ];
 
                 if (!empty($task['duedate'])) {
@@ -789,7 +790,7 @@ class Cron_model extends CRM_Model
         $notifiedUsers = [];
 
         foreach ($tasks as $task) {
-            if (date('Y-m-d', strtotime($task['duedate'])) > date('Y-m-d')) {
+            if (date('Y-m-d', strtotime($task['duedate'])) >= date('Y-m-d')) {
                 $duedate = new DateTime($task['duedate']);
                 $diff    = $duedate->diff($now)->format('%a');
                 // Check if difference between start date and duedate is the same like the reminder before
@@ -1185,6 +1186,7 @@ class Cron_model extends CRM_Model
                 $from      = $email['from'];
                 $fromname  = preg_replace('/(.*)<(.*)>/', '\\1', $from);
                 $fromname  = trim(str_replace('"', '', $fromname));
+
                 $fromemail = trim(preg_replace('/(.*)<(.*)>/', '\\2', $from));
                 $body      = do_action('leads_email_integration_email_body_for_database', $this->prepare_imap_email_body_html($email['body']));
                 // Okey everything good now let make some statements
@@ -1357,7 +1359,7 @@ class Cron_model extends CRM_Model
                                 }
                             }
                         }
-                        if ($field == 'address') {
+                        if ($field == 'address' || $field == 'description') {
                             $value = nl2br($value);
                         }
                         $value = $this->security->xss_clean($value);
@@ -1438,6 +1440,17 @@ class Cron_model extends CRM_Model
                     $email['body'] = 'No message found';
                 }
 
+                $plainTextBody = $imap->getPlainTextBody($email['uid']);
+                if (!empty($plainTextBody)) {
+                    $email['body'] = $plainTextBody;
+                }
+
+                $email['body'] = handle_google_drive_links_in_text($email['body']);
+
+                if (class_exists('EmailReplyParser\EmailReplyParser')) {
+                    $email['body'] = \EmailReplyParser\EmailReplyParser::parseReply($email['body']);
+                }
+
                 $email['body'] = $this->prepare_imap_email_body_html($email['body']);
 
                 $data['attachments'] = [];
@@ -1458,22 +1471,22 @@ class Cron_model extends CRM_Model
                     $data['attachments'] = [];
                 }
 
-                $data['subject']  = $email['subject'];
-                $data['body']     = $email['body'];
+                $data['subject'] = $email['subject'];
+                $data['body']    = $email['body'];
                 // To is the department name
                 $data['to'] = $e['email'];
 
                 // TODO, testing, beta
-                if(do_action('imap_fetch_from_email_by_reply_to_header', 'false') == 'true'){
+                if (do_action('imap_fetch_from_email_by_reply_to_header', 'false') == 'true') {
                     $replyTo = $imap->getReplyToAddresses($email['uid']);
-                    if(count($replyTo) === 1) {
+                    if (count($replyTo) === 1) {
                         $email['from'] = $replyTo[0];
                     }
                 }
 
                 $data['email']    = preg_replace('/(.*)<(.*)>/', '\\2', $email['from']);
                 $data['fromname'] = preg_replace('/(.*)<(.*)>/', '\\1', $email['from']);
-                $data['fromname'] = str_replace('"', '', $data['fromname']);
+                $data['fromname'] = trim(str_replace('"', '', $data['fromname']));
 
                 $hookData = do_action('imap_auto_import_ticket_data', ['data' => $data, 'email_contents' => $email]);
                 $data     = $hookData['data'];
@@ -1526,41 +1539,139 @@ class Cron_model extends CRM_Model
     public function make_backup_db($manual = false)
     {
         if ((get_option('auto_backup_enabled') == '1' && time() > (get_option('last_auto_backup') + get_option('auto_backup_every') * 24 * 60 * 60)) || $manual == true) {
-            $this->load->dbutil();
-            $prefs = [
-                'format'   => 'zip',
-                'filename' => date('Y-m-d-H-i-s') . '_backup.sql',
-            ];
-            $backup      = $this->dbutil->backup($prefs);
-            $backup_name = 'database_backup_' . date('Y-m-d-H-i-s') . '.zip';
-            $backup_name = unique_filename(BACKUPS_FOLDER, $backup_name);
-            $save        = BACKUPS_FOLDER . $backup_name;
-            $this->load->helper('file');
-            if (write_file($save, $backup)) {
-                if ($manual == false) {
-                    logActivity('Database Backup [' . $backup_name . ']', null);
-                    update_option('last_auto_backup', time());
-                } else {
-                    logActivity('Database Backup [' . $backup_name . ']');
+            if (!file_exists(BACKUPS_FOLDER . '/.htaccess') && is_writable(BACKUPS_FOLDER)) {
+                fopen(BACKUPS_FOLDER . '/.htaccess', 'w');
+                $fp = fopen(BACKUPS_FOLDER . '/.htaccess', 'a+');
+                if ($fp) {
+                    fwrite($fp, 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
+                    fclose($fp);
+                }
+            }
+
+            $manager = defined('APP_DATABASE_BACKUP_MANAGER') ? APP_DATABASE_BACKUP_MANAGER : 'codeigniter';
+
+            if ($manager == 'backup_manager') {
+                $configFileSystemProvider = new \BackupManager\Config\Config([
+                'local' => [
+                    'type' => 'Local',
+                    'root' => BACKUPS_FOLDER,
+                ],
+            ]);
+                // Only mysql is supported, not sure if this do the job
+                if ($this->db->dbdriver != 'mysqli') {
+                    return $this->database_backup_codeigniter();
                 }
 
-                $delete_backups = get_option('delete_backups_older_then');
-                // After write backup check for delete
-                if ($delete_backups != '0') {
-                    $backups                 = list_files(BACKUPS_FOLDER);
-                    $backups_days_to_seconds = ($delete_backups * 24 * 60 * 60);
-                    foreach ($backups as $b) {
-                        if ((time() - filectime(BACKUPS_FOLDER . $b)) > $backups_days_to_seconds) {
-                            @unlink(BACKUPS_FOLDER . $b);
-                        }
+                $port = '';
+                if ($parsePort = parse_url(APP_DB_HOSTNAME, PHP_URL_PORT)) {
+                    if (is_int($parsePort)) {
+                        $port = $parsePort;
                     }
                 }
 
-                return true;
+                $configDatabase = new \BackupManager\Config\Config([
+                'production' => [
+                    'type'     => 'mysql',
+                    'host'     => APP_DB_HOSTNAME,
+                    'port'     => $port,
+                    'user'     => APP_DB_USERNAME,
+                    'pass'     => APP_DB_PASSWORD,
+                    'database' => APP_DB_NAME,
+                ],
+            ]);
+
+                // build providers
+                $filesystems = new \BackupManager\Filesystems\FilesystemProvider($configFileSystemProvider);
+                $filesystems->add(new \BackupManager\Filesystems\LocalFilesystem);
+                $databases = new \BackupManager\Databases\DatabaseProvider($configDatabase);
+                $databases->add(new \BackupManager\Databases\MysqlDatabase);
+                $compressors = new \BackupManager\Compressors\CompressorProvider;
+                $compressors->add(new \BackupManager\Compressors\GzipCompressor);
+                $compressors->add(new \BackupManager\Compressors\NullCompressor);
+
+                // build manager
+                $manager = new \BackupManager\Manager($filesystems, $databases, $compressors);
+
+                $backup_name = date('Y-m-d-H-i-s') . '_backup.sql';
+
+                try {
+
+                  /*
+                      Restore example, not working
+                      $manager->makeRestore()->run('local', '2018-06-12-12-02-28_backup.sql.gz', 'production', 'gzip');
+                      die;
+                   */
+
+                    $manager->makeBackup()
+                    ->run('production', [
+                        new \BackupManager\Filesystems\Destination('local', $backup_name),
+                    ], 'gzip');
+
+                    logActivity('Database Backup [' . $backup_name . '.gz' . ']', null);
+
+                    if ($manual == false) {
+                        update_option('last_auto_backup', time());
+                    }
+
+                    $this->maybe_clean_old_backups();
+
+                    return true;
+                } catch (Exception $e) {
+                    if (ENVIRONMENT !== 'production') {
+                        logActivity('NEW BACKUP MANAGER ERROR [' . $e->getMessage() . ']');
+                    }
+
+                    return false;
+                }
+            } elseif ($manager == 'codeigniter') {
+                return $this->database_backup_codeigniter($manual);
             }
         }
 
         return false;
+    }
+
+    private function database_backup_codeigniter($manual)
+    {
+        $this->load->dbutil();
+
+        $prefs = [
+                'format'   => 'zip',
+                'filename' => date('Y-m-d-H-i-s') . '_backup.sql',
+            ];
+
+        $backup           = $this->dbutil->backup($prefs);
+        $backup_name      = unique_filename(BACKUPS_FOLDER, 'database_backup_' . date('Y-m-d-H-i-s') . '.zip');
+        $save_backup_path = BACKUPS_FOLDER . $backup_name;
+        $this->load->helper('file');
+
+        if (write_file($save_backup_path, $backup)) {
+            logActivity('Database Backup [' . $backup_name . ']', null);
+
+            if ($manual == false) {
+                update_option('last_auto_backup', time());
+            }
+            $this->maybe_clean_old_backups();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function maybe_clean_old_backups()
+    {
+        $delete_backups = get_option('delete_backups_older_then');
+        // After write backup check for delete
+        if ($delete_backups != '0') {
+            $backups                 = list_files(BACKUPS_FOLDER);
+            $backups_days_to_seconds = ($delete_backups * 24 * 60 * 60);
+            foreach ($backups as $b) {
+                if ((time() - filectime(BACKUPS_FOLDER . $b)) > $backups_days_to_seconds) {
+                    @unlink(BACKUPS_FOLDER . $b);
+                }
+            }
+        }
     }
 
     private function _notification_lead_email_integration($description, $mail, $leadid)
@@ -1652,6 +1763,10 @@ class Cron_model extends CRM_Model
 
     private function can_cron_run()
     {
+        if ($this->app->is_db_upgrade_required()) {
+            return false;
+        }
+
         return ($this->lock_handle && flock($this->lock_handle, LOCK_EX | LOCK_NB))
         || (defined('APP_DISABLE_CRON_LOCK') && APP_DISABLE_CRON_LOCK);
     }

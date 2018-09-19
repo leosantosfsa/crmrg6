@@ -39,7 +39,15 @@ class App
      * Available reminders
      * @var array
      */
-    private $available_reminders = ['customer', 'lead', 'estimate', 'invoice', 'proposal', 'expense', 'credit_note'];
+    private $available_reminders = [
+            'customer',
+            'lead',
+            'estimate',
+            'invoice',
+            'proposal',
+            'expense',
+            'credit_note',
+    ];
 
     /**
      * Tables where currency id is used

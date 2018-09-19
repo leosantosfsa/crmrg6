@@ -1,7 +1,7 @@
    <?php
    $table_data = array(
     array(
-      'name'=>'#',
+      'name'=>_l('the_number_sign'),
       'th_attrs'=>array('class'=>'toggleable', 'id'=>'th-id')
     ),
     array(

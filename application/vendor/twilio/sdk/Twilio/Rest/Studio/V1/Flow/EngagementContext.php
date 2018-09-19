@@ -17,8 +17,6 @@ use Twilio\Values;
 use Twilio\Version;
 
 /**
- * PLEASE NOTE that this class contains beta products that are subject to change. Use them with caution.
- * 
  * @property \Twilio\Rest\Studio\V1\Flow\Engagement\StepList steps
  * @property \Twilio\Rest\Studio\V1\Flow\Engagement\EngagementContextList engagementContext
  * @method \Twilio\Rest\Studio\V1\Flow\Engagement\StepContext steps(string $sid)
@@ -32,8 +30,8 @@ class EngagementContext extends InstanceContext {
      * Initialize the EngagementContext
      * 
      * @param \Twilio\Version $version Version that contains the resource
-     * @param string $flowSid The flow_sid
-     * @param string $sid The sid
+     * @param string $flowSid Flow Sid.
+     * @param string $sid Engagement Sid.
      * @return \Twilio\Rest\Studio\V1\Flow\EngagementContext 
      */
     public function __construct(Version $version, $flowSid, $sid) {
@@ -49,6 +47,7 @@ class EngagementContext extends InstanceContext {
      * Fetch a EngagementInstance
      * 
      * @return EngagementInstance Fetched EngagementInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         $params = Values::of(array());
@@ -65,6 +64,16 @@ class EngagementContext extends InstanceContext {
             $this->solution['flowSid'],
             $this->solution['sid']
         );
+    }
+
+    /**
+     * Deletes the EngagementInstance
+     * 
+     * @return boolean True if delete succeeds, false otherwise
+     * @throws TwilioException When an HTTP error occurs.
+     */
+    public function delete() {
+        return $this->version->delete('delete', $this->uri);
     }
 
     /**

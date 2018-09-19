@@ -119,10 +119,8 @@ function copy_project(id) {
               $('.tasks-copy-option').removeClass('hide');
 
           } else {
-
               $('.copy-project-tasks-status-wrapper').addClass('hide');
               $('.tasks-copy-option').addClass('hide');
-
           }
       });
 

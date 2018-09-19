@@ -17,9 +17,9 @@
          $recurring_invoice = $this->invoices_model->get($invoice->is_recurring_from);
          $next_recurring_date_compare = $recurring_invoice->last_recurring_date;
       }
-      if ($recurring_invoice->custom_recurring == 0) {
-        $recurring_invoice->recurring_type = 'MONTH';
-     }
+       if ($recurring_invoice->custom_recurring == 0) {
+          $recurring_invoice->recurring_type = 'MONTH';
+       }
      $next_date = date('Y-m-d', strtotime('+' . $recurring_invoice->recurring . ' ' . strtoupper($recurring_invoice->recurring_type),strtotime($next_recurring_date_compare)));
      ?>
      <div class="col-md-12">
@@ -168,7 +168,7 @@
          </table>
       </div>
    </div>
-   <div class="col-md-4 col-md-offset-8">
+   <div class="col-md-5 col-md-offset-7">
       <table class="table text-right">
          <tbody>
             <tr id="subtotal">

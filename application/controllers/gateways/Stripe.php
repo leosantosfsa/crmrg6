@@ -96,10 +96,18 @@ class Stripe extends CRM_Controller
                                   </span>
                               </p>
                               <?php
-                              if(!isset($data['stripe_customer']) || isset($data['stripe_customer']) && empty($data['stripe_customer']->default_source)) {
+                             if(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source)) {
+                                    echo form_open(site_url('gateways/stripe/complete_purchase/'.$data['invoice']->id.'/'. $data['invoice']->hash));
+                                    echo '<button type="submit" name="pay_with_card" value="true" class="btn btn-success mbot15">';
+                                    echo form_hidden('total', $data['total']);
+                                    echo _l('view_invoice_pdf_link_pay') . ' ('.$data['stripe_customer']->default_source->brand . ' ' . $data['stripe_customer']->default_source->last4.')';
+                                    echo '</button>';
+                                    echo form_close();
+                              }
                               $form = '<form action="' . site_url('gateways/stripe/complete_purchase/'.$data['invoice']->id.'/'. $data['invoice']->hash) . '" method="POST">
                                 <script
                                 src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+                                '.(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source) ? 'data-label="'._l('enter_new_card').'"' : '').'
                                 data-key="' . $this->stripe_gateway->getSetting('api_publishable_key') . '"
                                 data-amount="' . ($data['total'] * 100) . '"
                                 data-name="' . get_option('companyname') . '"
@@ -113,25 +121,19 @@ class Stripe extends CRM_Controller
                             ' . form_hidden('total', $data['total']) . '
                         </form>';
                         echo $form;
-                        } else if(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source)) {
-                            echo form_open(site_url('gateways/stripe/complete_purchase/'.$data['invoice']->id.'/'. $data['invoice']->hash));
-                            echo '<button type="submit" name="pay_with_card" value="true" class="btn btn-success">';
-                            echo form_hidden('total', $data['total']);
-                            echo _l('view_invoice_pdf_link_pay') . ' ('.$data['stripe_customer']->default_source->brand . ' ' . $data['stripe_customer']->default_source->last4.')';
-                            echo '</button>';
-                            echo form_close();
-                        }
                     ?>
                     </div>
                 </div>
             </div>
         </div>
         <?php echo payment_gateway_scripts(); ?>
-        <script>
-            $(function(){
-                $('.stripe-button-el').click();
-            });
-        </script>
+        <?php if(!isset($data['stripe_customer']) || (isset($data['stripe_customer']) && empty($data['stripe_customer']->default_source))) { ?>
+            <script>
+                $(function(){
+                    $('.stripe-button-el').click();
+                });
+            </script>
+         <?php } ?>
         <?php echo payment_gateway_footer(); ?>
     <?php
     }
@@ -152,7 +154,6 @@ class Stripe extends CRM_Controller
                     $meta = $input['data']['object']['metadata'];
                 }
 
-                log_message('error',$input['data']['object']['tax_percent']);
                 if (!isset($meta['pcrm-subscription-hash'])) {
                     return false;
                 }

@@ -409,7 +409,7 @@ class Proposals_model extends CRM_Model
                     }
                 }
                 if ($for_editor == false) {
-                     $proposal = parse_proposal_content_merge_fields($proposal);
+                    $proposal = parse_proposal_content_merge_fields($proposal);
                 }
             }
 
@@ -652,6 +652,7 @@ class Proposals_model extends CRM_Model
             'estimate_id',
             'is_expiry_notified',
             'date_converted',
+            'signature',
             'acceptance_firstname',
             'acceptance_lastname',
             'acceptance_email',
@@ -860,6 +861,10 @@ class Proposals_model extends CRM_Model
             foreach ($attachments as $attachment) {
                 $this->delete_attachment($attachment['id']);
             }
+
+            $this->db->where('rel_id', $id);
+            $this->db->where('rel_type', 'proposal');
+            $this->db->delete('tblnotes');
 
             $this->db->where('relid IN (SELECT id from tblitems_in WHERE rel_type="proposal" AND rel_id="' . $id . '")');
             $this->db->where('fieldto', 'items');

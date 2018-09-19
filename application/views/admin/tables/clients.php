@@ -5,18 +5,19 @@ defined('BASEPATH') or exit('No direct script access allowed');
 $hasPermissionDelete = has_permission('customers', '', 'delete');
 
 $custom_fields = get_table_custom_fields('customers');
+$this->ci->db->query("SET sql_mode = ''");
 
 $aColumns = [
     '1',
     'tblclients.userid as userid',
     'company',
-    'CONCAT(firstname, " ", lastname) as contact_fullname',
+    'firstname',
     'email',
     'tblclients.phonenumber as phonenumber',
     'tblclients.active',
-    '(SELECT GROUP_CONCAT(name ORDER BY name ASC) FROM tblcustomersgroups JOIN tblcustomergroups_in ON tblcustomergroups_in.groupid = tblcustomersgroups.id WHERE customer_id = tblclients.userid LIMIT 1) as groups',
+    'GROUP_CONCAT(DISTINCT(tblcustomersgroups.name)) as customerGroups',
     'tblclients.datecreated as datecreated',
-    ];
+];
 
 $sIndexColumn = 'userid';
 $sTable       = 'tblclients';
@@ -24,11 +25,15 @@ $where        = [];
 // Add blank where all filter can be stored
 $filter = [];
 
-$join = ['LEFT JOIN tblcontacts ON tblcontacts.userid=tblclients.userid AND tblcontacts.is_primary=1'];
+$join = [
+    'LEFT JOIN tblcontacts ON tblcontacts.userid=tblclients.userid AND tblcontacts.is_primary=1',
+    'LEFT JOIN tblcustomergroups_in ON tblcustomergroups_in.customer_id = tblclients.userid',
+    'LEFT JOIN tblcustomersgroups ON tblcustomersgroups.id = tblcustomergroups_in.groupid',
+];
 
 foreach ($custom_fields as $key => $field) {
     $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
-    array_push($customFieldsColumns,$selectAs);
+    array_push($customFieldsColumns, $selectAs);
     array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
     array_push($join, 'LEFT JOIN tblcustomfieldsvalues as ctable_' . $key . ' ON tblclients.userid = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
 }
@@ -130,8 +135,8 @@ if (count($customAdminIds) > 0) {
     array_push($filter, 'AND tblclients.userid IN (SELECT customer_id FROM tblcustomeradmins WHERE staff_id IN (' . implode(', ', $customAdminIds) . '))');
 }
 
-if($this->ci->input->post('requires_registration_confirmation')) {
-    array_push($filter,'AND tblclients.registration_confirmed=0');
+if ($this->ci->input->post('requires_registration_confirmation')) {
+    array_push($filter, 'AND tblclients.registration_confirmed=0');
 }
 
 if (count($filter) > 0) {
@@ -159,9 +164,10 @@ if (count($custom_fields) > 4) {
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'tblcontacts.id as contact_id',
+    'lastname',
     'tblclients.zip as zip',
     'registration_confirmed',
-]);
+], 'group by tblclients.userid', [7 => 'name']);
 
 $output  = $result['output'];
 $rResult = $result['rResult'];
@@ -194,8 +200,8 @@ foreach ($rResult as $aRow) {
     $company .= '<div class="row-options">';
     $company .= '<a href="' . $url . '">' . _l('view') . '</a>';
 
-    if($aRow['registration_confirmed'] == 0 && is_admin()) {
-        $company .= ' | <a href="'.admin_url('clients/confirm_registration/'. $aRow['userid']).'" class="text-success bold">'._l('confirm_registration').'</a>';
+    if ($aRow['registration_confirmed'] == 0 && is_admin()) {
+        $company .= ' | <a href="' . admin_url('clients/confirm_registration/' . $aRow['userid']) . '" class="text-success bold">' . _l('confirm_registration') . '</a>';
     }
     if (!$isPerson) {
         $company .= ' | <a href="' . admin_url('clients/client/' . $aRow['userid'] . '?group=contacts') . '">' . _l('customer_contacts') . '</a>';
@@ -209,7 +215,7 @@ foreach ($rResult as $aRow) {
     $row[] = $company;
 
     // Primary contact
-    $row[] = ($aRow['contact_id'] ? '<a href="' . admin_url('clients/client/' . $aRow['userid'] . '?contactid=' . $aRow['contact_id']) . '" target="_blank">' . $aRow['contact_fullname'] . '</a>' : '');
+    $row[] = ($aRow['contact_id'] ? '<a href="' . admin_url('clients/client/' . $aRow['userid'] . '?contactid=' . $aRow['contact_id']) . '" target="_blank">' . $aRow['firstname'] . ' ' . $aRow['lastname'] . '</a>' : '');
 
     // Primary contact email
     $row[] = ($aRow['email'] ? '<a href="mailto:' . $aRow['email'] . '">' . $aRow['email'] . '</a>' : '');
@@ -219,8 +225,8 @@ foreach ($rResult as $aRow) {
 
     // Toggle active/inactive customer
     $toggleActive = '<div class="onoffswitch" data-toggle="tooltip" data-title="' . _l('customer_active_inactive_help') . '">
-        <input type="checkbox"'.($aRow['registration_confirmed'] == 0 ? ' disabled' : '').' data-switch-url="' . admin_url() . 'clients/change_client_status" name="onoffswitch" class="onoffswitch-checkbox" id="' . $aRow['userid'] . '" data-id="' . $aRow['userid'] . '" ' . ($aRow['tblclients.active'] == 1 ? 'checked' : '') . '>
-        <label class="onoffswitch-label" for="' . $aRow['userid'] . '"></label>
+    <input type="checkbox"' . ($aRow['registration_confirmed'] == 0 ? ' disabled' : '') . ' data-switch-url="' . admin_url() . 'clients/change_client_status" name="onoffswitch" class="onoffswitch-checkbox" id="' . $aRow['userid'] . '" data-id="' . $aRow['userid'] . '" ' . ($aRow['tblclients.active'] == 1 ? 'checked' : '') . '>
+    <label class="onoffswitch-label" for="' . $aRow['userid'] . '"></label>
     </div>';
 
     // For exporting
@@ -230,8 +236,8 @@ foreach ($rResult as $aRow) {
 
     // Customer groups parsing
     $groupsRow = '';
-    if ($aRow['groups']) {
-        $groups = explode(',', $aRow['groups']);
+    if ($aRow['customerGroups']) {
+        $groups = explode(',', $aRow['customerGroups']);
         foreach ($groups as $group) {
             $groupsRow .= '<span class="label label-default mleft5 inline-block customer-group-list pointer">' . $group . '</span>';
         }

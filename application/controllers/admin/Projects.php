@@ -117,6 +117,55 @@ class Projects extends Admin_controller
         $this->load->view('admin/projects/project', $data);
     }
 
+    public function gantt()
+    {
+        $data['title'] = _l('project_gant');
+
+        $data['projects_assets'] = true;
+
+        $selected_statuses = [];
+        $selectedMember = null;
+        $data['statuses'] = $this->projects_model->get_project_statuses();
+
+        $appliedStatuses = $this->input->get('status');
+        $appliedMember = $this->input->get('member');
+
+        $allStatusesIds = [];
+        foreach ($data['statuses'] as $status) {
+            if (!isset($status['filter_default'])
+                || (isset($status['filter_default']) && $status['filter_default'])
+                && !$appliedStatuses) {
+                $selected_statuses[] = $status['id'];
+            } elseif ($appliedStatuses) {
+                if (in_array($status['id'], $appliedStatuses)) {
+                    $selected_statuses[] = $status['id'];
+                }
+            } else {
+                // All statuses
+                $allStatusesIds[] = $status['id'];
+            }
+        }
+
+        if (count($selected_statuses) == 0) {
+            $selected_statuses = $allStatusesIds;
+        }
+
+        $data['selected_statuses'] = $selected_statuses;
+
+        if(has_permission('projects','','view')){
+            $selectedMember = $appliedMember;
+            $data['selectedMember'] = $selectedMember;
+            $data['project_members'] = $this->projects_model->get_distinct_projects_members();
+        }
+
+        $data['gantt_data'] = $this->projects_model->get_all_projects_gantt_data([
+            'status'  => $selected_statuses,
+            'member' => $selectedMember,
+        ]);
+
+        $this->load->view('admin/projects/gantt', $data);
+    }
+
     public function view($id)
     {
         if ($this->projects_model->is_member($id) || has_permission('projects', '', 'view')) {

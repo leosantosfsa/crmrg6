@@ -74,7 +74,7 @@ $active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
-	'dsn'	=> defined('APP_DB_DSN') ? APP_DB_DSN : '',
+	'dsn'	   => '', // Not Supported
 	'hostname' => APP_DB_HOSTNAME,
 	'username' => APP_DB_USERNAME,
 	'password' => APP_DB_PASSWORD,
@@ -88,7 +88,7 @@ $db['default'] = array(
 	'char_set' => 'utf8',
 	'dbcollat' => 'utf8_general_ci',
 	'swap_pre' => '',
-	'encrypt' => FALSE,
+	'encrypt'  => FALSE,
 	'compress' => FALSE,
 	'stricton' => FALSE,
 	'failover' => array(),

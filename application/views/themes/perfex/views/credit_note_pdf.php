@@ -1,4 +1,5 @@
 <?php
+
 $dimensions = $pdf->getPageDimensions();
 
 $info_right_column = '';
@@ -8,25 +9,20 @@ $info_right_column .= '<span style="font-weight:bold;font-size:27px;">' . _l('cr
 $info_right_column .= '<b style="color:#4e4e4e;"># ' . $credit_note_number . '</b>';
 
 if (get_option('show_status_on_pdf_ei') == 1) {
-    $info_right_column .= '<br /><span style="color:rgb('.credit_note_status_color_pdf($credit_note->status).');text-transform:uppercase;">' . format_credit_note_status($credit_note->status,'',false) . '</span>';
+    $info_right_column .= '<br /><span style="color:rgb(' . credit_note_status_color_pdf($credit_note->status) . ');text-transform:uppercase;">' . format_credit_note_status($credit_note->status, '', false) . '</span>';
 }
-
-// write the first column
+// Add logo
 $info_left_column .= pdf_logo_url();
-$pdf->MultiCell(($dimensions['wk'] / 2) - $dimensions['lm'], 0, $info_left_column, 0, 'J', 0, 0, '', '', true, 0, true, true, 0);
-// write the second column
-$pdf->MultiCell(($dimensions['wk'] / 2) - $dimensions['rm'], 0, $info_right_column, 0, 'R', 0, 1, '', '', true, 0, true, false, 0);
+// Write top left logo and right column info/text
+pdf_multi_row($info_left_column, $info_right_column, $pdf, ($dimensions['wk'] / 2) - $dimensions['lm']);
+
 $pdf->ln(10);
 
-// Get Y position for the separation
-$y            = $pdf->getY();
 $organization_info = '<div style="color:#424242;">';
 
 $organization_info .= format_organization_info();
 
 $organization_info .= '</div>';
-
-$pdf->writeHTMLCell(($swap == '1' ? ($dimensions['wk']) - ($dimensions['lm'] * 2) : ($dimensions['wk'] / 2) - $dimensions['lm']), '', '', $y, $organization_info, 0, 0, false, true, ($swap == '1' ? 'R' : 'J'), true);
 
 // Bill to
 $credit_note_info = '<b>' . _l('credit_note_bill_to') . '</b>';
@@ -42,36 +38,41 @@ if ($credit_note->include_shipping == 1 && $credit_note->show_shipping_on_credit
     $credit_note_info .= '</div>';
 }
 
-$credit_note_info .= '<br />'. _l('credit_note_date') . ': ' . _d($credit_note->date) .'<br />';
+$credit_note_info .= '<br />' . _l('credit_note_date') . ': ' . _d($credit_note->date) . '<br />';
 
 if (!empty($credit_note->reference_no)) {
-    $credit_note_info .= _l('reference_no') . ': ' . $credit_note->reference_no .'<br />';
+    $credit_note_info .= _l('reference_no') . ': ' . $credit_note->reference_no . '<br />';
 }
 
 if ($credit_note->project_id != 0 && get_option('show_project_on_credit_note') == 1) {
-    $credit_note_info .= _l('project') . ': ' . get_project_name_by_id($credit_note->project_id).'<br />';
+    $credit_note_info .= _l('project') . ': ' . get_project_name_by_id($credit_note->project_id) . '<br />';
 }
 
-foreach($pdf_custom_fields as $field){
-    $value = get_custom_field_value($credit_note->id,$field['id'],'credit_note');
-    if($value == ''){continue;}
-    $credit_note_info .= $field['name'] . ': ' . $value .'<br />';
+foreach ($pdf_custom_fields as $field) {
+    $value = get_custom_field_value($credit_note->id, $field['id'], 'credit_note');
+    if ($value == '') {
+        continue;
+    }
+    $credit_note_info .= $field['name'] . ': ' . $value . '<br />';
 }
 
-$pdf->writeHTMLCell(($dimensions['wk'] / 2) - $dimensions['rm'], '', '', ($swap == '1' ? $y : ''), $credit_note_info, 0, 1, false, true, ($swap == '1' ? 'J' : 'R'), true);
+$left_info  = $swap == '1' ? $credit_note_info : $organization_info;
+$right_info = $swap == '1' ? $organization_info : $credit_note_info;
+
+pdf_multi_row($left_info, $right_info, $pdf, ($dimensions['wk'] / 2) - $dimensions['lm']);
 
 // The Table
 $pdf->Ln(do_action('pdf_info_and_table_separator', 6));
 
 $item_width = 38;
 // If show item taxes is disabled in PDF we should increase the item width table heading
-$item_width = get_option('show_tax_per_item') == 0 ? $item_width+15 : $item_width;
+$item_width = get_option('show_tax_per_item') == 0 ? $item_width + 15 : $item_width;
 
-$custom_fields_items = get_items_custom_fields_for_table_html($credit_note->id,'credit_note');
+$custom_fields_items = get_items_custom_fields_for_table_html($credit_note->id, 'credit_note');
 // Calculate headings width, in case there are custom fields for items
 $total_headings = get_option('show_tax_per_item') == 1 ? 4 : 3;
 $total_headings += count($custom_fields_items);
-$headings_width = (100-($item_width+6)) / $total_headings;
+$headings_width = (100 - ($item_width + 6)) / $total_headings;
 
 // Header
 $qty_heading = _l('credit_note_table_quantity_heading');
@@ -86,20 +87,20 @@ $tblhtml = '<table width="100%" bgcolor="#fff" cellspacing="0" cellpadding="8">'
 $tblhtml .= '<tr height="30" bgcolor="' . get_option('pdf_table_heading_color') . '" style="color:' . get_option('pdf_table_heading_text_color') . ';">';
 
 $tblhtml .= '<th width="5%;" align="center">#</th>';
-$tblhtml .= '<th width="'.$item_width.'%" align="left">' . _l('credit_note_table_item_heading') . '</th>';
+$tblhtml .= '<th width="' . $item_width . '%" align="left">' . _l('credit_note_table_item_heading') . '</th>';
 
 foreach ($custom_fields_items as $cf) {
-    $tblhtml .= '<th width="'.$headings_width.'%" align="left">' . $cf['name'] . '</th>';
+    $tblhtml .= '<th width="' . $headings_width . '%" align="left">' . $cf['name'] . '</th>';
 }
 
-$tblhtml .= '<th width="'.$headings_width.'%" align="right">' . $qty_heading . '</th>';
-$tblhtml .= '<th width="'.$headings_width.'%" align="right">' . _l('credit_note_table_rate_heading') . '</th>';
+$tblhtml .= '<th width="' . $headings_width . '%" align="right">' . $qty_heading . '</th>';
+$tblhtml .= '<th width="' . $headings_width . '%" align="right">' . _l('credit_note_table_rate_heading') . '</th>';
 
 if (get_option('show_tax_per_item') == 1) {
-    $tblhtml .= '<th width="'.$headings_width.'%" align="right">' . _l('credit_note_table_tax_heading') . '</th>';
+    $tblhtml .= '<th width="' . $headings_width . '%" align="right">' . _l('credit_note_table_tax_heading') . '</th>';
 }
 
-$tblhtml .= '<th width="'.$headings_width.'%" align="right">' . _l('credit_note_table_amount_heading') . '</th>';
+$tblhtml .= '<th width="' . $headings_width . '%" align="right">' . _l('credit_note_table_amount_heading') . '</th>';
 $tblhtml .= '</tr>';
 
 // Items
@@ -117,23 +118,23 @@ $pdf->writeHTML($tblhtml, true, false, false, false, '');
 $pdf->Ln(8);
 $tbltotal = '';
 
-$tbltotal .= '<table cellpadding="6" style="font-size:'.($font_size+4).'px">';
+$tbltotal .= '<table cellpadding="6" style="font-size:' . ($font_size + 4) . 'px">';
 $tbltotal .= '
 <tr>
     <td align="right" width="85%"><strong>' . _l('credit_note_subtotal') . '</strong></td>
     <td align="right" width="15%">' . format_money($credit_note->subtotal, $credit_note->symbol) . '</td>
 </tr>';
 
-if(is_sale_discount_applied($credit_note)){
+if (is_sale_discount_applied($credit_note)) {
     $tbltotal .= '
     <tr>
         <td align="right" width="85%"><strong>' . _l('credit_note_discount');
-        if(is_sale_discount($credit_note,'percent')){
-            $tbltotal .= '(' . _format_number($credit_note->discount_percent, true) . '%)';
-        }
-        $tbltotal .= '</strong>';
-        $tbltotal .= '</td>';
-        $tbltotal .= '<td align="right" width="15%">-' . format_money($credit_note->discount_total, $credit_note->symbol) . '</td>
+    if (is_sale_discount($credit_note, 'percent')) {
+        $tbltotal .= '(' . _format_number($credit_note->discount_percent, true) . '%)';
+    }
+    $tbltotal .= '</strong>';
+    $tbltotal .= '</td>';
+    $tbltotal .= '<td align="right" width="15%">-' . format_money($credit_note->discount_total, $credit_note->symbol) . '</td>
     </tr>';
 }
 

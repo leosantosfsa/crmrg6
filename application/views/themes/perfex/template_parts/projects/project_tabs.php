@@ -36,7 +36,7 @@
 
     <?php if($project->settings->view_gantt == 1 && $project->settings->available_features['project_gantt'] == 1){ ?>
     <li role="presentation" class="project_tab_gantt">
-        <a data-group="project_gantt" href="<?php echo site_url('clients/project/'.$project->id.'?group=project_gantt'); ?>" role="tab"><i class="fa fa-line-chart" aria-hidden="true"></i> <?php echo _l('project_gant'); ?></a>
+        <a data-group="project_gantt" href="<?php echo site_url('clients/project/'.$project->id.'?group=project_gantt'); ?>" role="tab"><i class="fa fa-align-left" aria-hidden="true"></i> <?php echo _l('project_gant'); ?></a>
     </li>
     <?php } ?>
 

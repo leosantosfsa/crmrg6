@@ -237,7 +237,7 @@
                            </table>
                         </div>
                      </div>
-                     <div class="col-md-4 col-md-offset-8">
+                     <div class="col-md-5 col-md-offset-7">
                         <table class="table text-right">
                            <tbody>
                               <tr id="subtotal">

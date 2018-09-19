@@ -52,6 +52,7 @@ $result = data_tables_init(
         'tblstafftasks.id',
         'rel_type',
         'rel_id',
+        'recurring',
         tasks_rel_name_select_query() . ' as rel_name',
         'billed',
         '(SELECT staffid FROM tblstafftaskassignees WHERE taskid=tblstafftasks.id AND staffid=' . get_staff_user_id() . ') as is_assigned',
@@ -84,6 +85,10 @@ foreach ($rResult as $aRow) {
         $link = task_rel_link($aRow['rel_id'], $aRow['rel_type']);
 
         $outputName .= '<span class="hide"> - </span><a class="text-muted task-table-related" data-toggle="tooltip" title="' . _l('task_related_to') . '" href="' . $link . '">' . $relName . '</a>';
+    }
+
+    if($aRow['recurring'] == 1) {
+        $outputName .= '<br /><span class="label label-primary inline-block mtop4"> ' . _l('recurring_task') . '</span>';
     }
 
     $outputName .= '<div class="row-options">';

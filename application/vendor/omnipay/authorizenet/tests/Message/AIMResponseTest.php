@@ -18,7 +18,8 @@ class AIMResponseTest extends TestCase
 
     public function testConstructEmpty()
     {
-        $this->setExpectedException('\Omnipay\Common\Exception\InvalidResponseException');
+        $this->expectException('\Omnipay\Common\Exception\InvalidResponseException');
+
         new AIMResponse($this->getMockRequest(), '');
     }
 
@@ -34,6 +35,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(1, $response->getReasonCode());
         $this->assertSame('GA4OQP', $response->getAuthorizationCode());
         $this->assertSame('Y', $response->getAVSCode());
+        $this->assertSame('P', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 
     public function testAuthorizeFailure()
@@ -48,6 +51,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(5, $response->getReasonCode());
         $this->assertSame('', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 
     public function testAuthorizeInvalid()
@@ -62,6 +67,7 @@ class AIMResponseTest extends TestCase
         $this->assertSame('E00007', $response->getReasonCode());
         $this->assertSame('', $response->getAuthorizationCode());
         $this->assertSame('', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
     }
 
     public function testAuthorizeInvalidOTSToken()
@@ -86,6 +92,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(1, $response->getReasonCode());
         $this->assertSame('F51OYG', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 
     public function testCaptureFailure()
@@ -100,6 +108,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(16, $response->getReasonCode());
         $this->assertSame('', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('', $response->getAccountType());
     }
     
     public function testCaptureOnlySuccess()
@@ -114,6 +124,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(1, $response->getReasonCode());
         $this->assertSame('ROHNFQ', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('MasterCard', $response->getAccountType());
     }
 
     public function testCaptureOnlyFailure()
@@ -128,6 +140,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(5, $response->getReasonCode());
         $this->assertSame('ROHNFQ', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('MasterCard', $response->getAccountType());
     }
 
     public function testPurchaseSuccess()
@@ -142,6 +156,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(1, $response->getReasonCode());
         $this->assertSame('JE6JM1', $response->getAuthorizationCode());
         $this->assertSame('Y', $response->getAVSCode());
+        $this->assertSame('P', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 
     public function testPurchaseFailure()
@@ -156,6 +172,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(5, $response->getReasonCode());
         $this->assertSame('', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 
     public function testRefundSuccess()
@@ -170,6 +188,8 @@ class AIMResponseTest extends TestCase
         $this->assertSame(1, $response->getResultCode());
         $this->assertSame(1, $response->getReasonCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 
     public function testRefundFailure()
@@ -184,5 +204,7 @@ class AIMResponseTest extends TestCase
         $this->assertSame(54, $response->getReasonCode());
         $this->assertSame('', $response->getAuthorizationCode());
         $this->assertSame('P', $response->getAVSCode());
+        $this->assertSame('', $response->getCVVCode());
+        $this->assertSame('Visa', $response->getAccountType());
     }
 }

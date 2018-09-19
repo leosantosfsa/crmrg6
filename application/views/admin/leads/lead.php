@@ -301,7 +301,7 @@
                </a>
                <div class="media-body">
                   <?php if($note['addedfrom'] == get_staff_user_id() || is_admin()){ ?>
-                  <a href="#" class="pull-right text-danger" onclick="delete_lead_note(this,<?php echo $note['id']; ?>);return false;"><i class="fa fa fa-times"></i></a>
+                  <a href="#" class="pull-right text-danger" onclick="delete_lead_note(this,<?php echo $note['id']; ?>, <?php echo $lead->id; ?>);return false;"><i class="fa fa fa-times"></i></a>
                   <a href="#" class="pull-right mright5" onclick="toggle_edit_note(<?php echo $note['id']; ?>);return false;"><i class="fa fa-pencil-square-o"></i></a>
                   <?php } ?>
                   <?php if(!empty($note['date_contacted'])){ ?>
@@ -314,7 +314,7 @@
                      <h5 class="media-heading bold"><?php echo get_staff_full_name($note['addedfrom']); ?></h5>
                   </a>
                   <div data-note-description="<?php echo $note['id']; ?>" class="text-muted">
-                     <?php echo app_happy_text($note['description']); ?>
+                     <?php echo check_for_links(app_happy_text($note['description'])); ?>
                   </div>
                   <div data-note-edit-textarea="<?php echo $note['id']; ?>" class="hide mtop15">
                      <?php echo render_textarea('note','',$note['description']); ?>

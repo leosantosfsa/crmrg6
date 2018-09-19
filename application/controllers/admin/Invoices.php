@@ -19,7 +19,9 @@ class Invoices extends Admin_controller
     /* List all invoices datatables */
     public function list_invoices($id = '')
     {
-        if (!has_permission('invoices', '', 'view') && !has_permission('invoices', '', 'view_own') && get_option('allow_staff_view_invoices_assigned') == '0') {
+        if (!has_permission('invoices', '', 'view')
+            && !has_permission('invoices', '', 'view_own')
+            && get_option('allow_staff_view_invoices_assigned') == '0') {
             access_denied('invoices');
         }
 
@@ -36,16 +38,36 @@ class Invoices extends Admin_controller
         $this->load->view('admin/invoices/manage', $data);
     }
 
+    /* List all recurring invoices */
+    public function recurring($id = '')
+    {
+        if (!has_permission('invoices', '', 'view')
+            && !has_permission('invoices', '', 'view_own')
+            && get_option('allow_staff_view_invoices_assigned') == '0') {
+            access_denied('invoices');
+        }
+
+        close_setup_menu();
+
+        $data['invoiceid']            = $id;
+        $data['title']                = _l('invoices_list_recurring');
+        $data['invoices_years']       = $this->invoices_model->get_invoices_years();
+        $data['invoices_sale_agents'] = $this->invoices_model->get_sale_agents();
+        $this->load->view('admin/invoices/recurring/list', $data);
+    }
+
     public function table($clientid = '')
     {
-        if (!has_permission('invoices', '', 'view') && !has_permission('invoices', '', 'view_own') && get_option('allow_staff_view_invoices_assigned') == '0') {
+        if (!has_permission('invoices', '', 'view')
+            && !has_permission('invoices', '', 'view_own')
+            && get_option('allow_staff_view_invoices_assigned') == '0') {
             ajax_access_denied();
         }
 
         $this->load->model('payment_modes_model');
         $data['payment_modes'] = $this->payment_modes_model->get('', [], true);
 
-        $this->app->get_table_data('invoices', [
+        $this->app->get_table_data(($this->input->get('recurring') ? 'recurring_invoices' : 'invoices'), [
             'clientid' => $clientid,
             'data'     => $data,
         ]);

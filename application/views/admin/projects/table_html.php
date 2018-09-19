@@ -1,7 +1,7 @@
 <?php
 
 $table_data = [
-   '#',
+   _l('the_number_sign'),
    _l('project_name'),
     [
          'name'     => _l('project_customer'),

@@ -2,10 +2,6 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-use Omnipay\Omnipay;
-
-// require_once(APPPATH . 'third_party/omnipay/vendor/autoload.php');
-
 class Two_checkout_gateway extends App_gateway
 {
     private $required_address_line_2_country_codes = 'CHN, JPN, RUS';
@@ -101,38 +97,42 @@ class Two_checkout_gateway extends App_gateway
 
     public function finish_payment($data)
     {
-        $gateway = Omnipay::create('TwoCheckoutPlus_Token');
-        $gateway->setAccountNumber($this->getSetting('account_number'));
-        $gateway->setPrivateKey($this->decryptSetting('private_key'));
-        $gateway->setTestMode($this->getSetting('test_mode_enabled'));
+        Twocheckout::privateKey($this->decryptSetting('private_key'));
+        Twocheckout::sellerId($this->getSetting('account_number'));
+        Twocheckout::sandbox($this->getSetting('test_mode_enabled') == '1');
 
-        $billing_data                    = [];
-        $billing_data['billingName']     = $this->ci->input->post('billingName');
-        $billing_data['billingAddress1'] = $this->ci->input->post('billingAddress1');
+        $billingAddress              = [];
+        $billingAddress['name']      = $this->ci->input->post('billingName');
+        $billingAddress['addrLine1'] = $this->ci->input->post('billingAddress1');
 
         if ($this->ci->input->post('billingAddress2')) {
-            $billing_data['billingAddress2'] = $this->ci->input->post('billingAddress2');
+            $billingAddress['addrLine2'] = $this->ci->input->post('billingAddress2');
         }
-        $billing_data['billingCity'] = $this->ci->input->post('billingCity');
+        $billingAddress['city'] = $this->ci->input->post('billingCity');
 
         if ($this->ci->input->post('billingState')) {
-            $billing_data['billingState'] = $this->ci->input->post('billingState');
+            $billingAddress['state'] = $this->ci->input->post('billingState');
         }
         if ($this->ci->input->post('billingPostcode')) {
-            $billing_data['billingPostcode'] = $this->ci->input->post('billingPostcode');
+            $billingAddress['zipCode'] = $this->ci->input->post('billingPostcode');
         }
-        $billing_data['billingCountry'] = $this->ci->input->post('billingCountry');
-        $billing_data['email']          = $this->ci->input->post('email');
+        $billingAddress['country'] = $this->ci->input->post('billingCountry');
+        $billingAddress['email']   = $this->ci->input->post('email');
 
-        $oResponse = $gateway->purchase([
-            'amount'        => number_format($data['amount'], 2, '.', ''),
-            'currency'      => $data['currency'],
-            'token'         => $this->ci->input->post('token'),
-            'transactionId' => $data['invoice']->id,
-            'card'          => $billing_data,
-        ])->send();
+        try {
+            $charge = Twocheckout_Charge::auth([
+                'sellerId'        => $this->getSetting('account_number'),
+                'merchantOrderId' => $data['invoice']->id,
+                'token'           => $this->ci->input->post('token'),
+                'currency'        => $data['currency'],
+                'total'           => number_format($data['amount'], 2, '.', ''),
+                'billingAddr'     => $billingAddress,
+            ]);
 
-        return $oResponse;
+            return ['success' => true, 'charge' => $charge];
+        } catch (Twocheckout_Error $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     public function get_required_address_2_by_country_code()

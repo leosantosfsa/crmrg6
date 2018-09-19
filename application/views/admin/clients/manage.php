@@ -270,7 +270,7 @@
                            $table_data = array();
                            $_table_data = array(
                             '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="clients"><label></label></div>',
-                            '#',
+                            _l('the_number_sign'),
                             _l('clients_list_company'),
                             _l('contact_primary'),
                             _l('company_primary_email'),

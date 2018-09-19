@@ -8,7 +8,7 @@
     <?php } ?>
     <?php set_ticket_open($ticket->clientread,$ticket->ticketid,false); ?>
     <?php echo form_hidden('ticket_id',$ticket->ticketid); ?>
-    <div class="col-md-4">
+    <div class="col-md-4 ticket-info">
         <div class="panel_s">
             <div class="panel-heading">
                 <?php echo _l('clients_single_ticket_information_heading'); ?>
@@ -64,26 +64,28 @@
                                 </p>
                                 <?php
                                 $custom_fields = get_custom_fields('tickets',array('show_on_client_portal'=>1));
-                                foreach($custom_fields as $field){ ?>
+                                foreach($custom_fields as $field){
+                                    $cfValue = get_custom_field_value($ticket->ticketid,$field['id'],'tickets');
+                                    if(empty($cfValue)) {
+                                        continue;
+                                    }
+                                 ?>
                                 <hr class="hr-10" />
-                                <p class="bold"><?php echo $field['name']; ?>: <span class="pull-right bold"><?php echo get_custom_field_value($ticket->ticketid,$field['id'],'tickets'); ?></span></p>
+                                <p><?php echo $field['name']; ?>: <span class="pull-right bold"><?php echo $cfValue; ?></span></p>
                                 <?php } ?>
                             </div>
                         </div>
-                    </div>
-                    <div class="panel-footer">
-                        <a href="#" class="btn btn-info btn-block single-ticket-add-reply"><?php echo _l('clients_ticket_single_add_reply_btn'); ?></a>
                     </div>
                 </div>
             </div>
             <div class="col-md-8">
                 <?php echo form_open_multipart($this->uri->uri_string(),array('id'=>'ticket-reply')); ?>
-                <div class="panel_s single-ticket-reply-area" <?php if (form_error('message') == ''){ ?>style="display:none;" <?php } ?>>
+                <div class="panel_s single-ticket-reply-area">
                     <div class="panel-heading">
                         <?php echo _l('clients_ticket_single_add_reply_heading'); ?>
                     </div>
                     <div class="panel-body">
-                        <textarea name="message" class="form-control" rows="15"></textarea>
+                        <textarea name="message" class="form-control" rows="8"></textarea>
                         <?php echo form_error('message'); ?>
                     </div>
                     <div class="panel-footer attachments_area">

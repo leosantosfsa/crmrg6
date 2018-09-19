@@ -58,6 +58,7 @@ class AssistantContext extends InstanceContext {
      * Fetch a AssistantInstance
      * 
      * @return AssistantInstance Fetched AssistantInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         $params = Values::of(array());
@@ -76,6 +77,7 @@ class AssistantContext extends InstanceContext {
      * 
      * @param array|Options $options Optional Arguments
      * @return AssistantInstance Updated AssistantInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function update($options = array()) {
         $options = new Values($options);
@@ -83,7 +85,6 @@ class AssistantContext extends InstanceContext {
         $data = Values::of(array(
             'FriendlyName' => $options['friendlyName'],
             'LogQueries' => Serialize::booleanToString($options['logQueries']),
-            'Ttl' => $options['ttl'],
             'UniqueName' => $options['uniqueName'],
             'ResponseUrl' => $options['responseUrl'],
             'CallbackUrl' => $options['callbackUrl'],
@@ -104,6 +105,7 @@ class AssistantContext extends InstanceContext {
      * Deletes the AssistantInstance
      * 
      * @return boolean True if delete succeeds, false otherwise
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function delete() {
         return $this->version->delete('delete', $this->uri);

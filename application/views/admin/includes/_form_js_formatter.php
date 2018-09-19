@@ -54,8 +54,12 @@ window.fbControls.push(function (controlClass) {
 });
 
 var fbOptions = {
-    dataType: 'json'
+    dataType: 'json',
+      stickyControls: {
+        enable: false,
+      }
 };
+
 
 if (formData && formData.length) {
     fbOptions.formData = formData;

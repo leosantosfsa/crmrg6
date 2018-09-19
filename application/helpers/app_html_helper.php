@@ -361,12 +361,16 @@ function get_company_logo($uri = '', $href_class = '', $type = '')
     $logoURL = do_action('logo_href', $logoURL);
 
     if ($company_logo != '') {
-        echo '<a href="' . $logoURL . '" class="' . $href_class . ' logo img-responsive"><img src="' . base_url('uploads/company/' . $company_logo) . '" class="img-responsive" alt="' . $company_name . '"></a>';
+        $logo = '<a href="' . $logoURL . '" class="' . $href_class . ' logo img-responsive"><img src="' . base_url('uploads/company/' . $company_logo) . '" class="img-responsive" alt="' . $company_name . '"></a>';
     } elseif ($company_name != '') {
-        echo '<a href="' . $logoURL . '" class="' . $href_class . ' logo logo-text">' . $company_name . '</a>';
+        $logo = '<a href="' . $logoURL . '" class="' . $href_class . ' logo logo-text">' . $company_name . '</a>';
     } else {
-        echo '';
+        $logo = '';
     }
+
+    $logo = do_action('company_logo', $logo);
+
+    echo $logo;
 }
 /**
  * Output company logo dark
@@ -389,11 +393,28 @@ function get_dark_company_logo($uri = '', $href_class = '')
  */
 function payment_gateway_logo()
 {
-    $url    = do_action('payment_gateway_logo_url', base_url('uploads/company/' . get_option('company_logo')));
+    $url    = payment_gateway_logo_url();
     $width  = do_action('payment_gateway_logo_width', 'auto');
     $height = do_action('payment_gateway_logo_height', '34px');
 
     return '<img src="' . $url . '" width="' . $width . '" height="' . $height . '">';
+}
+
+function payment_gateway_logo_url()
+{
+    $logoURL = '';
+
+    $logoDark  = get_option('company_logo_dark');
+    $logoLight = get_option('company_logo');
+    if ($logoDark != '' && file_exists(get_upload_path_by_type('company') . $logoDark)) {
+        $logoURL = base_url('uploads/company/' . $logoDark);
+    } elseif ($logoLight != '' && file_exists(get_upload_path_by_type('company') . $logoLight)) {
+        $logoURL = base_url('uploads/company/' . $logoLight);
+    }
+
+    $logoURL = do_action('payment_gateway_logo_url', $logoURL);
+
+    return $logoURL;
 }
 
 /**

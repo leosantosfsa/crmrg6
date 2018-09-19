@@ -162,6 +162,14 @@
                                        <hr class="mass_delete_separator" />
                                        <?php } ?>
                                        <div id="bulk_change">
+                                       <div class="form-group">
+                                              <div class="checkbox checkbox-primary checkbox-inline">
+                                                <input type="checkbox" name="leads_bulk_mark_lost" id="leads_bulk_mark_lost" value="1">
+                                                <label for="leads_bulk_mark_lost">
+                                                <?php echo _l('lead_mark_as_lost'); ?>
+                                                </label>
+                                             </div>
+                                         </div>
                                           <?php echo render_select('move_to_status_leads_bulk',$statuses,array('id','name'),'ticket_single_change_status'); ?>
                                           <?php
                                              echo render_select('move_to_source_leads_bulk',$sources,array('id','name'),'lead_source');
@@ -207,7 +215,7 @@
                               $_table_data = array(
                                 '<span class="hide"> - </span><div class="checkbox mass_select_all_wrap"><input type="checkbox" id="mass_select_all" data-to-table="leads"><label></label></div>',
                                 array(
-                                 'name'=>'#',
+                                 'name'=>_l('the_number_sign'),
                                  'th_attrs'=>array('class'=>'toggleable', 'id'=>'th-number')
                                ),
                                 array(
@@ -292,6 +300,18 @@
    var openLeadID = '<?php echo $leadid; ?>';
    $(function(){
       leads_kanban();
+      $('#leads_bulk_mark_lost').on('change', function(){
+          $('#move_to_status_leads_bulk').prop('disabled', $(this).prop('checked') == true);
+          $('#move_to_status_leads_bulk').selectpicker('refresh')
+       });
+      $('#move_to_status_leads_bulk').on('change', function(){
+        if($(this).selectpicker('val') != '') {
+         $('#leads_bulk_mark_lost').prop('disabled', true);
+         $('#leads_bulk_mark_lost').prop('checked', false);
+      } else {
+         $('#leads_bulk_mark_lost').prop('disabled', false);
+      }
+   });
    });
 </script>
 </body>

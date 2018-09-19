@@ -1,4 +1,4 @@
-  <table class="table dt-table" data-order-col="<?php echo (get_option('services') == 1 ? 7 : 6); ?>" data-order-type="desc">
+  <table class="table dt-table table-tickets" data-order-col="<?php echo (get_option('services') == 1 ? 7 : 6); ?>" data-order-type="desc">
     <thead>
       <th width="10%"><?php echo _l('clients_tickets_dt_number'); ?></th>
       <th><?php echo _l('clients_tickets_dt_subject'); ?></th>

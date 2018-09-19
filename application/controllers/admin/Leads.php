@@ -9,7 +9,7 @@ class Leads extends Admin_controller
     public function __construct()
     {
         parent::__construct();
-        $this->not_importable_leads_fields = do_action('not_importable_leads_fields', ['id', 'source', 'assigned', 'status', 'dateadded', 'last_status_change', 'addedfrom', 'leadorder', 'date_converted', 'lost', 'junk', 'is_imported_from_email_integration', 'email_integration_uid', 'is_public', 'dateassigned', 'client_id', 'lastcontact', 'last_lead_status', 'from_form_id', 'default_language']);
+        $this->not_importable_leads_fields = do_action('not_importable_leads_fields', ['id', 'source', 'assigned', 'status', 'dateadded', 'last_status_change', 'addedfrom', 'leadorder', 'date_converted', 'lost', 'junk', 'is_imported_from_email_integration', 'email_integration_uid', 'is_public', 'dateassigned', 'client_id', 'lastcontact', 'last_lead_status', 'from_form_id', 'default_language','hash']);
         $this->load->model('leads_model');
     }
 
@@ -113,7 +113,7 @@ class Leads extends Admin_controller
     {
         $reminder_data       = '';
         $data['lead_locked'] = false;
-        $data['openEdit']        = $this->input->get('edit') ? true : false;
+        $data['openEdit']    = $this->input->get('edit') ? true : false;
         $data['members']     = $this->staff_model->get('', ['is_not_staff' => 0, 'active' => 1]);
         $data['status_id']   = $this->input->get('status_id') ? $this->input->get('status_id') : get_option('leads_default_status');
 
@@ -604,13 +604,17 @@ class Leads extends Admin_controller
     public function add_external_attachment()
     {
         if ($this->input->post()) {
-            $this->leads_model->add_attachment_to_database($this->input->post('lead_id'), $this->input->post('files'), $this->input->post('external'));
+            $this->leads_model->add_attachment_to_database(
+                $this->input->post('lead_id'),
+                $this->input->post('files'),
+                $this->input->post('external')
+            );
         }
     }
 
-    public function delete_attachment($id)
+    public function delete_attachment($id, $lead_id)
     {
-        if (!is_staff_member() || !$this->leads_model->staff_can_access_lead($id)) {
+        if (!is_staff_member() || !$this->leads_model->staff_can_access_lead($lead_id)) {
             $this->access_denied_ajax();
         }
         echo json_encode([
@@ -618,9 +622,9 @@ class Leads extends Admin_controller
         ]);
     }
 
-    public function delete_note($id)
+    public function delete_note($id, $lead_id)
     {
-        if (!is_staff_member() || !$this->leads_model->staff_can_access_lead($id)) {
+        if (!is_staff_member() || !$this->leads_model->staff_can_access_lead($lead_id)) {
             $this->access_denied_ajax();
         }
         echo json_encode([
@@ -1115,15 +1119,25 @@ class Leads extends Admin_controller
         if ($this->input->post()) {
             $simulate = $this->input->post('simulate');
             if (isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
+                do_action('before_import_leads');
+
                 // Get the temp file path
                 $tmpFilePath = $_FILES['file_csv']['tmp_name'];
                 // Make sure we have a filepath
                 if (!empty($tmpFilePath) && $tmpFilePath != '') {
-                    // Setup our new file path
-                    $newFilePath = TEMP_FOLDER . $_FILES['file_csv']['name'];
+                    $tmpDir = TEMP_FOLDER . '/' . time() . uniqid() . '/';
+
                     if (!file_exists(TEMP_FOLDER)) {
-                        mkdir(TEMP_FOLDER, 0777);
+                        mkdir(TEMP_FOLDER, 0755);
                     }
+
+                    if (!file_exists($tmpDir)) {
+                        mkdir($tmpDir, 0755);
+                    }
+
+                    // Setup our new file path
+                    $newFilePath = $tmpDir . $_FILES['file_csv']['name'];
+
                     if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                         $import_result = true;
                         $fd            = fopen($newFilePath, 'r');
@@ -1250,7 +1264,7 @@ class Leads extends Admin_controller
                                 break;
                             }
                         }
-                        unlink($newFilePath);
+                        @delete_dir($tmpDir);
                     }
                 } else {
                     set_alert('warning', _l('import_upload_failed'));
@@ -1316,6 +1330,7 @@ class Leads extends Admin_controller
             $visibility            = $this->input->post('visibility');
             $tags                  = $this->input->post('tags');
             $last_contact          = $this->input->post('last_contact');
+            $lost                  = $this->input->post('lost');
             $has_permission_delete = has_permission('leads', '', 'delete');
             if (is_array($ids)) {
                 foreach ($ids as $id) {
@@ -1361,6 +1376,9 @@ class Leads extends Admin_controller
                         }
                         if ($tags) {
                             handle_tags_save($tags, $id, 'lead');
+                        }
+                        if ($lost == 'true') {
+                            $this->leads_model->mark_as_lost($id);
                         }
                     }
                 }

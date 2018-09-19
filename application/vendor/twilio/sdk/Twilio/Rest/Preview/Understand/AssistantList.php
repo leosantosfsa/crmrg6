@@ -125,6 +125,7 @@ class AssistantList extends ListResource {
      * 
      * @param array|Options $options Optional Arguments
      * @return AssistantInstance Newly created AssistantInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function create($options = array()) {
         $options = new Values($options);
@@ -132,7 +133,6 @@ class AssistantList extends ListResource {
         $data = Values::of(array(
             'FriendlyName' => $options['friendlyName'],
             'LogQueries' => Serialize::booleanToString($options['logQueries']),
-            'Ttl' => $options['ttl'],
             'UniqueName' => $options['uniqueName'],
             'ResponseUrl' => $options['responseUrl'],
             'CallbackUrl' => $options['callbackUrl'],

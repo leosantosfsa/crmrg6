@@ -374,7 +374,7 @@ class Reports_model extends CRM_Model
             }
             $this->db->where($custom_date_select);
         }
-        $this->db->select('amount,tblinvoicepaymentrecords.date,tblinvoices.clientid,(SELECT GROUP_CONCAT(name) FROM tblcustomersgroups LEFT JOIN tblcustomergroups_in ON tblcustomergroups_in.groupid = tblcustomersgroups.id WHERE customer_id = tblinvoices.clientid) as groups');
+        $this->db->select('amount,tblinvoicepaymentrecords.date,tblinvoices.clientid,(SELECT GROUP_CONCAT(name) FROM tblcustomersgroups LEFT JOIN tblcustomergroups_in ON tblcustomergroups_in.groupid = tblcustomersgroups.id WHERE customer_id = tblinvoices.clientid) as customerGroups');
         $this->db->from('tblinvoicepaymentrecords');
         $this->db->join('tblinvoices', 'tblinvoices.id = tblinvoicepaymentrecords.invoiceid');
         $this->db->where('tblinvoices.clientid IN (select customer_id FROM tblcustomergroups_in)');
@@ -397,7 +397,7 @@ class Reports_model extends CRM_Model
         if (isset($data['groups'])) {
             foreach ($data['groups'] as $group) {
                 foreach ($payments as $payment) {
-                    $p_groups = explode(',', $payment['groups']);
+                    $p_groups = explode(',', $payment['customerGroups']);
                     foreach ($p_groups as $p_group) {
                         if ($p_group == $group) {
                             $data['temp'][$group][] = $payment['amount'];

@@ -46,6 +46,16 @@ $.validator.addMethod("extension", function(value, element, param) {
 }, $.validator.format(validation_extension_not_allowed));
 
 $(function() {
+
+    // Fix for dropdown in tables
+    $('body').on('shown.bs.dropdown', '.btn-group', function() {
+        $(this).closest('.table-responsive').css("overflow", "inherit");
+    });
+
+    $('body').on('hidden.bs.dropdown', '.btn-group', function() {
+        $(this).closest('.table-responsive').css("overflow", "auto");
+    });
+
     $('body').find('select').selectpicker({
         showSubtext: true,
     });
@@ -62,7 +72,6 @@ $(function() {
     $('body').popover({
         selector: '[data-toggle="popover"]'
     });
-
 
     // Close all popovers if user click on body and the click is not inside the popover content area
     $('body').on('click', function(e) {
@@ -213,6 +222,7 @@ function init_datepicker() {
     var opt;
     // Datepicker without time
     $.each(datepickers, function() {
+        var that = $(this);
         var opt = {
             timepicker: false,
             scrollInput: false,
@@ -222,8 +232,8 @@ function init_datepicker() {
         };
 
         // Check in case the input have date-end-date or date-min-date
-        var max_date = $(this).data('date-end-date');
-        var min_date = $(this).data('date-min-date');
+        var max_date = that.data('date-end-date');
+        var min_date = that.data('date-min-date');
         if (max_date) {
             opt.maxDate = max_date;
         }
@@ -231,11 +241,16 @@ function init_datepicker() {
             opt.minDate = min_date;
         }
         // Init the picker
-        $(this).datetimepicker(opt);
+        that.datetimepicker(opt);
+        that.parents('.form-group').find('.calendar-icon').on('click', function() {
+            that.focus();
+            that.trigger('open.xdsoft');
+        });
     });
     var opt_time;
     // Datepicker with time
     $.each(datetimepickers, function() {
+        var that = $(this);
         opt_time = {
             lazyInit: true,
             scrollInput: false,
@@ -249,8 +264,8 @@ function init_datepicker() {
             opt_time.formatTime = 'g:i A';
         }
         // Check in case the input have date-end-date or date-min-date
-        var max_date = $(this).data('date-end-date');
-        var min_date = $(this).data('date-min-date');
+        var max_date = that.data('date-end-date');
+        var min_date = that.data('date-min-date');
         if (max_date) {
             opt_time.maxDate = max_date;
         }
@@ -258,7 +273,11 @@ function init_datepicker() {
             opt_time.minDate = min_date;
         }
         // Init the picker
-        $(this).datetimepicker(opt_time);
+        that.datetimepicker(opt_time);
+        that.parents('.form-group').find('.calendar-icon').on('click', function() {
+            that.focus();
+            that.trigger('open.xdsoft');
+        });
     });
 }
 

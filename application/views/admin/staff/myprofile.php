@@ -11,6 +11,7 @@
        </div>
      </div>
      <?php } ?>
+     <?php do_action('before_staff_myprofile'); ?>
      <div class="col-md-5<?php if($this->input->get('notifications')){echo ' hide';} ?>">
       <div class="panel_s">
 

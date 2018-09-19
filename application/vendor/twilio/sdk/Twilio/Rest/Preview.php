@@ -16,8 +16,6 @@ use Twilio\Rest\Preview\BulkExports as PreviewBulkExports;
 use Twilio\Rest\Preview\DeployedDevices as PreviewDeployedDevices;
 use Twilio\Rest\Preview\HostedNumbers as PreviewHostedNumbers;
 use Twilio\Rest\Preview\Marketplace as PreviewMarketplace;
-use Twilio\Rest\Preview\Proxy as PreviewProxy;
-use Twilio\Rest\Preview\Studio as PreviewStudio;
 use Twilio\Rest\Preview\Sync as PreviewSync;
 use Twilio\Rest\Preview\Understand as PreviewUnderstand;
 use Twilio\Rest\Preview\Wireless as PreviewWireless;
@@ -27,8 +25,6 @@ use Twilio\Rest\Preview\Wireless as PreviewWireless;
  * @property \Twilio\Rest\Preview\DeployedDevices deployedDevices
  * @property \Twilio\Rest\Preview\HostedNumbers hostedNumbers
  * @property \Twilio\Rest\Preview\Marketplace marketplace
- * @property \Twilio\Rest\Preview\Proxy proxy
- * @property \Twilio\Rest\Preview\Studio studio
  * @property \Twilio\Rest\Preview\AccSecurity accSecurity
  * @property \Twilio\Rest\Preview\Sync sync
  * @property \Twilio\Rest\Preview\Understand understand
@@ -38,10 +34,9 @@ use Twilio\Rest\Preview\Wireless as PreviewWireless;
  * @property \Twilio\Rest\Preview\DeployedDevices\FleetList fleets
  * @property \Twilio\Rest\Preview\HostedNumbers\AuthorizationDocumentList authorizationDocuments
  * @property \Twilio\Rest\Preview\HostedNumbers\HostedNumberOrderList hostedNumberOrders
- * @property \Twilio\Rest\Preview\Marketplace\AvailableAddOnList availableAddOns
  * @property \Twilio\Rest\Preview\Marketplace\InstalledAddOnList installedAddOns
+ * @property \Twilio\Rest\Preview\Marketplace\AvailableAddOnList availableAddOns
  * @property \Twilio\Rest\Preview\Sync\ServiceList services
- * @property \Twilio\Rest\Preview\Studio\FlowList flows
  * @property \Twilio\Rest\Preview\Understand\AssistantList assistants
  * @property \Twilio\Rest\Preview\Wireless\CommandList commands
  * @property \Twilio\Rest\Preview\Wireless\RatePlanList ratePlans
@@ -51,10 +46,9 @@ use Twilio\Rest\Preview\Wireless as PreviewWireless;
  * @method \Twilio\Rest\Preview\DeployedDevices\FleetContext fleets(string $sid)
  * @method \Twilio\Rest\Preview\HostedNumbers\AuthorizationDocumentContext authorizationDocuments(string $sid)
  * @method \Twilio\Rest\Preview\HostedNumbers\HostedNumberOrderContext hostedNumberOrders(string $sid)
- * @method \Twilio\Rest\Preview\Marketplace\AvailableAddOnContext availableAddOns(string $sid)
  * @method \Twilio\Rest\Preview\Marketplace\InstalledAddOnContext installedAddOns(string $sid)
+ * @method \Twilio\Rest\Preview\Marketplace\AvailableAddOnContext availableAddOns(string $sid)
  * @method \Twilio\Rest\Preview\Sync\ServiceContext services(string $sid)
- * @method \Twilio\Rest\Preview\Studio\FlowContext flows(string $sid)
  * @method \Twilio\Rest\Preview\Understand\AssistantContext assistants(string $sid)
  * @method \Twilio\Rest\Preview\Wireless\CommandContext commands(string $sid)
  * @method \Twilio\Rest\Preview\Wireless\RatePlanContext ratePlans(string $sid)
@@ -65,8 +59,6 @@ class Preview extends Domain {
     protected $_deployedDevices = null;
     protected $_hostedNumbers = null;
     protected $_marketplace = null;
-    protected $_proxy = null;
-    protected $_studio = null;
     protected $_accSecurity = null;
     protected $_sync = null;
     protected $_understand = null;
@@ -124,26 +116,6 @@ class Preview extends Domain {
             $this->_marketplace = new PreviewMarketplace($this);
         }
         return $this->_marketplace;
-    }
-
-    /**
-     * @return \Twilio\Rest\Preview\Proxy Version proxy of preview
-     */
-    protected function getProxy() {
-        if (!$this->_proxy) {
-            $this->_proxy = new PreviewProxy($this);
-        }
-        return $this->_proxy;
-    }
-
-    /**
-     * @return \Twilio\Rest\Preview\Studio Version studio of preview
-     */
-    protected function getStudio() {
-        if (!$this->_studio) {
-            $this->_studio = new PreviewStudio($this);
-        }
-        return $this->_studio;
     }
 
     /**
@@ -295,21 +267,6 @@ class Preview extends Domain {
     }
 
     /**
-     * @return \Twilio\Rest\Preview\Marketplace\AvailableAddOnList 
-     */
-    protected function getAvailableAddOns() {
-        return $this->marketplace->availableAddOns;
-    }
-
-    /**
-     * @param string $sid The unique Available Add-on Sid
-     * @return \Twilio\Rest\Preview\Marketplace\AvailableAddOnContext 
-     */
-    protected function contextAvailableAddOns($sid) {
-        return $this->marketplace->availableAddOns($sid);
-    }
-
-    /**
      * @return \Twilio\Rest\Preview\Marketplace\InstalledAddOnList 
      */
     protected function getInstalledAddOns() {
@@ -325,6 +282,21 @@ class Preview extends Domain {
     }
 
     /**
+     * @return \Twilio\Rest\Preview\Marketplace\AvailableAddOnList 
+     */
+    protected function getAvailableAddOns() {
+        return $this->marketplace->availableAddOns;
+    }
+
+    /**
+     * @param string $sid The unique Available Add-on Sid
+     * @return \Twilio\Rest\Preview\Marketplace\AvailableAddOnContext 
+     */
+    protected function contextAvailableAddOns($sid) {
+        return $this->marketplace->availableAddOns($sid);
+    }
+
+    /**
      * @return \Twilio\Rest\Preview\Sync\ServiceList 
      */
     protected function getServices() {
@@ -337,21 +309,6 @@ class Preview extends Domain {
      */
     protected function contextServices($sid) {
         return $this->sync->services($sid);
-    }
-
-    /**
-     * @return \Twilio\Rest\Preview\Studio\FlowList 
-     */
-    protected function getFlows() {
-        return $this->studio->flows;
-    }
-
-    /**
-     * @param string $sid The sid
-     * @return \Twilio\Rest\Preview\Studio\FlowContext 
-     */
-    protected function contextFlows($sid) {
-        return $this->studio->flows($sid);
     }
 
     /**

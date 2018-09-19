@@ -92,6 +92,7 @@ function get_staff_email_templates_slugs()
         'contract-expiration-to-staff',
         'gdpr-removal-request',
         'gdpr-removal-request-lead',
+        'contract-signed-to-staff',
     ];
 
     return do_action('staff_email_templates', $staff_email_templates_slugs);

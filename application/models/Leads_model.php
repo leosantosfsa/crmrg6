@@ -1057,17 +1057,8 @@ class Leads_model extends CRM_Model
         $data['success_submit_msg'] = nl2br($data['success_submit_msg']);
         $data['form_key']           = app_generate_hash();
 
-        if (isset($data['create_task_on_duplicate'])) {
-            $data['create_task_on_duplicate'] = 1;
-        } else {
-            $data['create_task_on_duplicate'] = 0;
-        }
-
-        if (isset($data['mark_public'])) {
-            $data['mark_public'] = 1;
-        } else {
-            $data['mark_public'] = 0;
-        }
+        $data['create_task_on_duplicate'] = (int) isset($data['create_task_on_duplicate']);
+        $data['mark_public'] = (int) isset($data['mark_public']);
 
         if (isset($data['allow_duplicate'])) {
             $data['allow_duplicate']           = 1;
@@ -1096,11 +1087,8 @@ class Leads_model extends CRM_Model
         $data                       = $this->_do_lead_web_to_form_responsibles($data);
         $data['success_submit_msg'] = nl2br($data['success_submit_msg']);
 
-        if (isset($data['create_task_on_duplicate'])) {
-            $data['create_task_on_duplicate'] = 1;
-        } else {
-            $data['create_task_on_duplicate'] = 0;
-        }
+        $data['create_task_on_duplicate'] = (int) isset($data['create_task_on_duplicate']);
+        $data['mark_public'] = (int) isset($data['mark_public']);
 
         if (isset($data['allow_duplicate'])) {
             $data['allow_duplicate']           = 1;
@@ -1109,12 +1097,6 @@ class Leads_model extends CRM_Model
             $data['create_task_on_duplicate']  = 0;
         } else {
             $data['allow_duplicate'] = 0;
-        }
-
-        if (isset($data['mark_public'])) {
-            $data['mark_public'] = 1;
-        } else {
-            $data['mark_public'] = 0;
         }
 
         $this->db->where('id', $id);

@@ -1,4 +1,4 @@
-/* v2.0.1 */
+/* v2.0.2 */
 /* jshint expr: true */
 /* jshint sub:true */
 /* jshint loopfunc:true */
@@ -98,7 +98,6 @@ var original_top_search_val,
     select_picker_validated_event = false,
     postid = 0,
     setup_menu_item = $('#setup-menu-item');
-
 
 // Custom deselect all on bootstrap ajax select input
 $("body").on('loaded.bs.select change', 'select.ajax-search', function(e) {
@@ -467,6 +466,11 @@ $(function() {
 
     // Init scrollable tabs
     init_tabs_scrollable();
+
+    // Refresh top timers on click
+    $('#top-timers').on('click', function() {
+        init_timers();
+    });
 
     // Top search input fetch results
     $('#search_input').on('keyup paste' + (app_user_browser == 'safari' ? ' input' : ''), function() {
@@ -1737,7 +1741,7 @@ $(function() {
 
         if (table_invoices.length) {
             // Invoices tables
-            initDataTable(table_invoices, admin_url + 'invoices/table', 'undefined', 'undefined', Invoices_Estimates_ServerParams, [
+            initDataTable(table_invoices, (admin_url + 'invoices/table' + ($('body').hasClass('recurring') ? '?recurring=1' : '')), 'undefined', 'undefined', Invoices_Estimates_ServerParams, [
                 [3, 'desc'],
                 [0, 'desc']
             ]);
@@ -1988,6 +1992,10 @@ $(function() {
                 get_sales_notes(rel_id, 'estimates');
             } else if (form.hasClass('invoice-notes-form')) {
                 get_sales_notes(rel_id, 'invoices');
+            } else if (form.hasClass('proposal-notes-form')) {
+                get_sales_notes(rel_id, 'proposals');
+            } else if (form.hasClass('contract-notes-form')) {
+                get_sales_notes(rel_id, 'contracts');
             }
         });
         return false;
@@ -2003,7 +2011,7 @@ $(function() {
         do_prefix_year($(this).val());
     });
 
-    $("body").on('change', 'div.invoice input[name="date"],div.estimate input[name="date"]', function() {
+    $("body").on('change', 'div.invoice input[name="date"], div.estimate input[name="date"], div.proposal input[name="date"]', function() {
 
         var date = $(this).val();
         do_prefix_year(date);
@@ -2019,6 +2027,9 @@ $(function() {
         if ($("body").find('div.estimate').length > 0) {
             due_calc_url = admin_url + 'estimates/get_due_date';
             due_date_input_name = 'expirydate';
+        } else if ($("body").find('div.proposal').length > 0) {
+            due_calc_url = admin_url + 'proposals/get_due_date';
+            due_date_input_name = 'open_till';
         }
 
         if (date === '') {
@@ -3384,7 +3395,7 @@ function edit_todo_item(id) {
 }
 
 // Date picker init with selected timeformat from settings
-function init_datepicker(element, element_time) {
+function init_datepicker(element, element_time, opts_date, opts_datetime) {
 
     var datepickers = typeof(element) == 'undefined' ? $('.datepicker') : element;
     var datetimepickers = typeof(element_time) == 'undefined' ? $('.datetimepicker') : element_time;
@@ -3402,11 +3413,18 @@ function init_datepicker(element, element_time) {
         };
 
         // Check in case the input have date-end-date or date-min-date
-        var max_date = that.data('date-end-date');
-        var min_date = that.data('date-min-date');
+        var max_date = that.attr('data-date-end-date');
+        var min_date = that.attr('data-date-min-date');
+        var lazy = that.attr('data-lazy');
+
+        if(lazy) {
+            opt.lazyInit = lazy == 'true';
+        }
+
         if (max_date) {
             opt.maxDate = max_date;
         }
+
         if (min_date) {
             opt.minDate = min_date;
         }
@@ -3436,11 +3454,18 @@ function init_datepicker(element, element_time) {
             opt_time.formatTime = 'g:i A';
         }
         // Check in case the input have date-end-date or date-min-date
-        var max_date = that.data('date-end-date');
-        var min_date = that.data('date-min-date');
+        var max_date = that.attr('data-date-end-date');
+        var min_date = that.attr('data-date-min-date');
+        var lazy = that.attr('data-lazy');
+
+        if(lazy) {
+            opt.lazyInit = lazy == 'true';
+        }
+
         if (max_date) {
             opt_time.maxDate = max_date;
         }
+
         if (min_date) {
             opt_time.minDate = min_date;
         }
@@ -4831,9 +4856,9 @@ function leads_kanban(search) {
 }
 
 // Deleting lead attachments
-function delete_lead_attachment(wrapper, id) {
+function delete_lead_attachment(wrapper, id, lead_id) {
     if (confirm_delete()) {
-        requestGetJSON('leads/delete_attachment/' + id).done(function(response) {
+        requestGetJSON('leads/delete_attachment/' + id + '/' + lead_id).done(function(response) {
             if (response.success === true || response.success == 'true') { $(wrapper).parents('.lead-attachment-wrapper').remove(); }
         }).fail(function(data) {
             alert_float('danger', data.responseText);
@@ -4842,9 +4867,9 @@ function delete_lead_attachment(wrapper, id) {
 }
 
 // Delete lead note
-function delete_lead_note(wrapper, id) {
+function delete_lead_note(wrapper, id, lead_id) {
     if (confirm_delete()) {
-        requestGetJSON('leads/delete_note/' + id).done(function(response) {
+        requestGetJSON('leads/delete_note/' + id + '/' + lead_id).done(function(response) {
             if (response.success === true || response.success == 'true') { $(wrapper).parents('.lead-note').remove(); }
         }).fail(function(data) {
             alert_float('danger', data.responseText);
@@ -4931,6 +4956,7 @@ function leads_bulk_action(event) {
         var ids = [];
         var data = {};
         if (mass_delete == false || typeof(mass_delete) == 'undefined') {
+            data.lost = $('#leads_bulk_mark_lost').prop('checked');
             data.status = $('#move_to_status_leads_bulk').val();
             data.assigned = $('#assign_to_leads_bulk').val();
             data.source = $('#move_to_source_leads_bulk').val();
@@ -4941,7 +4967,13 @@ function leads_bulk_action(event) {
             data.assigned = typeof(data.assigned) == 'undefined' ? '' : data.assigned;
             data.visibility = typeof(data.visibility) == 'undefined' ? '' : data.visibility;
 
-            if (data.status === '' && data.assigned === '' && data.source === '' && data.last_contact === '' && data.tags === '' && data.visibility === '') {
+            if (data.status === '' &&
+                data.lost === false &&
+                data.assigned === '' &&
+                data.source === '' &&
+                data.last_contact === '' &&
+                data.tags.length == 0 &&
+                data.visibility === '') {
                 return;
             }
         } else {
@@ -6988,14 +7020,8 @@ function save_sales_number_settings(e) {
 
 // Prefix for invoices/estimates in case there is year.
 function do_prefix_year(date) {
-    var date_array;
-    if (date.indexOf('.') > -1) {
-        date_array = date.split('.');
-    } else if (date.indexOf('-') > -1) {
-        date_array = date.split('-');
-    } else if (date.indexOf('/') > -1) {
-        date_array = date.split('/');
-    }
+    var date_array = _split_formatted_date_by_separator(date);
+
     if (typeof(date_array) != 'undefined') {
         $.each(date_array, function(i, string) {
             if (string.length == 4) {
@@ -7020,6 +7046,46 @@ function do_prefix_year(date) {
             }
         });
     }
+}
+
+function unformat_date(date) {
+
+    var date_array = _split_formatted_date_by_separator(date),
+        // Y-m-d is default, see below commented code
+        month_index = 1,
+        year_index = 0,
+        day_index = 2;
+    if (app_date_format == 'd-m-Y' || app_date_format == 'd/m/Y' || app_date_format == 'd.m.Y') {
+        day_index = 0;
+        month_index = 1;
+        year_index = 2;
+    }
+    /* else if (app_date_format == 'Y-m-d') {
+            day_index = 2;
+            month_index = 1;
+            year_index = 0;
+        }*/
+    else if (app_date_format == 'm-d-Y' || app_date_format == 'm.d.Y' || app_date_format == 'm/d/Y') {
+        day_index = 1;
+        month_index = 0;
+        year_index = 2;
+    }
+
+    return date_array[year_index] + '-' + date_array[month_index] + '-' + date_array[day_index];
+}
+
+function _split_formatted_date_by_separator(date) {
+    var date_array;
+
+    if (date.indexOf('.') > -1) {
+        date_array = date.split('.');
+    } else if (date.indexOf('-') > -1) {
+        date_array = date.split('-');
+    } else if (date.indexOf('/') > -1) {
+        date_array = date.split('/');
+    }
+
+    return date_array;
 }
 
 function init_tabs_scrollable() {

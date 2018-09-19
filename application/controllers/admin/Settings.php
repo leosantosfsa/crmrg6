@@ -59,7 +59,11 @@ class Settings extends Admin_controller
             } elseif ($signatureUploaded) {
                 redirect(admin_url('settings?group=pdf&tab=signature'));
             } else {
-                redirect(admin_url('settings?group=' . $this->input->get('group')));
+                $redUrl = admin_url('settings?group=' . $this->input->get('group'));
+                if($this->input->get('active_tab')) {
+                    $redUrl .= '&tab='.$this->input->get('active_tab');
+                }
+                redirect($redUrl);
             }
         }
 
@@ -105,14 +109,15 @@ class Settings extends Admin_controller
             }
 
             $data['current_version'] = $this->app->get_current_db_version();
+        } elseif ($view == 'pdf') {
+            $this->load->library('pdf');
         }
 
         $data['contacts_permissions'] = get_contact_permissions();
-        $this->load->library('pdf');
-        $data['payment_gateways'] = $this->payment_modes_model->get_online_payment_modes(true);
-        $data['view_name']        = $view;
-        $groups_path              = do_action('settings_groups_path', 'admin/settings/includes');
-        $data['group_view']       = $this->load->view($groups_path . '/' . $view, $data, true);
+        $data['payment_gateways']     = $this->payment_modes_model->get_online_payment_modes(true);
+        $data['view_name']            = $view;
+        $groups_path                  = do_action('settings_groups_path', 'admin/settings/includes');
+        $data['group_view']           = $this->load->view($groups_path . '/' . $view, $data, true);
         $this->load->view('admin/settings/all', $data);
     }
 

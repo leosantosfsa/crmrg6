@@ -6,7 +6,7 @@ function email_tracking_inject_in_body($template)
 {
     $CI = &get_instance();
     if (in_array($template->slug, get_available_tracking_templates_slugs())) {
-        $template->message .= '<img src="' . site_url('check_emails/track/' . $template->tmp_id) . '" height="1px" width="1px">';
+        $template->message .= '<img src="' . site_url('check_emails/track/' . $template->tmp_id) . '" alt="" width="1" height="1" border="0">';
         $template->has_tracking = true;
     }
 
@@ -54,7 +54,7 @@ function delete_tracked_emails($rel_id, $rel_type)
 
 function get_available_tracking_templates_slugs()
 {
-    return do_action('', [
+    return do_action('available_tracking_templates', [
         'invoice-send-to-client',
         'invoice-already-send',
         'invoice-overdue-notice',

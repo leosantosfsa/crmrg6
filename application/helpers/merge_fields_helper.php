@@ -11,13 +11,13 @@ function get_other_merge_fields()
     $fields               = [];
     $fields['{logo_url}'] = base_url('uploads/company/' . get_option('company_logo'));
 
-    $logo_width                      = do_action('merge_field_logo_img_width', '');
+    $logo_width = do_action('merge_field_logo_img_width', '');
 
     $fields['{logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo')) . '"' . ($logo_width != '' ? ' width="' . $logo_width . '"' : '') . '></a>';
 
     $fields['{dark_logo_image_with_url}'] = '';
-    if(get_option('company_logo_dark') != ''){
-     $fields['{dark_logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo_dark')) . '"' . ($logo_width != '' ? ' width="' . $logo_width . '"' : '') . '></a>';
+    if (get_option('company_logo_dark') != '') {
+        $fields['{dark_logo_image_with_url}'] = '<a href="' . site_url() . '" target="_blank"><img src="' . base_url('uploads/company/' . get_option('company_logo_dark')) . '"' . ($logo_width != '' ? ' width="' . $logo_width . '"' : '') . '></a>';
     }
 
     $fields['{crm_url}']     = site_url();
@@ -37,8 +37,8 @@ function get_other_merge_fields()
         }
     }
 
-    $field['terms_and_conditions_url'] = terms_url();
-    $field['privacy_policy_url']       = privacy_policy_url();
+    $fields['terms_and_conditions_url'] = terms_url();
+    $fields['privacy_policy_url']       = privacy_policy_url();
 
     $hook_data['merge_fields'] = $fields;
     $hook_data['fields_to']    = 'other';
@@ -536,6 +536,7 @@ function get_invoice_merge_fields($invoice_id, $payment_id = false)
         $fields['{payment_date}']  = _d($payment->date);
     }
 
+    $fields['{invoice_amount_due}'] = format_money(get_invoice_total_left_to_pay($invoice_id, $invoice->total), $symbol);
     $fields['{invoice_sale_agent}'] = get_staff_full_name($invoice->sale_agent);
     $fields['{invoice_total}']      = format_money($invoice->total, $symbol);
     $fields['{invoice_subtotal}']   = format_money($invoice->subtotal, $symbol);
@@ -863,7 +864,7 @@ function get_ticket_merge_fields($template, $ticket_id, $reply_id = '')
     $department = $CI->db->get('tbldepartments')->row();
 
     if ($department) {
-        $fields['{ticket_department}'] = $department->name;
+        $fields['{ticket_department}']       = $department->name;
         $fields['{ticket_department_email}'] = $department->email;
     }
 
@@ -995,6 +996,8 @@ function get_available_merge_fields()
                     ],
                     'templates' => [
                         'contract-expiration-to-staff',
+                        'contract-signed-to-staff',
+                        'contract-comment-to-admin',
                     ],
                 ],
                 [
@@ -1008,6 +1011,8 @@ function get_available_merge_fields()
                     ],
                     'templates' => [
                         'contract-expiration-to-staff',
+                        'contract-signed-to-staff',
+                        'contract-comment-to-admin',
                     ],
                 ],
                 [
@@ -1104,7 +1109,6 @@ function get_available_merge_fields()
                         'ticket',
                         'invoice',
                         'estimate',
-                        'contract',
                         'project',
                         'tasks',
                         'credit_note',
@@ -1112,6 +1116,9 @@ function get_available_merge_fields()
                     ],
                        'templates' => [
                         'gdpr-removal-request',
+                        'contract-expiration',
+                         'send-contract',
+                         'contract-comment-to-client',
                     ],
                 ],
                 [
@@ -1122,7 +1129,6 @@ function get_available_merge_fields()
                         'ticket',
                         'invoice',
                         'estimate',
-                        'contract',
                         'project',
                         'tasks',
                         'credit_note',
@@ -1130,6 +1136,9 @@ function get_available_merge_fields()
                     ],
                           'templates' => [
                         'gdpr-removal-request',
+                         'contract-expiration',
+                          'send-contract',
+                           'contract-comment-to-client',
                     ],
                 ],
                 [
@@ -1140,7 +1149,6 @@ function get_available_merge_fields()
                         'ticket',
                         'invoice',
                         'estimate',
-                        'contract',
                         'project',
                         'tasks',
                         'credit_note',
@@ -1148,6 +1156,9 @@ function get_available_merge_fields()
                     ],
                         'templates' => [
                         'gdpr-removal-request',
+                        'contract-expiration',
+                         'send-contract',
+                          'contract-comment-to-client',
                     ],
                 ],
                 [
@@ -1176,13 +1187,15 @@ function get_available_merge_fields()
                         'invoice',
                         'estimate',
                         'ticket',
-                        'contract',
                         'project',
                         'credit_note',
                         'subscriptions',
                     ],
                        'templates' => [
                         'gdpr-removal-request',
+                        'contract-expiration',
+                         'send-contract',
+                          'contract-comment-to-client',
                     ],
                 ],
                 [
@@ -1193,13 +1206,16 @@ function get_available_merge_fields()
                         'invoice',
                         'estimate',
                         'ticket',
-                        'contract',
                         'project',
                         'credit_note',
                         'subscriptions',
                     ],
                           'templates' => [
                         'gdpr-removal-request',
+                        'contract-expiration',
+                        'send-contract',
+                         'contract-comment-to-client',
+
                     ],
                 ],
                 [
@@ -1695,6 +1711,13 @@ function get_available_merge_fields()
                     ],
                     'templates' => [
                         'subscription-payment-succeeded',
+                    ],
+                ],
+                [
+                    'name'      => 'Invoice Amount Due',
+                    'key'       => '{invoice_amount_due}',
+                    'available' => [
+                        'invoice',
                     ],
                 ],
                 [

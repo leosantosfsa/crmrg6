@@ -132,7 +132,9 @@
        }
 
        $('#signatureInput-error').remove();
-       input.value = signaturePad.toDataURLAndRemoveBlanks();
+         var partBase64 = signaturePad.toDataURLAndRemoveBlanks();
+         partBase64 = partBase64.split(',')[1];
+         input.value = partBase64;
      }
 
      var canvas = document.getElementById("signature");
@@ -141,6 +143,7 @@
      var identityFormSubmit = document.getElementById('identityConfirmationForm');
 
      var signaturePad = new SignaturePad(canvas, {
+      maxWidth: 2,
       onEnd:function(){
         signaturePadChanged();
       }

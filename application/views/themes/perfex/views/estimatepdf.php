@@ -12,20 +12,16 @@ if(get_option('show_status_on_pdf_ei') == 1){
     $info_right_column .= '<br /><span style="color:rgb('.estimate_status_color_pdf($status).');text-transform:uppercase;">' . format_estimate_status($status,'',false) . '</span>';
 }
 
-// write the first column
+// Add logo
 $info_left_column .= pdf_logo_url();
-$pdf->MultiCell(($dimensions['wk'] / 2) - $dimensions['lm'], 0, $info_left_column, 0, 'J', 0, 0, '', '', true, 0, true, true, 0);
-// write the second column
-$pdf->MultiCell(($dimensions['wk'] / 2) - $dimensions['rm'], 0, $info_right_column, 0, 'R', 0, 1, '', '', true, 0, true, false, 0);
+// Write top left logo and right column info/text
+pdf_multi_row($info_left_column, $info_right_column, $pdf, ($dimensions['wk'] / 2) - $dimensions['lm']);
+
 $pdf->ln(10);
 
-// Get Y position for the separation
-$y            = $pdf->getY();
 $organization_info = '<div style="color:#424242;">';
     $organization_info .= format_organization_info();
 $organization_info .= '</div>';
-
-$pdf->writeHTMLCell(($swap == '1' ? ($dimensions['wk']) - ($dimensions['lm'] * 2) : ($dimensions['wk'] / 2) - $dimensions['lm']), '', '', $y, $organization_info, 0, 0, false, true, ($swap == '1' ? 'R' : 'J'), true);
 
 // Estimate to
 $estimate_info = '<b>' ._l('estimate_to') . '</b>';
@@ -65,7 +61,10 @@ foreach($pdf_custom_fields as $field){
     $estimate_info .= $field['name'] . ': ' . $value. '<br />';
 }
 
-$pdf->writeHTMLCell(($dimensions['wk'] / 2) - $dimensions['rm'], '', '', ($swap == '1' ? $y : ''), $estimate_info, 0, 1, false, true, ($swap == '1' ? 'J' : 'R'), true);
+$left_info = $swap == '1' ? $estimate_info : $organization_info;
+$right_info = $swap == '1' ? $organization_info : $estimate_info;
+
+pdf_multi_row($left_info, $right_info, $pdf, ($dimensions['wk'] / 2) - $dimensions['lm']);
 
 // The Table
 $pdf->Ln(do_action('pdf_info_and_table_separator', 6));

@@ -31,8 +31,8 @@ class CompletePurchaseRequest extends FetchTransactionRequest
 
     public function sendData($data)
     {
-        $httpResponse = $this->sendRequest('GET', '/payments/' . $data['id']);
+        $response = $this->sendRequest('GET', '/payments/' . $data['id']);
 
-        return $this->response = new CompletePurchaseResponse($this, $httpResponse->json());
+        return $this->response = new CompletePurchaseResponse($this, $response);
     }
 }

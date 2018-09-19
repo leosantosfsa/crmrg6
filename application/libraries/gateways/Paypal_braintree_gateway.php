@@ -4,8 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 use Omnipay\Omnipay;
 
-// require_once(APPPATH . 'third_party/omnipay/vendor/autoload.php');
-
 class Paypal_braintree_gateway extends App_gateway
 {
     public function __construct()
@@ -51,6 +49,12 @@ class Paypal_braintree_gateway extends App_gateway
                 'default_value' => 'USD',
             ],
             [
+                'name'          => 'paypal_enabled',
+                'type'          => 'yes_no',
+                'default_value' => 1,
+                'label'         => 'payment_gateway_enable_paypal',
+            ],
+            [
                 'name'          => 'test_mode_enabled',
                 'type'          => 'yes_no',
                 'default_value' => 1,
@@ -67,7 +71,12 @@ class Paypal_braintree_gateway extends App_gateway
 
     public function process_payment($data)
     {
-        redirect(site_url('gateways/braintree/make_payment?invoiceid=' . $data['invoiceid'] . '&total=' . $data['amount'] . '&hash=' . $data['invoice']->hash));
+        $redUrl = site_url('gateways/braintree/make_payment?invoiceid='
+            . $data['invoiceid']
+            . '&total=' . $data['amount']
+            . '&hash=' . $data['invoice']->hash);
+
+        redirect($redUrl);
     }
 
     public function fetch_payment($transaction_id)
@@ -104,7 +113,7 @@ class Paypal_braintree_gateway extends App_gateway
         $response = $gateway->purchase([
             'amount'   => number_format($data['amount'], 2, '.', ''),
             'currency' => $data['currency'],
-            'token'    => $data['nonce'],
+            'token'    => $data['payment_method_nonce'],
             ])->send();
 
         return $response;

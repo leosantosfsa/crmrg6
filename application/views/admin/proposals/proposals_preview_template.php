@@ -41,6 +41,16 @@
                   <?php echo _l('tasks'); ?>
                   </a>
                </li>
+                 <li role="presentation" class="tab-separator">
+                     <a href="#tab_notes" onclick="get_sales_notes(<?php echo $proposal->id; ?>,'proposals'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
+                     <?php echo _l('estimate_notes'); ?>
+                     <span class="notes-total">
+                        <?php if($totalNotes > 0){ ?>
+                           <span class="badge"><?php echo $totalNotes; ?></span>
+                        <?php } ?>
+                     </span>
+                     </a>
+                  </li>
                <li role="presentation" data-toggle="tooltip" title="<?php echo _l('emails_tracking'); ?>" class="tab-separator">
                   <a href="#tab_emails_tracking" aria-controls="tab_emails_tracking" role="tab" data-toggle="tab">
                     <?php if(!is_mobile()){ ?>
@@ -289,6 +299,17 @@
                         <textarea name="content" id="comment" rows="4" class="form-control mtop15 proposal-comment"></textarea>
                         <button type="button" class="btn btn-info mtop10 pull-right" onclick="add_proposal_comment();"><?php echo _l('proposal_add_comment'); ?></button>
                      </div>
+                  </div>
+               </div>
+               <div role="tabpanel" class="tab-pane" id="tab_notes">
+                  <?php echo form_open(admin_url('proposals/add_note/'.$proposal->id),array('id'=>'sales-notes','class'=>'proposal-notes-form')); ?>
+                  <?php echo render_textarea('description'); ?>
+                  <div class="text-right">
+                     <button type="submit" class="btn btn-info mtop15 mbot15"><?php echo _l('estimate_add_note'); ?></button>
+                  </div>
+                  <?php echo form_close(); ?>
+                  <hr />
+                  <div class="panel_s mtop20 no-shadow" id="sales_notes_area">
                   </div>
                </div>
                <div role="tabpanel" class="tab-pane" id="tab_emails_tracking">

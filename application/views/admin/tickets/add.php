@@ -9,22 +9,22 @@
 						<div class="row">
 							<div class="col-md-6">
 								<?php if(!isset($project_id) && !isset($contact)){ ?>
-								<a href="#" id="ticket_no_contact"><span class="label label-default">
-									<i class="fa fa-envelope"></i> <?php echo _l('ticket_create_no_contact'); ?>
+									<a href="#" id="ticket_no_contact"><span class="label label-default">
+										<i class="fa fa-envelope"></i> <?php echo _l('ticket_create_no_contact'); ?>
+									</span>
+								</a>
+								<a href="#" class="hide" id="ticket_to_contact"><span class="label label-default">
+									<i class="fa fa-user-o"></i> <?php echo _l('ticket_create_to_contact'); ?>
 								</span>
 							</a>
-							<a href="#" class="hide" id="ticket_to_contact"><span class="label label-default">
-								<i class="fa fa-user-o"></i> <?php echo _l('ticket_create_to_contact'); ?>
-							</span>
-						</a>
-						<div class="mbot15"></div>
+							<div class="mbot15"></div>
 						<?php } ?>
 						<?php echo render_input('subject','ticket_settings_subject','','text',array('required'=>'true')); ?>
 						<div class="form-group select-placeholder" id="ticket_contact_w">
 							<label for="contactid"><?php echo _l('contact'); ?></label>
 							<select name="contactid" required="true" id="contactid" class="ajax-search" data-width="100%" data-live-search="true" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
 								<?php if(isset($contact)) { ?>
-								<option value="<?php echo $contact['id']; ?>" selected><?php echo $contact['firstname'] . ' ' .$contact['lastname']; ?></option>
+									<option value="<?php echo $contact['id']; ?>" selected><?php echo $contact['firstname'] . ' ' .$contact['lastname']; ?></option>
 								<?php } ?>
 								<option value=""></option>
 							</select>
@@ -60,9 +60,9 @@
 							<select name="assigned" id="assigned" class="form-control selectpicker" data-live-search="true" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" data-width="100%">
 								<option value=""><?php echo _l('ticket_settings_none_assigned'); ?></option>
 								<?php foreach($staff as $member){ ?>
-								<option value="<?php echo $member['staffid']; ?>" <?php if($member['staffid'] == get_staff_user_id()){echo 'selected';} ?>>
-									<?php echo $member['firstname'] . ' ' . $member['lastname'] ; ?>
-								</option>
+									<option value="<?php echo $member['staffid']; ?>" <?php if($member['staffid'] == get_staff_user_id()){echo 'selected';} ?>>
+										<?php echo $member['firstname'] . ' ' . $member['lastname'] ; ?>
+									</option>
 								<?php } ?>
 							</select>
 						</div>
@@ -72,14 +72,14 @@
 								echo render_select('priority',$priorities,array('priorityid','name'),'ticket_settings_priority',do_action('new_ticket_priority_selected',2),array('required'=>'true')); ?>
 							</div>
 							<?php if(get_option('services') == 1){ ?>
-							<div class="col-md-6">
-								<?php if(is_admin() || get_option('staff_members_create_inline_ticket_services') == '1'){
-									echo render_select_with_input_group('service',$services,array('serviceid','name'),'ticket_settings_service','','<a href="#" onclick="new_service();return false;"><i class="fa fa-plus"></i></a>');
-								} else {
-									echo render_select('service',$services,array('serviceid','name'),'ticket_settings_service');
-								}
-								?>
-							</div>
+								<div class="col-md-6">
+									<?php if(is_admin() || get_option('staff_members_create_inline_ticket_services') == '1'){
+										echo render_select_with_input_group('service',$services,array('serviceid','name'),'ticket_settings_service','','<a href="#" onclick="new_service();return false;"><i class="fa fa-plus"></i></a>');
+									} else {
+										echo render_select('service',$services,array('serviceid','name'),'ticket_settings_service');
+									}
+									?>
+								</div>
 							<?php } ?>
 						</div>
 
@@ -88,7 +88,7 @@
 							<div id="project_ajax_search_wrapper">
 								<select name="project_id" id="project_id" class="projects ajax-search" data-live-search="true" data-width="100%" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>"<?php if(isset($project_id)){ ?> data-auto-project="true" data-project-userid="<?php echo $userid; ?>"<?php } ?>>
 									<?php if(isset($project_id)){ ?>
-									<option value="<?php echo $project_id; ?>" selected><?php echo '#'.$project_id. ' - ' . get_project_name_by_id($project_id); ?></option>
+										<option value="<?php echo $project_id; ?>" selected><?php echo '#'.$project_id. ' - ' . get_project_name_by_id($project_id); ?></option>
 									<?php } ?>
 								</select>
 							</div>
@@ -112,28 +112,39 @@
 						</div>
 						<div class="row">
 							<div class="col-md-12 mbot20 before-ticket-message">
-								<select id="insert_predefined_reply" data-live-search="true" class="selectpicker mleft10 pull-right" data-title="<?php echo _l('ticket_single_insert_predefined_reply'); ?>">
-									<?php foreach($predefined_replies as $predefined_reply){ ?>
-									<option value="<?php echo $predefined_reply['id']; ?>"><?php echo $predefined_reply['name']; ?></option>
+								<div class="row">
+									<div class="col-md-6">
+										<select id="insert_predefined_reply" data-width="100%" data-live-search="true" class="selectpicker" data-title="<?php echo _l('ticket_single_insert_predefined_reply'); ?>">
+											<?php foreach($predefined_replies as $predefined_reply){ ?>
+												<option value="<?php echo $predefined_reply['id']; ?>"><?php echo $predefined_reply['name']; ?></option>
+											<?php } ?>
+										</select>
+									</div>
+									<?php if(get_option('use_knowledge_base') == 1){ ?>
+										<div class="visible-xs">
+											<div class="mtop15"></div>
+										</div>
+										<div class="col-md-6">
+											<?php $groups = get_all_knowledge_base_articles_grouped(); ?>
+											<select id="insert_knowledge_base_link" data-width="100%" class="selectpicker" data-live-search="true" onchange="insert_ticket_knowledgebase_link(this);" data-title="<?php echo _l('ticket_single_insert_knowledge_base_link'); ?>">
+												<option value=""></option>
+												<?php foreach($groups as $group){ ?>
+													<?php if(count($group['articles']) > 0){ ?>
+														<optgroup label="<?php echo $group['name']; ?>">
+															<?php foreach($group['articles'] as $article) { ?>
+																<option value="<?php echo $article['articleid']; ?>">
+																	<?php echo $article['subject']; ?>
+																</option>
+															<?php } ?>
+														</optgroup>
+													<?php } ?>
+												<?php } ?>
+											</select>
+										</div>
 									<?php } ?>
-								</select>
-								<?php if(get_option('use_knowledge_base') == 1){ ?>
-								<?php $groups = get_all_knowledge_base_articles_grouped(); ?>
-								<select id="insert_knowledge_base_link" class="selectpicker pull-right" data-live-search="true" onchange="insert_ticket_knowledgebase_link(this);" data-title="<?php echo _l('ticket_single_insert_knowledge_base_link'); ?>">
-									<option value=""></option>
-									<?php foreach($groups as $group){ ?>
-									<?php if(count($group['articles']) > 0){ ?>
-									<optgroup label="<?php echo $group['name']; ?>">
-										<?php foreach($group['articles'] as $article) { ?>
-										<option value="<?php echo $article['articleid']; ?>">
-											<?php echo $article['subject']; ?>
-										</option>
-										<?php } ?>
-									</optgroup>
-									<?php } ?>
-									<?php } ?>
-								</select>
-								<?php } ?>
+								</div>
+
+
 							</div>
 						</div>
 						<div class="clearfix"></div>
@@ -187,17 +198,17 @@
 
 		<?php if(isset($project_id) || isset($contact)){ ?>
 			$('body.ticket select[name="contactid"]').change();
-			<?php } ?>
-			<?php if(isset($project_id)){ ?>
-				$('body').on('selected.cleared.ajax.bootstrap.select','select[data-auto-project="true"]',function(e){
-					$('input[name="userid"]').val('');
-					$(this).parents('.projects-wrapper').addClass('hide');
-					$(this).prop('disabled',false);
-					$(this).removeAttr('data-auto-project');
-					$('body.ticket select[name="contactid"]').change();
-				});
-				<?php } ?>
+		<?php } ?>
+		<?php if(isset($project_id)){ ?>
+			$('body').on('selected.cleared.ajax.bootstrap.select','select[data-auto-project="true"]',function(e){
+				$('input[name="userid"]').val('');
+				$(this).parents('.projects-wrapper').addClass('hide');
+				$(this).prop('disabled',false);
+				$(this).removeAttr('data-auto-project');
+				$('body.ticket select[name="contactid"]').change();
 			});
-		</script>
-	</body>
-	</html>
+		<?php } ?>
+	});
+</script>
+</body>
+</html>

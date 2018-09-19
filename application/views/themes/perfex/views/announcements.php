@@ -6,7 +6,7 @@
 <div class="panel_s">
     <div class="panel-body">
         <?php if(count($announcements) > 0){ ?>
-            <table class="table dt-table" data-order-col="1" data-order-type="desc">
+            <table class="table dt-table table-announcements" data-order-col="1" data-order-type="desc">
                 <thead>
                     <tr>
                         <th><?php echo _l('announcement_name'); ?></th>
@@ -23,7 +23,7 @@
                 </tbody>
             </table>
         <?php } else { ?>
-        <p class="no-margin"><?php echo _l('no_announcements'); ?></p>
+            <p class="no-margin"><?php echo _l('no_announcements'); ?></p>
         <?php } ?>
     </div>
 </div>

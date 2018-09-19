@@ -38,6 +38,9 @@ class Contract extends Clients_controller
                         'signed' => 1,
                     ]));
 
+                    // Notify contract creator that customer signed the contract
+                    send_contract_signed_notification_to_staff($id);
+
                     set_alert('success', _l('document_signed_successfully'));
                     redirect($_SERVER['HTTP_REFERER']);
 

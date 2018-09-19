@@ -61,6 +61,7 @@ $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'tax',
     'tax2',
     'project_id',
+    'recurring'
 ]);
 $output  = $result['output'];
 $rResult = $result['rResult'];
@@ -78,6 +79,10 @@ foreach ($rResult as $aRow) {
         $categoryOutput = '<a href="' . admin_url('expenses/list_expenses/' . $aRow['id']) . '">' . $aRow['category_name'] . '</a>';
     } else {
         $categoryOutput = '<a href="' . admin_url('expenses/list_expenses/' . $aRow['id']) . '" onclick="init_expense(' . $aRow['id'] . ');return false;">' . $aRow['category_name'] . '</a>';
+    }
+
+    if($aRow['recurring'] == 1) {
+        $categoryOutput .= '<br /><span class="label label-primary inline-block mtop4"> ' . _l('expense_recurring_indicator') . '</span>';
     }
 
     if ($aRow['billable'] == 1) {

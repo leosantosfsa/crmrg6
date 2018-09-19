@@ -94,7 +94,8 @@ class Emails_model extends CRM_Model
             $_data              = [];
             $_data['subject']   = $val;
             $_data['fromname']  = $data['fromname'];
-            $_data['fromemail'] = $data['fromemail'];
+            // Two factor authentication email template  don't have fromemail
+            $_data['fromemail'] = isset($data['fromemail']) ? $data['fromemail'] : '';
             $_data['message']   = $data['message'][$id];
             $_data['plaintext'] = $data['plaintext'];
             $_data['active']    = $data['active'];
@@ -346,6 +347,7 @@ class Emails_model extends CRM_Model
         if ($fromemail == '') {
             $fromemail = get_option('smtp_email');
         }
+
         if ($fromname == '') {
             $fromname = get_option('companyname');
         }

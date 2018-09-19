@@ -27,7 +27,6 @@ use Twilio\Version;
  * @property array links
  * @property boolean logQueries
  * @property string sid
- * @property integer ttl
  * @property string uniqueName
  * @property string url
  * @property string responseUrl
@@ -61,7 +60,6 @@ class AssistantInstance extends InstanceResource {
             'links' => Values::array_get($payload, 'links'),
             'logQueries' => Values::array_get($payload, 'log_queries'),
             'sid' => Values::array_get($payload, 'sid'),
-            'ttl' => Values::array_get($payload, 'ttl'),
             'uniqueName' => Values::array_get($payload, 'unique_name'),
             'url' => Values::array_get($payload, 'url'),
             'responseUrl' => Values::array_get($payload, 'response_url'),
@@ -91,6 +89,7 @@ class AssistantInstance extends InstanceResource {
      * Fetch a AssistantInstance
      * 
      * @return AssistantInstance Fetched AssistantInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         return $this->proxy()->fetch();
@@ -101,6 +100,7 @@ class AssistantInstance extends InstanceResource {
      * 
      * @param array|Options $options Optional Arguments
      * @return AssistantInstance Updated AssistantInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function update($options = array()) {
         return $this->proxy()->update($options);
@@ -110,6 +110,7 @@ class AssistantInstance extends InstanceResource {
      * Deletes the AssistantInstance
      * 
      * @return boolean True if delete succeeds, false otherwise
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function delete() {
         return $this->proxy()->delete();

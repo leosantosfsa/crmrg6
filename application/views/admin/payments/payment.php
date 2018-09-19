@@ -31,10 +31,23 @@
 					<div class="panel-body">
 						<h4 class="pull-left "><?php echo _l('payment_view_heading'); ?></h4>
 						<div class="pull-right">
-							<a href="<?php echo admin_url('payments/pdf/'.$payment->paymentid.'?print=true'); ?>" target="_blank" class="btn btn-default" data-toggle="tooltip" title="<?php echo _l('print'); ?>" data-placement="bottom"><i class="fa fa-print"></i></a>
-							<a href="<?php echo admin_url('payments/pdf/'.$payment->paymentid); ?>" class="btn btn-default" data-toggle="tooltip" title="<?php echo _l('view_pdf'); ?>" data-placement="bottom"><i class="fa fa-file-pdf-o"></i></a>
-							<?php if(has_permission('managePayment','','delete')){ ?>
-							<a href="<?php echo admin_url('payments/delete/'.$payment->paymentid); ?>" class="btn btn-danger _delete"><i class="fa fa-remove"></i></a>
+							<div class="btn-group">
+								<a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-file-pdf-o"></i><?php if(is_mobile()){echo ' PDF';} ?> <span class="caret"></span></a>
+								<ul class="dropdown-menu dropdown-menu-right">
+									<li class="hidden-xs"><a href="<?php echo admin_url('payments/pdf/'.$payment->paymentid.'?output_type=I'); ?>"><?php echo _l('view_pdf'); ?></a></li>
+									<li class="hidden-xs"><a href="<?php echo admin_url('payments/pdf/'.$payment->paymentid.'?output_type=I'); ?>" target="_blank"><?php echo _l('view_pdf_in_new_window'); ?></a></li>
+									<li><a href="<?php echo admin_url('payments/pdf/'.$payment->paymentid); ?>"><?php echo _l('download'); ?></a></li>
+									<li>
+										<a href="<?php echo admin_url('payments/pdf/'.$payment->paymentid.'?print=true'); ?>" target="_blank">
+											<?php echo _l('print'); ?>
+										</a>
+									</li>
+								</ul>
+							</div>
+							<?php if(has_permission('payments','','delete')){ ?>
+								<a href="<?php echo admin_url('payments/delete/'.$payment->paymentid); ?>" class="btn btn-danger _delete">
+									<i class="fa fa-remove"></i>
+								</a>
 							<?php } ?>
 						</div>
 						<div class="clearfix"></div>

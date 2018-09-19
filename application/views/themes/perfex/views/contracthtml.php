@@ -59,39 +59,39 @@
                         </h4>
                      </div>
                      <?php } ?>
-                     <div class="col-md-4 text-muted contract-number">
-                        #
+                     <div class="col-md-5 text-muted contract-number">
+                        # <?php echo _l('contract_number'); ?>
                      </div>
-                     <div class="col-md-8 contract-number">
+                     <div class="col-md-7 contract-number">
                         <?php echo $contract->id; ?>
                      </div>
-                     <div class="col-md-4 text-muted contract-start-date">
+                     <div class="col-md-5 text-muted contract-start-date">
                         <?php echo _l('contract_start_date'); ?>
                      </div>
-                     <div class="col-md-8 contract-start-date">
+                     <div class="col-md-7 contract-start-date">
                         <?php echo _d($contract->datestart); ?>
                      </div>
                      <?php if(!empty($contract->dateend)){ ?>
-                     <div class="col-md-4 text-muted contract-end-date">
+                     <div class="col-md-5 text-muted contract-end-date">
                         <?php echo _l('contract_end_date'); ?>
                      </div>
-                     <div class="col-md-8 contract-end-date">
+                     <div class="col-md-7 contract-end-date">
                         <?php echo _d($contract->dateend); ?>
                      </div>
                      <?php } ?>
                      <?php if(!empty($contract->type_name)){ ?>
-                     <div class="col-md-4 text-muted contract-type">
+                     <div class="col-md-5 text-muted contract-type">
                         <?php echo _l('contract_type'); ?>
                      </div>
-                     <div class="col-md-8 contract-type">
+                     <div class="col-md-7 contract-type">
                         <?php echo $contract->type_name; ?>
                      </div>
                      <?php } ?>
                      <?php if($contract->signed == 1){ ?>
-                     <div class="col-md-4 text-muted contract-type">
+                     <div class="col-md-5 text-muted contract-type">
                         <?php echo _l('date_signed'); ?>
                      </div>
-                     <div class="col-md-8 contract-type">
+                     <div class="col-md-7 contract-type">
                         <?php echo _d(explode(' ', $contract->acceptance_date)[0]); ?>
                      </div>
                      <?php } ?>

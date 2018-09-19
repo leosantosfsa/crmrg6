@@ -314,7 +314,7 @@ if (!function_exists('format_customer_info')) {
         $phone = '';
         if ($for == 'statement' && isset($data->phonenumber)) {
             $phone = $data->phonenumber;
-        } elseif ($type == 'billing' && isset($data->client->phonenumbe)) {
+        } elseif ($type == 'billing' && isset($data->client->phonenumber)) {
             $phone = $data->client->phonenumber;
         }
 

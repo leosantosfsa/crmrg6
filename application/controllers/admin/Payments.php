@@ -88,7 +88,7 @@ class Payments extends Admin_controller
         }
         $payment = $this->payments_model->get($id);
 
-        if(!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && !user_can_view_invoice($payment->invoiceid)) {
+        if (!has_permission('payments', '', 'view') && !has_permission('invoices', '', 'view_own') && !user_can_view_invoice($payment->invoiceid)) {
             access_denied('View Payment');
         }
 
@@ -107,9 +107,15 @@ class Payments extends Admin_controller
         }
 
         $type = 'D';
+
+        if ($this->input->get('output_type')) {
+            $type = $this->input->get('output_type');
+        }
+
         if ($this->input->get('print')) {
             $type = 'I';
         }
+
         $paymentpdf->Output(mb_strtoupper(slug_it(_l('payment') . '-' . $payment->paymentid)) . '.pdf', $type);
     }
 

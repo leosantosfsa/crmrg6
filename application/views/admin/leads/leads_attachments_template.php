@@ -13,7 +13,7 @@ foreach($attachments as $attachment) {
     $data .= '</div>';
     $data .= '<div class="col-md-2 text-right">';
     if($attachment['staffid'] == get_staff_user_id() || is_admin()){
-    $data .= '<a href="#" class="text-danger" onclick="delete_lead_attachment(this,'.$attachment['id'].'); return false;"><i class="fa fa fa-times"></i></a>';
+    $data .= '<a href="#" class="text-danger" onclick="delete_lead_attachment(this,'.$attachment['id'].', '.$attachment['rel_id'].'); return false;"><i class="fa fa fa-times"></i></a>';
     }
     $data .= '</div>';
     $data .= '<div class="clearfix"></div><hr/>';

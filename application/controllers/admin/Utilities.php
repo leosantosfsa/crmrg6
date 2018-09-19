@@ -1,5 +1,12 @@
 <?php
 
+function convert($size)
+{
+    $unit = ['b', 'kb', 'mb', 'gb', 'tb', 'pb'];
+
+    return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
+}
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 @ini_set('memory_limit', '256M');
@@ -372,33 +379,24 @@ class Utilities extends Admin_controller
             if (is_dir($dir)) {
                 delete_dir($dir);
             }
-            mkdir($dir, 0777);
+            mkdir($dir, 0755);
             if ($type == 'invoices') {
                 $this->load->model('invoices_model');
                 foreach ($data as $invoice) {
-                    $invoice_data    = $this->invoices_model->get($invoice['id']);
-                    $this->pdf_zip   = invoice_pdf($invoice_data, $this->input->post('tag'));
-                    $_temp_file_name = slug_it(format_invoice_number($invoice_data->id));
-                    $file_name       = $dir . '/' . strtoupper($_temp_file_name);
-                    $this->pdf_zip->Output($file_name . '.pdf', 'F');
+                    $this->pdf_zip = invoice_pdf($this->invoices_model->get($invoice['id']), $this->input->post('tag'));
+                    $this->pdf_zip->Output($dir . '/' . strtoupper(slug_it(format_invoice_number($invoice['id']))) . '.pdf', 'F');
                 }
             } elseif ($type == 'credit_notes') {
                 $this->load->model('credit_notes_model');
                 foreach ($data as $credit_note) {
-                    $credit_note_data = $this->credit_notes_model->get($credit_note['id']);
-                    $this->pdf_zip    = credit_note_pdf($credit_note_data, $this->input->post('tag'));
-                    $_temp_file_name  = slug_it(format_credit_note_number($credit_note_data->id));
-                    $file_name        = $dir . '/' . strtoupper($_temp_file_name);
-                    $this->pdf_zip->Output($file_name . '.pdf', 'F');
+                    $this->pdf_zip = credit_note_pdf($this->credit_notes_model->get($credit_note['id']), $this->input->post('tag'));
+                    $this->pdf_zip->Output($dir . '/' . strtoupper(slug_it(format_credit_note_number($credit_note['id']))) . '.pdf', 'F');
                 }
             } elseif ($type == 'estimates') {
+                $this->load->model('estimates_model');
                 foreach ($data as $estimate) {
-                    $this->load->model('estimates_model');
-                    $estimate_data   = $this->estimates_model->get($estimate['id']);
-                    $this->pdf_zip   = estimate_pdf($estimate_data, $this->input->post('tag'));
-                    $_temp_file_name = slug_it(format_estimate_number($estimate_data->id));
-                    $file_name       = $dir . '/' . strtoupper($_temp_file_name);
-                    $this->pdf_zip->Output($file_name . '.pdf', 'F');
+                    $this->pdf_zip = estimate_pdf($this->estimates_model->get($estimate['id']), $this->input->post('tag'));
+                    $this->pdf_zip->Output($dir . '/' . strtoupper(slug_it(format_estimate_number($estimate['id']))) . '.pdf', 'F');
                 }
             } elseif ($type == 'payments') {
                 $this->load->model('payments_model');
@@ -415,17 +413,15 @@ class Utilities extends Admin_controller
             } else {
                 $this->load->model('proposals_model');
                 foreach ($data as $proposal) {
-                    $proposal        = $this->proposals_model->get($proposal['id']);
-                    $this->pdf_zip   = proposal_pdf($proposal, $this->input->post('tag'));
-                    $_temp_file_name = format_proposal_number($proposal->id);
-                    $file_name       = $dir . '/' . strtoupper($_temp_file_name);
-                    $this->pdf_zip->Output($file_name . '.pdf', 'F');
+                    $this->pdf_zip = proposal_pdf($this->proposals_model->get($proposal['id']), $this->input->post('tag'));
+                    $this->pdf_zip->Output($dir . '/' . strtoupper(format_proposal_number($proposal['id'])) . '.pdf', 'F');
                 }
             }
+
+            register_shutdown_function([$this, 'clear_bulk_pdf_export_files'], $dir);
+
             $this->load->library('zip');
             $this->zip->read_dir($dir, false);
-            // Delete the temp directory for the export type
-            delete_dir($dir);
             $this->zip->download(slug_it(get_option('companyname')) . '-' . $type . '.zip');
             $this->zip->clear_data();
         }
@@ -446,6 +442,11 @@ class Utilities extends Admin_controller
 
         $data['title'] = _l('bulk_pdf_exporter');
         $this->load->view('admin/utilities/bulk_pdf_exporter', $data);
+    }
+
+    public function clear_bulk_pdf_export_files($dir)
+    {
+        delete_dir($dir);
     }
 
     /* Database back up functions */

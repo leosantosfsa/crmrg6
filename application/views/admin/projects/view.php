@@ -68,7 +68,7 @@
                   if($status['id'] == $project->status){continue;}
                   ?>
                   <li>
-                    <a href="#" onclick="project_mark_as_modal(<?php echo $status['id']; ?>,<?php echo $project->id; ?>); return false;"><?php echo _l('project_mark_as',$status['name']); ?></a>
+                    <a href="#" data-name="<?php echo _l('project_status_'.$status['id']); ?>" onclick="project_mark_as_modal(<?php echo $status['id']; ?>,<?php echo $project->id; ?>, this); return false;"><?php echo _l('project_mark_as',$status['name']); ?></a>
                   </li>
                   <?php } ?>
                   <?php } ?>

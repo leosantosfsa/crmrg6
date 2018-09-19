@@ -135,7 +135,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <h4><?php echo _l('contract_summary_by_type_value'); ?></h4>
+                                    <h4><?php echo _l('contract_summary_by_type_value'); ?> (<span data-toggle="tooltip" data-title="<?php echo _l('base_currency_string'); ?>" class="text-has-action"><?php echo $base_currency->name; ?></span>)</h4>
                                     <div class="relative" style="max-height:400px">
                                         <canvas class="chart" height="400" id="contracts-value-by-type-chart"></canvas>
                                     </div>

@@ -64,7 +64,7 @@ function get_project_tabs_admin($project_id)
     [
         'name'                      => 'project_gantt',
         'url'                       => admin_url('projects/view/' . $project_id . '?group=project_gantt'),
-        'icon'                      => 'fa fa-line-chart',
+        'icon'                      => 'fa fa-align-left',
         'lang'                      => _l('project_gant'),
         'visible'                   => true,
         'order'                     => 7,
@@ -395,4 +395,13 @@ function prepare_projects_for_export($customer_id, $contact_id)
     }
 
     return $projects;
+}
+
+/**
+ * Check if project has recurring tasks
+ * @param  mixed $id project id
+ * @return boolean
+ */
+function project_has_recurring_tasks($id) {
+    return total_rows('tblstafftasks','recurring=1 AND rel_id="'.$id.'" AND rel_type="project"') > 0;
 }

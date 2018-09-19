@@ -7,10 +7,11 @@
               <div class="panel-body">
               <div class="_buttons">
               <?php if(has_permission('projects','','create')){ ?>
-                <a href="<?php echo admin_url('projects/project'); ?>" class="btn btn-info pull-left display-block">
+                <a href="<?php echo admin_url('projects/project'); ?>" class="btn btn-info pull-left display-block mright5">
                   <?php echo _l('new_project'); ?>
                 </a>
               <?php } ?>
+              <a href="<?php echo admin_url('projects/gantt'); ?>" data-toggle="tooltip" title="<?php echo _l('project_gant'); ?>" class="btn btn-default"><i class="fa fa-align-left" aria-hidden="true"></i></a>
               <div class="btn-group pull-right mleft4 btn-with-tooltip-group _filter_data" data-toggle="tooltip" data-title="<?php echo _l('filter_by'); ?>">
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <i class="fa fa-filter" aria-hidden="true"></i>
@@ -22,7 +23,7 @@
                     </a>
                   </li>
                   <?php
-                  // Only show this filter if user has permission for projects view otherwisde wont need this becuase by default this filter will be applied
+                  // Only show this filter if user has permission for projects view otherwise wont need this becuase by default this filter will be applied
                   if(has_permission('projects','','view')){ ?>
                   <li>
                     <a href="#" data-cview="my_projects" onclick="dt_custom_view('my_projects','.table-projects','my_projects'); return false;">

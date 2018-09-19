@@ -57,7 +57,7 @@ function initMap() {
             "featureType": "water",
             "elementType": "all",
             "stylers": [{
-                    "color": "#28b8da"
+                    "color": "#03a9f4"
                 },
                 {
                     "visibility": "on"

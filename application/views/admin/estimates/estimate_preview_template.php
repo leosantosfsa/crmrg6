@@ -43,10 +43,11 @@
                   </li>
                   <li role="presentation" class="tab-separator">
                      <a href="#tab_notes" onclick="get_sales_notes(<?php echo $estimate->id; ?>,'estimates'); return false" aria-controls="tab_notes" role="tab" data-toggle="tab">
-                     </span><?php echo _l('estimate_notes'); ?> <span class="notes-total">
-                     <?php if($totalNotes > 0){ ?>
-                     <span class="badge"><?php echo $totalNotes; ?><span>
-                     <?php } ?>
+                     <?php echo _l('estimate_notes'); ?>
+                     <span class="notes-total">
+                        <?php if($totalNotes > 0){ ?>
+                           <span class="badge"><?php echo $totalNotes; ?></span>
+                        <?php } ?>
                      </span>
                      </a>
                   </li>
@@ -120,7 +121,7 @@
                            <?php echo _l('view_estimate_as_client'); ?>
                            </a>
                         </li>
-                        <?php if(!empty($estimate->expirydate) && date('Y-m-d') < $estimate->expirydate && ($estimate->status == 2 || $estimate->status == 5) && is_estimates_expiry_reminders_enabled()){ ?>
+                        <?php if((!empty($estimate->expirydate) && date('Y-m-d') < $estimate->expirydate && ($estimate->status == 2 || $estimate->status == 5)) && is_estimates_expiry_reminders_enabled()){ ?>
                         <li>
                            <a href="<?php echo admin_url('estimates/send_expiry_reminder/'.$estimate->id); ?>">
                            <?php echo _l('send_expiry_reminder'); ?>
@@ -326,7 +327,7 @@
                            </table>
                         </div>
                      </div>
-                     <div class="col-md-4 col-md-offset-8">
+                     <div class="col-md-5 col-md-offset-7">
                         <table class="table text-right">
                            <tbody>
                               <tr id="subtotal">

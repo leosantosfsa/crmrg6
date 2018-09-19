@@ -41,14 +41,19 @@ class Stripe_core
         return \Stripe\Customer::retrieve(['id' => $id, 'expand' => ['default_source']]);
     }
 
-
-    public function charge($data){
+    public function charge($data)
+    {
         return \Stripe\Charge::create($data);
     }
 
     public function get_publishable_key()
     {
         return $this->publishableKey;
+    }
+
+    public function retrieve_token($token_id)
+    {
+        return \Stripe\Token::retrieve($token_id);
     }
 
     public function has_api_key()

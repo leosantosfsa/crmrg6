@@ -133,8 +133,11 @@ class Utilities_model extends CRM_Model
         $hook_data = do_action('before_fetch_events', $hook_data);
         $data      = $hook_data['data'];
 
-        // excluded calendar_filters from post
-        $ff = (count($filters) > 1 && isset($filters['calendar_filters']) ? true : false);
+        $ff = false;
+        if ($filters) {
+            // excluded calendar_filters from post
+            $ff = (count($filters) > 1 && isset($filters['calendar_filters']) ? true : false);
+        }
 
         if (get_option('show_invoices_on_calendar') == 1 && !$ff || $ff && array_key_exists('invoices', $filters)) {
             $this->db->select('duedate as date,number,id,clientid,hash,' . get_sql_select_client_company());
@@ -213,7 +216,6 @@ class Utilities_model extends CRM_Model
             $estimates = $this->db->get()->result_array();
 
             foreach ($estimates as $estimate) {
-
                 if (($client_data && !$has_contact_permission_estimates) || (!$client_data && !user_can_view_estimate($estimate['id']))) {
                     continue;
                 }
@@ -276,47 +278,50 @@ class Utilities_model extends CRM_Model
         }
 
         if (get_option('show_tasks_on_calendar') == 1 && !$ff || $ff && array_key_exists('tasks', $filters)) {
-            $this->db->select('name as title,id,' . tasks_rel_name_select_query() . ' as rel_name,rel_id,status,CASE WHEN duedate IS NULL THEN startdate ELSE duedate END as date', false);
-            $this->db->from('tblstafftasks');
-            $this->db->where('status !=', 5);
+            if ($client_data && !$has_contact_permission_projects) {
+            } else {
+                $this->db->select('name as title,id,' . tasks_rel_name_select_query() . ' as rel_name,rel_id,status,CASE WHEN duedate IS NULL THEN startdate ELSE duedate END as date', false);
+                $this->db->from('tblstafftasks');
+                $this->db->where('status !=', 5);
 
-            $this->db->where("CASE WHEN duedate IS NULL THEN (startdate BETWEEN '$start' AND '$end') ELSE (duedate BETWEEN '$start' AND '$end') END", null, false);
+                $this->db->where("CASE WHEN duedate IS NULL THEN (startdate BETWEEN '$start' AND '$end') ELSE (duedate BETWEEN '$start' AND '$end') END", null, false);
 
-            if ($client_data) {
-                $this->db->where('rel_type', 'project');
-                $this->db->where('rel_id IN (SELECT id FROM tblprojects WHERE clientid=' . $client_id . ')');
-                $this->db->where('rel_id IN (SELECT project_id FROM tblprojectsettings WHERE name="view_tasks" AND value=1)');
-                $this->db->where('visible_to_client', 1);
-            }
-
-            if ((!$has_permission_tasks_view || get_option('calendar_only_assigned_tasks') == '1') && !$client_data) {
-                $this->db->where('(id IN (SELECT taskid FROM tblstafftaskassignees WHERE staffid = ' . get_staff_user_id() . '))');
-            }
-
-            $tasks = $this->db->get()->result_array();
-
-            foreach ($tasks as $task) {
-                $rel_showcase = '';
-
-                if (!empty($task['rel_id']) && !$client_data) {
-                    $rel_showcase = ' (' . $task['rel_name'] . ')';
+                if ($client_data) {
+                    $this->db->where('rel_type', 'project');
+                    $this->db->where('rel_id IN (SELECT id FROM tblprojects WHERE clientid=' . $client_id . ')');
+                    $this->db->where('rel_id IN (SELECT project_id FROM tblprojectsettings WHERE name="view_tasks" AND value=1)');
+                    $this->db->where('visible_to_client', 1);
                 }
 
-                $task['date'] = $task['date'];
-
-                $name             = mb_substr($task['title'], 0, 60) . '...';
-                $task['_tooltip'] = _l('calendar_task') . ' - ' . $name . $rel_showcase;
-                $task['title']    = $name;
-                $status           = get_task_status_by_id($task['status']);
-                $task['color']    = $status['color'];
-
-                if (!$client_data) {
-                    $task['onclick'] = 'init_task_modal(' . $task['id'] . '); return false';
-                    $task['url']     = '#';
-                } else {
-                    $task['url'] = site_url('clients/project/' . $task['rel_id'] . '?group=project_tasks&taskid=' . $task['id']);
+                if ((!$has_permission_tasks_view || get_option('calendar_only_assigned_tasks') == '1') && !$client_data) {
+                    $this->db->where('(id IN (SELECT taskid FROM tblstafftaskassignees WHERE staffid = ' . get_staff_user_id() . '))');
                 }
-                array_push($data, $task);
+
+                $tasks = $this->db->get()->result_array();
+
+                foreach ($tasks as $task) {
+                    $rel_showcase = '';
+
+                    if (!empty($task['rel_id']) && !$client_data) {
+                        $rel_showcase = ' (' . $task['rel_name'] . ')';
+                    }
+
+                    $task['date'] = $task['date'];
+
+                    $name             = mb_substr($task['title'], 0, 60) . '...';
+                    $task['_tooltip'] = _l('calendar_task') . ' - ' . $name . $rel_showcase;
+                    $task['title']    = $name;
+                    $status           = get_task_status_by_id($task['status']);
+                    $task['color']    = $status['color'];
+
+                    if (!$client_data) {
+                        $task['onclick'] = 'init_task_modal(' . $task['id'] . '); return false';
+                        $task['url']     = '#';
+                    } else {
+                        $task['url'] = site_url('clients/project/' . $task['rel_id'] . '?group=project_tasks&taskid=' . $task['id']);
+                    }
+                    array_push($data, $task);
+                }
             }
         }
 

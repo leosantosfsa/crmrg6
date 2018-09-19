@@ -42,9 +42,9 @@ class FetchCustomerRequest extends AbstractRequest
      */
     public function sendData($data)
     {
-        $httpResponse = $this->sendRequest('GET', '/customers/' . $this->getCustomerReference(), $data);
+        $response = $this->sendRequest('GET', '/customers/' . $this->getCustomerReference(), $data);
 
-        return $this->response = new FetchCustomerResponse($this, $httpResponse->json());
+        return $this->response = new FetchCustomerResponse($this, $response);
     }
 
     /**

@@ -696,7 +696,7 @@ class Clients extends Admin_controller
                 redirect(admin_url('clients/client/' . $id . '?group=credit_notes'));
             }
 
-            mkdir($dir, 0777);
+            mkdir($dir, 0755);
 
             foreach ($credit_notes as $credit_note) {
                 $credit_note     = $this->credit_notes_model->get($credit_note['id']);
@@ -760,7 +760,7 @@ class Clients extends Admin_controller
                 set_alert('warning', _l('client_zip_no_data_found', _l('invoices')));
                 redirect(admin_url('clients/client/' . $id . '?group=invoices'));
             }
-            mkdir($dir, 0777);
+            mkdir($dir, 0755);
             foreach ($invoices as $invoice) {
                 $invoice_data    = $this->invoices_model->get($invoice['id']);
                 $this->pdf_zip   = invoice_pdf($invoice_data);
@@ -811,7 +811,7 @@ class Clients extends Admin_controller
             $estimates = $this->db->get()->result_array();
             $this->load->helper('file');
             if (!is_really_writable(TEMP_FOLDER)) {
-                show_error('/temp folder is not writable. You need to change the permissions to 777');
+                show_error('/temp folder is not writable. You need to change the permissions to 0755');
             }
             $this->load->model('estimates_model');
             $dir = TEMP_FOLDER . $zip_file_name;
@@ -822,7 +822,7 @@ class Clients extends Admin_controller
                 set_alert('warning', _l('client_zip_no_data_found', _l('estimates')));
                 redirect(admin_url('clients/client/' . $id . '?group=estimates'));
             }
-            mkdir($dir, 0777);
+            mkdir($dir, 0755);
             foreach ($estimates as $estimate) {
                 $estimate_data   = $this->estimates_model->get($estimate['id']);
                 $this->pdf_zip   = estimate_pdf($estimate_data);
@@ -881,7 +881,7 @@ class Clients extends Admin_controller
         $zip_file_name = $this->input->post('file_name');
         $this->load->helper('file');
         if (!is_really_writable(TEMP_FOLDER)) {
-            show_error('/temp folder is not writable. You need to change the permissions to 777');
+            show_error('/temp folder is not writable. You need to change the permissions to 0755');
         }
         $dir = TEMP_FOLDER . $zip_file_name;
         if (is_dir($dir)) {
@@ -891,7 +891,7 @@ class Clients extends Admin_controller
             set_alert('warning', _l('client_zip_no_data_found', _l('payments')));
             redirect(admin_url('clients/client/' . $id . '?group=payments'));
         }
-        mkdir($dir, 0777);
+        mkdir($dir, 0755);
         $this->load->model('payments_model');
         $this->load->model('invoices_model');
         foreach ($payments as $payment) {
@@ -927,15 +927,27 @@ class Clients extends Admin_controller
             $contactFields = $this->db->list_fields('tblcontacts');
 
             if (isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
+
+                do_action('before_import_customers');
+
                 // Get the temp file path
                 $tmpFilePath = $_FILES['file_csv']['tmp_name'];
                 // Make sure we have a filepath
                 if (!empty($tmpFilePath) && $tmpFilePath != '') {
-                    // Setup our new file path
-                    $newFilePath = TEMP_FOLDER . $_FILES['file_csv']['name'];
+
+                    $tmpDir = TEMP_FOLDER . '/' .  time() . uniqid() . '/';
+
                     if (!file_exists(TEMP_FOLDER)) {
-                        mkdir(TEMP_FOLDER, 777);
+                        mkdir(TEMP_FOLDER, 0755);
                     }
+
+                    if (!file_exists($tmpDir)) {
+                        mkdir($tmpDir, 0755);
+                    }
+                    // Setup our new file path
+                    $newFilePath = $tmpDir .$_FILES['file_csv']['name'];
+
+
                     if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                         $import_result = true;
                         $fd            = fopen($newFilePath, 'r');
@@ -1127,7 +1139,7 @@ class Clients extends Admin_controller
                                 break;
                             }
                         }
-                        unlink($newFilePath);
+                        @delete_dir($tmpDir);
                     }
                 } else {
                     set_alert('warning', _l('import_upload_failed'));

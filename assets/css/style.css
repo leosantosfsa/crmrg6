@@ -675,7 +675,7 @@ body.modal-open.mobile>#wrapper {
     height: 100%;
 }
 
-body.rtl.modal-open {
+body.rtl {
     overflow-x: hidden;
 }
 
@@ -2955,6 +2955,7 @@ body.rtl.hide-sidebar #wrapper {
 
 
 
+
 /* iPad Landscape */
 
 @media only screen and (min-device-width: 768px) and (max-device-width: 1024px) and (orientation: landscape) {
@@ -2976,6 +2977,7 @@ body.rtl.hide-sidebar #wrapper {
         margin-bottom: 0;
     }
 }
+
 
 
 
@@ -5199,6 +5201,10 @@ body.rtl a+.main-tasks-table-href-name {
     margin-right: -5px;
 }
 
+body.rtl .checklist .remove-checklist {
+    margin-right: 0px;
+}
+
 textarea[name="checklist-box"] {
     cursor: pointer;
 }
@@ -5742,6 +5748,10 @@ body.rtl div.dataTables_wrapper div.dataTables_filter {
 
 body.rtl div.dataTables_wrapper div.dataTables_filter .input-group .input-group-addon {
     border-right: 1px solid #cccccc;
+}
+
+body.rtl .dt-button-collection.dropdown-menu {
+    right: auto;
 }
 
 body.rtl div.dataTables_wrapper {
@@ -8905,9 +8915,36 @@ body.media {
     background: #03a9f4 !important;
 }
 
-body.rtl .input-group-select .inner.open {
-        overflow-y: initial !important;
+.mce-menubar .mce-menubtn:hover,
+.mce-menubar .mce-menubtn.mce-active,
+.mce-menubar .mce-menubtn:focus {
+    border-radius: 4px;
 }
+
+body.rtl .input-group-select .inner.open {
+    overflow-y: initial !important;
+}
+
 body.rtl .bs-searchbox input {
-    margin-bottom:10px;
+    margin-bottom: 10px;
+}
+
+.border-radius-4 {
+    border-radius: 4px;
+}
+body.gantt {
+    margin: inherit;
+    border: inherit;
+    position: inherit;
+    width: inherit;
+}
+
+.ganttProject {
+    background-color: #e6e8ec !important;
+}
+
+.ganttProject .fn-label {
+    font-size: 13px !important;
+    text-align: left !important;
+    padding-left: 10px;
 }

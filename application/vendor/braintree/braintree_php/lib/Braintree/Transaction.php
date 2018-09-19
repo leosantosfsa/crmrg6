@@ -301,14 +301,6 @@ class Transaction extends Base
             );
         }
 
-        if (isset($transactionAttribs['europeBankAccount'])) {
-            $this->_set('europeBankAccount',
-                new Transaction\EuropeBankAccountDetails(
-                    $transactionAttribs['europeBankAccount']
-                )
-            );
-        }
-
         if (isset($transactionAttribs['usBankAccount'])) {
             $this->_set('usBankAccount',
                 new Transaction\UsBankAccountDetails(
@@ -487,6 +479,11 @@ class Transaction extends Base
     /** @return bool */
     public function isDisbursed() {
         return $this->disbursementDetails->isValid();
+    }
+
+    /** @return line items */
+    public function lineItems() {
+        return Configuration::gateway()->transactionLineItem()->findAll($this->id);
     }
 
     /**

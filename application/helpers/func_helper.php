@@ -641,6 +641,7 @@ function time_ago($time_ago)
  */
 function slug_it($str, $options = [])
 {
+    // TODO, remove in future updates, from version 2.1.0 min php version is 5.6
     if (version_compare(phpversion(), '5.5.9', '<')) {
         return slug_it_old($str, $options);
     }
@@ -652,14 +653,6 @@ function slug_it($str, $options = [])
         $defaults['separator'] = $options['delimiter'];
         unset($options['delimiter']);
     }
-
-    //  Version 3.0.1 (24 September 2017)
-    //  Using composer
-    //  require_once(APPPATH.'third_party/slugify/src/RuleProvider/RuleProviderInterface.php');
-    //  require_once(APPPATH.'third_party/slugify/src/RuleProvider/DefaultRuleProvider.php');
-    //  require_once(APPPATH.'third_party/slugify/src/RuleProvider/FileRuleProvider.php');
-    //  require_once(APPPATH.'third_party/slugify/src/SlugifyInterface.php');
-    //  require_once(APPPATH.'third_party/slugify/src/Slugify.php');
 
     $m = new Cocur\Slugify\RuleProvider\DefaultRuleProvider();
 

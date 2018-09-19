@@ -97,19 +97,23 @@ class Clients extends Clients_controller
         if (is_numeric($status)) {
             $where .= ' AND status=' . $status;
         } else {
+            $listStatusesIds = [];
             $where .= ' AND status IN (';
             foreach ($data['project_statuses'] as $projectStatus) {
                 if (isset($projectStatus['filter_default']) && $projectStatus['filter_default'] == true) {
+                    $listStatusesIds[] = $projectStatus['id'];
                     $where .= $projectStatus['id'] . ',';
                 }
             }
             $where = rtrim($where, ',');
             $where .= ')';
         }
-        $data['projects'] = $this->projects_model->get('', $where);
-        $data['title']    = _l('clients_my_projects');
-        $this->data       = $data;
-        $this->view       = 'projects';
+
+        $data['list_statuses'] = is_numeric($status) ? [$status] : $listStatusesIds;
+        $data['projects']      = $this->projects_model->get('', $where);
+        $data['title']         = _l('clients_my_projects');
+        $this->data            = $data;
+        $this->view            = 'projects';
         $this->layout();
     }
 
@@ -351,7 +355,7 @@ class Clients extends Clients_controller
                 $data['project_time_left_percent'] = 100;
                 if ($data['project']->deadline) {
                     if (human_to_unix($data['project']->start_date . ' 00:00') < time() && human_to_unix($data['project']->deadline . ' 00:00') > time()) {
-                        $data['project_days_left']         = round((human_to_unix($data['project']->deadline . ' 00:00') - time()) / 3600 / 24);
+                        $data['project_days_left'] = round((human_to_unix($data['project']->deadline . ' 00:00') - time()) / 3600 / 24);
 
                         $data['project_time_left_percent'] = $data['project_days_left'] / $data['project_total_days'] * 100;
                         $data['project_time_left_percent'] = round($data['project_time_left_percent'], 2);
@@ -577,27 +581,26 @@ class Clients extends Clients_controller
             redirect(site_url());
         }
 
-        $where = [
-            'tbltickets.userid' => get_client_user_id(),
-        ];
+        $where = 'tbltickets.userid=' . get_client_user_id();
 
         if (!is_primary_contact() && get_option('only_show_contact_tickets') == 1) {
-            $where['tbltickets.contactid'] = get_contact_user_id();
+            $where .= ' AND tbltickets.contactid=' . get_contact_user_id();
         }
 
+        $defaultStatuses = do_action('customers_area_list_default_ticket_statuses', [1, 2, 3, 4]);
         // By default only open tickets
         if (!is_numeric($status)) {
-            $status = 1;
+            $where .= ' AND status IN (' . implode(', ', $defaultStatuses) . ')';
+        } else {
+            $where .= ' AND status=' . $status;
         }
 
-        $where['status'] = $status;
-
-        $data['list_status'] = $status;
-        $data['bodyclass']   = 'tickets';
-        $data['tickets']     = $this->tickets_model->get('', $where);
-        $data['title']       = _l('clients_tickets_heading');
-        $this->data          = $data;
-        $this->view          = 'tickets';
+        $data['list_statuses'] = is_numeric($status) ? [$status] : $defaultStatuses;
+        $data['bodyclass']     = 'tickets';
+        $data['tickets']       = $this->tickets_model->get('', $where);
+        $data['title']         = _l('clients_tickets_heading');
+        $this->data            = $data;
+        $this->view            = 'tickets';
         $this->layout();
     }
 
@@ -1349,10 +1352,12 @@ class Clients extends Clients_controller
         $this->load->model('subscriptions_model');
         $data['subscriptions'] = $this->subscriptions_model->get(['clientid' => get_client_user_id()]);
 
-        $data['title']     = _l('subscriptions');
-        $data['bodyclass'] = 'subscriptions';
-        $this->data        = $data;
-        $this->view        = 'subscriptions';
+        $data['show_projects']  = total_rows('tblsubscriptions', 'project_id != 0 AND clientid='.get_client_user_id()) > 0 && has_contact_permission('projects');
+
+        $data['title']         = _l('subscriptions');
+        $data['bodyclass']     = 'subscriptions';
+        $this->data            = $data;
+        $this->view            = 'subscriptions';
         $this->layout();
     }
 

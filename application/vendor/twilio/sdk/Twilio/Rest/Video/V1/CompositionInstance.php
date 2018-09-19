@@ -43,7 +43,8 @@ class CompositionInstance extends InstanceResource {
      * 
      * @param \Twilio\Version $version Version that contains the resource
      * @param mixed[] $payload The response payload
-     * @param string $sid The sid
+     * @param string $sid The Composition Sid that uniquely identifies the
+     *                    Composition to fetch.
      * @return \Twilio\Rest\Video\V1\CompositionInstance 
      */
     public function __construct(Version $version, array $payload, $sid = null) {
@@ -93,6 +94,7 @@ class CompositionInstance extends InstanceResource {
      * Fetch a CompositionInstance
      * 
      * @return CompositionInstance Fetched CompositionInstance
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function fetch() {
         return $this->proxy()->fetch();
@@ -102,6 +104,7 @@ class CompositionInstance extends InstanceResource {
      * Deletes the CompositionInstance
      * 
      * @return boolean True if delete succeeds, false otherwise
+     * @throws TwilioException When an HTTP error occurs.
      */
     public function delete() {
         return $this->proxy()->delete();
