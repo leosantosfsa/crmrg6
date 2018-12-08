@@ -8,11 +8,15 @@
      <?php echo form_open_multipart(site_url('clients/upload_files'),array('class'=>'dropzone','id'=>'files-upload')); ?>
      <input type="file" name="file" multiple class="hide"/>
      <?php echo form_close(); ?>
-     <?php if(get_option('dropbox_app_key') != ''){ ?>
-     <div class="mtop15 mbot15">
-        <div id="dropbox-chooser-files"></div>
+     <div class="mtop15 mbot15 text-right">
+        <button class="gpicker" data-on-pick="customerFileGoogleDriveSave">
+            <i class="fa fa-google" aria-hidden="true"></i>
+            <?php echo _l('choose_from_google_drive'); ?>
+        </button>
+        <?php if(get_option('dropbox_app_key') != ''){ ?>
+            <div id="dropbox-chooser-files"></div>
+        <?php } ?>
     </div>
-    <?php } ?>
     <?php if(count($files) == 0){ ?>
     <hr class="hr-panel-heading" />
     <div class="text-center">
@@ -52,7 +56,8 @@
                     echo '<div class="preview_image">';
                 }
                 ?>
-                <a href="<?php echo $attachment_url; ?>" class="display-block mbot5">
+                <a href="<?php echo $attachment_url; ?>"<?php echo (isset($file['external']) && !empty($file['external']) ? ' target="_blank"' : ''); ?>
+                class="display-block mbot5">
                     <?php if($is_image){ ?>
                     <div class="table-image">
                           <div class="text-center"><i class="fa fa-spinner fa-spin mtop30"></i></div>

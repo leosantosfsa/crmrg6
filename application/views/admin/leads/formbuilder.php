@@ -34,6 +34,13 @@
                      </div>
                      <div role="tabpanel" class="tab-pane" id="tab_form_integration">
                         <p><?php echo _l('form_integration_code_help'); ?></p>
+                       <p>
+                         <span class="label label-default">
+                            <a href="<?php echo site_url('forms/wtl/'.$form->form_key); ?>" target="_blank">
+                          <?php echo site_url('forms/wtl/'.$form->form_key); ?>
+                         </span>
+                        </a>
+                       </p>
                         <textarea readonly class="form-control" rows="5"><iframe width="600" height="850" src="<?php echo site_url('forms/wtl/'.$form->form_key); ?>" frameborder="0" allowfullscreen></iframe></textarea>
                      </div>
                      <?php } ?>

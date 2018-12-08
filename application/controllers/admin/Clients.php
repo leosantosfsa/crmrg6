@@ -4,15 +4,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Clients extends Admin_controller
 {
-    private $not_importable_clients_fields;
-
     public $pdf_zip;
 
     public function __construct()
     {
         parent::__construct();
-        $this->not_importable_clients_fields = do_action('not_importable_clients_fields', ['userid', 'id', 'is_primary', 'password', 'datecreated', 'last_ip', 'last_login', 'last_password_change', 'active', 'new_pass_key', 'new_pass_key_requested', 'leadid', 'default_currency', 'profile_image', 'default_language', 'direction', 'show_primary_contact', 'invoice_emails', 'estimate_emails', 'project_emails', 'task_emails', 'contract_emails', 'credit_note_emails', 'ticket_emails', 'addedfrom','registration_confirmed', 'last_active_time']);
-        // last_active_time is from Chattr plugin, causing issue
     }
 
     /* List all clients */
@@ -272,6 +268,19 @@ class Clients extends Admin_controller
         }
     }
 
+    // Used to give a tip to the user if the company exists when new company is created
+    public function check_duplicate_customer_name()
+    {
+        if (has_permission('customers', '', 'create')) {
+            $companyName = trim($this->input->post('company'));
+            $response    = [
+                'exists'  => (bool) total_rows('tblclients', ['company' => $companyName]) > 0,
+                'message' => _l('company_exists_info', '<b>' . $companyName . '</b>'),
+            ];
+            echo json_encode($response);
+        }
+    }
+
     public function save_longitude_and_latitude($client_id)
     {
         if (!has_permission('customers', '', 'edit')) {
@@ -408,8 +417,9 @@ class Clients extends Admin_controller
         $this->load->view('admin/clients/modals/contact', $data);
     }
 
-    public function confirm_registration($client_id) {
-        if(!is_admin()){
+    public function confirm_registration($client_id)
+    {
+        if (!is_admin()) {
             access_denied('Customer Confirm Registration, ID: ' . $client_id);
         }
         $this->clients_model->confirm_registration($client_id);
@@ -558,7 +568,7 @@ class Clients extends Admin_controller
         }
 
         $this->clients_model->delete_contact($id);
-        if($hasProposals) {
+        if ($hasProposals) {
             $this->session->set_flashdata('gdpr_delete_warning', true);
         }
         redirect(admin_url('clients/client/' . $customer_id . '?group=contacts'));
@@ -917,245 +927,43 @@ class Clients extends Admin_controller
         if (!has_permission('customers', '', 'create')) {
             access_denied('customers');
         }
-        $country_fields = ['country', 'billing_country', 'shipping_country'];
 
-        $simulate_data  = [];
-        $total_imported = 0;
-        if ($this->input->post()) {
-
-            // Used when checking existing company to merge contact
-            $contactFields = $this->db->list_fields('tblcontacts');
-
-            if (isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
-
-                do_action('before_import_customers');
-
-                // Get the temp file path
-                $tmpFilePath = $_FILES['file_csv']['tmp_name'];
-                // Make sure we have a filepath
-                if (!empty($tmpFilePath) && $tmpFilePath != '') {
-
-                    $tmpDir = TEMP_FOLDER . '/' .  time() . uniqid() . '/';
-
-                    if (!file_exists(TEMP_FOLDER)) {
-                        mkdir(TEMP_FOLDER, 0755);
-                    }
-
-                    if (!file_exists($tmpDir)) {
-                        mkdir($tmpDir, 0755);
-                    }
-                    // Setup our new file path
-                    $newFilePath = $tmpDir .$_FILES['file_csv']['name'];
-
-
-                    if (move_uploaded_file($tmpFilePath, $newFilePath)) {
-                        $import_result = true;
-                        $fd            = fopen($newFilePath, 'r');
-                        $rows          = [];
-                        while ($row = fgetcsv($fd)) {
-                            $rows[] = $row;
-                        }
-
-                        $data['total_rows_post'] = count($rows);
-                        fclose($fd);
-                        if (count($rows) <= 1) {
-                            set_alert('warning', 'Not enought rows for importing');
-                            redirect(admin_url('clients/import'));
-                        }
-                        unset($rows[0]);
-                        if ($this->input->post('simulate')) {
-                            if (count($rows) > 500) {
-                                set_alert('warning', 'Recommended splitting the CSV file into smaller files. Our recomendation is 500 row, your CSV file has ' . count($rows));
-                            }
-                        }
-                        $client_contacts_fields = $this->db->list_fields('tblcontacts');
-                        $i                      = 0;
-                        foreach ($client_contacts_fields as $cf) {
-                            if ($cf == 'phonenumber') {
-                                $client_contacts_fields[$i] = 'contact_phonenumber';
-                            }
-                            $i++;
-                        }
-                        $db_temp_fields = $this->db->list_fields('tblclients');
-                        $db_temp_fields = array_merge($client_contacts_fields, $db_temp_fields);
-                        $db_fields      = [];
-                        foreach ($db_temp_fields as $field) {
-                            if (in_array($field, $this->not_importable_clients_fields)) {
-                                continue;
-                            }
-                            $db_fields[] = $field;
-                        }
-                        $custom_fields = get_custom_fields('customers');
-                        $_row_simulate = 0;
-
-                        $required = [
-                            'firstname',
-                            'lastname',
-                            'email',
-                        ];
-
-                        if (get_option('company_is_required') == 1) {
-                            array_push($required, 'company');
-                        }
-
-                        foreach ($rows as $row) {
-                            // do for db fields
-                            $insert    = [];
-                            $duplicate = false;
-                            for ($i = 0; $i < count($db_fields); $i++) {
-                                if (!isset($row[$i])) {
-                                    continue;
-                                }
-                                if ($db_fields[$i] == 'email') {
-                                    $email_exists = total_rows('tblcontacts', [
-                                        'email' => $row[$i],
-                                    ]);
-                                    // don't insert duplicate emails
-                                    if ($email_exists > 0) {
-                                        $duplicate = true;
-                                    }
-                                }
-                                // Avoid errors on required fields;
-                                if (in_array($db_fields[$i], $required) && $row[$i] == '' && $db_fields[$i] != 'company') {
-                                    $row[$i] = '/';
-                                } elseif (in_array($db_fields[$i], $country_fields)) {
-                                    if ($row[$i] != '') {
-                                        if (!is_numeric($row[$i])) {
-                                            $this->db->where('iso2', $row[$i]);
-                                            $this->db->or_where('short_name', $row[$i]);
-                                            $this->db->or_where('long_name', $row[$i]);
-                                            $country = $this->db->get('tblcountries')->row();
-                                            if ($country) {
-                                                $row[$i] = $country->country_id;
-                                            } else {
-                                                $row[$i] = 0;
-                                            }
-                                        }
-                                    } else {
-                                        $row[$i] = 0;
-                                    }
-                                }
-                                if ($row[$i] === 'NULL' || $row[$i] === 'null') {
-                                    $row[$i] = '';
-                                }
-                                $insert[$db_fields[$i]] = $row[$i];
-                            }
-
-
-                            if ($duplicate == true) {
-                                continue;
-                            }
-                            if (count($insert) > 0) {
-                                $total_imported++;
-                                $insert['datecreated'] = date('Y-m-d H:i:s');
-                                if ($this->input->post('default_pass_all')) {
-                                    $insert['password'] = $this->input->post('default_pass_all', false);
-                                }
-                                if (!$this->input->post('simulate')) {
-                                    $insert['donotsendwelcomeemail'] = true;
-                                    foreach ($insert as $key => $val) {
-                                        $insert[$key] = trim($val);
-                                    }
-
-                                    if (isset($insert['company']) && $insert['company'] != '' && $insert['company'] != '/') {
-                                        if (total_rows('tblclients', ['company' => $insert['company']]) === 1) {
-                                            $this->db->where('company', $insert['company']);
-                                            $existingCompany = $this->db->get('tblclients')->row();
-                                            $tmpInsert       = [];
-
-                                            foreach ($insert as $key => $val) {
-                                                foreach ($contactFields as $tmpContactField) {
-                                                    if (isset($insert[$tmpContactField])) {
-                                                        $tmpInsert[$tmpContactField] = $insert[$tmpContactField];
-                                                    }
-                                                }
-                                            }
-                                            $tmpInsert['donotsendwelcomeemail'] = true;
-                                            if (isset($insert['contact_phonenumber'])) {
-                                                $tmpInsert['phonenumber'] = $insert['contact_phonenumber'];
-                                            }
-
-                                            $contactid = $this->clients_model->add_contact($tmpInsert, $existingCompany->userid, true);
-
-                                            continue;
-                                        }
-                                    }
-                                    $insert['is_primary'] = 1;
-
-                                    $clientid = $this->clients_model->add($insert, true);
-                                    if ($clientid) {
-                                        if ($this->input->post('groups_in[]')) {
-                                            $groups_in = $this->input->post('groups_in[]');
-                                            foreach ($groups_in as $group) {
-                                                $this->db->insert('tblcustomergroups_in', [
-                                                    'customer_id' => $clientid,
-                                                    'groupid'     => $group,
-                                                ]);
-                                            }
-                                        }
-                                        if (!has_permission('customers', '', 'view')) {
-                                            $assign['customer_admins']   = [];
-                                            $assign['customer_admins'][] = get_staff_user_id();
-                                            $this->clients_model->assign_admins($assign, $clientid);
-                                        }
-                                    }
-                                } else {
-                                    foreach ($country_fields as $country_field) {
-                                        if (array_key_exists($country_field, $insert)) {
-                                            if ($insert[$country_field] != 0) {
-                                                $c = get_country($insert[$country_field]);
-                                                if ($c) {
-                                                    $insert[$country_field] = $c->short_name;
-                                                }
-                                            } elseif ($insert[$country_field] == 0) {
-                                                $insert[$country_field] = '';
-                                            }
-                                        }
-                                    }
-                                    $simulate_data[$_row_simulate] = $insert;
-                                    $clientid                      = true;
-                                }
-                                if ($clientid) {
-                                    $insert = [];
-                                    foreach ($custom_fields as $field) {
-                                        if (!$this->input->post('simulate')) {
-                                            if ($row[$i] != '' && $row[$i] !== 'NULL' && $row[$i] !== 'null') {
-                                                $this->db->insert('tblcustomfieldsvalues', [
-                                                    'relid'   => $clientid,
-                                                    'fieldid' => $field['id'],
-                                                    'value'   => $row[$i],
-                                                    'fieldto' => 'customers',
-                                                ]);
-                                            }
-                                        } else {
-                                            $simulate_data[$_row_simulate][$field['name']] = $row[$i];
-                                        }
-                                        $i++;
-                                    }
-                                }
-                            }
-                            $_row_simulate++;
-                            if ($this->input->post('simulate') && $_row_simulate >= 100) {
-                                break;
-                            }
-                        }
-                        @delete_dir($tmpDir);
-                    }
-                } else {
-                    set_alert('warning', _l('import_upload_failed'));
-                }
+        $dbFields = $this->db->list_fields('tblcontacts');
+        foreach ($dbFields as $key => $contactField) {
+            if ($contactField == 'phonenumber') {
+                $dbFields[$key] = 'contact_phonenumber';
             }
         }
-        if (count($simulate_data) > 0) {
-            $data['simulate'] = $simulate_data;
+
+        $dbFields = array_merge($dbFields, $this->db->list_fields('tblclients'));
+
+        $this->load->library('import/import_customers', [], 'import');
+
+        $this->import->setDatabaseFields($dbFields)
+                     ->setCustomFields(get_custom_fields('customers'));
+
+        if ($this->input->post('download_sample') === 'true') {
+            $this->import->downloadSample();
         }
-        if (isset($import_result)) {
-            set_alert('success', _l('import_total_imported', $total_imported));
+
+        if ($this->input->post()
+            && isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
+            $this->import->setSimulation($this->input->post('simulate'))
+                          ->setTemporaryFileLocation($_FILES['file_csv']['tmp_name'])
+                          ->setFilename($_FILES['file_csv']['name'])
+                          ->perform();
+
+
+            $data['total_rows_post'] = $this->import->totalRows();
+
+            if (!$this->import->isSimulation()) {
+                set_alert('success', _l('import_total_imported', $this->import->totalImported()));
+            }
         }
-        $data['groups']         = $this->clients_model->get_groups();
-        $data['not_importable'] = $this->not_importable_clients_fields;
-        $data['title']          = _l('import');
-        $data['bodyclass']      = 'dynamic-create-groups';
+
+        $data['groups']    = $this->clients_model->get_groups();
+        $data['title']     = _l('import');
+        $data['bodyclass'] = 'dynamic-create-groups';
         $this->load->view('admin/clients/import', $data);
     }
 

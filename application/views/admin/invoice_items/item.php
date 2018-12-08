@@ -28,7 +28,7 @@
                                 if($currency['isdefault'] == 0 && total_rows('tblclients',array('default_currency'=>$currency['id'])) > 0){ ?>
                                 <div class="form-group">
                                     <label for="rate_currency_<?php echo $currency['id']; ?>" class="control-label">
-                                        <?php echo _l('invoice_item_add_edit_rate_currency',$currency['name']); ?></label>
+                                        <?php echo _l('invoice_item_add_edit_rate_currency', $currency['name']); ?></label>
                                         <input type="number" id="rate_currency_<?php echo $currency['id']; ?>" name="rate_currency_<?php echo $currency['id']; ?>" class="form-control" value="">
                                     </div>
                              <?php   }

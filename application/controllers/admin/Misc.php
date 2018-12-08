@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Misc extends Admin_controller
 {
     public function __construct()
@@ -25,7 +26,18 @@ class Misc extends Admin_controller
             $address .= ', ' . $data['country'];
         }
 
-        $georequest = new JD_Geocoder_Request();
+        $apiKey = get_option('google_api_key');
+        if (empty($apiKey)) {
+            echo json_encode([
+                'response' => [
+                    'status'        => 'MISSING_API_KEY',
+                    'error_message' => 'Add Google API Key in Setup->Settings->Google',
+                ],
+            ]);
+            die;
+        }
+
+        $georequest = new JD_Geocoder_Request($apiKey);
         $georequest->forwardSearch($address);
         echo json_encode($georequest);
     }
@@ -62,7 +74,8 @@ class Misc extends Admin_controller
 
     public function tinymce_file_browser()
     {
-        $data['connector'] = admin_url() . '/utilities/media_connector';
+        $data['connector']   = admin_url() . '/utilities/media_connector';
+        $data['mediaLocale'] = get_media_locale();
         $this->load->view('admin/includes/elfinder_tinymce', $data);
     }
 
@@ -70,7 +83,7 @@ class Misc extends Admin_controller
     {
         if ($this->input->post()) {
             $type = $this->input->post('type');
-            $data = get_relation_data($type, '', $this->input->post('connection_type'), $this->input->post('connection_id'));
+            $data = get_relation_data($type);
             if ($this->input->post('rel_id')) {
                 $rel_id = $this->input->post('rel_id');
             } else {
@@ -203,7 +216,7 @@ class Misc extends Admin_controller
     public function reminders()
     {
         $this->load->model('staff_model');
-        $data['members']   = $this->staff_model->get('', ['active'=>1]);
+        $data['members']   = $this->staff_model->get('', ['active' => 1]);
         $data['title']     = _l('reminders');
         $data['bodyclass'] = 'all-reminders';
         $this->load->view('admin/utilities/all_reminders', $data);
@@ -250,14 +263,12 @@ class Misc extends Admin_controller
     public function edit_reminder($id)
     {
         $reminder = $this->misc_model->get_reminders($id);
-        if ($reminder) {
-            if (($reminder->creator == get_staff_user_id() || is_admin()) && $reminder->isnotified == 0) {
-                $success = $this->misc_model->edit_reminder($this->input->post(), $id);
-                echo json_encode([
+        if ($reminder && ($reminder->creator == get_staff_user_id() || is_admin()) && $reminder->isnotified == 0) {
+            $success = $this->misc_model->edit_reminder($this->input->post(), $id);
+            echo json_encode([
                     'alert_type' => 'success',
                     'message'    => ($success ? _l('updated_successfully', _l('reminder')) : ''),
                 ]);
-            }
         }
     }
 
@@ -273,8 +284,26 @@ class Misc extends Admin_controller
     /* Since Version 1.0.1 - General search */
     public function search()
     {
-        $data['result'] = $this->misc_model->perform_search($this->input->post('q'));
-        $this->load->view('admin/search', $data);
+        $q = $this->input->post('q');
+
+        $recentSearches = array_reverse(get_staff_recent_search_history());
+
+        $recentSearches[] = $q;
+
+        $recentSearches = update_staff_recent_search_history($recentSearches);
+
+        $data['result'] = $this->misc_model->perform_search($q);
+        echo json_encode([
+            'results' => $this->load->view('admin/search', $data, true),
+            'history' => $recentSearches,
+        ]);
+    }
+
+    public function remove_recent_search($index)
+    {
+        $recentSearches = get_staff_recent_search_history();
+        unset($recentSearches[$index]);
+        update_staff_recent_search_history(array_reverse($recentSearches));
     }
 
     public function add_note($rel_id, $rel_type)
@@ -504,7 +533,6 @@ class Misc extends Admin_controller
         $notChangableFields = ['estimated_hours'];
 
         if (is_admin()) {
-
             do_action('before_change_decimal_places');
 
             $tables = $this->db->query("SELECT *

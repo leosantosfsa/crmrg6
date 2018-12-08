@@ -16,17 +16,11 @@
             <i class="fa fa-plus"></i> <?php echo _l('inline_create'); ?>
           </a>
         </li>
-        <li role="presentation">
-          <a href="#set_recaptcha" aria-controls="set_recaptcha" role="tab" data-toggle="tab">
-            <i class="fa fa-google"></i> <?php echo _l('re_captcha'); ?></a>
-          </li>
         </ul>
       </div>
       <div class="tab-content mtop30">
         <div role="tabpanel" class="tab-pane active" id="misc">
           <?php echo render_yes_no_option('view_contract_only_logged_in','settings_require_client_logged_in_to_view_contract'); ?>
-          <hr />
-          <?php echo render_input('settings[google_api_key]','settings_google_api',get_option('google_api_key')); ?>
           <hr />
           <?php echo render_input('settings[dropbox_app_key]','dropbox_app_key',get_option('dropbox_app_key')); ?>
           <hr />
@@ -93,15 +87,7 @@
           <hr />
           <?php echo render_input('settings[tables_pagination_limit]','settings_general_tables_limit',get_option('tables_pagination_limit'),'number'); ?>
           <hr />
-
         </div>
-
-        <div role="tabpanel" class="tab-pane" id="set_recaptcha">
-         <?php echo render_input('settings[recaptcha_site_key]','recaptcha_site_key',get_option('recaptcha_site_key')); ?>
-         <?php echo render_input('settings[recaptcha_secret_key]','recaptcha_secret_key',get_option('recaptcha_secret_key')); ?>
-         <hr />
-         <?php echo render_yes_no_option('use_recaptcha_customers_area','use_recaptcha_customers_area'); ?>
-       </div>
        <div role="tabpanel" class="tab-pane" id="inline_create">
          <?php echo render_yes_no_option('staff_members_create_inline_lead_status',_l('inline_create_option',array(
           '<b>'._l('lead_status').'</b>',

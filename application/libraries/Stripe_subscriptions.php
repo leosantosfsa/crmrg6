@@ -1,8 +1,8 @@
 <?php
 
-include_once(APPPATH . 'libraries/Stripe_core.php');
-
 defined('BASEPATH') or exit('No direct script access allowed');
+
+include_once(APPPATH . 'libraries/Stripe_core.php');
 
 class Stripe_subscriptions extends Stripe_core
 {
@@ -45,7 +45,10 @@ class Stripe_subscriptions extends Stripe_core
     public function cancel_at_end_of_billing_period($id)
     {
         $sub = $this->get_subscription($id);
-        $sub->cancel(['at_period_end' => true]);
+
+        \Stripe\Subscription::update($id, [
+            'cancel_at_period_end' => true,
+        ]);
 
         return $sub->current_period_end;
     }
@@ -111,6 +114,7 @@ class Stripe_subscriptions extends Stripe_core
                 }
                 $stripeSubscription->items = $items;
             }
+
             $stripeSubscription->prorate = $prorate;
             $stripeSubscription->save();
         }

@@ -297,6 +297,7 @@ function tasks_rel_name_select_query()
 function init_relation_tasks_table($table_attributes = [])
 {
     $table_data = [
+        _l('the_number_sign'),
         [
             'name'     => _l('tasks_dt_name'),
             'th_attrs' => [

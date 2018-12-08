@@ -2,14 +2,12 @@
 
 header('Content-Type: text/html; charset=utf-8');
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Leads extends Admin_controller
 {
-    private $not_importable_leads_fields;
-
     public function __construct()
     {
         parent::__construct();
-        $this->not_importable_leads_fields = do_action('not_importable_leads_fields', ['id', 'source', 'assigned', 'status', 'dateadded', 'last_status_change', 'addedfrom', 'leadorder', 'date_converted', 'lost', 'junk', 'is_imported_from_email_integration', 'email_integration_uid', 'is_public', 'dateassigned', 'client_id', 'lastcontact', 'last_lead_status', 'from_form_id', 'default_language','hash']);
         $this->load->model('leads_model');
     }
 
@@ -1114,178 +1112,37 @@ class Leads extends Admin_controller
             access_denied('Leads Import');
         }
 
-        $simulate_data  = [];
-        $total_imported = 0;
-        if ($this->input->post()) {
-            $simulate = $this->input->post('simulate');
-            if (isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
-                do_action('before_import_leads');
+        $dbFields = $this->db->list_fields('tblleads');
+        array_push($dbFields, 'tags');
 
-                // Get the temp file path
-                $tmpFilePath = $_FILES['file_csv']['tmp_name'];
-                // Make sure we have a filepath
-                if (!empty($tmpFilePath) && $tmpFilePath != '') {
-                    $tmpDir = TEMP_FOLDER . '/' . time() . uniqid() . '/';
+        $this->load->library('import/import_leads', [], 'import');
+        $this->import->setDatabaseFields($dbFields)
+        ->setCustomFields(get_custom_fields('leads'));
 
-                    if (!file_exists(TEMP_FOLDER)) {
-                        mkdir(TEMP_FOLDER, 0755);
-                    }
+        if ($this->input->post('download_sample') === 'true') {
+            $this->import->downloadSample();
+        }
 
-                    if (!file_exists($tmpDir)) {
-                        mkdir($tmpDir, 0755);
-                    }
+        if ($this->input->post()
+            && isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
 
-                    // Setup our new file path
-                    $newFilePath = $tmpDir . $_FILES['file_csv']['name'];
+            $this->import->setSimulation($this->input->post('simulate'))
+                          ->setTemporaryFileLocation($_FILES['file_csv']['tmp_name'])
+                          ->setFilename($_FILES['file_csv']['name'])
+                          ->perform();
 
-                    if (move_uploaded_file($tmpFilePath, $newFilePath)) {
-                        $import_result = true;
-                        $fd            = fopen($newFilePath, 'r');
-                        $rows          = [];
-                        while ($row = fgetcsv($fd)) {
-                            $rows[] = $row;
-                        }
-                        fclose($fd);
-                        $data['total_rows_post'] = count($rows);
-                        if (count($rows) <= 1) {
-                            set_alert('warning', 'Not enought rows for importing');
-                            redirect(admin_url('leads/import'));
-                        }
+            $data['total_rows_post'] = $this->import->totalRows();
 
-                        unset($rows[0]);
-                        if ($simulate) {
-                            if (count($rows) > 500) {
-                                set_alert('warning', 'Recommended splitting the CSV file into smaller files. Our recomendation is 500 row, your CSV file has ' . count($rows));
-                            }
-                        }
-                        $db_temp_fields = $this->db->list_fields('tblleads');
-                        array_push($db_temp_fields, 'tags');
-
-                        $db_fields = [];
-                        foreach ($db_temp_fields as $field) {
-                            if (in_array($field, $this->not_importable_leads_fields)) {
-                                continue;
-                            }
-                            $db_fields[] = $field;
-                        }
-                        $custom_fields = get_custom_fields('leads');
-                        $_row_simulate = 0;
-                        foreach ($rows as $row) {
-                            // do for db fields
-                            $insert = [];
-                            for ($i = 0; $i < count($db_fields); $i++) {
-                                // Avoid errors on nema field. is required in database
-                                if ($db_fields[$i] == 'name' && $row[$i] == '') {
-                                    $row[$i] = '/';
-                                } elseif ($db_fields[$i] == 'country') {
-                                    if ($row[$i] != '') {
-                                        if (!is_numeric($row[$i])) {
-                                            $this->db->where('iso2', $row[$i]);
-                                            $this->db->or_where('short_name', $row[$i]);
-                                            $this->db->or_where('long_name', $row[$i]);
-                                            $country = $this->db->get('tblcountries')->row();
-                                            if ($country) {
-                                                $row[$i] = $country->country_id;
-                                            } else {
-                                                $row[$i] = 0;
-                                            }
-                                        }
-                                    } else {
-                                        $row[$i] = 0;
-                                    }
-                                }
-                                if ($row[$i] === 'NULL' || $row[$i] === 'null') {
-                                    $row[$i] = '';
-                                }
-                                $insert[$db_fields[$i]] = $row[$i];
-                            }
-
-                            if (count($insert) > 0) {
-                                if (isset($insert['email']) && $insert['email'] != '') {
-                                    if (total_rows('tblleads', ['email' => $insert['email']]) > 0) {
-                                        continue;
-                                    }
-                                }
-                                $total_imported++;
-                                $insert['dateadded'] = date('Y-m-d H:i:s');
-                                $insert['addedfrom'] = get_staff_user_id();
-                                //   $insert['lastcontact'] = null;
-                                $insert['status'] = $this->input->post('status');
-                                $insert['source'] = $this->input->post('source');
-                                if ($this->input->post('responsible')) {
-                                    $insert['assigned'] = $this->input->post('responsible');
-                                }
-                                if (!$simulate) {
-                                    foreach ($insert as $key => $val) {
-                                        $insert[$key] = trim($val);
-                                    }
-                                    if (isset($insert['tags'])) {
-                                        $tags = $insert['tags'];
-                                        unset($insert['tags']);
-                                    }
-                                    $this->db->insert('tblleads', $insert);
-                                    $leadid = $this->db->insert_id();
-                                } else {
-                                    if ($insert['country'] != 0) {
-                                        $c = get_country($insert['country']);
-                                        if ($c) {
-                                            $insert['country'] = $c->short_name;
-                                        }
-                                    } else {
-                                        $insert['country'] = '';
-                                    }
-                                    $simulate_data[$_row_simulate] = $insert;
-                                    $leadid                        = true;
-                                }
-                                if ($leadid) {
-                                    if (!$simulate) {
-                                        handle_tags_save($tags, $leadid, 'lead');
-                                    }
-                                    $insert = [];
-                                    foreach ($custom_fields as $field) {
-                                        if (!$simulate) {
-                                            if ($row[$i] != '' && $row[$i] !== 'NULL' && $row[$i] !== 'null') {
-                                                $this->db->insert('tblcustomfieldsvalues', [
-                                                    'relid'   => $leadid,
-                                                    'fieldid' => $field['id'],
-                                                    'value'   => trim($row[$i]),
-                                                    'fieldto' => 'leads',
-                                                ]);
-                                            }
-                                        } else {
-                                            $simulate_data[$_row_simulate][$field['name']] = $row[$i];
-                                        }
-                                        $i++;
-                                    }
-                                }
-                            }
-                            $_row_simulate++;
-                            if ($simulate && $_row_simulate >= 100) {
-                                break;
-                            }
-                        }
-                        @delete_dir($tmpDir);
-                    }
-                } else {
-                    set_alert('warning', _l('import_upload_failed'));
-                }
+            if (!$this->import->isSimulation()) {
+                set_alert('success', _l('import_total_imported', $this->import->totalImported()));
             }
         }
+
         $data['statuses'] = $this->leads_model->get_status();
         $data['sources']  = $this->leads_model->get_source();
+        $data['members']  = $this->staff_model->get('', ['is_not_staff' => 0, 'active' => 1]);
 
-        $data['members'] = $this->staff_model->get('', ['is_not_staff' => 0, 'active' => 1]);
-
-        if (count($simulate_data) > 0) {
-            $data['simulate'] = $simulate_data;
-        }
-
-        if (isset($import_result)) {
-            set_alert('success', _l('import_total_imported', $total_imported));
-        }
-
-        $data['not_importable'] = $this->not_importable_leads_fields;
-        $data['title']          = _l('import');
+        $data['title'] = _l('import');
         $this->load->view('admin/leads/import', $data);
     }
 

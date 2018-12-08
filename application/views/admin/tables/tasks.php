@@ -4,10 +4,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 $hasPermissionEdit   = has_permission('tasks', '', 'edit');
 $hasPermissionDelete = has_permission('tasks', '', 'delete');
-$tasksPriorities = get_tasks_priorities();
+$tasksPriorities     = get_tasks_priorities();
 
 $aColumns = [
     '1', // bulk actions
+    'tblstafftasks.id as id',
     'name',
     'status',
     'startdate',
@@ -49,7 +50,6 @@ $result = data_tables_init(
     $join,
     $where,
     [
-        'tblstafftasks.id',
         'rel_type',
         'rel_id',
         'recurring',
@@ -71,6 +71,8 @@ foreach ($rResult as $aRow) {
 
     $row[] = '<div class="checkbox"><input type="checkbox" value="' . $aRow['id'] . '"><label></label></div>';
 
+    $row[] = '<a href="' . admin_url('tasks/view/' . $aRow['id']) . '" onclick="init_task_modal(' . $aRow['id'] . '); return false;">' . $aRow['id'] . '</a>';
+
     $outputName = '';
 
     if ($aRow['not_finished_timer_by_current_staff']) {
@@ -87,7 +89,7 @@ foreach ($rResult as $aRow) {
         $outputName .= '<span class="hide"> - </span><a class="text-muted task-table-related" data-toggle="tooltip" title="' . _l('task_related_to') . '" href="' . $link . '">' . $relName . '</a>';
     }
 
-    if($aRow['recurring'] == 1) {
+    if ($aRow['recurring'] == 1) {
         $outputName .= '<br /><span class="label label-primary inline-block mtop4"> ' . _l('recurring_task') . '</span>';
     }
 
@@ -136,15 +138,6 @@ foreach ($rResult as $aRow) {
 
     $outputStatus .= $status['name'];
 
-    /*  if ($aRow['status'] == 5 && $canChangeStatus) {
-       $outputStatus .= '<a href="#" onclick="unmark_complete(' . $aRow['id'] . '); return false;"><i class="fa fa-check task-icon task-finished-icon" data-toggle="tooltip" title="' . _l('task_unmark_as_complete') . '"></i></a>';
-    } else {
-       if ($canChangeStatus) {
-           $outputStatus .= '<a href="#" onclick="mark_complete(' . $aRow['id'] . '); return false;"><i class="fa fa-check task-icon task-unfinished-icon" data-toggle="tooltip" title="' . _l('task_single_mark_as_complete') . '"></i></a>';
-       }
-    }
-*/
-
     if ($canChangeStatus) {
         $outputStatus .= '<div class="dropdown inline-block mleft5 table-export-exclude">';
         $outputStatus .= '<a href="#" style="font-size:14px;vertical-align:middle;" class="dropdown-toggle text-dark" id="tableTaskStatus-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
@@ -186,7 +179,7 @@ foreach ($rResult as $aRow) {
         $outputPriority .= '</a>';
 
         $outputPriority .= '<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="tableTaskPriority-' . $aRow['id'] . '">';
-        foreach($tasksPriorities as $priority){
+        foreach ($tasksPriorities as $priority) {
             if ($aRow['priority'] != $priority['id']) {
                 $outputPriority .= '<li>
                   <a href="#" onclick="task_change_priority(' . $priority['id'] . ',' . $aRow['id'] . '); return false;">
@@ -202,8 +195,6 @@ foreach ($rResult as $aRow) {
     $outputPriority .= '</span>';
     $row[] = $outputPriority;
 
-
-
     // Custom fields add values
     foreach ($customFieldsColumns as $customFieldColumn) {
         $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);
@@ -217,6 +208,7 @@ foreach ($rResult as $aRow) {
     $row = $hook_data['output'];
 
     $row['DT_RowClass'] = 'has-row-options';
+
     if ((!empty($aRow['duedate']) && $aRow['duedate'] < date('Y-m-d')) && $aRow['status'] != 5) {
         $row['DT_RowClass'] .= ' text-danger';
     }

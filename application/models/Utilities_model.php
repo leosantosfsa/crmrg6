@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Utilities_model extends CRM_Model
 {
     public function __construct()
@@ -366,9 +367,14 @@ class Utilities_model extends CRM_Model
                             } elseif ($key == 'proposal') {
                                 $url = admin_url('proposals/list_proposals/' . $reminder['rel_id']);
                             } elseif ($key == 'expense') {
-                                $url = 'expenses/list_expenses/' . $reminder['rel_id'];
+                                $url = admin_url('expenses/list_expenses/' . $reminder['rel_id']);
                             } elseif ($key == 'credit_note') {
-                                $url = 'credit_notes/list_credit_notes/' . $reminder['rel_id'];
+                                $url = admin_url('credit_notes/list_credit_notes/' . $reminder['rel_id']);
+                            } elseif ($key == 'ticket') {
+                                $url = admin_url('tickets/ticket/' . $reminder['rel_id']);
+                            } elseif ($key == 'task') {
+                                // Not implemented yet
+                                $url = admin_url('tasks/view/' . $reminder['rel_id']);
                             }
 
                             $_reminder['url'] = $url;

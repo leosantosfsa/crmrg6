@@ -99,9 +99,14 @@
                     'order'=>15,
                   ),
                   array(
+                    'name'=>'google',
+                    'lang'=>'Google',
+                    'order'=>16,
+                  ),
+                  array(
                     'name'=>'misc',
                     'lang'=>_l('settings_group_misc'),
-                    'order'=>16,
+                    'order'=>17,
                   ),
                   );
                   $settings_groups = do_action('settings_groups',$settings_groups);

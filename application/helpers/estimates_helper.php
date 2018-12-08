@@ -17,7 +17,7 @@ function check_estimate_restrictions($id, $hash)
     if (!is_client_logged_in() && !is_staff_logged_in()) {
         if (get_option('view_estimate_only_logged_in') == 1) {
             redirect_after_login_to_current_url();
-            redirect(site_url('clients/login'));
+            redirect(site_url('authentication/login'));
         }
     }
     $estimate = $CI->estimates_model->get($id);

@@ -14,7 +14,7 @@ function _maybe_system_setup_warnings()
 {
     // Check for just updates message
     add_action('before_start_render_dashboard_content', '_maybe_show_just_updated_message');
-    // Check if there is index.html file in the root crm directory, on some servers if this file exists eq default server index.html file the clients/login page may not work properly
+    // Check if there is index.html file in the root crm directory, on some servers if this file exists eq default server index.html file the authentication/login page may not work properly
     add_action('before_start_render_dashboard_content', '_maybe_static_index_html_file_exists');
     // Show development message
     add_action('before_start_render_dashboard_content', '_maybe_show_development_mode_message');
@@ -105,41 +105,14 @@ function _maybe_static_index_html_file_exists()
  */
 function _maybe_iconv_needs_to_be_enabled()
 {
-    if (!function_exists('iconv')) {
-        $CI                                 = &get_instance();
-        $leadsEmailIntegrationConfigured    = false;
-        $imapAutoImportingTicketsConfigured = false;
-        if (total_rows('tblleadsintegration', [
-            'active' => 1,
-            'email !=' => '',
-            'imap_server !=' => '',
-            'password !=' => '',
-        ]) > 0) {
-            $leadsEmailIntegrationConfigured = true;
-        }
-        if (total_rows('tbldepartments', [
-            'email !=' => '',
-            'host !=' => '',
-            'password !=' => '',
-        ]) > 0) {
-            $imapAutoImportingTicketsConfigured = true;
-        }
-        if ($imapAutoImportingTicketsConfigured || $leadsEmailIntegrationConfigured) {
-            $usedFeatures = '';
-            if ($imapAutoImportingTicketsConfigured && !$leadsEmailIntegrationConfigured) {
-                $usedFeatures = ' auto importing tickets via the IMAP method';
-            } elseif ($leadsEmailIntegrationConfigured && !$imapAutoImportingTicketsConfigured) {
-                $usedFeatures = ' leads email integration feature';
-            } else {
-                $usedFeatures = ' auto importing tickets via the IMAP method and leads email integration features';
-            } ?>
+    if (!extension_loaded('iconv')) {
+    ?>
             <div class="col-md-12">
                 <div class="alert alert-danger">
-                   You need to enable <b>iconv</b> php extension in order to use <b><?php echo $usedFeatures; ?></b>. You can enable it via php.ini or contact your hosting provider to enable this extension.
+                   A required PHP extension is not loaded. You must to enable the <b>iconv</b> php extension in order everything to work properly. You can enable the <b>iconv</b> extension via php.ini, cPanel PHP extensions area or contact your hosting provider to enable this extension.
                </div>
            </div>
            <?php
-        }
     }
 }
 
@@ -389,7 +362,7 @@ function _maybe_tcpdf_file_is_missing()
                 <p style="margin-top:15px;">This can happen because of <b>2 reasons</b>:</p>
                 <ul style="margin-top:15px;">
                   <li>
-                    1. Your hosting provider/server firewall <b>removed</b> the <b>tcpdf.php</b> file located in <b><?php echo $path; ?></b> because the firewall things that is malicious file, mostly happens because of not properly configured firewall rules. <br />
+                    1. Your hosting provider/server firewall <b>removed</b> the <b>tcpdf.php</b> file located in <b><?php echo $path; ?></b> because the firewall think that is malicious file, mostly happens because of not properly configured firewall rules. <br />
                     You will need to contact your hosting provider to whitelist this file, after the file is whitelisted download the core files again and locate this file inside the zip folder, upload the file in: <b> <?php echo APPPATH . 'vendor/tecnickcom/tcpdf/'; ?></b>
                 </li>
                 <li><br />2. The file is not uploaded or is skipped during upload, you can download the core files again and locate this file inside the zip folder, after that upload the file in: <b> <?php echo APPPATH . 'vendor/tecnickcom/tcpdf/'; ?></b></li>
@@ -451,7 +424,7 @@ function _maybe_cron_job_is_not_working_properly()
                             <h4><b>Cron Job Warning</b></h4>
                             <hr class="hr-10" />
                             <p>
-                                 <b>Seems like your cron job hasn't run in the last <?php echo $hoursCheck; ?> hours</b>, you should re-check if your cron job is properly configured, this message will auto disappear after 5 minutes since the cron job starts working.
+                                 <b>Seems like your cron job hasn't run in the last <?php echo $hoursCheck; ?> hours</b>, you should re-check if your cron job is properly configured, this message will auto disappear after 5 minutes after the cron job starts working properly again.
                             </p>
                     </div>
                 </div>

@@ -2,7 +2,13 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-$aColumns = [
+$aColumns = [];
+
+if (has_permission('items', '', 'delete')) {
+    $aColumns[] = '1';
+}
+
+$aColumns = array_merge($aColumns, [
     'description',
     'long_description',
     'tblitems.rate',
@@ -10,7 +16,8 @@ $aColumns = [
     't2.taxrate as taxrate_2',
     'unit',
     'tblitems_groups.name',
-    ];
+    ]);
+
 $sIndexColumn = 'id';
 $sTable       = 'tblitems';
 
@@ -56,7 +63,9 @@ foreach ($rResult as $aRow) {
             $_data = $aRow[$aColumns[$i]];
         }
 
-        if ($aColumns[$i] == 't1.taxrate as taxrate_1') {
+        if ($aColumns[$i] == '1') {
+            $_data = '<div class="checkbox"><input type="checkbox" value="' . $aRow['id'] . '"><label></label></div>';
+        } elseif ($aColumns[$i] == 't1.taxrate as taxrate_1') {
             if (!$aRow['taxrate_1']) {
                 $aRow['taxrate_1'] = 0;
             }

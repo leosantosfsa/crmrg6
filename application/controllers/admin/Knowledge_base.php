@@ -89,7 +89,7 @@ class Knowledge_base extends Admin_controller
     {
         // This is for did you find this answer useful
         if (($this->input->post() && $this->input->is_ajax_request())) {
-            echo json_encode($this->knowledge_base_model->add_article_answer($this->input->post()));
+            echo json_encode($this->knowledge_base_model->add_article_answer($this->input->post('articleid'), $this->input->post('answer')));
             die();
         }
     }

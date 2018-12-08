@@ -2,6 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 define('EMAIL_TEMPLATE_SEND', true);
+
 class Emails_model extends CRM_Model
 {
     private $attachment = [];
@@ -142,6 +143,7 @@ class Emails_model extends CRM_Model
     public function mark_as_by_type($type, $enabled)
     {
         $this->db->where('type', $type);
+        $this->db->where('slug !=','two-factor-authentication');
         $this->db->update('tblemailtemplates', ['active' => $enabled]);
 
         return $this->db->affected_rows() > 0 ? true : false;

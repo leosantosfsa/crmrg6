@@ -88,10 +88,13 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 // Used for phpass_helper
 define('PHPASS_HASH_STRENGTH', 8);
 define('PHPASS_HASH_PORTABLE', FALSE);
+
 // Admin url
 define('ADMIN_URL', 'admin');
+
 // CRM server update url
 define('UPDATE_URL','https://www.perfexcrm.com/perfex_updates/index.php');
+
 // Get latest version info
 define('UPDATE_INFO_URL','https://www.perfexcrm.com/perfex_updates/update_info.php');
 
@@ -104,7 +107,6 @@ if(!defined('CUSTOM_FIELD_TRANSFER_SIMILARITY')){
     define('CUSTOM_FIELD_TRANSFER_SIMILARITY', 85);
 }
 
-// Defined folders
 // CRM temporary path
 define('TEMP_FOLDER',FCPATH .'temp' . '/');
 // Database backups folder

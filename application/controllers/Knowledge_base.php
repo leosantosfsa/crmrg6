@@ -7,17 +7,17 @@ class Knowledge_base extends Clients_controller
     public function __construct()
     {
         parent::__construct();
+
         if (is_staff_logged_in() && get_option('use_knowledge_base') == 0) {
             set_alert('warning', 'Knowledge base is disabled, navigate to Setup->Settings->Customers and set Use Knowledge Base to YES.');
         }
-        do_action('customers_area_knowledge_construct');
+
+        do_action('customers_area_knowledge_base_construct');
     }
 
     public function index($slug = '')
     {
-        if (!is_knowledge_base_viewable()) {
-            show_404();
-        }
+        $this->checkKnowledgeBaseAccess();
 
         $data['articles']              = get_all_knowledge_base_articles_grouped(true);
         $data['knowledge_base_search'] = true;
@@ -29,9 +29,7 @@ class Knowledge_base extends Clients_controller
 
     public function search()
     {
-        if (!is_knowledge_base_viewable()) {
-            show_404();
-        }
+        $this->checkKnowledgeBaseAccess();
 
         $q = $this->input->get('q');
 
@@ -51,11 +49,10 @@ class Knowledge_base extends Clients_controller
 
     public function article($slug)
     {
-        if (!is_knowledge_base_viewable()) {
-            show_404();
-        }
+        $this->checkKnowledgeBaseAccess();
 
         $data['article'] = $this->knowledge_base_model->get(false, $slug);
+
         if (!$slug) {
             redirect(site_url('knowledge-base'));
         }
@@ -75,9 +72,7 @@ class Knowledge_base extends Clients_controller
 
     public function category($slug)
     {
-        if (!is_knowledge_base_viewable()) {
-            show_404();
-        }
+        $this->checkKnowledgeBaseAccess();
 
         $where_kb         = 'articlegroup IN (SELECT groupid FROM tblknowledgebasegroups WHERE group_slug="' . $slug . '")';
         $data['category'] = $slug;
@@ -97,8 +92,20 @@ class Knowledge_base extends Clients_controller
         }
         // This is for did you find this answer useful
         if (($this->input->post() && $this->input->is_ajax_request())) {
-            echo json_encode($this->knowledge_base_model->add_article_answer($this->input->post()));
+            echo json_encode($this->knowledge_base_model->add_article_answer($this->input->post('articleid'), $this->input->post('answer')));
             die();
+        }
+    }
+
+    private function checkKnowledgeBaseAccess()
+    {
+        if (get_option('use_knowledge_base') == 1 && !is_client_logged_in() && get_option('knowledge_base_without_registration') == 0) {
+            // Knowedge base viewable only for registered customers
+            // Redirect to login page so they can login to view
+            redirect_after_login_to_current_url();
+            redirect(site_url('authentication/login'));
+        } elseif (!is_knowledge_base_viewable()) {
+            show_404();
         }
     }
 }

@@ -244,9 +244,7 @@
                         </div>
                         <?php if(!empty($contract->signature)) { ?>
                         <div class="row mtop25">
-                           <div class="col-md-6">
-                           </div>
-                           <div class="col-md-6 text-right">
+                           <div class="col-md-6 col-md-offset-6 text-right">
                               <p class="bold"><?php echo _l('document_customer_signature_text'); ?>
                                  <?php if($contract->signed == 1 && has_permission('contracts','','delete')){ ?>
                                  <a href="<?php echo admin_url('contracts/clear_signature/'.$contract->id); ?>" data-toggle="tooltip" title="<?php echo _l('clear_signature'); ?>" class="_delete text-danger">
@@ -254,7 +252,9 @@
                                  </a>
                                  <?php } ?>
                               </p>
-                              <img src="<?php echo site_url('download/preview_image?path='.protected_file_url_by_path(get_upload_path_by_type('contract').$contract->id.'/'.$contract->signature)); ?>" alt="">
+                              <div class="pull-right">
+                                 <img src="<?php echo site_url('download/preview_image?path='.protected_file_url_by_path(get_upload_path_by_type('contract').$contract->id.'/'.$contract->signature)); ?>" class="img-responsive" alt="">
+                              </div>
                            </div>
                         </div>
                         <?php } ?>
@@ -284,8 +284,15 @@
                         <?php echo form_open(admin_url('contracts/add_contract_attachment/'.$contract->id),array('id'=>'contract-attachments-form','class'=>'dropzone')); ?>
                         <?php echo form_close(); ?>
                         <div class="text-right mtop15">
+                           <button class="gpicker" data-on-pick="contractGoogleDriveSave">
+                              <i class="fa fa-google" aria-hidden="true"></i>
+                              <?php echo _l('choose_from_google_drive'); ?>
+                           </button>
                            <div id="dropbox-chooser"></div>
+                           <div class="clearfix"></div>
                         </div>
+                        <!-- <img src="https://drive.google.com/uc?id=14mZI6xBjf-KjZzVuQe8-rjtv_wXEbDTw" /> -->
+
                         <div id="contract_attachments" class="mtop30">
                            <?php
                               $data = '<div class="row">';
@@ -297,7 +304,7 @@
                                 $data .= '<div class="display-block contract-attachment-wrapper">';
                                 $data .= '<div class="col-md-10">';
                                 $data .= '<div class="pull-left"><i class="'.get_mime_class($attachment['filetype']).'"></i></div>';
-                                $data .= '<a href="'.$href_url.'">'.$attachment['file_name'].'</a>';
+                                $data .= '<a href="'.$href_url.'"'.(!empty($attachment['external']) ? ' target="_blank"' : '').'>'.$attachment['file_name'].'</a>';
                                 $data .= '<p class="text-muted">'.$attachment["filetype"].'</p>';
                                 $data .= '</div>';
                                 $data .= '<div class="col-md-2 text-right">';
@@ -670,6 +677,17 @@
    function toggle_contract_comment_edit(id) {
        $('body').find('[data-contract-comment="' + id + '"]').toggleClass('hide');
        $('body').find('[data-contract-comment-edit-textarea="' + id + '"]').toggleClass('hide');
+   }
+
+   function contractGoogleDriveSave(pickData) {
+      var data = {};
+      data.contract_id = contract_id;
+      data.external = 'gdrive';
+      data.files = pickData;
+      $.post(admin_url + 'contracts/add_external_attachment', data).done(function () {
+        var location = window.location.href;
+        window.location.href = location.split('?')[0] + '?tab=attachments';
+     });
    }
 
 </script>

@@ -47,6 +47,8 @@ class App
             'proposal',
             'expense',
             'credit_note',
+            'ticket',
+            'task',
     ];
 
     /**
@@ -115,7 +117,7 @@ class App
     public function upgrade_database()
     {
         if (!is_really_writable(APPPATH . 'config/config.php')) {
-            show_error('/config/config.php file is not writable. You need to change the permissions to 755. This error occurs while trying to update database to latest version.');
+            show_error('/config/config.php file is not writable. You need to change the permissions to 0644. This error occurs while trying to update database to latest version.');
             die;
         }
 
@@ -129,7 +131,7 @@ class App
             if (is_staff_logged_in()) {
                 redirect(admin_url(), 'refresh');
             } else {
-                redirect(site_url('authentication/admin'));
+                redirect(admin_url('authentication/admin'));
             }
         }
     }

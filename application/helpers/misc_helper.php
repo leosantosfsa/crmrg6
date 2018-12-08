@@ -64,9 +64,10 @@ function check_missing_language_strings($language)
  * @param  string $locale current locale
  * @return string
  */
-function get_media_locale($locale)
+function get_media_locale()
 {
-    $lng = $locale;
+    $lng = $GLOBALS['locale'];
+
     if ($lng == 'ja') {
         $lng = 'jp';
     } elseif ($lng == 'pt') {
@@ -191,14 +192,14 @@ function process_digital_signature_image($partBase64, $path)
         return false;
     }
 
-    $filename = 'signature.png';
+    _maybe_create_upload_path($path);
+    $filename = unique_filename($path, 'signature.png');
 
     $decoded_image = base64_decode($partBase64);
 
     $retval = false;
-    _maybe_create_upload_path($path);
 
-    $path = rtrim($path, '/') . '/' . unique_filename($path, $filename);
+    $path = rtrim($path, '/') . '/' . $filename;
 
     $fp = fopen($path, 'w+');
 
@@ -522,7 +523,6 @@ function render_admin_js_variables()
         'site_url'                                    => site_url(),
         'admin_url'                                   => admin_url(),
         'max_php_ini_upload_size_bytes'               => file_upload_max_size(),
-        'google_api'                                  => '',
         'calendarIDs'                                 => '',
         'is_admin'                                    => is_admin(),
         'is_staff_member'                             => is_staff_member(),
@@ -547,9 +547,13 @@ function render_admin_js_variables()
         'app_timezone'                                => get_option('default_timezone'),
         'app_calendar_first_day'                      => get_option('calendar_first_day'),
         'app_allowed_files'                           => get_option('allowed_files'),
+        'app_acceptable_mimes'                        => get_form_accepted_mimes(),
         'app_show_table_export_button'                => get_option('show_table_export_button'),
         'app_desktop_notifications'                   => get_option('desktop_notifications'),
         'app_dismiss_desktop_not_after'               => get_option('auto_dismiss_desktop_notifications_after'),
+        'app_enable_google_picker'                    => get_option('enable_google_picker'),
+        'app_google_client_id'                        => get_option('google_client_id'),
+        'google_api'                                  => get_option('google_api_key'),
     ];
 
     $lang = [
@@ -602,6 +606,10 @@ function render_admin_js_variables()
         'credit_amount_bigger_then_invoice_balance'               => _l('credit_amount_bigger_then_invoice_balance'),
         'credit_amount_bigger_then_credit_note_remaining_credits' => _l('credit_amount_bigger_then_credit_note_remaining_credits'),
         'save'                                                    => _l('save'),
+        'expense'                                                 => _l('expense'),
+        'ticket'                                                  => _l('ticket'),
+        'lead'                                                    => _l('lead'),
+        'create_reminder'                                         => _l('create_reminder'),
     ];
 
     $js_vars = do_action('before_render_app_js_vars_admin', $js_vars);
@@ -806,7 +814,6 @@ function is_knowledge_base_viewable()
 {
     return (get_option('use_knowledge_base') == 1 && !is_client_logged_in() && get_option('knowledge_base_without_registration') == 1) || (get_option('use_knowledge_base') == 1 && is_client_logged_in()) || is_staff_logged_in();
 }
-
 
 function _prepare_attachments_array_for_export($attachments)
 {

@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Newsfeed_model extends CRM_Model
 {
     public $post_likes_limit = 6;

@@ -53,9 +53,11 @@
   <div role="tabpanel" class="tab-pane" id="ticket_form">
     <h4 class="bold">Form Info</h4>
     <p><b>Form url:</b>
-      <a href="<?php echo site_url('forms/ticket'); ?>" target="_blank">
+     <span class="label label-default">
+        <a href="<?php echo site_url('forms/ticket'); ?>" target="_blank">
         <?php echo site_url('forms/ticket'); ?>
       </a>
+     </span>
     </p>
     <p><b>Form file location:</b> <code><?php echo do_action('ticket_form_file_location_settings',VIEWPATH.'forms\ticket.php'); ?></code></p>
     <hr />
@@ -69,16 +71,22 @@
     <hr />
     <h4 class="bold">Change form container column (Bootstrap)</h4>
     <p>
+      <span class="label label-default">
       <a href="<?php echo site_url('forms/ticket?col=col-md-8'); ?>" target="_blank">
         <?php echo site_url('forms/ticket?col=col-md-8'); ?>
       </a>
+    </span>
     </p>
     <p>
+      <span class="label label-default">
       <a href="<?php echo site_url('forms/ticket?col=col-md-8+col-md-offset-2'); ?>" target="_blank"><?php echo site_url('forms/ticket?col=col-md-8+col-md-offset-2'); ?></a>
+    </span>
     </p>
     <p>
+      <span class="label label-default">
       <a href="<?php echo site_url('forms/ticket?col=col-md-5'); ?>" target="_blank">
         <?php echo site_url('forms/ticket?col=col-md-5'); ?>
       </a>
+    </span>
     </p>
   </div>

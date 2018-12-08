@@ -52,7 +52,7 @@ foreach ($rResult as $aRow) {
 
     $rowName .= '<a href="#" onclick="contact(' . $aRow['userid'] . ',' . $aRow['id'] . ');return false;">' . _l('edit') . '</a>';
 
-    if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1' && is_admin()) {
+    if (is_gdpr() && get_option('gdpr_data_portability_contacts') == '1' && is_admin()) {
         $rowName .= ' | <a href="' . admin_url('clients/export/' . $aRow['id']) . '">
              ' . _l('dt_button_export') . ' ('._l('gdpr_short').')
           </a>';

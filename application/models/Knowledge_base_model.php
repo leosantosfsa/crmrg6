@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Knowledge_base_model extends CRM_Model
 {
     public function __construct()
@@ -236,7 +237,7 @@ class Knowledge_base_model extends CRM_Model
             $data['active'] = 1;
         }
 
-        $data['group_slug']        = slug_it($data['name']);
+        $data['group_slug'] = slug_it($data['name']);
         $this->db->like('group_slug', $data['group_slug']);
         $slug_total = $this->db->count_all_results('tblknowledgebasegroups');
         if ($slug_total > 0) {
@@ -340,15 +341,18 @@ class Knowledge_base_model extends CRM_Model
 
     /**
      * Add new article vote / Called from client area
-     * @param array $data article data
-     * @return mixed
+     * @param mixed $articleid article id
+     * @param boolean $bool
      */
-    public function add_article_answer($data)
+    public function add_article_answer($articleid, $bool)
     {
-        $articleid = $this->input->post('articleid');
-        $ip        = $this->input->ip_address();
+        $bool = (bool) $bool;
+
+        $ip = $this->input->ip_address();
+
         $this->db->where('ip', $ip)->where('articleid', $articleid)->order_by('date', 'desc')->limit(1);
         $answer = $this->db->get('tblknowledgebasearticleanswers')->row();
+
         if ($answer) {
             $last_answer    = strtotime($answer->date);
             $minus_24_hours = strtotime('-24 hours');
@@ -359,12 +363,14 @@ class Knowledge_base_model extends CRM_Model
                 ];
             }
         }
-        $data['answer']    = $data['answer'];
-        $data['ip']        = $ip;
-        $data['date']      = date('Y-m-d H:i:s');
-        $data['articleid'] = $articleid;
-        $this->db->insert('tblknowledgebasearticleanswers', $data);
+        $this->db->insert('tblknowledgebasearticleanswers', [
+            'answer'    => $bool,
+            'ip'        => $ip,
+            'articleid' => $articleid,
+            'date'      => date('Y-m-d H:i:s'),
+        ]);
         $insert_id = $this->db->insert_id();
+
         if ($insert_id) {
             return [
                 'success' => true,

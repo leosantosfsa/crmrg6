@@ -209,7 +209,7 @@
   <script src='https://www.google.com/recaptcha/api.js'></script>
 <?php } ?>
 <?php if(file_exists(FCPATH.'assets/css/custom.css')){ ?>
-  <link href="<?php echo base_url('assets/css/custom.css'); ?>" rel="stylesheet">
+  <link href="<?php echo base_url('assets/css/custom.css'); ?>" rel="stylesheet" id="custom-css">
 <?php } ?>
 <?php render_custom_styles(array('general','buttons')); ?>
 <?php do_action('app_admin_login_head'); ?>

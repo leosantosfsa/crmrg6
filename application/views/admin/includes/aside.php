@@ -43,8 +43,9 @@
                    ?>
                <li>
                   <a href="<?php echo $url; ?>" <?php echo $href_attributes; ?>>
-                  <i class="fa fa-plus-square-o"></i>
-                  <?php echo $item['name']; ?></a>
+                    <i class="fa fa-plus-square-o"></i>
+                    <?php echo $item['name']; ?>
+                  </a>
                </li>
                <?php } ?>
             </ul>
@@ -158,7 +159,9 @@
          ?>
       <li class="menu-item-<?php echo $item->id; ?>">
          <a href="<?php echo $url; ?>" aria-expanded="false"><i class="<?php echo $item->icon; ?> menu-icon"></i>
-         <?php echo _l($item->name); ?>
+          <span class="menu-text">
+             <?php echo _l($item->name); ?>
+          </span>
          <?php if($submenu == true){ ?>
          <span class="fa arrow"></span>
          <?php } ?>
@@ -220,7 +223,10 @@
                <?php if(!empty($submenu->icon)){ ?>
                <i class="<?php echo $submenu->icon; ?> menu-icon"></i>
                <?php } ?>
-               <?php echo _l($submenu->name); ?></a>
+                 <span class="sub-menu-text">
+                   <?php echo _l($submenu->name); ?>
+                 </span>
+              </a>
             </li>
             <?php } ?>
          </ul>
@@ -233,7 +239,10 @@
       <?php if((is_staff_member() || is_admin()) && $this->app->show_setup_menu() == true){ ?>
       <li<?php if(get_option('show_setup_menu_item_only_on_hover') == 1) { echo ' style="display:none;"'; } ?> id="setup-menu-item">
          <a href="#" class="open-customizer"><i class="fa fa-cog menu-icon"></i>
-         <?php echo _l('setting_bar_heading'); ?></a>
+         <span class="menu-text">
+           <?php echo _l('setting_bar_heading'); ?>
+         </span>
+          </a>
          <?php } ?>
       </li>
       <?php do_action('after_render_aside_menu'); ?>

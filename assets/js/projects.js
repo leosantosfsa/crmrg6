@@ -4,12 +4,6 @@
   var expenseDropzone;
   $(function() {
 
-      $('.project-tabs-and-opts-toggler').on('click', function(e) {
-          e.preventDefault();
-          slideToggle('.project-menu-panel');
-          slideToggle('.project-toggler-opts');
-      });
-
       init_ajax_search('customer', '#clientid_copy_project.ajax-search');
 
       // remove the divider for project actions in case there is no other li except for pin project
@@ -88,15 +82,7 @@
       if (typeof(Dropbox) != 'undefined' && $('#dropbox-chooser').length > 0) {
           document.getElementById("dropbox-chooser").appendChild(Dropbox.createChooseButton({
               success: function(files) {
-                  $.post(admin_url + 'projects/add_external_file', {
-                      files: files,
-                      project_id: project_id,
-                      external: 'dropbox',
-                      visible_to_customer: $('#pf_visible_to_customer').prop('checked')
-                  }).done(function() {
-                      var location = window.location.href;
-                      window.location.href = location.split('?')[0] + '?group=project_files';
-                  });
+                  saveProjectExternalFile(files, 'dropbox');
               },
               linkType: "preview",
               extensions: app_allowed_files.split(','),
@@ -345,6 +331,20 @@
           }
       });
   });
+  function projectFileGoogleDriveSave(pickData) {
+      saveProjectExternalFile(pickData, 'gdrive');
+  }
+  function saveProjectExternalFile(files, externalType) {
+      $.post(admin_url + 'projects/add_external_file', {
+          files: files,
+          project_id: project_id,
+          external: externalType,
+          visible_to_customer: $('#pf_visible_to_customer').prop('checked')
+      }).done(function() {
+          var location = window.location.href;
+          window.location.href = location.split('?')[0] + '?group=project_files';
+      });
+  }
 
   function milestones_switch_view() {
       $('#milestones-table').toggleClass('hide');
@@ -562,7 +562,7 @@
       }
       var noticeWrapper = $('.recurring-tasks-notice');
       if (status_id == 4 || status_id == 5 || status_id == 3) {
-          if(noticeWrapper.length) {
+          if (noticeWrapper.length) {
               var notice = noticeWrapper.data('notice-text');
               notice = notice.replace('{0}', $(target).data('name'));
               noticeWrapper.html(notice);
@@ -678,7 +678,7 @@
   }
 
   function milestones_kanban() {
-      init_kanban('projects/milestones_kanban', milestones_kanban_update, '.project-milestone', 320, 360, after_milestones_kanban);
+      init_kanban('projects/milestones_kanban', milestones_kanban_update, '.project-milestone', 445, 360, after_milestones_kanban);
   }
 
   function after_milestones_kanban() {

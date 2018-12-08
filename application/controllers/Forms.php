@@ -4,10 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Forms extends Clients_controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function index()
     {
@@ -38,6 +34,23 @@ class Forms extends Clients_controller
         if ($this->input->post('key')) {
             if ($this->input->post('key') == $key) {
                 $post_data = $this->input->post();
+                $required  = [];
+
+                foreach ($data['form_fields'] as $field) {
+                    if (isset($field->required)) {
+                        $required[] = $field->name;
+                    }
+                }
+                if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_lead_form') == 1) {
+                    $required[] = 'accept_terms_and_conditions';
+                }
+
+                foreach ($required as $field) {
+                    if (!isset($post_data[$field]) || isset($post_data[$field]) && empty($post_data[$field])) {
+                        $this->output->set_status_header(422);
+                        die;
+                    }
+                }
 
                 if (get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '' && $form->recaptcha == 1) {
                     if (!do_recaptcha_validation($post_data['g-recaptcha-response'])) {
@@ -356,6 +369,7 @@ class Forms extends Clients_controller
             $data = $this->input->post();
             unset($data['update']);
             $this->leads_model->update($data, $lead->id);
+            redirect($_SERVER['HTTP_REFERER']);
         } elseif ($this->input->post('export') && get_option('gdpr_data_portability_leads') == '1') {
             export_lead_data($lead->id);
         } elseif ($this->input->post('removal_request')) {
@@ -397,10 +411,20 @@ class Forms extends Clients_controller
         $form = do_action('ticket_form_settings', $form);
 
         if ($this->input->post() && $this->input->is_ajax_request()) {
+
             $post_data = $this->input->post();
 
-            if (!isset($post_data['subject']) || isset($post_data['subject']) && empty($post_data['subject'])) {
-                die('Busted');
+            $required = ['subject', 'department', 'email', 'name', 'message', 'priority'];
+
+            if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_ticket_form') == 1) {
+                $required[] = 'accept_terms_and_conditions';
+            }
+
+            foreach ($required as $field) {
+                if (!isset($post_data[$field]) || isset($post_data[$field]) && empty($post_data[$field])) {
+                    $this->output->set_status_header(422);
+                    die;
+                }
             }
 
             if (get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '' && $form->recaptcha == 1) {
@@ -413,13 +437,20 @@ class Forms extends Clients_controller
                 }
             }
 
-            if (isset($post_data['g-recaptcha-response'])) {
-                unset($post_data['g-recaptcha-response']);
-            }
-
-            if (isset($post_data['accept_terms_and_conditions'])) {
-                unset($post_data['accept_terms_and_conditions']);
-            }
+            $post_data = [
+                    'email'      => $post_data['email'],
+                    'name'       => $post_data['name'],
+                    'subject'    => $post_data['subject'],
+                    'department' => $post_data['department'],
+                    'priority'   => $post_data['priority'],
+                    'service'    => isset($post_data['service']) && is_numeric($post_data['service'])
+                    ? $post_data['service']
+                    : null,
+                    'custom_fields' => isset($post_data['custom_fields']) && is_array($post_data['custom_fields'])
+                    ? $post_data['custom_fields']
+                    : [],
+                    'message' => $post_data['message'],
+            ];
 
             $success = false;
 
@@ -434,6 +465,8 @@ class Forms extends Clients_controller
             }
 
             $this->load->model('tickets_model');
+
+            $post_data = do_action('ticket_external_form_insert_data', $post_data);
             $ticket_id = $this->tickets_model->add($post_data);
 
             if ($ticket_id) {

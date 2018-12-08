@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * Default project tabs
  * @param  mixed $project_id project id to format the url
@@ -171,10 +173,10 @@ function get_project_status_by_id($id)
     $statuses = $CI->projects_model->get_project_statuses();
 
     $status = [
-          'id'         => 0,
+          'id'    => 0,
           'color' => '#333',
-          'name'       => '[Status Not Found]',
-          'order'      => 1,
+          'name'  => '[Status Not Found]',
+          'order' => 1,
       ];
 
     foreach ($statuses as $s) {
@@ -280,17 +282,35 @@ function customer_has_projects($customer_id)
 }
 
 /**
- * Get projcet billing type
+ * Get project billing type
  * @param  mixed $project_id
  * @return mixed
  */
 function get_project_billing_type($project_id)
 {
     $CI = & get_instance();
+    $CI->db->select('billing_type');
     $CI->db->where('id', $project_id);
     $project = $CI->db->get('tblprojects')->row();
     if ($project) {
         return $project->billing_type;
+    }
+
+    return false;
+}
+/**
+ * Get project deadline
+ * @param  mixed $project_id
+ * @return mixed
+ */
+function get_project_deadline($project_id)
+{
+    $CI = & get_instance();
+    $CI->db->select('deadline');
+    $CI->db->where('id', $project_id);
+    $project = $CI->db->get('tblprojects')->row();
+    if ($project) {
+        return $project->deadline;
     }
 
     return false;
@@ -402,6 +422,7 @@ function prepare_projects_for_export($customer_id, $contact_id)
  * @param  mixed $id project id
  * @return boolean
  */
-function project_has_recurring_tasks($id) {
-    return total_rows('tblstafftasks','recurring=1 AND rel_id="'.$id.'" AND rel_type="project"') > 0;
+function project_has_recurring_tasks($id)
+{
+    return total_rows('tblstafftasks', 'recurring=1 AND rel_id="' . $id . '" AND rel_type="project"') > 0;
 }

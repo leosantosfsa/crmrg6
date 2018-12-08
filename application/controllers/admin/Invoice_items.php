@@ -3,6 +3,8 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 class Invoice_items extends Admin_controller
 {
+    private $not_importable_fields = ['id'];
+
     public function __construct()
     {
         parent::__construct();
@@ -81,6 +83,39 @@ class Invoice_items extends Admin_controller
         }
     }
 
+    public function import()
+    {
+        if (!has_permission('items', '', 'create')) {
+            access_denied('Items Import');
+        }
+
+        $this->load->library('import/import_items', [], 'import');
+
+        $this->import->setDatabaseFields($this->db->list_fields('tblitems'))
+                     ->setCustomFields(get_custom_fields('items'));
+
+        if ($this->input->post('download_sample') === 'true') {
+            $this->import->downloadSample();
+        }
+
+        if ($this->input->post()
+            && isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
+            $this->import->setSimulation($this->input->post('simulate'))
+                          ->setTemporaryFileLocation($_FILES['file_csv']['tmp_name'])
+                          ->setFilename($_FILES['file_csv']['name'])
+                          ->perform();
+
+            $data['total_rows_post'] = $this->import->totalRows();
+
+            if (!$this->import->isSimulation()) {
+                set_alert('success', _l('import_total_imported', $this->import->totalImported()));
+            }
+        }
+
+        $data['title'] = _l('import');
+        $this->load->view('admin/invoice_items/import', $data);
+    }
+
     public function add_group()
     {
         if ($this->input->post() && has_permission('items', '', 'create')) {
@@ -127,6 +162,31 @@ class Invoice_items extends Admin_controller
             set_alert('warning', _l('problem_deleting', _l('invoice_item_lowercase')));
         }
         redirect(admin_url('invoice_items'));
+    }
+
+    public function bulk_action()
+    {
+        do_action('before_do_bulk_action_for_items');
+        $total_deleted = 0;
+        if ($this->input->post()) {
+            $ids                   = $this->input->post('ids');
+            $has_permission_delete = has_permission('items', '', 'delete');
+            if (is_array($ids)) {
+                foreach ($ids as $id) {
+                    if ($this->input->post('mass_delete')) {
+                        if ($has_permission_delete) {
+                            if ($this->invoice_items_model->delete($id)) {
+                                $total_deleted++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($this->input->post('mass_delete')) {
+            set_alert('success', _l('total_items_deleted', $total_deleted));
+        }
     }
 
     public function search()

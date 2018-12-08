@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * We are registering all widgets here
  * Also action hook is included to add new widgets if needed in my_functions_helper.php

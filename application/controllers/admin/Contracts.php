@@ -428,7 +428,11 @@ class Contracts extends Admin_controller
     public function add_external_attachment()
     {
         if ($this->input->post()) {
-            $this->misc_model->add_attachment_to_database($this->input->post('contract_id'), 'contract', $this->input->post('files'), $this->input->post('external'));
+            $this->misc_model->add_attachment_to_database(
+                $this->input->post('contract_id'),
+                'contract',
+                $this->input->post('files'),
+                $this->input->post('external'));
         }
     }
 

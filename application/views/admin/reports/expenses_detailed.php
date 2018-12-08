@@ -84,8 +84,8 @@
                <td></td>
                <td class="subtotal"></td>
                <td></td>
-               <td></td>
-               <td></td>
+               <td class="tax_1"></td>
+               <td class="tax_2"></td>
                <td class="total_tax"></td>
                <td class="total"></td>
                <td></td>
@@ -156,6 +156,8 @@
         var sums = expenseReportsTable.ajax.json().sums;
         $(this).find('tfoot').addClass('bold');
         $(this).find('tfoot td').eq(0).html("<?php echo _l('expenses_report_total'); ?>");
+        $(this).find('tfoot td.tax_1').html(sums.tax_1);
+        $(this).find('tfoot td.tax_2').html(sums.tax_2);
         $(this).find('tfoot td.subtotal').html(sums.amount);
         $(this).find('tfoot td.total_tax').html(sums.total_tax);
         $(this).find('tfoot td.total').html(sums.amount_with_tax);

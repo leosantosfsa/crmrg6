@@ -61,6 +61,7 @@
                   <?php $value=( isset($client) ? $client->company : ''); ?>
                   <?php $attrs = (isset($client) ? array() : array('autofocus'=>true)); ?>
                   <?php echo render_input( 'company', 'client_company',$value,'text',$attrs); ?>
+                  <div id="company_exists_info" class="hide"></div>
                   <?php if(get_option('company_requires_vat_number_field') == 1){
                      $value=( isset($client) ? $client->vat : '');
                      echo render_input( 'vat', 'client_vat_number',$value);

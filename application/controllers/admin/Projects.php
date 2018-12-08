@@ -121,14 +121,14 @@ class Projects extends Admin_controller
     {
         $data['title'] = _l('project_gant');
 
-        $data['projects_assets'] = true;
+        add_projects_assets();
 
         $selected_statuses = [];
-        $selectedMember = null;
-        $data['statuses'] = $this->projects_model->get_project_statuses();
+        $selectedMember    = null;
+        $data['statuses']  = $this->projects_model->get_project_statuses();
 
         $appliedStatuses = $this->input->get('status');
-        $appliedMember = $this->input->get('member');
+        $appliedMember   = $this->input->get('member');
 
         $allStatusesIds = [];
         foreach ($data['statuses'] as $status) {
@@ -152,14 +152,14 @@ class Projects extends Admin_controller
 
         $data['selected_statuses'] = $selected_statuses;
 
-        if(has_permission('projects','','view')){
-            $selectedMember = $appliedMember;
-            $data['selectedMember'] = $selectedMember;
+        if (has_permission('projects', '', 'view')) {
+            $selectedMember          = $appliedMember;
+            $data['selectedMember']  = $selectedMember;
             $data['project_members'] = $this->projects_model->get_distinct_projects_members();
         }
 
         $data['gantt_data'] = $this->projects_model->get_all_projects_gantt_data([
-            'status'  => $selected_statuses,
+            'status' => $selected_statuses,
             'member' => $selectedMember,
         ]);
 
@@ -314,11 +314,24 @@ class Projects extends Admin_controller
 
             $data['percent'] = $percent;
 
-            $data['projects_assets']       = true;
-            $data['circle_progress_asset'] = true;
+            add_projects_assets();
+            $this->app_scripts->add('circle-progress-js', 'assets/plugins/jquery-circle-progress/circle-progress.min.js');
 
             $other_projects       = [];
-            $other_projects_where = 'id !=' . $id . ' and status = 2';
+            $other_projects_where = 'id != ' . $id;
+
+            $statuses = $this->projects_model->get_project_statuses();
+
+            $other_projects_where .= ' AND (';
+            foreach ($statuses as $status) {
+                if (isset($status['filter_default']) && $status['filter_default']) {
+                    $other_projects_where .= 'status = ' . $status['id'] . ' OR ';
+                }
+            }
+
+            $other_projects_where = rtrim($other_projects_where, ' OR ');
+
+            $other_projects_where .= ')';
 
             if (!has_permission('projects', '', 'view')) {
                 $other_projects_where .= ' AND tblprojects.id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . get_staff_user_id() . ')';
@@ -1092,7 +1105,11 @@ class Projects extends Admin_controller
                 $allow_to_view_tasks = $project_settings->value;
             }
 
+            $deadline = get_project_deadline($id);
+
             echo json_encode([
+                'deadline'            => $deadline,
+                'deadline_formatted'  => $deadline ? _d($deadline) : null,
                 'allow_to_view_tasks' => $allow_to_view_tasks,
                 'billing_type'        => get_project_billing_type($id),
                 'milestones'          => render_select('milestone', $this->projects_model->get_milestones($id), [

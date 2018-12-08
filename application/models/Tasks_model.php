@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Tasks_model extends CRM_Model
 {
     public function __construct()
@@ -391,6 +392,13 @@ class Tasks_model extends CRM_Model
         }
 
         return $tasks;
+    }
+
+    public function get_billable_amount($taskId)
+    {
+        $data = $this->get_billable_task_data($taskId);
+
+        return _format_number($data->total_hours * $data->hourly_rate);
     }
 
     public function get_billable_task_data($task_id)
@@ -947,7 +955,7 @@ class Tasks_model extends CRM_Model
                 $this->projects_model->log_activity($task->rel_id, 'project_activity_new_task_comment', $task->name, $task->visible_to_client);
             }
 
-            $this->_send_task_responsible_users_notification($description, $data['taskid'], false, 'task-commented', $additional_data);
+            $this->_send_task_responsible_users_notification($description, $data['taskid'], false, 'task-commented', $additional_data, $insert_id);
             $this->_send_customer_contacts_notification($data['taskid'], 'task-commented-to-contacts');
 
             do_action('task_comment_added', ['task_id' => $data['taskid'], 'comment_id' => $insert_id]);
@@ -1111,15 +1119,16 @@ class Tasks_model extends CRM_Model
     public function get_task_attachments($taskid, $where = [])
     {
         $this->db->select(implode(', ', prefixed_table_fields_array('tblfiles')) . ', tblstafftaskcomments.id as comment_file_id');
-        $this->db->where('rel_id', $taskid);
-        $this->db->where('rel_type', 'task');
+        $this->db->where('tblfiles.rel_id', $taskid);
+        $this->db->where('tblfiles.rel_type', 'task');
 
         if ((is_array($where) && count($where) > 0) || (is_string($where) && $where != '')) {
             $this->db->where($where);
         }
 
         $this->db->join('tblstafftaskcomments', 'tblstafftaskcomments.file_id = tblfiles.id', 'left');
-        $this->db->order_by('dateadded', 'desc');
+        $this->db->join('tblstafftasks', 'tblstafftasks.id = tblfiles.rel_id');
+        $this->db->order_by('tblfiles.dateadded', 'desc');
 
         return $this->db->get('tblfiles')->result_array();
     }
@@ -1599,6 +1608,10 @@ class Tasks_model extends CRM_Model
             $this->db->where('rel_type', 'task');
             $this->db->delete('tbltags_in');
 
+            $this->db->where('rel_type', 'task');
+            $this->db->where('rel_id', $id);
+            $this->db->delete('tblreminders');
+
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'task');
             $attachments = $this->db->get('tblfiles')->result_array();
@@ -1627,7 +1640,7 @@ class Tasks_model extends CRM_Model
      * @param  boolean $excludeid   excluded staff id to not send the notifications
      * @return boolean
      */
-    private function _send_task_responsible_users_notification($description, $taskid, $excludeid = false, $email_template = '', $additional_notification_data = '')
+    private function _send_task_responsible_users_notification($description, $taskid, $excludeid = false, $email_template = '', $additional_notification_data = '', $comment_id = false)
     {
         $this->load->model('staff_model');
         $staff         = $this->staff_model->get('', ['active' => 1]);
@@ -1645,10 +1658,16 @@ class Tasks_model extends CRM_Model
             }
 
             if ($this->should_staff_receive_notification($member['staffid'], $taskid)) {
+                $link = '#taskid=' . $taskid;
+
+                if ($comment_id) {
+                    $link .= '#comment_' . $comment_id;
+                }
+
                 $notified = add_notification([
                     'description'     => $description,
                     'touserid'        => $member['staffid'],
-                    'link'            => '#taskid=' . $taskid,
+                    'link'            => $link,
                     'additional_data' => $additional_notification_data,
                 ]);
 
@@ -1770,12 +1789,21 @@ class Tasks_model extends CRM_Model
         return true;
     }
 
-    public function timer_tracking($task_id = '', $timer_id = '', $note = '')
+    /**
+     * Timer action, START/STOP Timer
+     * @param  mixed  $task_id   task id
+     * @param  mixed  $timer_id  timer_id to stop the timer
+     * @param  string  $note      note for timer
+     * @param  boolean $adminStop is admin want to stop timer from another staff member
+     * @return boolean
+     */
+    public function timer_tracking($task_id = '', $timer_id = '', $note = '', $adminStop = false)
     {
         if ($task_id == '' && $timer_id == '') {
             return false;
         }
-        if ($task_id !== '0') {
+
+        if ($task_id !== '0' && $adminStop == false) {
             if (!$this->is_task_assignee(get_staff_user_id(), $task_id)) {
                 return false;
             } elseif ($this->is_task_billed($task_id)) {
@@ -1793,15 +1821,6 @@ class Tasks_model extends CRM_Model
             $newTimer = true;
         }
 
-        /* if($timer === null || ($timer != null && $timer->task_id != '0')){
-             $newTimer = true;
-         } else if(total_rows('tbltaskstimers', array(
-                 'staff_id' => get_staff_user_id(),
-                 'task_id' => $task_id
-             )) == 0 && $timer == null) {
-             $newTimer = true;
-         }
-*/
         if ($newTimer) {
             $this->db->select('hourly_rate');
             $this->db->from('tblstaff');
@@ -1839,6 +1858,7 @@ class Tasks_model extends CRM_Model
 
             return true;
         }
+
         if ($timer) {
             // time already ended
             if ($timer->end_time != null) {
@@ -2130,10 +2150,32 @@ class Tasks_model extends CRM_Model
         return false;
     }
 
+    public function get_reminders($task_id)
+    {
+        $this->db->where('rel_id', $task_id);
+        $this->db->where('rel_type', 'task');
+        $this->db->order_by('isnotified,date', 'ASC');
+
+        return $this->db->get('tblreminders')->result_array();
+    }
+
+    public function get_staff_members_that_can_access_task($task_id)
+    {
+        return $this->db->query("SELECT * FROM tblstaff
+            WHERE (
+                    admin=1
+                    OR staffid IN (SELECT staffid FROM tblstafftaskassignees WHERE taskid='.$task_id.')
+                    OR staffid IN (SELECT staffid FROM tblstafftasksfollowers WHERE taskid='.$task_id.')
+                    OR staffid IN (SELECT addedfrom FROM tblstafftasks WHERE id='.$task_id.' AND is_added_from_contact=0)
+                    OR staffid IN(SELECT staffid FROM tblstaffpermissions JOIN tblpermissions ON tblpermissions.permissionid=tblstaffpermissions.permissionid WHERE tblpermissions.name = \"tasks\" AND can_view=1)
+                )
+            AND active=1")->result_array();
+    }
+
     private function should_staff_receive_notification($staffid, $taskid)
     {
-        return ($this->is_task_follower($staffid, $taskid)
-                || $this->is_task_assignee($staffid, $taskid)
+        return ($this->is_task_assignee($staffid, $taskid)
+                || $this->is_task_follower($staffid, $taskid)
                 || $this->is_task_creator($staffid, $taskid)
                 || $this->staff_has_commented_on_task($staffid, $taskid));
     }

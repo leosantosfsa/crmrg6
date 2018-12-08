@@ -6,13 +6,8 @@
     <a href="#colors" aria-controls="colors" role="tab" data-toggle="tab"><?php echo _l('settings_calendar_colors_heading'); ?></a>
   </li>
 </ul>
-
 <div class="tab-content mtop30">
   <div role="tabpanel" class="tab-pane active" id="general">
-
-    <a href="<?php echo admin_url('departments'); ?>" class="mbot30 display-block"><?php echo _l('setup_calendar_by_departments'); ?></a>
-    <?php echo render_input('settings[google_calendar_main_calendar]','settings_gcal_main_calendar_id',get_option('google_calendar_main_calendar'),'text',array('data-toggle'=>'tooltip','title'=>'settings_gcal_main_calendar_id_help')); ?>
-    <hr />
     <?php echo render_input('settings[calendar_events_limit]','calendar_events_limit',get_option('calendar_events_limit'),'number'); ?>
     <hr />
     <div class="form-group">
@@ -65,6 +60,8 @@
          <?php render_yes_no_option('show_credit_note_reminders_on_calendar','show_credit_note_reminders_on_calendar'); ?>
        </div>
         <div class="col-md-6">
+          <?php render_yes_no_option('show_ticket_reminders_on_calendar','calendar_ticket_reminder'); ?>
+          <br />
           <?php render_yes_no_option('show_invoices_on_calendar','show_invoices_on_calendar'); ?>
           <hr />
           <?php render_yes_no_option('show_estimates_on_calendar','show_estimates_on_calendar'); ?>
@@ -78,7 +75,6 @@
           <?php render_yes_no_option('calendar_only_assigned_tasks','calendar_only_assigned_tasks'); ?>
           <hr />
           <?php render_yes_no_option('show_projects_on_calendar','show_projects_on_calendar'); ?>
-          <hr />
         </div>
 
      </div>

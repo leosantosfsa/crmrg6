@@ -2,7 +2,7 @@
     <?php if($ticket->project_id != 0){ ?>
     <div class="col-md-12">
         <div class="alert alert-info">
-            <?php echo _l('ticket_linked_to_project','<a href="'.site_url('clients/project/'.$ticket->project_id).'">'.get_project_name_by_id($ticket->project_id).'</a>') ;?>
+            <?php echo _l('ticket_linked_to_project','<a href="'.site_url('clients/project/'.$ticket->project_id).'"><b>'.get_project_name_by_id($ticket->project_id).'</b></a>') ;?>
         </div>
     </div>
     <?php } ?>

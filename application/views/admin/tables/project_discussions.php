@@ -24,7 +24,7 @@ foreach ($rResult as $aRow) {
             if (has_permission('projects', '', 'edit') || has_permission('projects', '', 'delete')) {
                 $_data .= '<div class="row-options">';
                 if (has_permission('projects', '', 'edit')) {
-                    $_data .= '<a href="#" onclick="edit_discussion(this,' . $aRow['id'] . '); return false;" data-subject="'.$aRow['subject'].'" data-description="'.clear_textarea_breaks($aRow['description']).'" data-show-to-customer="'.$aRow['show_to_customer'].'">'._l('edit').'</a>';
+                    $_data .= '<a href="#" onclick="edit_discussion(this,' . $aRow['id'] . '); return false;" data-subject="'.$aRow['subject'].'" data-description="'.htmlentities(clear_textarea_breaks($aRow['description'])).'" data-show-to-customer="'.$aRow['show_to_customer'].'">'._l('edit').'</a>';
                 }
                 if (has_permission('projects', '', 'delete')) {
                      $_data .= (has_permission('projects', '', 'edit') ? ' | ' : '') . '<a href="#" onclick="delete_project_discussion(' . $aRow['id'] . '); return false;" class="text-danger">'._l('delete').'</a>';

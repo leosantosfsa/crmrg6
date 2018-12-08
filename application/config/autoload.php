@@ -61,6 +61,8 @@ $autoload['packages'] = [];
 */
 $autoload['libraries'] = [
     'database',
+    'app_scripts',
+    'app_css',
     'user_agent',
     'image_lib',
     'encryption',
@@ -112,6 +114,7 @@ $autoload['helper'] = [
         'file',
         'form',
         'action_hooks',
+        'assets',
         'user_meta',
         'emails_tracking',
         'general',

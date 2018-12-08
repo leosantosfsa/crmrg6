@@ -290,6 +290,22 @@
                         }
                         ?>
                   </div>
+                      <?php if(!empty($proposal->signature)) { ?>
+                        <div class="row mtop25">
+                           <div class="col-md-6 col-md-offset-6 text-right">
+                              <p class="bold"><?php echo _l('document_customer_signature_text'); ?>
+                                 <?php if(has_permission('proposals','','delete')){ ?>
+                                 <a href="<?php echo admin_url('proposals/clear_signature/'.$proposal->id); ?>" data-toggle="tooltip" title="<?php echo _l('clear_signature'); ?>" class="_delete text-danger">
+                                 <i class="fa fa-remove"></i>
+                                 </a>
+                                 <?php } ?>
+                              </p>
+                              <div class="pull-right">
+                                 <img src="<?php echo site_url('download/preview_image?path='.protected_file_url_by_path(get_upload_path_by_type('proposal').$proposal->id.'/'.$proposal->signature)); ?>" class="img-responsive" alt="">
+                              </div>
+                           </div>
+                        </div>
+                        <?php } ?>
                </div>
                <div role="tabpanel" class="tab-pane" id="tab_comments">
                   <div class="row proposal-comments mtop15">

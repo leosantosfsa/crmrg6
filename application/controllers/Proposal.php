@@ -4,10 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Proposal extends Clients_controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function index($id, $hash)
     {
@@ -97,7 +93,7 @@ class Proposal extends Clients_controller
         $data['comments'] = $this->proposals_model->get_comments($id);
         add_views_tracking('proposal', $id);
         do_action('proposal_html_viewed', $id);
-        $data['exclude_reset_css'] = true;
+        $this->app_css->remove('reset-css','customers-area-default');
         $data                      = do_action('proposal_customers_area_view_data', $data);
         no_index_customers_area();
         $this->data = $data;

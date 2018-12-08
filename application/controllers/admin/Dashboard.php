@@ -55,8 +55,7 @@ class Dashboard extends Admin_controller
 
         $this->load->model('projects_model');
         $data['projects_activity'] = $this->projects_model->get_activity('', do_action('projects_activity_dashboard_limit', 20));
-        // To load js files
-        $data['calendar_assets'] = true;
+        add_calendar_assets();
         $this->load->model('utilities_model');
         $this->load->model('estimates_model');
         $data['estimate_statuses'] = $this->estimates_model->get_statuses();

@@ -307,10 +307,6 @@
       var serverData = {};
       serverData.rel_id = _rel_id.val();
       data.type = _rel_type.val();
-      <?php if(isset($proposal)){ ?>
-        serverData.connection_type = 'proposal';
-        serverData.connection_id = '<?php echo $proposal->id; ?>';
-      <?php } ?>
       init_ajax_search(_rel_type.val(),_rel_id,serverData);
    }
    function validate_proposal_form(){

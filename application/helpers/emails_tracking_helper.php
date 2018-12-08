@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 add_action('after_parse_email_template_message', 'email_tracking_inject_in_body');
 
 function email_tracking_inject_in_body($template)

@@ -150,15 +150,30 @@ foreach ($rResult as $aRow) {
         }
 
         if (!$task_is_billed) {
-            if ($aRow['end_time'] == null && $aRow['staff_id'] == get_staff_user_id()) {
-                $options .= icon_btn('#', 'clock-o', 'btn-danger', [
-                'onclick'     => 'timer_action(this,' . $aRow['task_id'] . ',' . $aRow['id'] . ');return false',
-                'data-toggle' => 'tooltip',
-                'data-title'  => _l('timesheet_stop_timer'),
-                ]);
+            if ($aRow['end_time'] == null && ($aRow['staff_id'] == get_staff_user_id() || is_admin())) {
+
+                $adminStop = $aRow['staff_id'] != get_staff_user_id() ? 1 : 0;
+
+                $options .= ' <a href="#"
+                    class="btn btn-danger btn-icon"
+                    data-toggle="popover"
+                    data-placement="bottom"
+                    data-html="true"
+                    data-trigger="manual"
+                    data-title="' . _l('note') . "\"
+                    data-content='" . render_textarea('timesheet_note') . '
+                    <button type="button"
+                    onclick="timer_action(this, ' . $aRow['task_id'] . ', ' . $aRow['id'] . ', '.$adminStop.');"
+                    class="btn btn-info btn-xs">' . _l('save')
+                    . "</button>'
+                    class=\"text-danger\"
+                    onclick=\"return false;\">
+                    <span data-toggle=\"tooltip\" data-title='" . _l('timesheet_stop_timer') . "'>
+                          <i class=\"fa fa-clock-o\"></i>
+                          </span>
+                    </a>'";
             }
         }
-
 
         if (has_permission('projects', '', 'delete') || has_permission('tasks', '', 'delete') || $aRow['staff_id'] == get_staff_user_id()) {
             $btn_icon_class = 'btn-danger _delete';

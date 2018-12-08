@@ -49,6 +49,7 @@ function get_client_email_templates_slugs()
         'subscription-payment-succeeded',
         'subscription-canceled',
         'client-registration-confirmed',
+        'contact-verification-email',
     ];
 
     return do_action('client_email_templates', $client_email_templates_slugs);
@@ -93,6 +94,8 @@ function get_staff_email_templates_slugs()
         'gdpr-removal-request',
         'gdpr-removal-request-lead',
         'contract-signed-to-staff',
+        'customer-subscribed-to-staff',
+        'new-customer-profile-file-uploaded-to-staff',
     ];
 
     return do_action('staff_email_templates', $staff_email_templates_slugs);

@@ -54,7 +54,7 @@ function active_clients_theme()
         show_error('Default theme is not set');
     }
     if (!is_dir(APPPATH . 'views/themes/' . $theme)) {
-        show_error('Theme does not exists');
+        show_error('Customars area default theme folder does not exists.');
     }
 
     return $theme;
@@ -69,6 +69,7 @@ add_action('app_customers_head', 'do_theme_required_head');
 function do_theme_required_head($params = [])
 {
     ob_start();
+
     $isRTL = (is_rtl(true) ? 'true' : 'false');
     echo get_custom_fields_hyperlink_js_function();
     $locale = get_locale_key($params['language']);
@@ -76,18 +77,18 @@ function do_theme_required_head($params = [])
     $date_format = get_option('dateformat');
     $date_format = explode('|', $date_format);
     $date_format = $date_format[0]; ?>
-    <?php if (get_option('use_recaptcha_customers_area') == 1 && get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '') {
-        ?>
-    <script src='https://www.google.com/recaptcha/api.js'></script>
-    <?php
-    } ?>
+
+    <?php if (get_option('use_recaptcha_customers_area') == 1
+        && get_option('recaptcha_secret_key') != ''
+        && get_option('recaptcha_site_key') != '') {?>
+        <script src='https://www.google.com/recaptcha/api.js'></script>
+    <?php } ?>
+
     <script>
-        <?php if (is_staff_logged_in()) {
-        ?>
+        <?php if (is_staff_logged_in()) { ?>
           var admin_url = '<?php echo admin_url(); ?>';
-          <?php
-    } ?>
-          var site_url = '<?php echo site_url(''); ?>';
+        <?php } ?>
+        var site_url = '<?php echo site_url(''); ?>';
         // Settings required for javascript
         var calendar_events_limit = "<?php echo get_option('calendar_events_limit'); ?>";
         var maximum_allowed_ticket_attachments = "<?php echo get_option('maximum_allowed_ticket_attachments'); ?>";
@@ -104,6 +105,10 @@ function do_theme_required_head($params = [])
         var browser_not_support_drag_and_drop = "<?php echo _l('browser_not_support_drag_and_drop'); ?>";
         var remove_file = "<?php echo _l('remove_file'); ?>";
         var tables_pagination_limit = "<?php echo get_option('tables_pagination_limit'); ?>";
+        var enable_google_picker = "<?php echo get_option('enable_google_picker'); ?>";
+        var google_client_id = "<?php echo get_option('google_client_id'); ?>";
+        var google_api = "<?php echo get_option('google_api_key'); ?>";
+        var acceptable_mimes = "<?php echo get_form_accepted_mimes(); ?>";
         var date_format = "<?php echo $date_format; ?>";
         var time_format = "<?php echo get_option('time_format'); ?>";
         var default_view_calendar = "<?php echo get_option('default_view_calendar'); ?>";

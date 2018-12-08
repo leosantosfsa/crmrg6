@@ -256,13 +256,13 @@ function get_password_merge_field($data, $staff, $type)
 
     if ($staff == true) {
         if ($type == 'forgot') {
-            $fields['{reset_password_url}'] = site_url('authentication/reset_password/' . floatval($staff) . '/' . $data['userid'] . '/' . $data['new_pass_key']);
+            $fields['{reset_password_url}'] = admin_url('authentication/reset_password/' . floatval($staff) . '/' . $data['userid'] . '/' . $data['new_pass_key']);
         }
     } else {
         if ($type == 'forgot') {
-            $fields['{reset_password_url}'] = site_url('clients/reset_password/' . floatval($staff) . '/' . $data['userid'] . '/' . $data['new_pass_key']);
+            $fields['{reset_password_url}'] = site_url('authentication/reset_password/' . floatval($staff) . '/' . $data['userid'] . '/' . $data['new_pass_key']);
         } elseif ($type == 'set') {
-            $fields['{set_password_url}'] = site_url('authentication/set_password/' . $staff . '/' . $data['userid'] . '/' . $data['new_pass_key']);
+            $fields['{set_password_url}'] = admin_url('authentication/set_password/' . $staff . '/' . $data['userid'] . '/' . $data['new_pass_key']);
         }
     }
 
@@ -283,20 +283,22 @@ function get_client_contact_merge_fields($client_id, $contact_id = '', $password
         $contact_id = get_primary_contact_user_id($client_id);
     }
 
-    $fields['{contact_firstname}']          = '';
-    $fields['{contact_lastname}']           = '';
-    $fields['{contact_email}']              = '';
-    $fields['{contact_phonenumber}']        = '';
-    $fields['{client_company}']             = '';
-    $fields['{client_phonenumber}']         = '';
-    $fields['{client_country}']             = '';
-    $fields['{client_city}']                = '';
-    $fields['{client_zip}']                 = '';
-    $fields['{client_state}']               = '';
-    $fields['{client_address}']             = '';
-    $fields['{password}']                   = '';
-    $fields['{client_vat_number}']          = '';
-    $fields['{contact_public_consent_url}'] = '';
+    $fields['{contact_firstname}']                 = '';
+    $fields['{contact_lastname}']                  = '';
+    $fields['{contact_email}']                     = '';
+    $fields['{contact_phonenumber}']               = '';
+    $fields['{client_company}']                    = '';
+    $fields['{client_phonenumber}']                = '';
+    $fields['{client_country}']                    = '';
+    $fields['{client_city}']                       = '';
+    $fields['{client_zip}']                        = '';
+    $fields['{client_state}']                      = '';
+    $fields['{client_address}']                    = '';
+    $fields['{password}']                          = '';
+    $fields['{client_vat_number}']                 = '';
+    $fields['{contact_public_consent_url}']        = '';
+    $fields['{email_verification_url}']            = '';
+    $fields['{customer_profile_files_admin_link}'] = '';
 
     $CI = & get_instance();
 
@@ -320,20 +322,22 @@ function get_client_contact_merge_fields($client_id, $contact_id = '', $password
         $fields['{contact_email}']              = $contact->email;
         $fields['{contact_phonenumber}']        = $contact->phonenumber;
         $fields['{contact_public_consent_url}'] = contact_consent_url($contact->id);
+        $fields['{email_verification_url}']     = site_url('verification/verify/' . $contact->id . '/' . $contact->email_verification_key);
     }
 
     if (!empty($client->vat)) {
         $fields['{client_vat_number}'] = $client->vat;
     }
 
-    $fields['{client_company}']     = $client->company;
-    $fields['{client_phonenumber}'] = $client->phonenumber;
-    $fields['{client_country}']     = get_country_short_name($client->country);
-    $fields['{client_city}']        = $client->city;
-    $fields['{client_zip}']         = $client->zip;
-    $fields['{client_state}']       = $client->state;
-    $fields['{client_address}']     = $client->address;
-    $fields['{client_id}']          = $client_id;
+    $fields['{customer_profile_files_admin_link}'] = admin_url('clients/client/' . $client->userid . '?group=attachments');
+    $fields['{client_company}']                    = $client->company;
+    $fields['{client_phonenumber}']                = $client->phonenumber;
+    $fields['{client_country}']                    = get_country_short_name($client->country);
+    $fields['{client_city}']                       = $client->city;
+    $fields['{client_zip}']                        = $client->zip;
+    $fields['{client_state}']                      = $client->state;
+    $fields['{client_address}']                    = $client->address;
+    $fields['{client_id}']                         = $client_id;
 
     if ($password != '') {
         $fields['{password}'] = $password;
@@ -404,9 +408,10 @@ function get_subscription_merge_fields($id)
         return $fields;
     }
 
+    $fields['{subscription_link}']        = site_url('subscription/' . $subscription->hash);
     $fields['{subscription_id}']          = $subscription->id;
     $fields['{subscription_name}']        = $subscription->name;
-    $fields['{subscription_description}'] = $fields['{subscription_link}'] = site_url('subscription/' . $subscription->hash);
+    $fields['{subscription_description}'] = $subscription->description;
 
     $hook_data['fields_to']    = 'subscription';
     $hook_data['merge_fields'] = $fields;
@@ -991,10 +996,13 @@ function get_available_merge_fields()
                     'available' => [
                         'staff',
                         'tasks',
-                        'project',
                         'gdpr',
                     ],
                     'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-file-uploaded-to-staff',
+                        'new-project-discussion-comment-to-staff',
+                        'staff-added-as-project-member',
                         'contract-expiration-to-staff',
                         'contract-signed-to-staff',
                         'contract-comment-to-admin',
@@ -1006,10 +1014,13 @@ function get_available_merge_fields()
                     'available' => [
                         'staff',
                         'tasks',
-                        'project',
                         'gdpr',
                     ],
                     'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-file-uploaded-to-staff',
+                        'new-project-discussion-comment-to-staff',
+                        'staff-added-as-project-member',
                         'contract-expiration-to-staff',
                         'contract-signed-to-staff',
                         'contract-comment-to-admin',
@@ -1020,7 +1031,12 @@ function get_available_merge_fields()
                     'key'       => '{staff_email}',
                     'available' => [
                         'staff',
-                        'project',
+                    ],
+                    'templates' => [
+                        'new-project-discussion-created-to-staff',
+                        'new-project-file-uploaded-to-staff',
+                        'new-project-discussion-comment-to-staff',
+                        'staff-added-as-project-member',
                     ],
                 ],
                 [
@@ -1162,24 +1178,6 @@ function get_available_merge_fields()
                     ],
                 ],
                 [
-                    'name'      => 'Set New Password Url',
-                    'key'       => '{set_password_url}',
-                    'available' => [
-                    ],
-                    'templates' => [
-                        'contact-set-password',
-                    ],
-                ],
-                [
-                    'name'      => 'Reset Password Url',
-                    'key'       => '{reset_password_url}',
-                    'available' => [
-                    ],
-                    'templates' => [
-                        'contact-forgot-password',
-                    ],
-                ],
-                [
                     'name'      => 'Contact Email',
                     'key'       => '{contact_email}',
                     'available' => [
@@ -1196,6 +1194,33 @@ function get_available_merge_fields()
                         'contract-expiration',
                          'send-contract',
                           'contract-comment-to-client',
+                    ],
+                ],
+                   [
+                    'name'      => 'Set New Password URL',
+                    'key'       => '{set_password_url}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'contact-set-password',
+                    ],
+                ],
+                [
+                    'name'      => 'Email Verification URL',
+                    'key'       => '{email_verification_url}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'contact-verification-email',
+                    ],
+                ],
+                [
+                    'name'      => 'Reset Password URL',
+                    'key'       => '{reset_password_url}',
+                    'available' => [
+                    ],
+                    'templates' => [
+                        'contact-forgot-password',
                     ],
                 ],
                 [
@@ -1420,6 +1445,16 @@ function get_available_merge_fields()
                     ],
                     'templates' => [
                         'client-statement',
+                    ],
+                ],
+                [
+                    'name'      => 'Customer Files Admin Link',
+                    'key'       => '{customer_profile_files_admin_link}',
+                    'available' => [
+
+                    ],
+                    'templates' => [
+                        'new-customer-profile-file-uploaded-to-staff',
                     ],
                 ],
             ],

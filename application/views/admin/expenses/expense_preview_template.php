@@ -52,10 +52,10 @@
             </div>
          </div>
          <div class="row">
-            <div class="col-md-6">
-               <h3 class="bold no-margin"><?php echo $expense->category_name; ?></h3>
+            <div class="col-md-6" id="expenseHeadings">
+               <h3 class="bold no-margin" id="expenseCategory"><?php echo $expense->category_name; ?></h3>
                <?php if(!empty($expense->expense_name)){ ?>
-               <h4 class="text-muted font-medium no-mtop"><?php echo $expense->expense_name; ?></h4>
+               <h4 class="text-muted font-medium no-mtop" id="expenseName"><?php echo $expense->expense_name; ?></h4>
                <?php } ?>
             </div>
             <div class="col-md-6 _buttons text-right">
@@ -75,6 +75,9 @@
                   <?php if(has_permission('expenses','','edit')){ ?>
                   <a class="btn btn-default btn-with-tooltip" href="<?php echo admin_url('expenses/expense/'.$expense->expenseid); ?>" data-toggle="tooltip" data-placement="bottom" title="<?php echo _l('expense_edit'); ?>"><i class="fa fa-pencil-square-o"></i></a>
                   <?php } ?>
+                  <a class="btn btn-default btn-with-tooltip" href="#" onclick="print_expense_information(); return false;" data-toggle="tooltip" data-placement="bottom" title="<?php echo _l('print'); ?>">
+                    <i class="fa fa-print"></i>
+                  </a>
                   <?php if(has_permission('expenses','','create')){ ?>
                   <a class="btn btn-default btn-with-tooltip" href="<?php echo admin_url('expenses/copy/'.$expense->expenseid); ?>" data-toggle="tooltip" data-placement="bottom" title="<?php echo _l('expense_copy'); ?>"><i class="fa fa-clone"></i></a>
                   <?php } ?>
@@ -135,10 +138,13 @@
                <hr class="hr-panel-heading" />
                <?php } ?>
                <div class="col-md-6">
-                  <p><span class="bold font-medium"><?php echo _l('expense_amount'); ?></span> <span class="text-danger bold font-medium"><?php echo format_money($expense->amount,$expense->currency_data->symbol); ?></span>
+                  <p>
+                    <div id="amountWrapper">
+                      <span class="bold font-medium"><?php echo _l('expense_amount'); ?></span> <span class="text-danger bold font-medium"><?php echo format_money($expense->amount,$expense->currency_data->symbol); ?></span>
+                    </div>
                      <?php if($expense->paymentmode != '0' && !empty($expense->paymentmode)){
                         ?>
-                     <span class="text-muted"><?php echo _l('expense_paid_via',$expense->payment_mode_name); ?></span>
+                     <span class="text-muted"><?php echo _l('expense_paid_via',$expense->payment_mode_name); ?></span><br />
                      <?php } ?>
                      <?php
                         if($expense->tax != 0){
@@ -154,12 +160,12 @@
                         echo '<p class="font-medium bold text-danger">' . _l('total_with_tax') . ': ' . format_money($total,$expense->currency_data->symbol) . '</p>';
                         }
                         ?>
+                           <p><span class="bold"><?php echo _l('expense_date'); ?></span> <span class="text-muted"><?php echo _d($expense->date); ?></span></p>
                      <?php if($expense->billable == 1){
-                        echo '<br />';
-                        echo '<br />';
                         if($expense->invoiceid == NULL){
                           echo '<span class="text-danger">'._l('expense_invoice_not_created').'</span>';
                         } else {
+                          echo '<span class="bold">'.format_invoice_number($invoice->id).' - </span>';
                           if($invoice->status == 2){
                             echo '<span class="text-success">'._l('expense_billed').'</span>';
                           } else {
@@ -168,9 +174,6 @@
                         }
                         } ?>
                   </p>
-                  <p><span class="bold"><?php echo _l('expense_date'); ?></span> <span class="text-muted"><?php echo _d($expense->date); ?></span></p>
-                  <br />
-                  <br />
                   <?php if(!empty($expense->reference_no)){ ?>
                   <p class="bold mbot15"><?php echo _l('expense_ref_noe'); ?> <span class="text-muted"><?php echo $expense->reference_no; ?></span></p>
                   <?php } ?>
@@ -203,7 +206,7 @@
                   <p class="text-muted mbot15"><?php echo $expense->note; ?></p>
                   <?php } ?>
                </div>
-               <div class="col-md-6">
+               <div class="col-md-6" id="expenseReceipt">
                   <h4 class="bold mbot25"><?php echo _l('expense_receipt'); ?></h4>
                   <?php if(empty($expense->attachment)) { ?>
                   <?php echo form_open('admin/expenses/add_expense_attachment/'.$expense->expenseid,array('class'=>'mtop10 dropzone dropzone-expense-preview dropzone-manual','id'=>'expense-receipt-upload')); ?>

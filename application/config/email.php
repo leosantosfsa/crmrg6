@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') OR exit('No direct script access allowed');
+
 $config['useragent']    = get_option('mail_engine'); // phpmailer or codeigniter
 
 $config['protocol']     = get_option('email_protocol');

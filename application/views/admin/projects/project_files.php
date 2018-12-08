@@ -6,10 +6,15 @@
   <input type="checkbox" name="visible_to_customer" id="pf_visible_to_customer" class="onoffswitch-checkbox">
   <label class="onoffswitch-label" for="pf_visible_to_customer"></label>
 </div>
-<div class="text-right pull-right">
-  <div id="dropbox-chooser" style="margin-top:-25px;"></div>
+<div class="text-right" style="margin-top:-25px;">
+   <button class="gpicker" data-on-pick="projectFileGoogleDriveSave">
+    <i class="fa fa-google" aria-hidden="true"></i>
+    <?php echo _l('choose_from_google_drive'); ?>
+  </button>
+  <div id="dropbox-chooser"></div>
 </div>
-<div class="clearfix mtop25"></div>
+<div class="clearfix"></div>
+<div class="mtop25"></div>
 <div class="modal fade bulk_actions" id="project_files_bulk_actions" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">

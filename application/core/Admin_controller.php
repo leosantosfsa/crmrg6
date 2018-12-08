@@ -34,10 +34,11 @@ class Admin_controller extends CRM_Controller
         $this->authentication_model->autologin();
 
         if (!is_staff_logged_in()) {
-            if (strpos(current_full_url(), 'authentication/admin') === false) {
+            if (strpos(current_full_url(), get_admin_uri() . '/authentication') === false) {
                 redirect_after_login_to_current_url();
             }
-            redirect(site_url('authentication/admin'));
+
+            redirect(admin_url('authentication'));
         }
 
         // In case staff have setup logged in as client - This is important don't change it
@@ -53,24 +54,18 @@ class Admin_controller extends CRM_Controller
 
         $this->load->model('staff_model');
 
-        $is_ajax_request = $this->input->is_ajax_request();
         // Do not check on ajax requests
-        if (!$is_ajax_request) {
+        if (!$this->input->is_ajax_request()) {
             if (ENVIRONMENT == 'production' && is_admin()) {
                 if ($this->config->item('encryption_key') === '') {
-                    die('<h1>Encryption key not sent in application/config/config.php</h1>For more info visit <a href="http://www.perfexcrm.com/knowledgebase/encryption-key/">Encryption key explained</a> FAQ3');
+                    die('<h1>Encryption key not sent in application/config/app-config.php</h1>For more info visit <a href="https://help.perfexcrm.com/encryption-key-explained/">Encryption key explained</a> FAQ3');
                 } elseif (strlen($this->config->item('encryption_key')) != 32) {
                     die('<h1>Encryption key length should be 32 charachters</h1>For more info visit <a href="https://help.perfexcrm.com/encryption-key-explained/">Encryption key explained</a>');
                 }
             }
 
             _maybe_system_setup_warnings();
-
-            if (is_mobile()) {
-                $this->session->set_userdata(['is_mobile' => true]);
-            } else {
-                $this->session->unset_userdata('is_mobile');
-            }
+            is_mobile() ? $this->session->set_userdata(['is_mobile' => true]) : $this->session->unset_userdata('is_mobile');
         }
 
         $currentUser = $this->staff_model->get(get_staff_user_id());
@@ -78,25 +73,27 @@ class Admin_controller extends CRM_Controller
         // Deleted or inactive but have session
         if (!$currentUser || $currentUser->active == 0) {
             $this->authentication_model->logout();
-            redirect(site_url('authentication/admin'));
+            redirect(admin_url('authentication'));
         }
 
         $GLOBALS['current_user'] = $currentUser;
-        $language                = load_admin_language();
+        $GLOBALS['language']     = load_admin_language();
+        $GLOBALS['locale']       = get_locale_key($GLOBALS['language']);
+
+        init_admin_assets();
 
         $auto_loaded_vars = [
-            'current_user'         => $currentUser,
-            'app_language'         => $language,
-            'locale'               => get_locale_key($language),
-            'current_version'      => $this->current_db_version,
-            'task_statuses'        => $this->tasks_model->get_statuses(),
-            'unread_notifications' => $currentUser->total_unread_notifications, // Deprecated
+            'current_user'    => $currentUser,
+            'app_language'    => $GLOBALS['language'],
+            'locale'          => $GLOBALS['locale'],
+            'current_version' => $this->current_db_version,
+            'task_statuses'   => $this->tasks_model->get_statuses(),
         ];
 
         $auto_loaded_vars = do_action('before_set_auto_loaded_vars_admin_area', $auto_loaded_vars);
         $this->load->vars($auto_loaded_vars);
 
-        if (!$is_ajax_request) {
+        if (!$this->input->is_ajax_request()) {
             $this->init_quick_actions_links();
         }
     }

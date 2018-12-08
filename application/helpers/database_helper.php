@@ -846,3 +846,28 @@ function get_country_name($id)
 
     return '';
 }
+
+function update_staff_recent_search_history($history, $staff_id = null)
+{
+    $totalRecentSearches = do_action('total_recent_searches', 5);
+    $history = array_reverse($history);
+    $history = array_unique($history);
+    $history = array_splice($history, 0, $totalRecentSearches);
+
+    update_staff_meta($staff_id ? $staff_id : get_staff_user_id(), 'recent_searches', json_encode($history));
+
+    return $history;
+}
+
+function get_staff_recent_search_history($staff_id = null)
+{
+    $recentSearches = get_staff_meta($staff_id ? $staff_id : get_staff_user_id(), 'recent_searches');
+
+    if ($recentSearches == '') {
+        $recentSearches = [];
+    } else {
+        $recentSearches = json_decode($recentSearches);
+    }
+
+    return $recentSearches;
+}

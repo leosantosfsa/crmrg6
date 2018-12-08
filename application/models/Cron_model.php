@@ -82,6 +82,8 @@ class Cron_model extends CRM_Model
             $this->_maybe_fix_duplicate_tasks_assignees_and_followers();
 
             $this->make_backup_db();
+
+            $this->maybe_delete_old_temporary_files();
         }
     }
 
@@ -1183,9 +1185,9 @@ class Cron_model extends CRM_Model
             }
 
             foreach ($emails as $email) {
-                $from      = $email['from'];
-                $fromname  = preg_replace('/(.*)<(.*)>/', '\\1', $from);
-                $fromname  = trim(str_replace('"', '', $fromname));
+                $from     = $email['from'];
+                $fromname = preg_replace('/(.*)<(.*)>/', '\\1', $from);
+                $fromname = trim(str_replace('"', '', $fromname));
 
                 $fromemail = trim(preg_replace('/(.*)<(.*)>/', '\\2', $from));
                 $body      = do_action('leads_email_integration_email_body_for_database', $this->prepare_imap_email_body_html($email['body']));
@@ -1441,18 +1443,26 @@ class Cron_model extends CRM_Model
                 }
 
                 $plainTextBody = $imap->getPlainTextBody($email['uid']);
+                $plainTextBody = trim($plainTextBody);
+
                 if (!empty($plainTextBody)) {
                     $email['body'] = $plainTextBody;
                 }
 
                 $email['body'] = handle_google_drive_links_in_text($email['body']);
 
-                if (class_exists('EmailReplyParser\EmailReplyParser')) {
-                    $email['body'] = \EmailReplyParser\EmailReplyParser::parseReply($email['body']);
+                if (class_exists('EmailReplyParser\EmailReplyParser')
+                    && (mb_substr_count($email['subject'], 'FWD:') == 0 && mb_substr_count($email['subject'], 'FW:') == 0)) {
+                    $parsedBody = \EmailReplyParser\EmailReplyParser::parseReply($email['body']);
+                    $parsedBody = trim($parsedBody);
+                    // For some emails this is causing an issue and not returning the email, instead is returning empty string
+                    // In this case, only use parsed email reply if not empty
+                    if (!empty($parsedBody)) {
+                        $email['body'] = $parsedBody;
+                    }
                 }
 
-                $email['body'] = $this->prepare_imap_email_body_html($email['body']);
-
+                $email['body']       = $this->prepare_imap_email_body_html($email['body']);
                 $data['attachments'] = [];
 
                 if (isset($email['attachments'])) {
@@ -1510,7 +1520,7 @@ class Cron_model extends CRM_Model
     {
         $older_then_months = get_option('delete_activity_log_older_then');
 
-        if ($older_then_months == 0) {
+        if ($older_then_months == 0 || empty($older_then_months)) {
             return;
         }
 
@@ -1613,7 +1623,7 @@ class Cron_model extends CRM_Model
                         update_option('last_auto_backup', time());
                     }
 
-                    $this->maybe_clean_old_backups();
+                    $this->maybe_delete_old_backups();
 
                     return true;
                 } catch (Exception $e) {
@@ -1651,7 +1661,7 @@ class Cron_model extends CRM_Model
             if ($manual == false) {
                 update_option('last_auto_backup', time());
             }
-            $this->maybe_clean_old_backups();
+            $this->maybe_delete_old_backups();
 
             return true;
         }
@@ -1659,7 +1669,28 @@ class Cron_model extends CRM_Model
         return false;
     }
 
-    private function maybe_clean_old_backups()
+    // Remove temporary files older than 15 minutes
+    private function maybe_delete_old_temporary_files()
+    {
+        $older_than = do_action('delete_old_temporary_files_older_than', 900);
+        $files      = list_files(TEMP_FOLDER);
+        foreach ($files as $file) {
+            $path = TEMP_FOLDER . $file;
+            if ((time() - filectime($path)) > $older_than) {
+                @unlink($path);
+            }
+        }
+
+        $folders = list_folders(TEMP_FOLDER);
+        foreach ($folders as $folder) {
+            $path = TEMP_FOLDER . $folder;
+            if ((time() - filectime($path)) > $older_than) {
+                @delete_dir($path);
+            }
+        }
+    }
+
+    private function maybe_delete_old_backups()
     {
         $delete_backups = get_option('delete_backups_older_then');
         // After write backup check for delete

@@ -3,6 +3,9 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 $aColumns = [
+    '@dateAddCol:= CASE WHEN last_recurring_date THEN last_recurring_date ELSE date END',
+    '@rType:= CASE WHEN custom_recurring = 0 THEN \'month\' ELSE recurring_type END',
+    '@rec:= CAST(recurring AS UNSIGNED)',
     'number',
     'total',
     'YEAR(date) as year',
@@ -12,11 +15,12 @@ $aColumns = [
     '(SELECT date FROM tblinvoices t WHERE is_recurring_from=tblinvoices.id ORDER BY id DESC LIMIT 1) as last_date', // Last Date
     // Used only for filtering, in most case php and mysql timezone won't be the same and this may lead to incorect showing dates
     // However, the correct date will be calculated with php when the row is added into the table, see below
-    '(CASE
+    'CASE WHEN (cycles > 0 AND cycles = total_cycles) THEN NULL
         WHEN @rType = "month" THEN DATE_ADD(@dateAddCol, INTERVAL @rec MONTH)
         WHEN @rType = "day" THEN DATE_ADD(@dateAddCol, INTERVAL @rec DAY)
         WHEN @rType = "week" THEN DATE_ADD(@dateAddCol, INTERVAL @rec WEEK)
-        WHEN @rType = "year" THEN DATE_ADD(@dateAddCol, INTERVAL @rec YEAR) END) as next_date', // Next Date
+        WHEN @rType = "year" THEN DATE_ADD(@dateAddCol, INTERVAL @rec YEAR)
+        END as next_date', // Next Date
 ];
 
 $sIndexColumn = 'id';
@@ -77,16 +81,45 @@ $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'deleted_customer_name',
     // next recurring date
     'CASE WHEN last_recurring_date THEN last_recurring_date ELSE date end as helper_next_date',
-    '@dateAddCol:= CASE WHEN last_recurring_date THEN last_recurring_date ELSE date END',
-    '@rType:= CASE WHEN custom_recurring = 0 THEN \'month\' ELSE recurring_type END',
-    '@rec:= recurring',
 ]);
 
 $output  = $result['output'];
 $rResult = $result['rResult'];
 
+// Fix for sorting next_date to be as last when worting descending
+$order = $this->ci->input->post('order');
+
+if ($order && $order[0]['column'] == '10' && $order[0]['dir'] == 'asc') {
+    usort($rResult, function ($a, $b) {
+        if (is_null($a['next_date']) && !is_null($b['next_date'])) {
+            return 1;
+        }
+
+        if (is_null($b['next_date']) && !is_null($a['next_date'])) {
+            return -1;
+        }
+        // No sort if not null
+        return 0;
+    });
+} elseif ($order && $order[0]['column'] == '10' && $order[0]['dir'] == 'desc') {
+    usort($rResult, function ($a, $b) {
+        if (!is_null($a['next_date']) && is_null($b['next_date'])) {
+            return 1;
+        }
+
+        if (!is_null($b['next_date']) && is_null($a['next_date'])) {
+            return -1;
+        }
+        // No sort if not null
+        return 0;
+    });
+}
 foreach ($rResult as $aRow) {
     $row = [];
+
+    $row[] = '';
+    $row[] = '';
+    $row[] = '';
 
     $numberOutput = '';
 

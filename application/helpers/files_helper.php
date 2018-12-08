@@ -4,7 +4,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 function access_control_media($attr, $path, $data, $volume, $isDir, $relpath)
 {
-    $basename = basename($path);
+    $basename = end(explode('/', $path));
+
     if ($basename == 'index.html') {
         return true;
     }

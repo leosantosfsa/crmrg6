@@ -298,7 +298,13 @@ class Invoices extends Admin_controller
                 $id = $this->invoices_model->add($invoice_data);
                 if ($id) {
                     set_alert('success', _l('added_successfully', _l('invoice')));
-                    redirect(admin_url('invoices/list_invoices/' . $id));
+                    $redUrl = admin_url('invoices/list_invoices/' . $id);
+
+                    if(isset($invoice_data['save_and_record_payment'])) {
+                        $this->session->set_userdata('record_payment', true);
+                    }
+
+                    redirect($redUrl);
                 }
             } else {
                 if (!has_permission('invoices', '', 'edit')) {
@@ -441,6 +447,14 @@ class Invoices extends Admin_controller
         }
 
         $data['invoice'] = $invoice;
+
+        $data['record_payment'] = false;
+
+        if($this->session->has_userdata('record_payment')) {
+            $data['record_payment'] = true;
+            $this->session->unset_userdata('record_payment');
+        }
+
         $this->load->view('admin/invoices/invoice_preview_template', $data);
     }
 

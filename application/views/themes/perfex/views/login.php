@@ -33,11 +33,11 @@
 		<div class="form-group">
 			<button type="submit" class="btn btn-info btn-block"><?php echo _l('clients_login_login_string'); ?></button>
 			<?php if(get_option('allow_registration') == 1) { ?>
-			<a href="<?php echo site_url('clients/register'); ?>" class="btn btn-success btn-block"><?php echo _l('clients_register_string'); ?>
+			<a href="<?php echo site_url('authentication/register'); ?>" class="btn btn-success btn-block"><?php echo _l('clients_register_string'); ?>
 			</a>
 			<?php } ?>
 		</div>
-		<a href="<?php echo site_url('clients/forgot_password'); ?>"><?php echo _l('customer_forgot_password'); ?></a>
+		<a href="<?php echo site_url('authentication/forgot_password'); ?>"><?php echo _l('customer_forgot_password'); ?></a>
 		<?php echo form_close(); ?>
 	</div>
 </div>

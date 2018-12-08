@@ -249,7 +249,13 @@
                   <label for="allowed_payment_modes" class="control-label"><?php echo _l('invoice_add_edit_allowed_payment_modes'); ?></label>
                   <br />
                   <?php if(count($payment_modes) > 0){ ?>
-                  <select class="selectpicker" name="allowed_payment_modes[]" data-actions-box="true" multiple="true" data-width="100%" data-title="<?php echo _l('dropdown_non_selected_tex'); ?>">
+                  <select class="selectpicker"
+                  data-toggle="<?php echo $this->input->get('allowed_payment_modes'); ?>"
+                  name="allowed_payment_modes[]"
+                  data-actions-box="true"
+                  multiple="true"
+                  data-width="100%"
+                  data-title="<?php echo _l('dropdown_non_selected_tex'); ?>">
                   <?php foreach($payment_modes as $mode){
                      $selected = '';
                      if(isset($invoice)){
@@ -495,7 +501,7 @@
                   <?php echo render_custom_fields_items_table_add_edit_preview(); ?>
                   <td>
                      <input type="number" name="quantity" min="0" value="1" class="form-control" placeholder="<?php echo _l('item_quantity_placeholder'); ?>">
-                     <input type="text" placeholder="<?php echo _l('unit'); ?>" name="unit" class="form-control input-transparent text-right">
+                     <input type="text" placeholder="<?php echo _l('unit'); ?>" data-toggle="tooltip" data-title="e.q kg, lots, packs" name="unit" class="form-control input-transparent text-right">
                   </td>
                   <td>
                      <input type="number" name="rate" class="form-control" placeholder="<?php echo _l('item_rate_placeholder'); ?>">
@@ -691,12 +697,26 @@
                 <?php echo _l('save_as_draft'); ?>
                 </button>
                 <?php } ?>
-                <button class="btn-tr btn btn-info mleft10 text-right invoice-form-submit save-and-send transaction-submit">
-                  <?php echo _l('save_and_send'); ?>
+              <div class="btn-group dropup">
+                <button type="button" class="btn-tr btn btn-info invoice-form-submit transaction-submit"><?php echo _l('submit'); ?></button>
+                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span class="caret"></span>
                 </button>
-                <button class="btn-tr btn btn-info mleft10 text-right invoice-form-submit transaction-submit">
-                  <?php echo _l('submit'); ?>
-                </button>
+                <ul class="dropdown-menu dropdown-menu-right width200">
+                  <li>
+                    <a href="#" class="invoice-form-submit save-and-send transaction-submit">
+                      <?php echo _l('save_and_send'); ?>
+                    </a>
+                  </li>
+                  <?php if(!isset($invoice)) { ?>
+                  <li>
+                      <a href="#" class="invoice-form-submit save-and-record-payment transaction-submit">
+                        <?php echo _l('save_and_record_payment'); ?>
+                      </a>
+                  </li>
+                <?php } ?>
+                </ul>
+              </div>
              </div>
          </div>
         <div class="btn-bottom-pusher"></div>

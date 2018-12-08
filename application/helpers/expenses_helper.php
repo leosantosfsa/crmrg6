@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 function prepare_expenses_for_export($customer_id)
 {
     $CI = &get_instance();

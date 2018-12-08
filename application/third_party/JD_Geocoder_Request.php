@@ -1,42 +1,16 @@
 <?php
 
-/**
- * LICENSE
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * In other words: use at your own risk
- *
- * @package         Geocoder
- * @dependencies  none
- * @copyright       Copyright (c) Jörg Drzycimski (http://www.drzycimski.com)
- * @license         New BSD License
- * @version         $Id: Geocoder/Request.php, v1.0 2011-01-25
- */
-
 class JD_Geocoder_Request
 {
-    /**
-    * @class vars
-    */
-
     // Google´s geocode URL
-    public $url = 'http://maps.google.com/maps/api/geocode/json?';
+    public $url = 'https://maps.google.com/maps/api/geocode/json?';
 
-    // Params for request
     public $sensor = 'false'; // REQUIRED FOR REQUEST!
 
     public $language = 'en';
 
-    // Class vars
+    private $apiKey;
+
     public $response = '';
 
     public $country_long = '';
@@ -62,11 +36,12 @@ class JD_Geocoder_Request
     /**
     * Constructor
     *
-    * @param mixed $config
+    * @param mixed $apiKey
     * @return void
     */
-    public function __construct($config = null)
+    public function __construct($apiKey)
     {
+        $this->apiKey = $apiKey;
     }
 
     /**
@@ -121,7 +96,7 @@ class JD_Geocoder_Request
     */
     private function _sendRequest($search)
     {
-        $url = $this->url . $search . '&language=' . strtolower($this->language) . '&sensor=' . strtolower($this->sensor);
+        $url = $this->url . $search . '&language=' . strtolower($this->language) . '&sensor=' . strtolower($this->sensor) . '&key=' . $this->apiKey;
 
         $resp_json      = self::curl_file_get_contents($url);
         $this->response = json_decode($resp_json);
@@ -195,6 +170,4 @@ class JD_Geocoder_Request
             $this->zipcode = '';
         }
     }
-
-    // end set
-} // end class
+}

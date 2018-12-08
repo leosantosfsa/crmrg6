@@ -1,4 +1,7 @@
 <?php
+
+defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * @deprecated
  */
@@ -544,4 +547,40 @@ function number_unformat($number, $force_number = true)
     settype($number, $type);
 
     return $number;
+}
+
+
+/**
+ * Output the select plugin with locale
+ * @param  string $locale current locale
+ * @return mixed
+ */
+function app_select_plugin_js($locale = 'en')
+{
+    echo "<script src='" . base_url('assets/plugins/app-build/bootstrap-select.min.js?v=' . get_app_version()) . "'></script>" . PHP_EOL;
+
+    if ($locale != 'en') {
+        if (file_exists(FCPATH . 'assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '.min.js') . "'></script>" . PHP_EOL;
+        } elseif (file_exists(FCPATH . 'assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '_' . strtoupper($locale) . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '_' . strtoupper($locale) . '.min.js') . "'></script>" . PHP_EOL;
+        }
+    }
+}
+
+/**
+ * Output the validation plugin with locale
+ * @param  string $locale current locale
+ * @return mixed
+ */
+function app_jquery_validation_plugin_js($locale = 'en')
+{
+    echo "<script src='" . base_url('assets/plugins/jquery-validation/jquery.validate.min.js?v=' . get_app_version()) . "'></script>" . PHP_EOL;
+    if ($locale != 'en') {
+        if (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale . '.min.js') . "'></script>" . PHP_EOL;
+        } elseif (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale . '_' . strtoupper($locale) . '.min.js')) {
+            echo "<script src='" . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale . '_' . strtoupper($locale) . '.min.js') . "'></script>" . PHP_EOL;
+        }
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Todo_model extends CRM_Model
 {
     public $todo_limit;

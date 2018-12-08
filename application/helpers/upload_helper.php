@@ -413,36 +413,59 @@ function handle_client_attachments_upload($id, $customer_upload = false)
 {
     $path = get_upload_path_by_type('customer') . $id . '/';
     $CI   = & get_instance();
-    if (isset($_FILES['file']['name'])) {
-        do_action('before_upload_client_attachment', $id);
-        // Get the temp file path
-        $tmpFilePath = $_FILES['file']['tmp_name'];
-        // Make sure we have a filepath
-        if (!empty($tmpFilePath) && $tmpFilePath != '') {
-            _maybe_create_upload_path($path);
-            $filename    = unique_filename($path, $_FILES['file']['name']);
-            $newFilePath = $path . $filename;
-            // Upload the file into the temp dir
-            if (move_uploaded_file($tmpFilePath, $newFilePath)) {
-                $attachment   = [];
-                $attachment[] = [
+    $totalUploaded = 0;
+
+    if (isset($_FILES['file']['name'])
+        && ($_FILES['file']['name'] != '' || is_array($_FILES['file']['name']) && count($_FILES['file']['name']) > 0)) {
+        if (!is_array($_FILES['file']['name'])) {
+            $_FILES['file']['name']     = [$_FILES['file']['name']];
+            $_FILES['file']['type']     = [$_FILES['file']['type']];
+            $_FILES['file']['tmp_name'] = [$_FILES['file']['tmp_name']];
+            $_FILES['file']['error']    = [$_FILES['file']['error']];
+            $_FILES['file']['size']     = [$_FILES['file']['size']];
+        }
+
+        _file_attachments_index_fix('file');
+        for ($i = 0; $i < count($_FILES['file']['name']); $i++) {
+            do_action('before_upload_client_attachment', $id);
+            // Get the temp file path
+            $tmpFilePath = $_FILES['file']['tmp_name'][$i];
+            // Make sure we have a filepath
+            if (!empty($tmpFilePath) && $tmpFilePath != '') {
+                if (_perfex_upload_error($_FILES['file']['error'][$i])
+                    || !_upload_extension_allowed($_FILES['file']['name'][$i])) {
+                    continue;
+                }
+
+                _maybe_create_upload_path($path);
+                $filename    = unique_filename($path, $_FILES['file']['name'][$i]);
+                $newFilePath = $path . $filename;
+                // Upload the file into the temp dir
+                if (move_uploaded_file($tmpFilePath, $newFilePath)) {
+                    $attachment   = [];
+                    $attachment[] = [
                     'file_name' => $filename,
-                    'filetype'  => $_FILES['file']['type'],
+                    'filetype'  => $_FILES['file']['type'][$i],
                     ];
-                if (is_image($newFilePath)) {
-                    create_img_thumb($newFilePath, $filename);
-                }
 
-                if ($customer_upload == true) {
-                    $attachment[0]['staffid']          = 0;
-                    $attachment[0]['contact_id']       = get_contact_user_id();
-                    $attachment['visible_to_customer'] = 1;
-                }
+                    if (is_image($newFilePath)) {
+                        create_img_thumb($newFilePath, $filename);
+                    }
 
-                $CI->misc_model->add_attachment_to_database($id, 'customer', $attachment);
+                    if ($customer_upload == true) {
+                        $attachment[0]['staffid']          = 0;
+                        $attachment[0]['contact_id']       = get_contact_user_id();
+                        $attachment['visible_to_customer'] = 1;
+                    }
+
+                    $CI->misc_model->add_attachment_to_database($id, 'customer', $attachment);
+                    $totalUploaded++;
+                }
             }
         }
     }
+
+    return (bool) $totalUploaded;
 }
 /**
  * Handles upload for expenses receipt

@@ -41,15 +41,16 @@ class Subscriptions extends Admin_controller
 
         if ($this->input->post()) {
             $insert_id = $this->subscriptions_model->create([
-                'name'           => $this->input->post('name'),
-                'description'    => nl2br($this->input->post('name')),
-                'date'           => $this->input->post('date') ? to_sql_date($this->input->post('date')) : '',
-                'clientid'       => $this->input->post('clientid'),
-                'project_id'     => $this->input->post('project_id') ? $this->input->post('project_id') : 0,
-                'stripe_plan_id' => $this->input->post('stripe_plan_id'),
-                'quantity'       => $this->input->post('quantity'),
-                'tax_id'         => $this->input->post('tax_id') ? $this->input->post('tax_id') : 0,
-                'currency'       => $this->input->post('currency'),
+                'name'                => $this->input->post('name'),
+                'description'         => nl2br($this->input->post('description')),
+                'description_in_item' => $this->input->post('description_in_item') ? 1 : 0,
+                'date'                => $this->input->post('date') ? to_sql_date($this->input->post('date')) : null,
+                'clientid'            => $this->input->post('clientid'),
+                'project_id'          => $this->input->post('project_id') ? $this->input->post('project_id') : 0,
+                'stripe_plan_id'      => $this->input->post('stripe_plan_id'),
+                'quantity'            => $this->input->post('quantity'),
+                'tax_id'              => $this->input->post('tax_id') ? $this->input->post('tax_id') : 0,
+                'currency'            => $this->input->post('currency'),
 
             ]);
             set_alert('success', _l('added_successfully', _l('subscription')));
@@ -100,15 +101,16 @@ class Subscriptions extends Admin_controller
             }
 
             $update = [
-                'name'           => $this->input->post('name'),
-                'description'    => nl2br($this->input->post('description')),
-                'clientid'       => $this->input->post('clientid'),
-                'date'           => $this->input->post('date') ? to_sql_date($this->input->post('date')) : '',
-                'project_id'     => $this->input->post('project_id') ? $this->input->post('project_id') : 0,
-                'stripe_plan_id' => $this->input->post('stripe_plan_id'),
-                'quantity'       => $this->input->post('quantity'),
-                'tax_id'         => $this->input->post('tax_id') ? $this->input->post('tax_id') : 0,
-                'currency'       => $this->input->post('currency'),
+                'name'                => $this->input->post('name'),
+                'description'         => nl2br($this->input->post('description')),
+                'description_in_item' => $this->input->post('description_in_item') ? 1 : 0,
+                'clientid'            => $this->input->post('clientid'),
+                'date'                => $this->input->post('date') ? to_sql_date($this->input->post('date')) : null,
+                'project_id'          => $this->input->post('project_id') ? $this->input->post('project_id') : 0,
+                'stripe_plan_id'      => $this->input->post('stripe_plan_id'),
+                'quantity'            => $this->input->post('quantity'),
+                'tax_id'              => $this->input->post('tax_id') ? $this->input->post('tax_id') : 0,
+                'currency'            => $this->input->post('currency'),
              ];
 
             if (!empty($stripeSubscriptionId)) {
@@ -139,16 +141,16 @@ class Subscriptions extends Admin_controller
             if (!empty($subscription->stripe_subscription_id)) {
                 $data['stripeSubscription'] = $this->stripe_subscriptions->get_subscription($subscription->stripe_subscription_id);
 
-            /*       $data['stripeSubscription']->billing_cycle_anchor = 'now';
-                   $data['stripeSubscription']->save();
-                   die;*/
+                /*       $data['stripeSubscription']->billing_cycle_anchor = 'now';
+                       $data['stripeSubscription']->save();
+                       die;*/
 
                 if ($subscription->status != 'canceled') {
                     $data['upcoming_invoice'] = $this->stripe_subscriptions->get_upcoming_invoice($subscription->stripe_customer_id, $subscription->stripe_subscription_id);
 
                     $data['upcoming_invoice'] = subscription_invoice_preview_data($subscription, $data['upcoming_invoice'], $data['stripeSubscription']);
                     // Throwing errors when not set in the invoice preview area
-                    if(!isset($data['upcoming_invoice']->include_shipping))  {
+                    if (!isset($data['upcoming_invoice']->include_shipping)) {
                         $data['upcoming_invoice']->include_shipping = 0;
                     }
                 }

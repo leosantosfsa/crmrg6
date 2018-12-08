@@ -4,10 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Subscription extends Clients_controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function index($hash)
     {
@@ -18,6 +14,9 @@ class Subscription extends Clients_controller
         if (!$subscription) {
             show_404();
         }
+
+        $language = load_client_language($subscription->clientid);
+        $data['locale'] = get_locale_key($language);
 
         $data['stripe_customer'] = false;
         if (!empty($subscription->stripe_customer_id)) {
@@ -39,8 +38,8 @@ class Subscription extends Clients_controller
         $upcomingInvoice->tax_percent = $subscription->tax_percent;
         $product                      = $this->stripe_subscriptions->get_product($plan->product);
 
-        $upcomingInvoice->lines         = new stdClass();
-        $upcomingInvoice->lines->data   = [];
+        $upcomingInvoice->lines       = new stdClass();
+        $upcomingInvoice->lines->data = [];
 
         $upcomingInvoice->lines->data[] = [
             'description' => $product->name . ' (' . format_money($plan->amount / 100, strtoupper($subscription->symbol)) . ' / ' . $plan->interval . ')',
@@ -48,17 +47,17 @@ class Subscription extends Clients_controller
             'quantity'    => $subscription->quantity,
         ];
 
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
+        $this->use_navigation   = false;
+        $this->use_submenu      = false;
         $data['child_invoices'] = $this->subscriptions_model->get_child_invoices($subscription->id);
-        $data['invoice']      = subscription_invoice_preview_data($subscription, $upcomingInvoice);
-        $data['plan']         = $plan;
-        $data['subscription'] = $subscription;
-        $data['title']        = $subscription->name;
-        $data['hash']         = $hash;
-        $data['bodyclass']    = 'subscriptionhtml';
-        $this->data           = $data;
-        $this->view           = 'subscriptionhtml';
+        $data['invoice']        = subscription_invoice_preview_data($subscription, $upcomingInvoice);
+        $data['plan']           = $plan;
+        $data['subscription']   = $subscription;
+        $data['title']          = $subscription->name;
+        $data['hash']           = $hash;
+        $data['bodyclass']      = 'subscriptionhtml';
+        $this->data             = $data;
+        $this->view             = 'subscriptionhtml';
         $this->layout();
     }
 
@@ -158,6 +157,8 @@ class Subscription extends Clients_controller
             }
 
             $this->subscriptions_model->update($subscription->id, $update);
+
+            send_email_customer_subscribed_to_subscription_to_staff($subscription);
 
             set_alert('success', _l('customer_successfully_subscribed_to_subscription', $subscription->name));
         } catch (Exception $e) {

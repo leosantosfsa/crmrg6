@@ -27,7 +27,10 @@ class Clients_model extends CRM_Model
 
         $this->db->join('tblcountries', 'tblcountries.country_id = tblclients.country', 'left');
         $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
-        $this->db->where($where);
+
+        if ((is_array($where) && count($where) > 0) || (is_string($where) && $where != '')) {
+            $this->db->where($where);
+        }
 
         if (is_numeric($id)) {
             $this->db->where('tblclients.userid', $id);
@@ -422,18 +425,29 @@ class Clients_model extends CRM_Model
             unset($data['permissions']);
         }
 
+        $data['email_verified_at'] = date('Y-m-d H:i:s');
+
         $send_welcome_email = true;
+
         if (isset($data['donotsendwelcomeemail'])) {
             $send_welcome_email = false;
-        } elseif (strpos($_SERVER['HTTP_REFERER'], 'register') !== false) {
+        }
+
+        if (defined('CONTACT_REGISTERING')) {
             $send_welcome_email = true;
 
             // Do not send welcome email if confirmation for registration is enabled
             if (get_option('customers_register_require_confirmation') == '1') {
                 $send_welcome_email = false;
             }
-            // If client register set this auto contact as primary
+
+            // If client register set this contact as primary
             $data['is_primary'] = 1;
+            if (is_email_verification_enabled() && !empty($data['email'])) {
+                // Verification is required on register
+                $data['email_verified_at']      = null;
+                $data['email_verification_key'] = app_generate_hash();
+            }
         }
 
         if (isset($data['is_primary'])) {
@@ -558,7 +572,6 @@ class Clients_model extends CRM_Model
                 }
             }
 
-
             if ($send_welcome_email == true) {
                 $this->load->model('emails_model');
                 $merge_fields = [];
@@ -568,6 +581,14 @@ class Clients_model extends CRM_Model
 
             if ($send_set_password_email) {
                 $this->authentication_model->set_password_email($data['email'], 0);
+            }
+
+            if (defined('CONTACT_REGISTERING')) {
+                $this->send_verification_email($contact_id);
+            } else {
+                // User already verified because is added from admin area, try to transfer any tickets
+                $this->load->model('tickets_model');
+                $this->tickets_model->transfer_email_tickets_to_contact($data['email'], $contact_id);
             }
 
             logActivity('Contact Created [ID: ' . $contact_id . ']');
@@ -1228,32 +1249,34 @@ class Clients_model extends CRM_Model
     }
 
     /**
-     * @param  mixed $_POST data
-     * @return mixed
      * Change contact password, used from client area
+     * @param  mixed $id          contact id to change password
+     * @param  string $oldPassword old password to verify
+     * @param  string $newPassword new password
+     * @return boolean
      */
-    public function change_contact_password($data)
+    public function change_contact_password($id, $oldPassword, $newPassword)
     {
-        $hook_data['data'] = $data;
-        $hook_data         = do_action('before_contact_change_password', $hook_data);
-        $data              = $hook_data['data'];
-
         // Get current password
-        $this->db->where('id', get_contact_user_id());
+        $this->db->where('id', $id);
         $client = $this->db->get('tblcontacts')->row();
+
         $this->load->helper('phpass');
         $hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-        if (!$hasher->CheckPassword($data['oldpassword'], $client->password)) {
+        if (!$hasher->CheckPassword($oldPassword, $client->password)) {
             return [
                 'old_password_not_match' => true,
             ];
         }
-        $update_data['password']             = $hasher->HashPassword($data['newpasswordr']);
-        $update_data['last_password_change'] = date('Y-m-d H:i:s');
-        $this->db->where('id', get_contact_user_id());
-        $this->db->update('tblcontacts', $update_data);
+
+        $this->db->where('id', $id);
+        $this->db->update('tblcontacts', [
+            'last_password_change' => date('Y-m-d H:i:s'),
+            'password'             => $hasher->HashPassword($newPassword),
+        ]);
+
         if ($this->db->affected_rows() > 0) {
-            logActivity('Contact Password Changed [ContactID: ' . get_contact_user_id() . ']');
+            logActivity('Contact Password Changed [ContactID: ' . $id . ']');
 
             return true;
         }
@@ -1430,9 +1453,87 @@ class Clients_model extends CRM_Model
         return false;
     }
 
+    public function send_verification_email($id)
+    {
+        $contact = $this->get_contact($id);
+
+        if (empty($contact->email)) {
+            return false;
+        }
+
+        $this->load->model('emails_model');
+        $merge_fields = [];
+        $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contact->userid, $contact->id));
+
+        $success = $this->emails_model->send_email_template('contact-verification-email', $contact->email, $merge_fields);
+
+        if ($success) {
+            $this->db->where('id', $id);
+            $this->db->update('tblcontacts', ['email_verification_sent_at' => date('Y-m-d H:i:s')]);
+        }
+
+        return $success;
+    }
+
+    public function mark_email_as_verified($id)
+    {
+        $contact = $this->get_contact($id);
+
+        $this->db->where('id', $id);
+        $this->db->update('tblcontacts', [
+            'email_verified_at'          => date('Y-m-d H:i:s'),
+            'email_verification_key'     => null,
+            'email_verification_sent_at' => null,
+        ]);
+
+        if ($this->db->affected_rows() > 0) {
+
+            // Check for previous tickets opened by this email/contact and link to the contact
+            $this->load->model('tickets_model');
+            $this->tickets_model->transfer_email_tickets_to_contact($contact->email, $contact->id);
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function get_clients_distinct_countries()
     {
         return $this->db->query('SELECT DISTINCT(country_id), short_name FROM tblclients JOIN tblcountries ON tblcountries.country_id=tblclients.country')->result_array();
+    }
+
+    public function send_notification_customer_profile_file_uploaded_to_responsible_staff($contact_id, $customer_id)
+    {
+        $staff         = $this->get_staff_members_that_can_access_customer($customer_id);
+        $merge_fields  = get_client_contact_merge_fields($customer_id, $contact_id);
+        $notifiedUsers = [];
+
+        $this->load->model('emails_model');
+
+        foreach ($staff as $member) {
+            $this->emails_model->send_email_template('new-customer-profile-file-uploaded-to-staff', $member['email'], $merge_fields);
+
+            if (add_notification([
+                    'touserid'    => $member['staffid'],
+                    'description' => 'not_customer_uploaded_file',
+                    'link'        => 'clients/client/' . $customer_id . '?group=attachments',
+                ])) {
+                array_push($notifiedUsers, $member['staffid']);
+            }
+        }
+        pusher_trigger_notification($notifiedUsers);
+    }
+
+    public function get_staff_members_that_can_access_customer($id)
+    {
+        return $this->db->query("SELECT * FROM tblstaff
+            WHERE (
+                    admin=1
+                    OR staffid IN (SELECT staff_id FROM tblcustomeradmins WHERE customer_id='.$id.')
+                    OR staffid IN(SELECT staffid FROM tblstaffpermissions JOIN tblpermissions ON tblpermissions.permissionid=tblstaffpermissions.permissionid WHERE tblpermissions.name = \"customers\" AND can_view=1)
+                )
+            AND active=1")->result_array();
     }
 
     private function check_zero_columns($data)

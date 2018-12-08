@@ -19,6 +19,7 @@
                     <hr class="hr-panel-heading" />
                     <div class="clearfix"></div>
                     <?php render_datatable(array(
+                        _l('id'),
                         _l('department_list_name'),
                         _l('department_email'),
                         _l('department_calendar_id'),
@@ -49,7 +50,9 @@
                         <input  type="text" class="fake-autofill-field" name="fakeusernameremembered" value='' tabindex="-1"/>
                         <input  type="password" class="fake-autofill-field" name="fakepasswordremembered" value='' tabindex="-1"/>
                         <?php echo render_input('name','department_name'); ?>
+                        <?php if(get_option('google_api_key') != ''){ ?>
                         <?php echo render_input('calendar_id','department_calendar_id'); ?>
+                         <?php } ?>
                         <div class="checkbox checkbox-primary">
                             <input type="checkbox" name="hidefromclient" id="hidefromclient">
                             <label for="hidefromclient"><?php echo _l('department_hide_from_client'); ?></label>
@@ -97,7 +100,7 @@
     <?php init_tail(); ?>
     <script>
         $(function(){
-           initDataTable('.table-departments', window.location.href, [3], [3]);
+           initDataTable('.table-departments', window.location.href, [4], [4], undefined, [1, 'asc']);
            _validate_form($('form'),{name:'required',email:{
             email: true,
             remote: {

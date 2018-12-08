@@ -60,6 +60,12 @@
       <?php echo render_input('name','subscription_name',$value,'text',[],[],'','ays-ignore'); ?>
       <?php $value = (isset($subscription) ? $subscription->description : ''); ?>
       <?php echo render_textarea('description','subscriptions_description',$value,[],[],'','ays-ignore'); ?>
+       <div class="form-group">
+        <div class="checkbox checkbox-primary">
+          <input type="checkbox" id="description_in_item" class="ays-ignore" name="description_in_item"<?php if(isset($subscription) && $subscription->description_in_item == '1'){echo ' checked';} ?>>
+          <label for="description_in_item"><i class="fa fa-question-circle" data-toggle="tooltip" data-title="<?php echo _l('description_in_invoice_item_help'); ?>"></i> <?php echo _l('description_in_invoice_item'); ?></label>
+        </div>
+       </div>
       <div class="form-group select-placeholder f_client_id">
          <label for="clientid" class="control-label"><?php echo _l('client'); ?></label>
          <select id="clientid" name="clientid" data-live-search="true" data-width="100%" class="ajax-search ays-ignore" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>"<?php if(isset($subscription) && !empty($subscription->stripe_subscription_id)){echo ' disabled'; } ?>>

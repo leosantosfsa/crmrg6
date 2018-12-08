@@ -1,15 +1,14 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * Function used to get related data based on rel_id and rel_type
  * Eq in the tasks section there is field where this task is related eq invoice with number INV-0005
  * @param  string $type
  * @param  string $rel_id
- * @param  string $connection_type
- * @param  string $connection_id
  * @return mixed
  */
-function get_relation_data($type, $rel_id = '', $connection_type = '', $connection_id = '')
+function get_relation_data($type, $rel_id = '')
 {
     $CI = & get_instance();
     $q  = '';
@@ -19,24 +18,12 @@ function get_relation_data($type, $rel_id = '', $connection_type = '', $connecti
     }
     $data = [];
     if ($type == 'customer' || $type == 'customers') {
-        $where_clients = 'tblclients.active=1';
-        if ($connection_id != '') {
-            if ($connection_type == 'proposal') {
-                $where_clients = 'CASE
-                WHEN tblclients.userid NOT IN(SELECT rel_id FROM tblproposals WHERE id=' . $connection_id . ' AND rel_type="customer") THEN tblclients.active=1
-                ELSE 1=1
-                END';
-            } elseif ($connection_type == 'task') {
-                $where_clients = 'CASE
-                WHEN tblclients.userid NOT IN(SELECT rel_id FROM tblstafftasks WHERE id=' . $connection_id . ' AND rel_type="customer") THEN tblclients.active=1
-                ELSE 1=1
-                END';
-            }
-        }
+        $where_clients = '';
 
         if ($q) {
-            $where_clients .= ' AND (company LIKE "%' . $q . '%" OR CONCAT(firstname, " ", lastname) LIKE "%' . $q . '%" OR email LIKE "%' . $q . '%")';
+            $where_clients .= '(company LIKE "%' . $q . '%" OR CONCAT(firstname, " ", lastname) LIKE "%' . $q . '%" OR email LIKE "%' . $q . '%") AND tblclients.active = 1';
         }
+
         $data = $CI->clients_model->get($rel_id, $where_clients);
     } elseif ($type == 'contact' || $type == 'contacts') {
         if ($rel_id != '') {
@@ -142,7 +129,7 @@ function get_relation_data($type, $rel_id = '', $connection_type = '', $connecti
             $search = $CI->misc_model->_search_staff($q);
             $data   = $search['result'];
         }
-    } elseif ($type == 'tasks') {
+    } elseif ($type == 'tasks' || $type == 'task') {
         // Tasks only have relation with custom fields when searching on top
         if ($rel_id != '') {
             $data = $CI->tasks_model->get($rel_id);
@@ -298,8 +285,8 @@ function get_relation_values($relation, $type)
             }
         }
         $name = format_proposal_number($id);
-        $link = admin_url('proposals/proposal/' . $id);
-    } elseif ($type == 'tasks') {
+        $link = admin_url('proposals/list_proposals/' . $id);
+    } elseif ($type == 'tasks' || $type == 'task') {
         if (is_array($relation)) {
             $id   = $relation['id'];
             $name = $relation['name'];

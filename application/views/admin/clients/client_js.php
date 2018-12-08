@@ -89,13 +89,7 @@ $(function() {
     if (typeof(Dropbox) != 'undefined' && $('#dropbox-chooser').length > 0) {
         document.getElementById("dropbox-chooser").appendChild(Dropbox.createChooseButton({
             success: function(files) {
-                $.post(admin_url + 'clients/add_external_attachment', {
-                    files: files,
-                    clientid: customer_id,
-                    external: 'dropbox'
-                }).done(function() {
-                    window.location.reload();
-                });
+                saveCustomerProfileExternalFile(files, 'dropbox');
             },
             linkType: "preview",
             extensions: app_allowed_files.split(','),
@@ -179,7 +173,33 @@ $(function() {
             company: 'required',
         }
     }
+
     _validate_form($('.client-form'), vRules);
+
+    if(typeof(customer_id) == 'undefined'){
+        $('#company').on('blur', function() {
+            var company = $(this).val();
+            var $companyExistsDiv = $('#company_exists_info');
+
+            if(company == '') {
+                $companyExistsDiv.addClass('hide');
+                return;
+            }
+
+            $.post(admin_url+'clients/check_duplicate_customer_name', {company:company})
+            .done(function(response) {
+                if(response) {
+                    response = JSON.parse(response);
+                    if(response.exists == true) {
+                        $companyExistsDiv.removeClass('hide');
+                        $companyExistsDiv.html('<div class="info-block mbot15">'+response.message+'</div>');
+                    } else {
+                        $companyExistsDiv.addClass('hide');
+                    }
+                }
+            });
+        });
+    }
 
     $('.billing-same-as-customer').on('click', function(e) {
         e.preventDefault();
@@ -217,6 +237,20 @@ function delete_contact_profile_image(contact_id) {
     });
 }
 
+function customerGoogleDriveSave(pickData) {
+    saveCustomerProfileExternalFile(pickData, 'gdrive');
+}
+
+function saveCustomerProfileExternalFile(files, externalType) {
+    $.post(admin_url + 'clients/add_external_attachment', {
+        files: files,
+        clientid: customer_id,
+        external: externalType
+    }).done(function() {
+        window.location.reload();
+    });
+}
+
 function validate_contact_form() {
     _validate_form('#contact-form', {
         firstname: 'required',
@@ -224,8 +258,10 @@ function validate_contact_form() {
         password: {
             required: {
                 depends: function(element) {
-                    var sent_set_password = $('input[name="send_set_password_email"]');
-                    if ($('#contact input[name="contactid"]').val() == '' && sent_set_password.prop('checked') == false) {
+
+                    var $sentSetPassword = $('input[name="send_set_password_email"]');
+
+                    if ($('#contact input[name="contactid"]').val() == '' && $sentSetPassword.prop('checked') == false) {
                         return true;
                     }
                 }
@@ -399,7 +435,7 @@ function fetch_lat_long_from_google_cprofile() {
             if (data.response.status == 'ZERO_RESULTS') {
                 alert_float('warning', "<?php echo _l('g_search_address_not_found'); ?>");
             } else {
-                alert_float('danger', data.response.status);
+                alert_float('danger', data.response.status + ' - ' + data.response.error_message);
             }
         }
     });

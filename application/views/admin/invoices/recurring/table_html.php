@@ -1,5 +1,17 @@
 <?php
      $table_data = [
+       [
+        'name'     => '',
+        'th_attrs' => ['class' => 'not_visible'],
+      ],
+       [
+        'name'     => '',
+        'th_attrs' => ['class' => 'not_visible'],
+      ],
+       [
+        'name'     => '',
+        'th_attrs' => ['class' => 'not_visible'],
+      ],
       _l('invoice_dt_table_heading_number'),
       _l('invoice_dt_table_heading_amount'),
       [
@@ -11,7 +23,10 @@
       ],
       _l('frequency'),
       _l('cycles_remaining'),
-      _l('last_invoice_date'),
-      _l('last_invoice_date'),
+      _l('last_child_invoice_date'),
+      [
+        'name'=>_l('next_invoice_date_list'),
+        'th_attrs'=>['class'=>'next-recurring-date']
+      ],
     ];
     render_datatable($table_data, 'invoices');

@@ -3,6 +3,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 $aColumns = [
+    'departmentid',
     'name',
     'email',
     'calendar_id',
@@ -10,7 +11,7 @@ $aColumns = [
 $sIndexColumn = 'departmentid';
 $sTable       = 'tbldepartments';
 
-$result  = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], ['departmentid', 'email', 'hidefromclient', 'host', 'encryption', 'password', 'delete_after_import', 'imap_username']);
+$result  = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], ['email', 'hidefromclient', 'host', 'encryption', 'password', 'delete_after_import', 'imap_username']);
 $output  = $result['output'];
 $rResult = $result['rResult'];
 

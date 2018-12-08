@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Misc_model extends CRM_Model
 {
     public $notifications_limit;
@@ -144,6 +145,7 @@ class Misc_model extends CRM_Model
         }
 
         $data['rel_type'] = $rel_type;
+
         if (isset($attachment[0]['contact_id'])) {
             $data['contact_id']          = $attachment[0]['contact_id'];
             $data['visible_to_customer'] = 1;
@@ -161,7 +163,7 @@ class Misc_model extends CRM_Model
             $path_parts            = pathinfo($attachment[0]['name']);
             $data['file_name']     = $attachment[0]['name'];
             $data['external_link'] = $attachment[0]['link'];
-            $data['filetype']      = get_mime_by_extension('.' . $path_parts['extension']);
+            $data['filetype']      = !isset($attachment[0]['mime']) ? get_mime_by_extension('.' . $path_parts['extension']) : $attachment[0]['mime'];
             $data['external']      = $external;
             if (isset($attachment[0]['thumbnailLink'])) {
                 $data['thumbnail_link'] = $attachment[0]['thumbnailLink'];

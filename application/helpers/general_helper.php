@@ -310,7 +310,9 @@ function blank_page($message = '', $alert = 'danger')
 function access_denied($permission = '')
 {
     set_alert('danger', _l('access_denied'));
-    logActivity('Tried to access page where don\'t have permission [' . $permission . ']');
+
+    logActivity('Tried to access page where don\'t have permission' . ($permission != '' ? ' [' . $permission . ']' : ''));
+
     if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
         redirect($_SERVER['HTTP_REFERER']);
     } else {

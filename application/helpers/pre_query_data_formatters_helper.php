@@ -126,7 +126,7 @@ function _get_sales_feature_unused_names()
         'repeat_type_custom', 'bill_expenses',
         'save_and_send', 'merge_current_invoice',
         'cancel_merged_invoices', 'invoices_to_merge',
-        'tags', 's_prefix',
+        'tags', 's_prefix','save_and_record_payment'
     ];
 }
 

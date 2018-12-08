@@ -4,11 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Invoice extends Clients_controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function index($id, $hash)
     {
         check_invoice_restrictions($id, $hash);

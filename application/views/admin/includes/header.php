@@ -5,6 +5,8 @@
    <input type="search" id="search_input" class="form-control" placeholder="<?php echo _l('top_search_placeholder'); ?>">
    <div id="search_results">
    </div>
+   <ul class="dropdown-menu search-results animated fadeIn no-mtop search-history" id="search-history">
+   </ul>
 </li>
 <li id="top_search_button">
    <button class="btn"><i class="fa fa-search"></i></button>
@@ -32,9 +34,9 @@
             <?php
                // To prevent not loading the timers twice
                if(is_mobile()){ ?>
-            <li class="dropdown notifications-wrapper header-notifications">
-               <?php $this->load->view('admin/includes/notifications'); ?>
-            </li>
+               <li class="dropdown notifications-wrapper header-notifications">
+                  <?php $this->load->view('admin/includes/notifications'); ?>
+               </li>
             <li class="header-timers">
                <a href="#" id="top-timers" class="dropdown-toggle top-timers" data-toggle="dropdown"><i class="fa fa-clock-o fa-fw fa-lg"></i>
                <span class="label bg-success icon-total-indicator icon-started-timers<?php if ($totalTimers = count($startedTimers) == 0){ echo ' hide'; }?>"><?php echo count($startedTimers); ?></span>

@@ -517,7 +517,12 @@ class Estimates extends Admin_controller
             $type = 'I';
         }
 
-        $pdf->Output(mb_strtoupper(slug_it($estimate_number)) . '.pdf', $type);
+        $fileNameHookData = do_action('estimate_file_name_admin_area', [
+                            'file_name' => mb_strtoupper(slug_it($estimate_number)) . '.pdf',
+                            'estimate'  => $estimate,
+                        ]);
+
+        $pdf->Output($fileNameHookData['file_name'], $type);
     }
 
     // Pipeline

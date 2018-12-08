@@ -6,7 +6,7 @@
         "neitanod/forceutf8": "~2.0",
         "pusher/pusher-php-server": "^3.0",
         "tecnickcom/tcpdf": "^6.2",
-        "Studio-42/elFinder": "2.1.39",
+        "Studio-42/elFinder": "2.1.42",
         "stripe/stripe-php": "^6.0",
         "phpmailer/phpmailer": "^5.2.26",
         "nabble/semalt-blocker": "~1",
@@ -20,6 +20,7 @@
         "omnipay/authorizenet": "3.x@dev",
         "2checkout/2checkout-php": "^0.3.1",
         "willdurand/email-reply-parser": "^2.8",
-        "symfony/http-foundation": "3.4"
+        "symfony/http-foundation": "3.4",
+        "instamojo/instamojo-php": "^0.3.0"
     }
 }

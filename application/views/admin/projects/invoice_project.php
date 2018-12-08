@@ -19,7 +19,12 @@
                 <button class="btn btn-default invoice-form-submit save-as-draft transaction-submit">
                     <?php echo _l('save_as_draft'); ?>
                 </button>
-                <button class="btn btn-info invoice-form-submit transaction-submit"><?php echo _l('submit'); ?></button>
+                <button class="btn btn-info invoice-form-submit save-and-send transaction-submit">
+                      <?php echo _l('save_and_send'); ?>
+                </button>
+                <button class="btn btn-info invoice-form-submit transaction-submit">
+                    <?php echo _l('submit'); ?>
+                </button>
             </div>
         </div>
         <?php echo form_close(); ?>

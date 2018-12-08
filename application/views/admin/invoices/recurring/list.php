@@ -10,7 +10,7 @@
 	</div>
 </div>
 <?php $this->load->view('admin/includes/modals/sales_attach_file'); ?>
-<script>var hidden_columns = [4,5,6];</script>
+<script>var hidden_columns = [5, 7, 8, 9];</script>
 <?php init_tail(); ?>
 <script>
 	$(function(){

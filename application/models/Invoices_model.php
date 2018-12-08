@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Invoices_model extends CRM_Model
 {
     private $shipping_fields = ['shipping_street', 'shipping_city', 'shipping_city', 'shipping_state', 'shipping_zip', 'shipping_country'];
@@ -1269,7 +1270,7 @@ class Invoices_model extends CRM_Model
             if ($attach_pdf === true) {
                 $this->emails_model->add_attachment([
                         'attachment' => $attach,
-                        'filename'   => $invoice_number . '.pdf',
+                        'filename'   => str_replace('/', '-', $invoice_number . '.pdf'),
                         'type'       => 'application/pdf',
                     ]);
             }
@@ -1371,7 +1372,7 @@ class Invoices_model extends CRM_Model
                     if ($attachpdf) {
                         $this->emails_model->add_attachment([
                             'attachment' => $attach,
-                            'filename'   => $invoice_number . '.pdf',
+                            'filename'   => str_replace('/', '-', $invoice_number . '.pdf'),
                             'type'       => 'application/pdf',
                         ]);
                     }
@@ -1406,6 +1407,7 @@ class Invoices_model extends CRM_Model
         } else {
             return false;
         }
+
         if ($sent) {
             $this->set_invoice_sent($id, false, $emails_sent, true);
             do_action('invoice_sent', $id);

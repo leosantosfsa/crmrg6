@@ -427,13 +427,63 @@ class Tasks extends Admin_controller
         $data['checklistTemplates'] = $this->tasks_model->get_checklist_templates();
         $data['task']               = $task;
         $data['id']                 = $task->id;
-        $data['staff']              = $this->staff_model->get('', ['active'=>1]);
-        $data['task_is_billed']     = $this->tasks_model->is_task_billed($taskid);
+        $data['staff']              = $this->staff_model->get('', ['active' => 1]);
+        $data['reminders']          = $this->tasks_model->get_reminders($taskid);
+
+        $data['staff_reminders'] = $this->tasks_model->get_staff_members_that_can_access_task($taskid);
+
         if ($return == false) {
             $this->load->view('admin/tasks/view_task_template', $data);
         } else {
             return $this->load->view('admin/tasks/view_task_template', $data, true);
         }
+    }
+
+    public function add_reminder($task_id)
+    {
+        $message    = '';
+        $alert_type = 'warning';
+        if ($this->input->post()) {
+            $success = $this->misc_model->add_reminder($this->input->post(), $task_id);
+            if ($success) {
+                $alert_type = 'success';
+                $message    = _l('reminder_added_successfully');
+            }
+        }
+        echo json_encode([
+            'taskHtml'   => $this->get_task_data($task_id, true),
+            'alert_type' => $alert_type,
+            'message'    => $message,
+        ]);
+    }
+
+    public function edit_reminder($id)
+    {
+        $reminder = $this->misc_model->get_reminders($id);
+        if ($reminder && ($reminder->creator == get_staff_user_id() || is_admin()) && $reminder->isnotified == 0) {
+            $success = $this->misc_model->edit_reminder($this->input->post(), $id);
+            echo json_encode([
+                    'taskHtml'   => $this->get_task_data($reminder->rel_id, true),
+                    'alert_type' => 'success',
+                    'message'    => ($success ? _l('updated_successfully', _l('reminder')) : ''),
+                ]);
+        }
+    }
+
+    public function delete_reminder($rel_id, $id)
+    {
+        $success    = $this->misc_model->delete_reminder($id);
+        $alert_type = 'warning';
+        $message    = _l('reminder_failed_to_delete');
+        if ($success) {
+            $alert_type = 'success';
+            $message    = _l('reminder_deleted');
+        }
+        echo json_encode([
+            'taskHtml'   => $this->get_task_data($rel_id, true),
+            'alert_type' => $alert_type,
+            'message'    => $message,
+        ]);
     }
 
     public function get_staff_started_timers($return = false)
@@ -572,10 +622,10 @@ class Tasks extends Admin_controller
     {
         $data            = $this->input->post();
         $data['content'] = $this->input->post('content', false);
-        if($this->input->post('no_editor')) {
+        if ($this->input->post('no_editor')) {
             $data['content'] = nl2br($this->input->post('content'));
         }
-        $comment_id      = false;
+        $comment_id = false;
         if ($data['content'] != ''
             || (isset($_FILES['file']['name']) && is_array($_FILES['file']['name']) && count($_FILES['file']['name']) > 0)) {
             $comment_id = $this->tasks_model->add_task_comment($data);
@@ -600,9 +650,23 @@ class Tasks extends Admin_controller
         ]);
     }
 
-    public function download_comment_files($task_id, $comment_id)
+    public function download_files($task_id, $comment_id = null)
     {
-        $files = $this->tasks_model->get_task_attachments($task_id, 'task_comment_id=' . $comment_id);
+        $taskWhere = 'external IS NULL';
+
+        if ($comment_id) {
+            $taskWhere = ' AND task_comment_id=' . $comment_id;
+        }
+
+        if (!has_permission('tasks', '', 'view')) {
+            $taskWhere .= ' AND ' . get_tasks_where_string(false);
+        }
+
+        $files = $this->tasks_model->get_task_attachments($task_id, $taskWhere);
+
+        if (count($files) == 0) {
+            redirect($_SERVER['HTTP_REFERER']);
+        }
 
         $path = get_upload_path_by_type('task') . $task_id;
 
@@ -643,11 +707,11 @@ class Tasks extends Admin_controller
         if ($this->input->post()) {
             $data            = $this->input->post();
             $data['content'] = $this->input->post('content', false);
-            if($this->input->post('no_editor')) {
+            if ($this->input->post('no_editor')) {
                 $data['content'] = nl2br(clear_textarea_breaks($this->input->post('content')));
             }
-            $success         = $this->tasks_model->edit_comment($data);
-            $message         = '';
+            $success = $this->tasks_model->edit_comment($data);
+            $message = '';
             if ($success) {
                 $message = _l('task_comment_updated');
             }
@@ -706,7 +770,7 @@ class Tasks extends Admin_controller
     {
         if ($this->tasks_model->is_task_assignee(get_staff_user_id(), $id)
             || $this->tasks_model->is_task_creator(get_staff_user_id(), $id)
-            || is_admin()) {
+            || has_permission('tasks', '', 'edit')) {
             $success = $this->tasks_model->unmark_complete($id);
 
             // Don't do this query if the action is not performed via task single
@@ -725,7 +789,7 @@ class Tasks extends Admin_controller
             echo json_encode([
                 'success'  => false,
                 'message'  => '',
-                'taskHtml' => $taskHtml,
+                'taskHtml' => '',
             ]);
         }
     }
@@ -734,7 +798,7 @@ class Tasks extends Admin_controller
     {
         if ($this->tasks_model->is_task_assignee(get_staff_user_id(), $id)
             || $this->tasks_model->is_task_creator(get_staff_user_id(), $id)
-            || is_admin()) {
+            || has_permission('tasks', '', 'edit')) {
             $success = $this->tasks_model->mark_as($status, $id);
 
             // Don't do this query if the action is not performed via task single
@@ -755,7 +819,7 @@ class Tasks extends Admin_controller
             echo json_encode([
                 'success'  => false,
                 'message'  => '',
-                'taskHtml' => $taskHtml,
+                'taskHtml' => '',
             ]);
         }
     }
@@ -881,9 +945,20 @@ class Tasks extends Admin_controller
 
     public function timer_tracking()
     {
-        $task_id = $this->input->post('task_id');
+        $task_id   = $this->input->post('task_id');
+        $adminStop = $this->input->get('admin_stop') && is_admin() ? true : false;
+
+        if ($adminStop) {
+            $this->session->set_flashdata('task_single_timesheets_open', true);
+        }
+
         echo json_encode([
-            'success'  => $this->tasks_model->timer_tracking($task_id, $this->input->post('timer_id'), nl2br($this->input->post('note'))),
+            'success' => $this->tasks_model->timer_tracking(
+                $task_id,
+                $this->input->post('timer_id'),
+                nl2br($this->input->post('note')),
+                $adminStop
+            ),
             'taskHtml' => $this->input->get('single_task') === 'true' ? $this->get_task_data($task_id, true) : '',
             'timers'   => $this->get_staff_started_timers(true),
         ]);

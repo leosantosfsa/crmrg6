@@ -13,11 +13,14 @@
                         <?php echo form_close(); ?>
                         <div class="row mtop15" id="sales_uploaded_files_preview">
                         </div>
-                        <div class="text-center">
+                        <div class="text-right">
+                        <button class="gpicker" data-on-pick="salesGoogleDriveSave">
+                            <i class="fa fa-google" aria-hidden="true"></i>
+                            <?php echo _l('choose_from_google_drive'); ?>
+                        </button>
                         <div id="dropbox-chooser-sales"></div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

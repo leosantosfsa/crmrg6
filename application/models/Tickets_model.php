@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Tickets_model extends CRM_Model
 {
     private $piping = false;
@@ -119,11 +120,17 @@ class Tickets_model extends CRM_Model
                         if ($tid) {
                             $data            = [];
                             $data['message'] = $message;
-                            $data['status']  = 1;
+                            $data['status']  = get_option('default_ticket_reply_status');
+
+                            if (!$data['status']) {
+                                $data['status'] = 3; // Answered
+                            }
+
                             if ($userid == false) {
                                 $data['name']  = $name;
                                 $data['email'] = $email;
                             }
+
                             $reply_id = $this->add_reply($data, $tid, $result->staffid, $attachments);
                             if ($reply_id) {
                                 $mailstatus = 'Ticket Reply Imported Successfully';
@@ -378,6 +385,7 @@ class Tickets_model extends CRM_Model
             $assigned = get_staff_user_id();
             unset($data['assign_to_current_user']);
         }
+
         $unsetters = [
             'note_description',
             'department',
@@ -392,11 +400,13 @@ class Tickets_model extends CRM_Model
             'DataTables_Table_1_length',
             'custom_fields',
         ];
+
         foreach ($unsetters as $unset) {
             if (isset($data[$unset])) {
                 unset($data[$unset]);
             }
         }
+
         if ($admin !== null) {
             $data['admin'] = $admin;
             $status        = $data['status'];
@@ -427,20 +437,27 @@ class Tickets_model extends CRM_Model
             $data['message'] = _strip_tags($data['message']);
             $data['message'] = nl2br_save_html($data['message']);
         }
+
         if (!isset($data['userid'])) {
             $data['userid'] = 0;
         }
-        if (is_client_logged_in()) {
-            $data['contactid'] = get_contact_user_id();
-        }
-        $_data = do_action('before_ticket_reply_add', [
+
+        /*  if (is_client_logged_in()) {
+                    $data['contactid'] = get_contact_user_id();
+                }
+        */
+
+        $hookData = do_action('before_ticket_reply_add', [
             'data'  => $data,
             'id'    => $id,
             'admin' => $admin,
         ]);
-        $data = $_data['data'];
+
+        $data = $hookData['data'];
         $this->db->insert('tblticketreplies', $data);
+
         $insert_id = $this->db->insert_id();
+
         if ($insert_id) {
             if (isset($assigned)) {
                 $this->db->where('ticketid', $id);
@@ -1004,6 +1021,10 @@ class Tickets_model extends CRM_Model
             $this->db->where('rel_id', $ticketid);
             $this->db->where('rel_type', 'ticket');
             $this->db->delete('tbltags_in');
+
+            $this->db->where('rel_type', 'ticket');
+            $this->db->where('rel_id', $ticketid);
+            $this->db->delete('tblreminders');
 
             // Get related tasks
             $this->db->where('rel_type', 'ticket');
@@ -1569,5 +1590,47 @@ class Tickets_model extends CRM_Model
     public function get_tickets_assignes_disctinct()
     {
         return $this->db->query('SELECT DISTINCT(assigned) as assigned FROM tbltickets WHERE assigned != 0')->result_array();
+    }
+
+    /**
+     * Check for previous tickets opened by this email/contact and link to the contact
+     * @param  string $email      email to check for
+     * @param  mixed $contact_id the contact id to transfer the tickets
+     * @return boolean
+     */
+    public function transfer_email_tickets_to_contact($email, $contact_id)
+    {
+        // Some users don't want to fill the email
+        if (empty($email)) {
+            return false;
+        }
+
+        $customer_id = get_user_id_by_contact_id($contact_id);
+
+        $this->db->where('userid', 0)
+                ->where('contactid', 0)
+                ->where('admin IS NULL')
+                ->where('email', $email);
+
+        $this->db->update('tbltickets', [
+                    'email'     => null,
+                    'name'      => null,
+                    'userid'    => $customer_id,
+                    'contactid' => $contact_id,
+                ]);
+
+        $this->db->where('userid', 0)
+                ->where('contactid', 0)
+                ->where('admin IS NULL')
+                ->where('email', $email);
+
+        $this->db->update('tblticketreplies', [
+                    'email'     => null,
+                    'name'      => null,
+                    'userid'    => $customer_id,
+                    'contactid' => $contact_id,
+                ]);
+
+        return true;
     }
 }

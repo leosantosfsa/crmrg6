@@ -48,7 +48,7 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
     /*
      * Ordering
      */
-    $dueDateColumns = get_sorting_due_date_columns();
+    $dueDateColumns = get_null_columns_that_should_be_sorted_as_last();
     $sOrder         = '';
     if ($CI->input->post('order')) {
         $sOrder = 'ORDER BY ';
@@ -109,7 +109,7 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
             if (stripos($columnName, 'AVG(') !== false || stripos($columnName, 'SUM(') !== false) {
             } else {
                 if (($__post['columns'][$i]) && $__post['columns'][$i]['searchable'] == 'true') {
-                    if(isset($searchAs[$i])) {
+                    if (isset($searchAs[$i])) {
                         $columnName = $searchAs[$i];
                     }
                     $sWhere .= 'convert(' . $columnName . ' USING utf8)' . " LIKE '%" . $search_value . "%' OR ";
@@ -243,9 +243,14 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
  * Null should be always last
  * @return array
  */
-function get_sorting_due_date_columns()
+function get_null_columns_that_should_be_sorted_as_last()
 {
-    $dueDateColumns = ['tblprojects.deadline', 'tblstafftasks.duedate', 'tblcontracts.dateend', 'tblsubscriptions.date_subscribed'];
+    $dueDateColumns = [
+        'tblprojects.deadline',
+        'tblstafftasks.duedate',
+        'tblcontracts.dateend',
+        'tblsubscriptions.date_subscribed',
+    ];
 
     return do_action('sorting_due_date_columns', $dueDateColumns);
 }

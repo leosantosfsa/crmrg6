@@ -15,7 +15,7 @@
     <?php $this->load->view('authentication/includes/alerts'); ?>
     <?php echo render_input('code','two_factor_authentication_code'); ?>
     <div class="form-group">
-      <a href="<?php echo site_url('authentication'); ?>"><?php echo _l('back_to_login'); ?></a>
+      <a href="<?php echo admin_url('authentication'); ?>"><?php echo _l('back_to_login'); ?></a>
     </div>
     <div class="form-group">
       <button type="submit" class="btn btn-info btn-block"><?php echo _l('confirm'); ?></button>

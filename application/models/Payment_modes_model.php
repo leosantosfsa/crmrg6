@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Payment_modes_model extends CRM_Model
 {
     private $online_payment_modes = [];

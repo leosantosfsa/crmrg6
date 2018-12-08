@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2c5f1525ce28d91d77c7788cf53987de",
+    "content-hash": "6b684199bb0fefca2bb224cd61e0138e",
     "packages": [
         {
             "name": "2checkout/2checkout-php",
@@ -57,16 +57,16 @@
         },
         {
             "name": "backup-manager/backup-manager",
-            "version": "1.2",
+            "version": "1.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/backup-manager/backup-manager.git",
-                "reference": "4d925b5de2cc8a98d6776f5bf88ec41edd584533"
+                "reference": "4b3d74bb929aebc2df0f39f1032e0ca5e0948247"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/backup-manager/backup-manager/zipball/4d925b5de2cc8a98d6776f5bf88ec41edd584533",
-                "reference": "4d925b5de2cc8a98d6776f5bf88ec41edd584533",
+                "url": "https://api.github.com/repos/backup-manager/backup-manager/zipball/4b3d74bb929aebc2df0f39f1032e0ca5e0948247",
+                "reference": "4b3d74bb929aebc2df0f39f1032e0ca5e0948247",
                 "shasum": ""
             },
             "require": {
@@ -121,20 +121,20 @@
                 }
             ],
             "description": "A framework agnostic database backup manager with user-definable procedures and support for S3, Dropbox, FTP, SFTP, and more with drivers for popular frameworks.",
-            "time": "2018-01-28T20:31:36+00:00"
+            "time": "2018-09-23T09:14:37+00:00"
         },
         {
             "name": "braintree/braintree_php",
-            "version": "3.34.0",
+            "version": "3.36.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/braintree/braintree_php.git",
-                "reference": "fd55c466d0d0088c67705d7ba0b3876d9767bfda"
+                "reference": "a864c9c4a3ed08f384e278f7e9723bd9c5d984d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/braintree/braintree_php/zipball/fd55c466d0d0088c67705d7ba0b3876d9767bfda",
-                "reference": "fd55c466d0d0088c67705d7ba0b3876d9767bfda",
+                "url": "https://api.github.com/repos/braintree/braintree_php/zipball/a864c9c4a3ed08f384e278f7e9723bd9c5d984d0",
+                "reference": "a864c9c4a3ed08f384e278f7e9723bd9c5d984d0",
                 "shasum": ""
             },
             "require": {
@@ -168,7 +168,7 @@
                 }
             ],
             "description": "Braintree PHP Client Library",
-            "time": "2018-05-21T18:14:47+00:00"
+            "time": "2018-10-10T20:59:28+00:00"
         },
         {
             "name": "clue/stream-filter",
@@ -515,29 +515,73 @@
             "time": "2017-03-20T17:10:46+00:00"
         },
         {
-            "name": "league/flysystem",
-            "version": "1.0.45",
+            "name": "instamojo/instamojo-php",
+            "version": "0.3",
             "source": {
                 "type": "git",
-                "url": "https://github.com/thephpleague/flysystem.git",
-                "reference": "a99f94e63b512d75f851b181afcdf0ee9ebef7e6"
+                "url": "https://github.com/Instamojo/instamojo-php.git",
+                "reference": "8b5a7f76c74d156b23f91c64413bda00a2329ea5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/a99f94e63b512d75f851b181afcdf0ee9ebef7e6",
-                "reference": "a99f94e63b512d75f851b181afcdf0ee9ebef7e6",
+                "url": "https://api.github.com/repos/Instamojo/instamojo-php/zipball/8b5a7f76c74d156b23f91c64413bda00a2329ea5",
+                "reference": "8b5a7f76c74d156b23f91c64413bda00a2329ea5",
                 "shasum": ""
             },
             "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Instamojo\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Instamojo and contributors",
+                    "email": "dev@instamojo.com",
+                    "homepage": "https://github.com/instamojo/instamojo-php/contributors"
+                }
+            ],
+            "description": "This is composer wrapper for instamojo-php",
+            "homepage": "https://github.com/instamojo/instamojo-php/",
+            "keywords": [
+                "api",
+                "instamojo",
+                "php",
+                "wrapper"
+            ],
+            "time": "2016-09-25T21:46:32+00:00"
+        },
+        {
+            "name": "league/flysystem",
+            "version": "1.0.48",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/flysystem.git",
+                "reference": "a6ded5b2f6055e2db97b4b859fdfca2b952b78aa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/a6ded5b2f6055e2db97b4b859fdfca2b952b78aa",
+                "reference": "a6ded5b2f6055e2db97b4b859fdfca2b952b78aa",
+                "shasum": ""
+            },
+            "require": {
+                "ext-fileinfo": "*",
                 "php": ">=5.5.9"
             },
             "conflict": {
                 "league/flysystem-sftp": "<1.0.6"
             },
             "require-dev": {
-                "ext-fileinfo": "*",
                 "phpspec/phpspec": "^3.4",
-                "phpunit/phpunit": "^5.7"
+                "phpunit/phpunit": "^5.7.10"
             },
             "suggest": {
                 "ext-fileinfo": "Required for MimeType",
@@ -596,22 +640,11 @@
                 "sftp",
                 "storage"
             ],
-            "time": "2018-05-07T08:44:23+00:00"
+            "time": "2018-10-15T13:53:10+00:00"
         },
         {
             "name": "league/omnipay",
             "version": "v3.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/thephpleague/omnipay.git",
-                "reference": "1514469083290aa53102440bae19313b6c8d7900"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/omnipay/zipball/1514469083290aa53102440bae19313b6c8d7900",
-                "reference": "1514469083290aa53102440bae19313b6c8d7900",
-                "shasum": ""
-            },
             "require": {
                 "omnipay/common": "^3",
                 "php": "^5.6|^7",
@@ -819,16 +852,16 @@
         },
         {
             "name": "neitanod/forceutf8",
-            "version": "v2.0.1",
+            "version": "v2.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/neitanod/forceutf8.git",
-                "reference": "47c883ab2739e7938a8bb0bfd1c29d48c88858de"
+                "reference": "30980a8ca2787a7730d370eac310b8987eb68229"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/neitanod/forceutf8/zipball/47c883ab2739e7938a8bb0bfd1c29d48c88858de",
-                "reference": "47c883ab2739e7938a8bb0bfd1c29d48c88858de",
+                "url": "https://api.github.com/repos/neitanod/forceutf8/zipball/30980a8ca2787a7730d370eac310b8987eb68229",
+                "reference": "30980a8ca2787a7730d370eac310b8987eb68229",
                 "shasum": ""
             },
             "require": {
@@ -841,6 +874,9 @@
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
             "authors": [
                 {
                     "name": "Sebastián Grignoli",
@@ -849,7 +885,7 @@
             ],
             "description": "PHP Class Encoding featuring popular Encoding::toUTF8() function --formerly known as forceUTF8()-- that fixes mixed encoded strings.",
             "homepage": "https://github.com/neitanod/forceutf8",
-            "time": "2017-05-22T18:50:57+00:00"
+            "time": "2018-10-10T23:03:52+00:00"
         },
         {
             "name": "nuovo/spreadsheet-reader",
@@ -1275,16 +1311,16 @@
         },
         {
             "name": "paragonie/sodium_compat",
-            "version": "v1.6.3",
+            "version": "v1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/sodium_compat.git",
-                "reference": "7d0549c3947eaea620f4e523f42ab236cf7fd304"
+                "reference": "7b73005be3c224f12c47bd75a23ce24b762e47e8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/7d0549c3947eaea620f4e523f42ab236cf7fd304",
-                "reference": "7d0549c3947eaea620f4e523f42ab236cf7fd304",
+                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/7b73005be3c224f12c47bd75a23ce24b762e47e8",
+                "reference": "7b73005be3c224f12c47bd75a23ce24b762e47e8",
                 "shasum": ""
             },
             "require": {
@@ -1353,7 +1389,7 @@
                 "secret-key cryptography",
                 "side-channel resistant"
             ],
-            "time": "2018-06-06T17:30:29+00:00"
+            "time": "2018-09-22T03:59:58+00:00"
         },
         {
             "name": "php-http/discovery",
@@ -1535,21 +1571,21 @@
         },
         {
             "name": "php-http/message",
-            "version": "1.6.0",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-http/message.git",
-                "reference": "2edd63bae5f52f79363c5f18904b05ce3a4b7253"
+                "reference": "741f2266a202d59c4ed75436671e1b8e6f475ea3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-http/message/zipball/2edd63bae5f52f79363c5f18904b05ce3a4b7253",
-                "reference": "2edd63bae5f52f79363c5f18904b05ce3a4b7253",
+                "url": "https://api.github.com/repos/php-http/message/zipball/741f2266a202d59c4ed75436671e1b8e6f475ea3",
+                "reference": "741f2266a202d59c4ed75436671e1b8e6f475ea3",
                 "shasum": ""
             },
             "require": {
-                "clue/stream-filter": "^1.3",
-                "php": ">=5.4",
+                "clue/stream-filter": "^1.4",
+                "php": "^5.4 || ^7.0",
                 "php-http/message-factory": "^1.0.2",
                 "psr/http-message": "^1.0"
             },
@@ -1603,7 +1639,7 @@
                 "message",
                 "psr-7"
             ],
-            "time": "2017-07-05T06:40:53+00:00"
+            "time": "2018-08-15T06:37:30+00:00"
         },
         {
             "name": "php-http/message-factory",
@@ -1935,16 +1971,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v6.15.0",
+            "version": "v6.19.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "20e18a9feface85d183eece03e84013ff794d5b1"
+                "reference": "1ab5c54fae4c16e9cc47d60c7454e6c3b6bbcb85"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/20e18a9feface85d183eece03e84013ff794d5b1",
-                "reference": "20e18a9feface85d183eece03e84013ff794d5b1",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/1ab5c54fae4c16e9cc47d60c7454e6c3b6bbcb85",
+                "reference": "1ab5c54fae4c16e9cc47d60c7454e6c3b6bbcb85",
                 "shasum": ""
             },
             "require": {
@@ -1954,8 +1990,8 @@
                 "php": ">=5.4.0"
             },
             "require-dev": {
+                "php-coveralls/php-coveralls": "1.*",
                 "phpunit/phpunit": "~4.0",
-                "satooshi/php-coveralls": "~0.6.1",
                 "squizlabs/php_codesniffer": "~2.0"
             },
             "type": "library",
@@ -1986,20 +2022,20 @@
                 "payment processing",
                 "stripe"
             ],
-            "time": "2018-08-03T10:54:52+00:00"
+            "time": "2018-10-17T14:58:41+00:00"
         },
         {
             "name": "studio-42/elfinder",
-            "version": "2.1.39",
+            "version": "2.1.42",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Studio-42/elFinder.git",
-                "reference": "f92460bdf9bb210296e2aaaf47fbe8a04c770937"
+                "reference": "83f4b3102bafd4393cb51ff41af4edd34f8132f4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Studio-42/elFinder/zipball/f92460bdf9bb210296e2aaaf47fbe8a04c770937",
-                "reference": "f92460bdf9bb210296e2aaaf47fbe8a04c770937",
+                "url": "https://api.github.com/repos/Studio-42/elFinder/zipball/83f4b3102bafd4393cb51ff41af4edd34f8132f4",
+                "reference": "83f4b3102bafd4393cb51ff41af4edd34f8132f4",
                 "shasum": ""
             },
             "require": {
@@ -2044,7 +2080,7 @@
             ],
             "description": "File manager for web",
             "homepage": "http://elfinder.org",
-            "time": "2018-06-05T07:36:51+00:00"
+            "time": "2018-08-29T06:44:30+00:00"
         },
         {
             "name": "symfony/http-foundation",
@@ -2102,16 +2138,16 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.8.0",
+            "version": "v1.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "3296adf6a6454a050679cde90f95350ad604b171"
+                "reference": "d0cd638f4634c16d8df4508e847f14e9e43168b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/3296adf6a6454a050679cde90f95350ad604b171",
-                "reference": "3296adf6a6454a050679cde90f95350ad604b171",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/d0cd638f4634c16d8df4508e847f14e9e43168b8",
+                "reference": "d0cd638f4634c16d8df4508e847f14e9e43168b8",
                 "shasum": ""
             },
             "require": {
@@ -2123,7 +2159,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.8-dev"
+                    "dev-master": "1.9-dev"
                 }
             },
             "autoload": {
@@ -2157,7 +2193,7 @@
                 "portable",
                 "shim"
             ],
-            "time": "2018-04-26T10:06:28+00:00"
+            "time": "2018-08-06T14:22:27+00:00"
         },
         {
             "name": "symfony/polyfill-php70",
@@ -2220,16 +2256,16 @@
         },
         {
             "name": "symfony/process",
-            "version": "v4.1.1",
+            "version": "v4.1.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
-                "reference": "1d1677391ecf00d1c5b9482d6050c0c27aa3ac3a"
+                "reference": "ee33c0322a8fee0855afcc11fff81e6b1011b529"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/1d1677391ecf00d1c5b9482d6050c0c27aa3ac3a",
-                "reference": "1d1677391ecf00d1c5b9482d6050c0c27aa3ac3a",
+                "url": "https://api.github.com/repos/symfony/process/zipball/ee33c0322a8fee0855afcc11fff81e6b1011b529",
+                "reference": "ee33c0322a8fee0855afcc11fff81e6b1011b529",
                 "shasum": ""
             },
             "require": {
@@ -2265,20 +2301,20 @@
             ],
             "description": "Symfony Process Component",
             "homepage": "https://symfony.com",
-            "time": "2018-05-31T10:17:53+00:00"
+            "time": "2018-10-02T12:40:59+00:00"
         },
         {
             "name": "tecnickcom/tcpdf",
-            "version": "6.2.17",
+            "version": "6.2.26",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tecnickcom/TCPDF.git",
-                "reference": "64fc19439863e1b1314487a72a74d9bfd0b55a53"
+                "reference": "367241059ca166e3a76490f4448c284e0a161f15"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/64fc19439863e1b1314487a72a74d9bfd0b55a53",
-                "reference": "64fc19439863e1b1314487a72a74d9bfd0b55a53",
+                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/367241059ca166e3a76490f4448c284e0a161f15",
+                "reference": "367241059ca166e3a76490f4448c284e0a161f15",
                 "shasum": ""
             },
             "require": {
@@ -2327,7 +2363,7 @@
                 "pdf417",
                 "qrcode"
             ],
-            "time": "2018-02-24T11:48:20+00:00"
+            "time": "2018-10-16T17:24:05+00:00"
         },
         {
             "name": "true/punycode",
@@ -2377,16 +2413,16 @@
         },
         {
             "name": "twilio/sdk",
-            "version": "5.21.1",
+            "version": "5.24.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twilio/twilio-php.git",
-                "reference": "b160d7d04fea6ad108120b064adac0015686d530"
+                "reference": "2dd9c1fa804c0ad0c91cfa2eec152ca24f40efc9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twilio/twilio-php/zipball/b160d7d04fea6ad108120b064adac0015686d530",
-                "reference": "b160d7d04fea6ad108120b064adac0015686d530",
+                "url": "https://api.github.com/repos/twilio/twilio-php/zipball/2dd9c1fa804c0ad0c91cfa2eec152ca24f40efc9",
+                "reference": "2dd9c1fa804c0ad0c91cfa2eec152ca24f40efc9",
                 "shasum": ""
             },
             "require": {
@@ -2419,7 +2455,7 @@
                 "sms",
                 "twilio"
             ],
-            "time": "2018-08-09T17:01:55+00:00"
+            "time": "2018-10-16T00:12:03+00:00"
         },
         {
             "name": "willdurand/email-reply-parser",
@@ -2471,16 +2507,16 @@
         },
         {
             "name": "zbateson/mail-mime-parser",
-            "version": "0.4.9",
+            "version": "0.4.12",
             "source": {
                 "type": "git",
-                "url": "https://github.com/zbateson/MailMimeParser.git",
-                "reference": "1e85e46204616e59ff7e34e4a141acdf9cf0c70a"
+                "url": "https://github.com/zbateson/mail-mime-parser.git",
+                "reference": "5c6711cf688fa609dfa1bb283ca4897ed8a5ae57"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zbateson/MailMimeParser/zipball/1e85e46204616e59ff7e34e4a141acdf9cf0c70a",
-                "reference": "1e85e46204616e59ff7e34e4a141acdf9cf0c70a",
+                "url": "https://api.github.com/repos/zbateson/mail-mime-parser/zipball/5c6711cf688fa609dfa1bb283ca4897ed8a5ae57",
+                "reference": "5c6711cf688fa609dfa1bb283ca4897ed8a5ae57",
                 "shasum": ""
             },
             "require": {
@@ -2518,7 +2554,7 @@
                 "parser",
                 "php-imap"
             ],
-            "time": "2018-04-18T18:25:58+00:00"
+            "time": "2018-10-17T21:45:27+00:00"
         }
     ],
     "packages-dev": [],

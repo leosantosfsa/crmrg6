@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 class App_mailer extends CI_Email
 {
     public $phpmailer;  // This property has been made public for testing purposes.

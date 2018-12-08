@@ -1,12 +1,5 @@
 <?php
 
-function convert($size)
-{
-    $unit = ['b', 'kb', 'mb', 'gb', 'tb', 'pb'];
-
-    return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $unit[$i];
-}
-
 defined('BASEPATH') or exit('No direct script access allowed');
 
 @ini_set('memory_limit', '256M');
@@ -91,8 +84,7 @@ class Utilities extends Admin_controller
         $data['google_ids_calendars'] = $this->misc_model->get_google_calendar_ids();
         $data['google_calendar_api']  = get_option('google_calendar_api_key');
         $data['title']                = _l('calendar');
-        // To load js files
-        $data['calendar_assets'] = true;
+        add_calendar_assets();
         $this->load->view('admin/utilities/calendar', $data);
     }
 
@@ -145,7 +137,14 @@ class Utilities extends Admin_controller
         $this->load->helper('url');
         $data['title']        = _l('media_files');
         $data['connector']    = admin_url() . '/utilities/media_connector';
-        $data['media_assets'] = true;
+
+        $mediaLocale = get_media_locale();
+
+        $this->app_scripts->add('media-js', 'assets/plugins/elFinder/js/elfinder.min.js');
+        if (file_exists(FCPATH . 'assets/plugins/elFinder/js/i18n/elfinder.' . $mediaLocale . '.js') && $mediaLocale != 'en') {
+            $this->app_scripts->add('media-lang-js', 'assets/plugins/elFinder/js/i18n/elfinder.' . $mediaLocale . '.js');
+        }
+
         $this->load->view('admin/utilities/media', $data);
     }
 
@@ -187,7 +186,7 @@ class Utilities extends Admin_controller
                 'application/x-python-code',
                 'wwwserver/shellcgi', // CGI
             ],
-            'uploadAllow' => [],
+            'uploadAllow' => !$this->input->get('editor') ? [] : ['image','video'],
             'uploadOrder' => [
                 'deny',
                 'allow',
@@ -207,6 +206,7 @@ class Utilities extends Admin_controller
                 ],
             ],
         ];
+
         if (!is_admin()) {
             $this->db->select('media_path_slug,staffid,firstname,lastname')
             ->from('tblstaff')
@@ -500,7 +500,7 @@ class Utilities extends Admin_controller
         if (!is_admin()) {
             access_denied('databaseBackup');
         }
-        if (unlink(BACKUPS_FOLDER . $backup)) {
+        if (unlink(BACKUPS_FOLDER . $backup.'.zip')) {
             set_alert('success', _l('backup_delete'));
         }
         redirect(admin_url('utilities/backup'));

@@ -30,7 +30,7 @@
                     <?php if(get_option('company_requires_vat_number_field') == 1){ ?>
                     <div class="form-group">
                         <label for="vat" class="control-label"><?php echo _l('clients_vat'); ?></label>
-                        <input type="text" class="form-control" name="vat" value="<?php if(isset($client)){echo $client->vat;} ?>">
+                        <input type="text" class="form-control" name="vat" value="<?php echo $client->vat; ?>">
                     </div>
                     <?php } ?>
                     <div class="form-group">
@@ -91,7 +91,7 @@
                       <?php } ?>
                   </div>
                   <div class="col-md-12">
-                    <?php echo render_custom_fields( 'customers',$client->userid,array('show_on_client_portal'=>1)); ?>
+                    <?php echo render_custom_fields('customers',$client->userid,array('show_on_client_portal'=>1)); ?>
                 </div>
                 <?php if(get_option('allow_primary_contact_to_view_edit_billing_and_shipping') == 1 && is_primary_contact()){ ?>
                 <div class="col-md-12">
@@ -129,7 +129,6 @@
                 </div>
 
                 <div class="col-md-6">
-                    <?php $countries= get_all_countries(); ?>
                     <h4 class="mbot15 mtop20"><?php echo _l('shipping_address'); ?></h4>
                     <div class="form-group">
                         <label for="shipping_street"><?php echo _l('shipping_street'); ?></label>
@@ -157,16 +156,15 @@
                         </select>
                     </div>
                 </div>
-
                 <?php } ?>
                 <?php if($contact->is_primary == 1){ ?>
-                <div class="row p15">
-                    <div class="col-md-12 text-right mtop20">
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-info"><?php echo _l('clients_edit_profile_update_btn'); ?></button>
+                    <div class="row p15">
+                        <div class="col-md-12 text-right mtop20">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-info"><?php echo _l('clients_edit_profile_update_btn'); ?></button>
+                            </div>
                         </div>
                     </div>
-                </div>
                 <?php } ?>
             </div>
         </div>

@@ -3,7 +3,7 @@
    <table class="table items no-margin">
       <thead>
          <tr>
-            <th align="center">#</th>
+            <th align="center"><?php echo _l('the_number_sign'); ?></th>
             <th class="description" width="50%" align="left"><?php echo _l('estimate_table_item_heading'); ?></th>
             <?php
                $custom_fields = get_items_custom_fields_for_table_html($proposal->id,'proposal');
@@ -94,7 +94,7 @@
       $proposal->content = str_replace('{proposal_items}',$items,$proposal->content);
       ?>
    <div class="mtop30">
-      <div class="row">
+      <div class="row top">
         <div class="col-md-12">
          <div class="mbot30">
           <?php echo get_dark_company_logo(); ?>
@@ -147,6 +147,8 @@
             <?php } ?>
             <div class="clearfix"></div>
          </div>
+       </div>
+       <div class="row">
          <div class="col-md-8 proposal-left">
             <div class="panel_s mtop20">
                <div class="panel-body proposal-content tc-content padding-30">
@@ -154,8 +156,8 @@
                </div>
             </div>
          </div>
-         <div class="col-md-4">
-            <div class="mtop20">
+         <div class="col-md-4 proposal-right">
+               <div class="inner mtop20">
                <ul class="nav nav-tabs nav-tabs-flat mbot15" role="tablist">
                   <li role="presentation" class="<?php if(!$this->input->get('tab') || $this->input->get('tab') === 'summary'){echo 'active';} ?>">
                      <a href="#summary" aria-controls="summary" role="tab" data-toggle="tab">
@@ -271,6 +273,8 @@
          </div>
       </div>
    </div>
+ </div>
+
    <?php
       if($identity_confirmation_enabled == '1'){
         get_template_part('identity_confirmation_form',array('formData'=>form_hidden('action','accept_proposal')));
@@ -278,10 +282,15 @@
       ?>
    <script>
       $(function(){
+        <?php if(!is_mobile()){ ?>
+          var right = $('.proposal-right .inner')[0];
+          var stop = (right.offsetTop + 100);
+          preview_right_sticky(right, stop);
+        <?php } ?>
+
         $(".proposal-left table").wrap("<div class='table-responsive'></div>");
             // Create lightbox for proposal content images
             $('.proposal-content img').wrap( function(){ return '<a href="' + $(this).attr('src') + '" data-lightbox="proposal"></a>'; });
-          });
-
+        });
    </script>
 </div>

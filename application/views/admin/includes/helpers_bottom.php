@@ -27,7 +27,7 @@
 <div id="timers-logout-template-warning" class="hide">
   <h2 class="bold"><?php echo _l('timers_started_confirm_logout'); ?></h2>
   <hr />
-  <a href="<?php echo site_url('authentication/logout'); ?>" class="btn btn-danger"><?php echo _l('confirm_logout'); ?></a>
+  <a href="<?php echo admin_url('authentication/logout'); ?>" class="btn btn-danger"><?php echo _l('confirm_logout'); ?></a>
 </div>
 
 <!--Lead convert to customer modal-->

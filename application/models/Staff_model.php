@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Staff_model extends CRM_Model
 {
     private $perm_statements = ['view', 'view_own', 'edit', 'create', 'delete'];

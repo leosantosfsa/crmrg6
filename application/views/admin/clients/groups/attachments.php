@@ -26,6 +26,10 @@
 <input type="file" name="file" multiple />
 <?php echo form_close(); ?>
 <div class="text-right mtop15">
+    <button class="gpicker" data-on-pick="customerGoogleDriveSave">
+        <i class="fa fa-google" aria-hidden="true"></i>
+        <?php echo _l('choose_from_google_drive'); ?>
+    </button>
     <div id="dropbox-chooser"></div>
 </div>
 <div class="attachments">
@@ -81,7 +85,7 @@
                                 $lightBoxUrl = site_url('download/preview_image?path='.protected_file_url_by_path($path).'&type='.$_att['filetype']);
                             } else if(isset($_att['external']) && !empty($_att['external'])){
 
-                                if(!empty($_att['thumbnail_link'])){
+                                if(!empty($_att['thumbnail_link']) && $_att['external'] == 'dropbox'){
                                     $is_image = true;
                                     $img_url = optimize_dropbox_thumbnail($_att['thumbnail_link']);
                                 }
@@ -144,7 +148,7 @@
                         <?php if(!isset($_att['external'])){ ?>
                         <button type="button" data-toggle="modal" data-file-name="<?php echo $_att['file_name']; ?>" data-filetype="<?php echo $_att['filetype']; ?>" data-path="<?php echo $path; ?>" data-target="#send_file" class="btn btn-info btn-icon"><i class="fa fa-envelope"></i></button>
                         <?php } else if(isset($_att['external']) && !empty($_att['external'])) {
-                            echo '<a href="'.$_att['external_link'].'" class="btn btn-info btn-icon" target="_blank"><i class="fa fa-dropbox"></i></a>';
+                            echo '<a href="'.$_att['external_link'].'" class="btn btn-info btn-icon" target="_blank">'.($_att['external'] == 'dropbox' ? '<i class="fa fa-dropbox"></i>' : '<i class="fa fa-google"></i>').'</a>';
                         } ?>
                         <?php if($type == 'customer'){ ?>
                         <a href="<?php echo admin_url('clients/delete_attachment/'.$_att['rel_id'].'/'.$_att['id']); ?>"  class="btn btn-danger btn-icon _delete"><i class="fa fa-remove"></i></a>

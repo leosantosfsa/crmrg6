@@ -77,7 +77,7 @@ class Subscriptions_model extends CRM_Model
 
     private function select()
     {
-        $this->db->select('tblsubscriptions.id as id, date, next_billing_cycle, status, tblsubscriptions.project_id as project_id, description, tblsubscriptions.created_from as created_from, tblsubscriptions.name as name, tblcurrencies.name as currency_name, tblcurrencies.symbol, currency, clientid, ends_at, date_subscribed, stripe_plan_id,stripe_subscription_id,quantity,hash,tbltaxes.name as tax_name, tbltaxes.taxrate as tax_percent, tax_id, stripe_id as stripe_customer_id,' . get_sql_select_client_company());
+        $this->db->select('tblsubscriptions.id as id, date, next_billing_cycle, status, tblsubscriptions.project_id as project_id, description, tblsubscriptions.created_from as created_from, tblsubscriptions.name as name, tblcurrencies.name as currency_name, tblcurrencies.symbol, currency, clientid, ends_at, date_subscribed, stripe_plan_id,stripe_subscription_id,quantity,hash,description_in_item,tbltaxes.name as tax_name, tbltaxes.taxrate as tax_percent, tax_id, stripe_id as stripe_customer_id,' . get_sql_select_client_company());
     }
 
     private function join()
@@ -87,7 +87,7 @@ class Subscriptions_model extends CRM_Model
         $this->db->join('tblclients', 'tblclients.userid=tblsubscriptions.clientid');
     }
 
-    public function send_email_template($id, $cc = '', $template = 'send-subscription')
+    public function send_email_template($id, $cc = '', $template = 'send-subscription', $email = '')
     {
         $this->load->model('emails_model');
 
@@ -101,7 +101,7 @@ class Subscriptions_model extends CRM_Model
         $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($subscription->clientid, $contact->id));
         $merge_fields = array_merge($merge_fields, get_subscription_merge_fields($subscription->id));
 
-        $email = $contact->email;
+        $email = $email == '' ? $contact->email : $email;
 
         /* if($template == 'subscription-payment-failed' || $template == 'subscription-canceled') {
              $this->load->library('stripe_subscriptions');
@@ -113,6 +113,10 @@ class Subscriptions_model extends CRM_Model
         $sent = $this->emails_model->send_email_template($template, $email, $merge_fields, '', $cc);
 
         return $sent ? true : false;
+    }
+
+    public function sent_staff_email_template() {
+
     }
 
     public function delete($id, $simpleDelete = false)

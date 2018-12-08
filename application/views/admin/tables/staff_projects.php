@@ -15,8 +15,8 @@ $staff_id = get_staff_user_id();
 if ($this->ci->input->post('staff_id')) {
     $staff_id = $this->ci->input->post('staff_id');
 } else {
-    // Request from home and finished not need to be shown
-    array_push($where, ' AND status != 4');
+    // Request from dashboard, finished and canceled not need to be shown
+    array_push($where, ' AND status != 4 AND status != 5');
 }
 array_push($where, ' AND tblprojects.id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . $staff_id . ')');
 

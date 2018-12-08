@@ -18,10 +18,10 @@
         <li class="customers-nav-item-kb"><a href="<?php echo site_url('knowledge-base'); ?>"><?php echo _l('clients_nav_kb'); ?></a></li>
         <?php } ?>
         <?php if(!is_client_logged_in() && get_option('allow_registration') == 1){ ?>
-        <li class="customers-nav-item-register"><a href="<?php echo site_url('clients/register'); ?>"><?php echo _l('clients_nav_register'); ?></a></li>
+        <li class="customers-nav-item-register"><a href="<?php echo site_url('authentication/register'); ?>"><?php echo _l('clients_nav_register'); ?></a></li>
         <?php } ?>
         <?php if(!is_client_logged_in()){ ?>
-        <li class="customers-nav-item-login"><a href="<?php echo site_url('clients/login'); ?>"><?php echo _l('clients_nav_login'); ?></a></li>
+        <li class="customers-nav-item-login"><a href="<?php echo site_url('authentication/login'); ?>"><?php echo _l('clients_nav_login'); ?></a></li>
         <?php } else { ?>
         <?php if(has_contact_permission('projects')){ ?>
         <li class="customers-nav-item-projects"><a href="<?php echo site_url('clients/projects'); ?>"><?php echo _l('clients_nav_projects'); ?></a></li>
@@ -92,7 +92,7 @@
                </ul>
              </li>
              <?php } ?>
-             <li class="customers-nav-item-logout"><a href="<?php echo site_url('clients/logout'); ?>"><?php echo _l('clients_nav_logout'); ?></a></li>
+             <li class="customers-nav-item-logout"><a href="<?php echo site_url('authentication/logout'); ?>"><?php echo _l('clients_nav_logout'); ?></a></li>
            </ul>
          </li>
          <?php } ?>

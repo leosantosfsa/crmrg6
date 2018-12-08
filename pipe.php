@@ -119,7 +119,11 @@ foreach ($mailAttachments as $attachment) {
 
 $subject   = $message->getHeaderValue('subject');
 $fromemail = $message->getHeaderValue('from');
-$fromname  = $message->getHeader('from')->getPersonName();
+$fromname  = '';
+
+if ($fromHeader = $message->getHeader('from')) {
+    $fromname = $fromHeader->getPersonName();
+}
 
 if (empty($fromname)) {
     $fromname = $fromemail;
@@ -142,8 +146,16 @@ $to = implode(',', $toemails);
 
 $body = handle_google_drive_links_in_text($body);
 
-if(class_exists('EmailReplyParser\EmailReplyParser')){
-    $body = \EmailReplyParser\EmailReplyParser::parseReply($body);
+if (class_exists('EmailReplyParser\EmailReplyParser')
+    && (mb_substr_count($subject, 'FWD:') == 0 && mb_substr_count($subject, 'FW:') == 0)) {
+    $parsedBody = \EmailReplyParser\EmailReplyParser::parseReply($body);
+
+    $parsedBody = trim($parsedBody);
+    // For some emails this is causing an issue and not returning the email, instead is returning empty string
+    // In this case, only use parsed email reply if not empty
+    if (!empty($parsedBody)) {
+        $body = $parsedBody;
+    }
 }
 
 // Trim message

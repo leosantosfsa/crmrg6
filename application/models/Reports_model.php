@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Reports_model extends CRM_Model
 {
     public function __construct()
@@ -393,6 +394,7 @@ class Reports_model extends CRM_Model
                 $data['groups'][$group['name']] = $group['name'];
             }
         }
+
         // If any groups found
         if (isset($data['groups'])) {
             foreach ($data['groups'] as $group) {
@@ -407,14 +409,17 @@ class Reports_model extends CRM_Model
                 array_push($data['labels'], $group);
                 if (isset($data['temp'][$group])) {
                     $data['total'][] = array_sum($data['temp'][$group]);
+                } else {
+                    $data['total'][] = 0;
                 }
             }
         }
+
         $chart = [
             'labels'   => $data['labels'],
             'datasets' => [
                 [
-                    'label'           => _l('customer_groups'),
+                    'label'           => _l('total_amount'),
                     'backgroundColor' => 'rgba(197, 61, 169, 0.2)',
                     'borderColor'     => '#c53da9',
                     'borderWidth'     => 1,

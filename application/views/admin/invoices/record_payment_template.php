@@ -9,6 +9,7 @@
                 <div class="col-md-6">
                     <?php
                     $amount = $invoice->total_left_to_pay;
+                    $totalAllowed = 0;
                     echo render_input('amount','record_payment_amount_received',$amount,'number',array('max'=>$amount)); ?>
                     <?php echo render_date_input('date','record_payment_date',_d(date('Y-m-d'))); ?>
                     <div class="form-group">
@@ -16,13 +17,24 @@
                         <select class="selectpicker" name="paymentmode" data-width="100%" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                             <option value=""></option>
                             <?php foreach($payment_modes as $mode){ ?>
-                            <?php if(is_payment_mode_allowed_for_invoice($mode['id'],$invoice->id)){ ?>
+                            <?php
+                            if(is_payment_mode_allowed_for_invoice($mode['id'],$invoice->id)){
+                                $totalAllowed++;
+                            ?>
                             <option value="<?php echo $mode['id']; ?>"><?php echo $mode['name']; ?></option>
                             <?php } ?>
                             <?php } ?>
                         </select>
                     </div>
                     <?php
+                    if($totalAllowed === 0) {
+                        ?>
+                        <div class="alert alert-info">
+                            Allowed payment modes not found for this invoice.<br />
+                            Click <a href="<?php echo admin_url('invoices/invoice/'.$invoice->id.'?allowed_payment_modes=1'); ?>">here</a> to edit the invoice and allow payment modes.
+                        </div>
+                        <?php
+                    }
                     $pr_template = total_rows('tblemailtemplates',array('slug'=>'invoice-payment-recorded','active'=>0)) == 0;
                     $sms_trigger = is_sms_trigger_active(SMS_TRIGGER_PAYMENT_RECORDED);
                     if($pr_template || $sms_trigger){ ?>

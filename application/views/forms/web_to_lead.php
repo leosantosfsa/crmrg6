@@ -23,7 +23,7 @@
          <?php if(get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '' && $form->recaptcha == 1){ ?>
          <div class="col-md-12">
            <div class="form-group"><div class="g-recaptcha" data-sitekey="<?php echo get_option('recaptcha_site_key'); ?>"></div>
-           <div id="recaptcha_response_field" class="text-danger"></div></div>
+           <div id="recaptcha_response_field" class="text-danger"></div>
          </div>
          <?php } ?>
          <?php if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions_lead_form') == 1) { ?>
@@ -75,11 +75,12 @@
        processData: false,
        url: formURL
      }).done(function(response){
+      $('#form_submit').prop('disabled', false);
       response = JSON.parse(response);
                  // In case action hook is used to redirect
                  if (response.redirect_url) {
-                   window.top.location.href = response.redirect_url;
-                   return;
+                     window.top.location.href = response.redirect_url;
+                     return;
                  }
                  if (response.success == false) {
                      $('#recaptcha_response_field').html(response.message); // error message
@@ -96,10 +97,14 @@
                      grecaptcha.reset();
                    }
                  }).fail(function(data){
-                  if (typeof(grecaptcha) != 'undefined') {
+                 if (typeof(grecaptcha) != 'undefined') {
                    grecaptcha.reset();
                  }
-                 $('#response').html(data.responseText);
+                 if(data.status == 422) {
+                    $('#response').html('<div class="alert alert-danger">Some fields that are required are not filled properly.</div>');
+                 } else {
+                    $('#response').html(data.responseText);
+                 }
                });
                  return false;
                }

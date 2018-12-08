@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * Load PDF language for client
  * This is used eq if client have different language the system default language so in this case the PDF document will be on client language not on system language

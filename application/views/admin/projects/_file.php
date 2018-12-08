@@ -21,13 +21,23 @@
                   <?php } ?>
                   <?php } ?>
                   <?php if(!empty($file->external) && $file->external == 'dropbox'){ ?>
-                  <a href="<?php echo $file->external_link; ?>" target="_blank" class="btn btn-info mbot20"><i class="fa fa-dropbox" aria-hidden="true"></i> <?php echo _l('open_in_dropbox'); ?></a><br />
+                     <a href="<?php echo $file->external_link; ?>" target="_blank" class="btn btn-info mbot20">
+                        <i class="fa fa-dropbox" aria-hidden="true"></i>
+                        <?php echo _l('open_in_dropbox'); ?>
+                     </a>
+                     <br />
+                  <?php } else if(!empty($file->external) && $file->external == 'gdrive') { ?>
+                     <a href="<?php echo $file->external_link; ?>" target="_blank" class="btn btn-info mbot20">
+                           <i class="fa fa-google" aria-hidden="true"></i>
+                           <?php echo _l('open_in_google'); ?>
+                     </a>
+                     <br />
                   <?php } ?>
                   <?php
                      $path = PROJECT_ATTACHMENTS_FOLDER .$file->project_id.'/'.$file->file_name;
                      if(is_image($path)){ ?>
                   <img src="<?php echo base_url('uploads/projects/'.$file->project_id.'/'.$file->file_name); ?>" class="img img-responsive">
-                  <?php } else if(!empty($file->external) && !empty($file->thumbnail_link)){ ?>
+                  <?php } else if(!empty($file->external) && !empty($file->thumbnail_link) && $file->external == 'dropbox'){ ?>
                   <img src="<?php echo optimize_dropbox_thumbnail($file->thumbnail_link); ?>" class="img img-responsive">
                   <?php } else if(strpos($file->filetype,'pdf') !== false && empty($file->external)){ ?>
                   <iframe src="<?php echo base_url('uploads/projects/'.$file->project_id.'/'.$file->file_name); ?>" height="100%" width="100%" frameborder="0"></iframe>
@@ -38,7 +48,11 @@
                   <?php } else if(is_markdown_file($path) && $previewMarkdown = markdown_parse_preview($path)) {
                      echo $previewMarkdown;
                   } else {
-                     echo '<a href="'.site_url('uploads/projects/'.$file->project_id.'/'.$file->file_name).'" download>'.$file->file_name.'</a>';
+                     if(empty($file->external)) {
+                        echo '<a href="'.site_url('uploads/projects/'.$file->project_id.'/'.$file->file_name).'" download>'.$file->file_name.'</a>';
+                     } else {
+                        echo '<a href="'.$file->external_link.'" target="_blank">'.$file->file_name.'</a>';
+                     }
                      echo '<p class="text-muted">'._l('no_preview_available_for_file').'</p>';
                      } ?>
                </div>

@@ -55,7 +55,9 @@ class Stripe extends CRM_Controller
         check_invoice_restrictions($this->input->get('invoiceid'), $this->input->get('hash'));
         $this->load->model('invoices_model');
         $invoice = $this->invoices_model->get($this->input->get('invoiceid'));
-        load_client_language($invoice->clientid);
+        $language = load_client_language($invoice->clientid);
+        $data['locale'] = get_locale_key($language);
+
         $data['invoice'] = $invoice;
         if (is_client_logged_in()) {
             $data['contact'] = $this->clients_model->get_contact(get_contact_user_id());
@@ -107,13 +109,13 @@ class Stripe extends CRM_Controller
                               $form = '<form action="' . site_url('gateways/stripe/complete_purchase/'.$data['invoice']->id.'/'. $data['invoice']->hash) . '" method="POST">
                                 <script
                                 src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-                                '.(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source) ? 'data-label="'._l('enter_new_card').'"' : '').'
+                                data-label="'.(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source) ? _l('enter_new_card') : _l('pay_with_card')).'"
                                 data-key="' . $this->stripe_gateway->getSetting('api_publishable_key') . '"
                                 data-amount="' . ($data['total'] * 100) . '"
                                 data-name="' . get_option('companyname') . '"
                                 data-billing-address="true"
                                 data-description=" ' . _l('payment_for_invoice') . ' ' . format_invoice_number($data['invoice']->id) . '";
-                                data-locale="auto"
+                                data-locale="'.$data['locale'].'"
                                 ' . (is_client_logged_in() ? 'data-email="' . $data['contact']->email . '"' : '') . '
                                 data-currency="' . $data['invoice']->currency_name . '"
                                 >

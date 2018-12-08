@@ -1,6 +1,8 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-include_once(APPPATH.'config/app-config.php');
+
+defined('BASEPATH') or exit('No direct script access allowed');
+include_once(APPPATH . 'config/app-config.php');
+
 /*
 | -------------------------------------------------------------------
 | DATABASE CONNECTIVITY SETTINGS
@@ -70,27 +72,35 @@ include_once(APPPATH.'config/app-config.php');
 | The $query_builder variables lets you determine whether or not to load
 | the query builder class.
 */
-$active_group = 'default';
-$query_builder = TRUE;
+$active_group  = 'default';
+$query_builder = true;
 
-$db['default'] = array(
-	'dsn'	   => '', // Not Supported
-	'hostname' => APP_DB_HOSTNAME,
-	'username' => APP_DB_USERNAME,
-	'password' => APP_DB_PASSWORD,
-	'database' => APP_DB_NAME,
-	'dbdriver' => defined('APP_DB_DRIVER') ? APP_DB_DRIVER : 'mysqli',
-	'dbprefix' => '', // Not Supported
-	'pconnect' => FALSE,
-	'db_debug' => (ENVIRONMENT !== 'production'),
-	'cache_on' => FALSE,
-	'cachedir' => '',
-	'char_set' => 'utf8',
-	'dbcollat' => 'utf8_general_ci',
-	'swap_pre' => '',
-	'encrypt'  => FALSE,
-	'compress' => FALSE,
-	'stricton' => FALSE,
-	'failover' => array(),
-	'save_queries' => TRUE
-);
+global $app_db_encrypt;
+$db_encrypt = false;
+if (defined('APP_DB_ENCRYPT')) {
+    $db_encrypt = APP_DB_ENCRYPT;
+} elseif (!is_null($app_db_encrypt)) {
+    $db_encrypt = $app_db_encrypt;
+}
+
+$db['default'] = [
+    'dsn'          => '', // Not Supported
+    'hostname'     => APP_DB_HOSTNAME,
+    'username'     => APP_DB_USERNAME,
+    'password'     => APP_DB_PASSWORD,
+    'database'     => APP_DB_NAME,
+    'dbdriver'     => defined('APP_DB_DRIVER') ? APP_DB_DRIVER : 'mysqli',
+    'dbprefix'     => '', // Not Supported
+    'pconnect'     => false,
+    'db_debug'     => (ENVIRONMENT !== 'production'),
+    'cache_on'     => false,
+    'cachedir'     => '',
+    'char_set'     => 'utf8',
+    'dbcollat'     => 'utf8_general_ci',
+    'swap_pre'     => '',
+    'encrypt'      => $db_encrypt,
+    'compress'     => false,
+    'stricton'     => false,
+    'failover'     => [],
+    'save_queries' => true,
+];

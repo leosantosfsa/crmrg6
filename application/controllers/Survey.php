@@ -4,10 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Survey extends Clients_controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function index($id, $hash)
     {

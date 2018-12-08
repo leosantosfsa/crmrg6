@@ -105,7 +105,7 @@ class Credit_notes_model extends CRM_Model
                     if ($attachpdf) {
                         $this->emails_model->add_attachment([
                             'attachment' => $attach,
-                            'filename'   => $number . '.pdf',
+                            'filename'   => str_replace('/', '-', $number . '.pdf'),
                             'type'       => 'application/pdf',
                         ]);
                     }

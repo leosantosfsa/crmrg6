@@ -17,7 +17,7 @@ class Staff extends Admin_controller
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('staff');
         }
-        $data['staff_members'] = $this->staff_model->get('', ['active'=>1]);
+        $data['staff_members'] = $this->staff_model->get('', ['active' => 1]);
         $data['title']         = _l('staff_members');
         $this->load->view('admin/staff/manage', $data);
     }
@@ -167,6 +167,7 @@ class Staff extends Admin_controller
         if ($data['view_all'] == false) {
             unset($data['view_all']);
         }
+
         $data['logged_time'] = $this->staff_model->get_logged_time_data(get_staff_user_id());
         $data['title']       = '';
         $this->load->view('admin/staff/timesheets', $data);
@@ -174,10 +175,8 @@ class Staff extends Admin_controller
 
     public function delete()
     {
-        if (!is_admin()) {
-            if (is_admin($this->input->post('id'))) {
-                die('Busted, you can\'t delete administrators');
-            }
+        if (!is_admin() && is_admin($this->input->post('id'))) {
+            die('Busted, you can\'t delete administrators');
         }
         if (has_permission('staff', '', 'delete')) {
             $success = $this->staff_model->delete($this->input->post('id'), $this->input->post('transfer_data_to'));

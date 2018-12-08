@@ -12,6 +12,7 @@
 						<hr class="hr-panel-heading" />
 						<div class="clearfix"></div>
 						<?php render_datatable(array(
+							_l('id'),
 							_l('tax_dt_name'),
 							_l('tax_dt_rate'),
 							_l('options')
@@ -60,7 +61,7 @@
 	<script>
 		$(function(){
 
-			initDataTable('.table-taxes', window.location.href, [2], [2]);
+			initDataTable('.table-taxes', window.location.href, [3], [3], undefined, [2,'asc']);
 
 			_validate_form($('form'),{
 				name:{
@@ -101,8 +102,8 @@
 					$('.tax_is_used_in_subscriptions_warning').addClass('hide');
 					if (typeof(id) !== 'undefined') {
 						$('input[name="taxid"]').val(id);
-						var name = $(button).parents('tr').find('td').eq(0).text();
-						var rate = $(button).parents('tr').find('td').eq(1).text();
+						var name = $(button).parents('tr').find('td').eq(1).text();
+						var rate = $(button).parents('tr').find('td').eq(2).text();
 						var is_referenced_expenses = $(button).data('is-referenced-expenses');
 						if(is_referenced_expenses == 1){
 							$('.tax_is_used_in_expenses_warning').removeClass('hide');

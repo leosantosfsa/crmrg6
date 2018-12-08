@@ -90,7 +90,7 @@ $tblhtml = '<table width="100%" bgcolor="#fff" cellspacing="0" cellpadding="8">'
 
 $tblhtml .= '<tr height="30" bgcolor="' . get_option('pdf_table_heading_color') . '" style="color:' . get_option('pdf_table_heading_text_color') . ';">';
 
-$tblhtml .= '<th width="5%;" align="center">#</th>';
+$tblhtml .= '<th width="5%;" align="center">'._l('the_number_sign').'</th>';
 $tblhtml .= '<th width="'.$item_width.'%" align="left">' . _l('estimate_table_item_heading') . '</th>';
 
 foreach ($custom_fields_items as $cf) {

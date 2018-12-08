@@ -4,10 +4,11 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 $hasPermissionEdit   = has_permission('tasks', '', 'edit');
 $hasPermissionDelete = has_permission('tasks', '', 'delete');
-$tasksPriorities = get_tasks_priorities();
+$tasksPriorities     = get_tasks_priorities();
 
 $aColumns = [
     '1', // bulk actions
+    'tblstafftasks.id as id',
     'name',
     'status',
     'startdate',
@@ -78,7 +79,6 @@ if (count($custom_fields) > 4) {
 }
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
-    'tblstafftasks.id',
     'billed',
     'recurring',
     '(SELECT staffid FROM tblstafftaskassignees WHERE taskid=tblstafftasks.id AND staffid=' . get_staff_user_id() . ') as is_assigned',
@@ -96,6 +96,8 @@ foreach ($rResult as $aRow) {
 
     $row[] = '<div class="checkbox"><input type="checkbox" value="' . $aRow['id'] . '"><label></label></div>';
 
+    $row[] = '<a href="' . admin_url('tasks/view/' . $aRow['id']) . '" onclick="init_task_modal(' . $aRow['id'] . '); return false;">' . $aRow['id'] . '</a>';
+
     $outputName = '';
 
     if ($aRow['not_finished_timer_by_current_staff']) {
@@ -104,7 +106,7 @@ foreach ($rResult as $aRow) {
 
     $outputName .= '<a href="' . admin_url('tasks/view/' . $aRow['id']) . '" class="display-block main-tasks-table-href-name" onclick="init_task_modal(' . $aRow['id'] . '); return false;">' . $aRow['name'] . '</a>';
 
-    if($aRow['recurring'] == 1) {
+    if ($aRow['recurring'] == 1) {
         $outputName .= '<span class="label label-primary inline-block mtop4"> ' . _l('recurring_task') . '</span>';
     }
 
@@ -146,7 +148,7 @@ foreach ($rResult as $aRow) {
     $row[]           = $outputName;
     $canChangeStatus = ($aRow['current_user_is_creator'] != '0' || $aRow['current_user_is_assigned'] || has_permission('tasks', '', 'edit'));
     $status          = get_task_status_by_id($aRow['status']);
-    $outputStatus      = '';
+    $outputStatus    = '';
 
     $outputStatus .= '<span class="inline-block label" style="color:' . $status['color'] . ';border:1px solid ' . $status['color'] . '" task-status-table="' . $aRow['status'] . '">';
 
@@ -192,7 +194,7 @@ foreach ($rResult as $aRow) {
 
     $row[] = render_tags($aRow['tags']);
 
-        $outputPriority = '<span style="color:' . task_priority_color($aRow['priority']) . ';" class="inline-block">' . task_priority($aRow['priority']);
+    $outputPriority = '<span style="color:' . task_priority_color($aRow['priority']) . ';" class="inline-block">' . task_priority($aRow['priority']);
 
     if (has_permission('tasks', '', 'edit') && $aRow['status'] != 5) {
         $outputPriority .= '<div class="dropdown inline-block mleft5 table-export-exclude">';
@@ -201,7 +203,7 @@ foreach ($rResult as $aRow) {
         $outputPriority .= '</a>';
 
         $outputPriority .= '<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="tableTaskPriority-' . $aRow['id'] . '">';
-        foreach($tasksPriorities as $priority){
+        foreach ($tasksPriorities as $priority) {
             if ($aRow['priority'] != $priority['id']) {
                 $outputPriority .= '<li>
                   <a href="#" onclick="task_change_priority(' . $priority['id'] . ',' . $aRow['id'] . '); return false;">

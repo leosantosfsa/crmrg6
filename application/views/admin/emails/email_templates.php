@@ -379,7 +379,7 @@
                                                     <?php if(ENVIRONMENT !== 'production'){ ?>
                                                     <br/><small><?php echo $staff_template['slug']; ?></small>
                                                     <?php } ?>
-                                                    <?php if($hasPermissionEdit){ ?>
+                                                    <?php if($hasPermissionEdit && $staff_template['slug'] != 'two-factor-authentication'){ ?>
                                                     <a href="<?php echo admin_url('emails/'.($staff_template['active'] == '1' ? 'disable/' : 'enable/').$staff_template['emailtemplateid']); ?>" class="pull-right"><small><?php echo _l($staff_template['active'] == 1 ? 'disable' : 'enable'); ?></small></a>
                                                     <?php } ?>
                                                 </td>

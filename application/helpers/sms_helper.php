@@ -66,22 +66,21 @@ function _init_core_sms_gateways()
             ],
         ]);
 
-    /*
-    TODO
-      $CI->sms->add_gateway('msg91', [
+    $CI->sms->add_gateway('msg91', [
+                'info'    => "<p>MSG91 SMS integration is one way messaging, means that your customers won't be able to reply to the SMS.</p><hr class='hr-10'>",
                 'name'    => 'MSG91',
                 'options' => [
                     [
                         'name'  => 'sender_id',
                         'label' => 'Sender ID',
-                        'info'=>'<p><a href="https://help.msg91.com/article/40-what-is-a-sender-id-how-to-select-a-sender-id" target="_blank">https://help.msg91.com/article/40-what-is-a-sender-id-how-to-select-a-sender-id</a></p>'
+                        'info'  => '<p><a href="https://help.msg91.com/article/40-what-is-a-sender-id-how-to-select-a-sender-id" target="_blank">https://help.msg91.com/article/40-what-is-a-sender-id-how-to-select-a-sender-id</a></p>',
                     ],
                      [
                         'name'  => 'auth_key',
                         'label' => 'Auth Key',
                     ],
                 ],
-            ]);*/
+            ]);
 
     $CI->sms->add_gateway('clickatell', [
             'info'    => "<p>Clickatell SMS integration is one way messaging, means that your customers won't be able to reply to the SMS.</p><hr class='hr-10'>",
@@ -122,9 +121,6 @@ function twilio_trigger_send_sms($number, $message)
 {
     $CI = &get_instance();
 
-    // Using composer
-    // require_once(APPPATH . '/third_party/twilio/Twilio/autoload.php');
-
     // Account SID from twilio.com/console
     static $sid;
     // Auth Token from twilio.com/console
@@ -162,7 +158,7 @@ function twilio_trigger_send_sms($number, $message)
                     'body' => $message,
                 ]
             );
-        logActivity('SMS to send via Twilio to ' . $number . ', Message: ' . $message);
+        logActivity('SMS sent via Twilio to ' . $number . ', Message: ' . $message);
     } catch (Exception $e) {
         $error                = $e->getMessage();
         $GLOBALS['sms_error'] = $error;
@@ -212,7 +208,7 @@ function clickatell_trigger_send_sms($number, $message)
         $result = json_decode($result);
 
         if (isset($result->messages[0]->accepted) && $result->messages[0]->accepted == true) {
-            logActivity('SMS to send via Clickatell to ' . $number . ', Message: ' . $message);
+            logActivity('SMS sent via Clickatell to ' . $number . ', Message: ' . $message);
 
             return true;
         } elseif (isset($result->messages) && isset($result->error)) {
@@ -275,10 +271,20 @@ function msg91_trigger_send_sms($number, $message)
     curl_close($curl);
 
     if ($err) {
-        echo 'cURL Error #:' . $err;
+        $GLOBALS['sms_error'] = $err;
+        logActivity('Failed to send SMS via MSG91: ' . $err);
     } else {
-        echo $response;
+        $response = json_decode($response);
+
+        if ($response->type == 'success') {
+            logActivity('SMS sent via MSG91 to ' . $number . ', Message: ' . $message);
+
+            return true;
+        }
+
+        $GLOBALS['sms_error'] = $response->message;
+        logActivity('Failed to send SMS via MSG91: ' . $response->message);
     }
 
-    die;
+    return false;
 }

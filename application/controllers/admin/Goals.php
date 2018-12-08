@@ -19,7 +19,7 @@ class Goals extends Admin_controller
         if ($this->input->is_ajax_request()) {
             $this->app->get_table_data('goals');
         }
-        $data['circle_progress_asset'] = true;
+        $this->app_scripts->add('circle-progress-js','assets/plugins/jquery-circle-progress/circle-progress.min.js');
         $data['title']                 = _l('goals_tracking');
         $this->load->view('admin/goals/manage', $data);
     }
@@ -65,7 +65,7 @@ class Goals extends Admin_controller
         $this->load->model('contracts_model');
         $data['contract_types']        = $this->contracts_model->get_contract_types();
         $data['title']                 = $title;
-        $data['circle_progress_asset'] = true;
+        $this->app_scripts->add('circle-progress-js','assets/plugins/jquery-circle-progress/circle-progress.min.js');
         $this->load->view('admin/goals/goal', $data);
     }
 

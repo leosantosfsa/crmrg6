@@ -156,6 +156,7 @@
        processData: false,
        url: formURL
      }).done(function(response){
+      $('#form_submit').prop('disabled', false);
       response = JSON.parse(response);
                  // In case action hook is used to redirect
                  if (response.redirect_url) {
@@ -177,10 +178,16 @@
                      grecaptcha.reset();
                    }
                  }).fail(function(data){
+
                   if (typeof(grecaptcha) != 'undefined') {
                    grecaptcha.reset();
                  }
-                 $('#response').html(data.responseText);
+
+                 if(data.status == 422) {
+                    $('#response').html('<div class="alert alert-danger">Some fields that are required are not filled properly.</div>');
+                 } else {
+                    $('#response').html(data.responseText);
+                 }
                });
                  return false;
                }});

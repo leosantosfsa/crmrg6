@@ -10,6 +10,7 @@ $v = $this->ci->db->query('SELECT VERSION() as version')->row();
     'task_id',
     'rel_type',
     'rel_id',
+    'billed',
     'status', ];
 
 $staffIdSelect = '';
@@ -91,8 +92,38 @@ if ($staff_id != false) {
         ];
 }
 
-if ($this->ci->input->post('project_id')) {
-    array_push($where, 'AND task_id IN (SELECT id FROM tblstafftasks WHERE rel_type = "project" AND rel_id = "' . $this->ci->input->post('project_id') . '")');
+$project_ids = $this->ci->input->post('project_id');
+
+if ($project_ids && is_array($project_ids)) {
+    $project_ids = array_filter($project_ids, function ($value) {
+        return $value !== '';
+    });
+
+    if (count($project_ids) > 0) {
+        array_push($where, 'AND task_id IN (SELECT id FROM tblstafftasks WHERE rel_type = "project" AND rel_id  IN (' . implode(',', $project_ids) . '))');
+    }
+}
+
+if ($this->ci->input->post('clientid') && !$this->ci->input->post('project_id')) {
+    $customer_id = $this->ci->input->post('clientid');
+
+    array_push($where, 'AND (
+                (rel_id IN (SELECT id FROM tblinvoices WHERE clientid=' . $customer_id . ') AND rel_type="invoice")
+                OR
+                (rel_id IN (SELECT id FROM tblestimates WHERE clientid=' . $customer_id . ') AND rel_type="estimate")
+                OR
+                (rel_id IN (SELECT id FROM tblcontracts WHERE client=' . $customer_id . ') AND rel_type="contract")
+                OR
+                ( rel_id IN (SELECT ticketid FROM tbltickets WHERE userid=' . $customer_id . ') AND rel_type="ticket")
+                OR
+                (rel_id IN (SELECT id FROM tblexpenses WHERE clientid=' . $customer_id . ') AND rel_type="expense")
+                OR
+                (rel_id IN (SELECT id FROM tblproposals WHERE rel_id=' . $customer_id . ' AND rel_type="customer") AND rel_type="proposal")
+                OR
+                (rel_id IN (SELECT userid FROM tblclients WHERE userid=' . $customer_id . ') AND rel_type="customer")
+                OR
+                (rel_id IN (SELECT id FROM tblprojects WHERE clientid=' . $customer_id . ') AND rel_type="project")
+                )');
 }
 
 array_push($where, 'AND task_id != 0');
@@ -204,7 +235,7 @@ $chartWhere = implode(' ', $where);
 $chartWhere = ltrim($chartWhere, 'AND ');
 
 $chartData = $this->ci->db->query('SELECT end_time - start_time logged_time_h,
-    end_time - start_time logged_time_d,start_time,end_time FROM tbltaskstimers WHERE ' . trim($chartWhere))->result_array();
+    end_time - start_time logged_time_d,start_time,end_time FROM tbltaskstimers LEFT JOIN tblstafftasks ON tblstafftasks.id = tbltaskstimers.task_id WHERE ' . trim($chartWhere))->result_array();
 
 foreach ($chartData as $timer) {
     if ($timer['logged_time_h'] == null) {
@@ -269,8 +300,26 @@ foreach ($rResult as $aRow) {
 
     $row[] = _dt($aRow['start_time'], true);
 
-    $row[] = ($aRow['end_time'] ? _dt($aRow['end_time'], true) : '');
+    $endTimeOutput = ($aRow['end_time'] ? _dt($aRow['end_time'], true) : '');
 
+    if (!$aRow['end_time'] && is_admin() && $aRow['billed'] == 0) {
+        $endTimeOutput .= ' <a href="#"
+        data-toggle="popover"
+        data-placement="bottom"
+        data-html="true"
+        data-trigger="manual"
+        data-title="' . _l('note') . "\"
+        data-content='" . render_textarea('timesheet_note') . '
+        <button type="button"
+        onclick="timer_action(this, ' . $aRow['task_id'] . ', ' . $aRow['id'] . ', 1);"
+        class="btn btn-info btn-xs">' . _l('save')
+        . "</button>'
+        class=\"text-danger\"
+        onclick=\"return false;\">
+                <i class=\"fa fa-clock-o\"></i> " . _l('task_stop_timer') . '
+        </a>';
+    }
+    $row[] = $endTimeOutput;
     $row[] = $aRow['note'];
 
     if ($aRow['rel_name']) {
@@ -338,4 +387,5 @@ unset($footer_data['chart']);
 
 $footer_data['total_logged_time_h'] = seconds_to_time_format($footer_data['total_logged_time_h']);
 $footer_data['total_logged_time_d'] = sec2qty($footer_data['total_logged_time_d']);
-$output['logged_time']              = $footer_data;
+
+$output['logged_time'] = $footer_data;

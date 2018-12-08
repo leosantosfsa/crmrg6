@@ -332,14 +332,15 @@
 
     custom_fields_hyperlink();
 
-
     _validate_form($('#task-form'), {
       name: 'required',
       startdate: 'required'
     },task_form_handler);
 
     $('.rel_id_label').html(_rel_type.find('option:selected').text());
+
     _rel_type.on('change', function() {
+
      var clonedSelect = _rel_id.html('').clone();
      _rel_id.selectpicker('destroy').remove();
      _rel_id = clonedSelect;
@@ -359,6 +360,7 @@
     init_color_pickers();
     init_selectpicker();
     task_rel_select();
+
     $('body').on('change','#rel_id',function(){
      if($(this).val() != ''){
        if(_rel_type.val() == 'project'){
@@ -374,8 +376,29 @@
          } else {
            $('.task-hours').removeClass('project-task-hours');
          }
+
+         if(project.deadline) {
+
+            var $duedate = $('#_task_modal #duedate');
+            var currentSelectedTaskDate = $duedate.val();
+            $duedate.datetimepicker('destroy');
+            $duedate.attr('data-date-end-date', project.deadline);
+            init_datepicker($duedate);
+
+            if(currentSelectedTaskDate) {
+               var dateTask = new Date(unformat_date(currentSelectedTaskDate));
+               var projectDeadline = new Date(project.deadline);
+               if(dateTask > projectDeadline) {
+                  $duedate.val(project.deadline_formatted);
+               }
+            }
+         } else {
+            reset_task_duedate_input();
+         }
          init_project_details(_rel_type.val(),project.allow_to_view_tasks);
        },'json');
+       } else {
+         reset_task_duedate_input();
        }
      }
    });
@@ -395,11 +418,7 @@
       var serverData = {};
       serverData.rel_id = _rel_id.val();
       data.type = _rel_type.val();
-      <?php if(isset($task)){ ?>
-       data.connection_type = 'task';
-       data.connection_id = '<?php echo $task->id; ?>';
-       <?php } ?>
-       init_ajax_search(_rel_type.val(),_rel_id,serverData);
+      init_ajax_search(_rel_type.val(),_rel_id,serverData);
      }
 
      function init_project_details(type,tasks_visible_to_customer){
@@ -429,4 +448,10 @@
         }
       }
     }
+    function reset_task_duedate_input() {
+      var $duedate = $('#_task_modal #duedate');
+      $duedate.removeAttr('data-date-end-date');
+      $duedate.datetimepicker('destroy');
+      init_datepicker($duedate);
+   }
 </script>

@@ -1,8 +1,7 @@
 <?php
 
-if (!defined('BASEPATH')) {
-    exit('No direct script access allowed');
-}
+defined('BASEPATH') or exit('No direct script access allowed');
+
 class Authentication_model extends CRM_Model
 {
     public function __construct()
@@ -35,17 +34,23 @@ class Authentication_model extends CRM_Model
                 $this->load->helper('phpass');
                 $hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
                 if (!$hasher->CheckPassword($password, $user->password)) {
+                    do_action('failed_login_attempt', [
+                        'user'            => $user,
+                        'is_staff_member' => $staff,
+                    ]);
+
+                    logActivity('Failed Login Attempt [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
                     // Password failed, return
                     return false;
                 }
             } else {
-                logActivity('Failed Login Attempt [Email:' . $email . ', Is Staff Member:' . ($staff == true ? 'Yes' : 'No') . ', IP:' . $this->input->ip_address() . ']');
+                logActivity('Non Existing User Tried to Login [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
 
                 return false;
             }
 
             if ($user->active == 0) {
-                logActivity('Inactive User Tried to Login [Email:' . $email . ', Is Staff Member:' . ($staff == true ? 'Yes' : 'No') . ', IP:' . $this->input->ip_address() . ']');
+                logActivity('Inactive User Tried to Login [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
 
                 return [
                     'memberinactive' => true,
@@ -375,7 +380,7 @@ class Authentication_model extends CRM_Model
             'password' => $password,
         ]);
         if ($this->db->affected_rows() > 0) {
-            logActivity('User Set Password [User ID:' . $userid . ', Is Staff Member:' . ($staff == true ? 'Yes' : 'No') . ', IP:' . $this->input->ip_address() . ']');
+            logActivity('User Set Password [User ID: ' . $userid . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
             $this->db->set('new_pass_key', null);
             $this->db->set('new_pass_key_requested', null);
             $this->db->set('last_password_change', date('Y-m-d H:i:s'));
@@ -420,7 +425,7 @@ class Authentication_model extends CRM_Model
             'password' => $password,
         ]);
         if ($this->db->affected_rows() > 0) {
-            logActivity('User Reseted Password [User ID:' . $userid . ', Is Staff Member:' . ($staff == true ? 'Yes' : 'No') . ', IP:' . $this->input->ip_address() . ']');
+            logActivity('User Reseted Password [User ID: ' . $userid . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
             $this->db->set('new_pass_key', null);
             $this->db->set('new_pass_key_requested', null);
             $this->db->set('last_password_change', date('Y-m-d H:i:s'));

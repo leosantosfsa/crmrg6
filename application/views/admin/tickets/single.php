@@ -22,6 +22,24 @@
                               </a>
                            </li>
                            <li role="presentation">
+                              <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $ticket->ticketid ;?> + '/' + 'ticket', undefined, undefined, undefined,[1,'asc']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
+                              <?php echo _l('ticket_reminders'); ?>
+                              <?php
+                                 $total_reminders = total_rows('tblreminders',
+                                   array(
+                                     'isnotified'=>0,
+                                     'staff'=>get_staff_user_id(),
+                                     'rel_type'=>'ticket',
+                                     'rel_id'=>$ticket->ticketid
+                                  )
+                                 );
+                                 if($total_reminders > 0){
+                                   echo '<span class="badge">'.$total_reminders.'</span>';
+                                 }
+                                 ?>
+                              </a>
+                           </li>
+                           <li role="presentation">
                               <a href="#othertickets" onclick="init_table_tickets(true);" aria-controls="othertickets" role="tab" data-toggle="tab">
                               <?php echo _l('ticket_single_other_user_tickets'); ?>
                               </a>
@@ -169,9 +187,9 @@
                                     </select>
                                  </div>
                                  <?php if($use_knowledge_base == 1){ ?>
-                                    <div class="visible-xs">
-                                       <div class="mtop15"></div>
-                                    </div>
+                                 <div class="visible-xs">
+                                    <div class="mtop15"></div>
+                                 </div>
                                  <div class="col-md-6">
                                     <?php $groups = get_all_knowledge_base_articles_grouped(); ?>
                                     <select data-width="100%" id="insert_knowledge_base_link" class="selectpicker" data-live-search="true" onchange="insert_ticket_knowledgebase_link(this);" data-title="<?php echo _l('ticket_single_insert_knowledge_base_link'); ?>">
@@ -248,6 +266,11 @@
                         </div>
                         <a class="btn btn-info pull-right add_note_ticket"><?php echo _l('ticket_single_add_note'); ?></a>
                      </div>
+                     <div role="tabpanel" class="tab-pane" id="tab_reminders">
+                        <a href="#" class="btn btn-info btn-xs" data-toggle="modal" data-target=".reminder-modal-ticket-<?php echo $ticket->ticketid; ?>"><i class="fa fa-bell-o"></i> <?php echo _l('ticket_set_reminder_title'); ?></a>
+                        <hr />
+                        <?php render_datatable(array( _l( 'reminder_description'), _l( 'reminder_date'), _l( 'reminder_staff'), _l( 'reminder_is_notified')), 'reminders'); ?>
+                     </div>
                      <div role="tabpanel" class="tab-pane" id="othertickets">
                         <hr class="no-mtop" />
                         <div class="_filters _hidden_inputs hidden tickets_filters">
@@ -302,9 +325,17 @@
                                  <label for="assigned" class="control-label">
                                  <?php echo _l('ticket_settings_assign_to'); ?>
                                  </label>
-                                 <select name="assigned" id="assigned" class="form-control selectpicker" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
+                                 <select name="assigned" data-live-search="true" id="assigned" class="form-control selectpicker" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                     <option value=""><?php echo _l('ticket_settings_none_assigned'); ?></option>
-                                    <?php foreach($staff as $member){ ?>
+                                    <?php foreach($staff as $member){
+                                       // Ticket is assigned to member
+                                       // Member is set to inactive
+                                       // We should show the member in the dropdown too
+                                       // Otherwise, skip this member
+                                       if($member['active'] == 0 && $ticket->assigned != $member['staffid']) {
+                                          continue;
+                                       }
+                                       ?>
                                     <option value="<?php echo $member['staffid']; ?>" <?php if($ticket->assigned == $member['staffid']){echo 'selected';} ?>>
                                        <?php echo $member['firstname'] . ' ' . $member['lastname'] ; ?>
                                     </option>
@@ -400,7 +431,9 @@
                      <div class="col-md-9">
                         <div class="row">
                            <div class="col-md-12 text-right">
-                              <a href=""></a>
+                              <?php if(!empty($ticket->message)) { ?>
+                              <a href="#" onclick="print_ticket_message(<?php echo $ticket->ticketid; ?>, 'ticket'); return false;" class="mright5"><i class="fa fa-print"></i></a>
+                              <?php } ?>
                               <a href="#" onclick="edit_ticket_message(<?php echo $ticket->ticketid; ?>,'ticket'); return false;"><i class="fa fa-pencil-square-o"></i></a>
                            </div>
                         </div>
@@ -481,6 +514,9 @@
                      <div class="col-md-9">
                         <div class="row">
                            <div class="col-md-12 text-right">
+                              <?php if(!empty($reply['message'])) { ?>
+                              <a href="#" onclick="print_ticket_message(<?php echo $reply['id']; ?>, 'reply'); return false;" class="mright5"><i class="fa fa-print"></i></a>
+                              <?php } ?>
                               <a href="#" onclick="edit_ticket_message(<?php echo $reply['id']; ?>,'reply'); return false;"><i class="fa fa-pencil-square-o"></i></a>
                            </div>
                         </div>
@@ -530,7 +566,14 @@
       <?php } ?>
    </div>
 </div>
-<!-- Modal -->
+<!-- The reminders modal -->
+<?php $this->load->view('admin/includes/modals/reminder',array(
+   'id'=>$ticket->ticketid,
+   'name'=>'ticket',
+   'members'=>$staff,
+   'reminder_title'=>_l('ticket_set_reminder_title'))
+   ); ?>
+<!-- Edit Ticket Messsage Modal -->
 <div class="modal fade" id="ticket-message" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
    <div class="modal-dialog modal-lg" role="document">
       <?php echo form_open(admin_url('tickets/edit_message')); ?>
@@ -588,7 +631,6 @@
          e.preventDefault();
       });
 
-            // Smooth scroll to bottom.
             $("a[href='#bot']").on("click", function(e) {
                e.preventDefault();
                $("html,body").animate({scrollTop:$(document).height()}, 1000);
@@ -600,15 +642,10 @@
    var Ticket_message_editor;
    var edit_ticket_message_additional = $('#edit-ticket-message-additional');
 
-
-   function edit_ticket_message(id,type){
+   function edit_ticket_message(id, type){
       edit_ticket_message_additional.empty();
-      if(type == 'ticket'){
-         _ticket_message = $('[data-ticket-id="'+id+'"]').html();
-      } else {
-         _ticket_message = $('[data-reply-id="'+id+'"]').html();
-      }
-
+      // type is either ticket or reply
+      _ticket_message = $('[data-'+type+'-id="'+id+'"]').html();
       init_ticket_edit_editor();
       tinyMCE.activeEditor.setContent(_ticket_message);
       $('#ticket-message').modal('show');

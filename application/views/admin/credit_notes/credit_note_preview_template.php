@@ -203,7 +203,7 @@
                            <table class="table items credit-note-items-preview">
                               <thead>
                                  <tr>
-                                    <th align="center">#</th>
+                                    <th align="center"><?php echo _l('the_number_sign'); ?></th>
                                     <th class="description" width="50%" align="left">
                                        <?php echo _l('credit_note_table_item_heading'); ?>
                                     </th>

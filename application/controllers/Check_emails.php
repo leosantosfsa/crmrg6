@@ -4,11 +4,6 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Check_emails extends CI_Controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function track($uid)
     {
         $this->db->where('opened', 0);

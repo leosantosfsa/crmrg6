@@ -189,7 +189,7 @@ class Download extends CRM_Controller
             if (!is_admin()) {
                 die('Access forbidden');
             }
-            $path = BACKUPS_FOLDER . $attachmentid;
+            $path = BACKUPS_FOLDER . $attachmentid.'.zip';
         } elseif ($folder_indicator == 'client') {
             $this->db->where('attachment_key', $attachmentid);
             $attachment = $this->db->get('tblfiles')->row();
@@ -202,6 +202,7 @@ class Download extends CRM_Controller
         } else {
             die('folder not specified');
         }
+
         force_download($path, null);
     }
 }

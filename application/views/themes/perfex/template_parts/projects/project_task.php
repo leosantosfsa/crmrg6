@@ -124,12 +124,12 @@
                         <li class="mbot10 task-attachment">
                            <div class="mbot10 pull-right task-attachment-user">
                               <?php
-                                 if($attachment['staffid'] != 0){
-                                   echo _l('project_file_uploaded_by') . ' ' . get_staff_full_name($attachment['staffid']);
-                                 } else {
-                                   echo _l('project_file_uploaded_by') . ' ' . get_contact_full_name($attachment['contact_id']);
-                                 }
-                                 ?>
+                              echo _l('project_file_uploaded_by') . ' ' . (
+                                 $attachment['staffid'] != 0
+                                 ? get_staff_full_name($attachment['staffid'])
+                                 : get_contact_full_name($attachment['contact_id'])
+                              );
+                              ?>
                               <?php if(get_option('allow_contact_to_delete_files') == 1 && $attachment['contact_id'] == get_contact_user_id()){ ?>
                               <a href="<?php echo site_url('clients/delete_file/'.$attachment['id'].'/task?project_id='.$project->id); ?>" class="text-danger _delete pull-right"><i class="fa fa-remove"></i></a>
                               <?php } ?>
@@ -153,8 +153,10 @@
                                $href_url = $attachment['external_link'];
                               }
                               if(!empty($attachment['external']) && $attachment['external'] == 'dropbox' && $is_image){ ?>
-                           <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-dropbox" data-toggle="tooltip" data-title="<?php echo _l('open_in_dropbox'); ?>"><i class="fa fa-dropbox" aria-hidden="true"></i></a>
-                           <?php }
+                              <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-external" data-toggle="tooltip" data-title="<?php echo _l('open_in_dropbox'); ?>"><i class="fa fa-dropbox" aria-hidden="true"></i></a>
+                               <?php } else if(!empty($attachment['external']) && $attachment['external'] == 'gdrive'){ ?>
+                                  <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-external" data-toggle="tooltip" data-title="<?php echo _l('open_in_google'); ?>"><i class="fa fa-google" aria-hidden="true"></i></a>
+                                 <?php }
                               ob_start();
                               ?>
                            <div class="<?php if($is_image){echo 'preview-image';}else if(!$isHtml5Video){echo 'task-attachment-no-preview';} ?>">
@@ -201,11 +203,14 @@
          <input type="file" name="file" multiple class="hide"/>
          <input type="hidden" name="task_id" value="<?php echo $view_task->id; ?>" class="hide"/>
          <?php echo form_close(); ?>
-         <?php if(get_option('dropbox_app_key') != ''){ ?>
          <div class="text-right mtop15">
+            <button class="gpicker" data-on-pick="taskFileGoogleDriveSave">
+               <i class="fa fa-google" aria-hidden="true"></i>
+               <?php echo _l('choose_from_google_drive'); ?>
+           </button>
             <div id="dropbox-chooser-task"></div>
          </div>
-         <?php } ?>
+
          <?php } ?>
          <?php if($project->settings->view_task_comments == 1){ ?>
          <hr />

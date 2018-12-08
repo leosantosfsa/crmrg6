@@ -6,6 +6,11 @@ Dropzone.options.projectFilesUpload = false;
 Dropzone.options.taskFileUpload = false;
 Dropzone.options.filesUpload = false;
 
+if (enable_google_picker == '1') {
+    $.fn.googleDrivePicker.defaults.clientId = google_client_id;
+    $.fn.googleDrivePicker.defaults.developerKey = google_api;
+}
+
 var salesChart;
 $(function() {
 
@@ -35,6 +40,7 @@ $(function() {
     });
 
     client_home_chart();
+
     $('select[name="currency"],select[name="payments_years"]').on('change', function() {
         client_home_chart();
     });
@@ -51,14 +57,7 @@ $(function() {
         if ($('#dropbox-chooser-task').length > 0) {
             document.getElementById("dropbox-chooser-task").appendChild(Dropbox.createChooseButton({
                 success: function(files) {
-                    $.post(site_url + 'clients/project/' + project_id, {
-                        files: files,
-                        task_id: $('input[name="task_id"]').val(),
-                        external: 'dropbox',
-                        action: 'add_task_external_file'
-                    }).done(function() {
-                        window.location.reload();
-                    });
+                    taskExternalFileUpload(files, 'dropbox');
                 },
                 linkType: "preview",
                 extensions: allowed_files.split(','),
@@ -68,12 +67,7 @@ $(function() {
         if ($('#files-upload').length > 0) {
             document.getElementById("dropbox-chooser-files").appendChild(Dropbox.createChooseButton({
                 success: function(files) {
-                    $.post(site_url + 'clients/upload_files', {
-                        files: files,
-                        external: 'dropbox',
-                    }).done(function() {
-                        window.location.reload();
-                    });
+                    customerExternalFileUpload(files, 'dropbox');
                 },
                 linkType: "preview",
                 extensions: allowed_files.split(','),
@@ -83,14 +77,7 @@ $(function() {
         if (typeof(Dropbox) != 'undefined' && $('#dropbox-chooser-project-files').length > 0) {
             document.getElementById("dropbox-chooser-project-files").appendChild(Dropbox.createChooseButton({
                 success: function(files) {
-                    $.post(site_url + 'clients/project/' + project_id, {
-                        files: files,
-                        external: 'dropbox',
-                        action: 'project_file_dropbox',
-                    }).done(function() {
-                        var location = window.location.href;
-                        window.location.href = location.split('?')[0] + '?group=project_files';
-                    });
+                    projectExternalFileUpload(files, 'dropbox');
                 },
                 linkType: "preview",
                 extensions: allowed_files.split(','),
@@ -100,20 +87,20 @@ $(function() {
 
     if ($('#files-upload').length > 0) {
         new Dropzone('#files-upload', {
+            uploadMultiple: true,
+            parallelUploads: 20,
+            maxFiles: 20,
             paramName: "file",
             dictFileTooBig: file_exceeds_maxfile_size_in_form,
             dictDefaultMessage: drop_files_here_to_upload,
             dictFallbackMessage: browser_not_support_drag_and_drop,
             maxFilesize: (max_php_ini_upload_size_bytes / (1024 * 1024)).toFixed(0),
-            accept: function(file, done) {
-                done();
-            },
+            acceptedFiles: allowed_files,
             success: function(file, response) {
                 if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
                     window.location.reload();
                 }
             },
-            acceptedFiles: allowed_files,
             error: function(file, response) {
                 alert_float('danger', response);
             }
@@ -704,6 +691,7 @@ function update_file_data(id) {
     data.action = 'update_file_data';
     $.post(site_url + 'clients/project/' + project_id, data);
 }
+
 // Function to close modal manually... needed in some modals where the data is flexible.
 function close_modal_manually(modal) {
     $(modal).fadeOut('slow', function() {
@@ -766,5 +754,58 @@ function client_home_chart() {
             data: response,
             options: { responsive: true, maintainAspectRatio: false }
         });
+    });
+}
+
+function projectFileGoogleDriveSave(pickData) {
+    projectExternalFileUpload(pickData, 'gdrive');
+}
+
+function customerFileGoogleDriveSave(pickData) {
+    customerExternalFileUpload(pickData, 'gdrive');
+}
+
+function taskFileGoogleDriveSave(pickData) {
+    taskExternalFileUpload(pickData, 'gdrive');
+}
+
+function projectExternalFileUpload(files, externalType) {
+    $.post(site_url + 'clients/project/' + project_id, {
+        files: files,
+        external: externalType,
+        action: 'project_external_file',
+    }).done(function() {
+        var location = window.location.href;
+        window.location.href = location.split('?')[0] + '?group=project_files';
+    });
+}
+
+function taskExternalFileUpload(files, externalType) {
+    $.post(site_url + 'clients/project/' + project_id, {
+        files: files,
+        task_id: $('input[name="task_id"]').val(),
+        external: externalType,
+        action: 'add_task_external_file'
+    }).done(function() {
+        window.location.reload();
+    });
+}
+
+function customerExternalFileUpload(files, externalType) {
+    $.post(site_url + 'clients/upload_files', {
+        files: files,
+        external: externalType,
+    }).done(function() {
+        window.location.reload();
+    });
+}
+
+function onGoogleApiLoad() {
+    var pickers = $('.gpicker');
+    $.each(pickers, function() {
+        var that = $(this);
+        setTimeout(function() {
+            that.googleDrivePicker();
+        }, 10)
     });
 }

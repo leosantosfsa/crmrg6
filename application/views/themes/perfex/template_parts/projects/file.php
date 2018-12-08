@@ -22,6 +22,12 @@
                   <?php } ?>
                   <?php if(!empty($file->external) && $file->external == 'dropbox'){ ?>
                   <a href="<?php echo $file->external_link; ?>" target="_blank" class="btn btn-info mbot20"><i class="fa fa-dropbox" aria-hidden="true"></i> <?php echo _l('open_in_dropbox'); ?></a><br /><br />
+                  <?php } else if(!empty($file->external) && $file->external == 'gdrive') { ?>
+                     <a href="<?php echo $file->external_link; ?>" target="_blank" class="btn btn-info mbot20">
+                           <i class="fa fa-google" aria-hidden="true"></i>
+                           <?php echo _l('open_in_google'); ?>
+                     </a>
+                     <br />
                   <?php } ?>
                   <?php
                      $path = PROJECT_ATTACHMENTS_FOLDER .$file->project_id.'/'.$file->file_name;
@@ -38,7 +44,13 @@
                   <?php } else if(is_markdown_file($path) && $previewMarkdown = markdown_parse_preview($path)) {
                      echo $previewMarkdown;
                   } else {
-                     echo '<a href="'.site_url('uploads/projects/'.$file->project_id.'/'.$file->file_name).'" download>'.$file->file_name.'</a>';
+
+                     if(empty($file->external)) {
+                        echo '<a href="'.site_url('uploads/projects/'.$file->project_id.'/'.$file->file_name).'" download>'.$file->file_name.'</a>';
+                     } else {
+                        echo '<a href="'.$file->external_link.'" target="_blank">'.$file->file_name.'</a>';
+                     }
+
                      echo '<p class="text-muted">'._l('no_preview_available_for_file').'</p>';
                      } ?>
                </div>

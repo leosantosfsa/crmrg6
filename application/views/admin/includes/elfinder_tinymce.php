@@ -7,12 +7,11 @@
     <script src="<?php echo base_url('assets/plugins/jquery/jquery.min.js'); ?>"></script>
     <script src="<?php echo base_url('assets/plugins/jquery-ui/jquery-ui.min.js'); ?>"></script>
     <!-- elFinder JS (REQUIRED) -->
-    <script src="<?php echo base_url('assets/plugins/elFinder/js/elfinder.min.js'); ?>"></script>
-    <link rel="stylesheet" type="text/css" href="<?php echo base_url('assets/plugins/elFinder/themes/Material/css/theme-gray.css'); ?>">
+    <script src="<?php echo base_url('assets/plugins/elFinder/js/elfinder.min.js?v='.get_app_version()); ?>"></script>
+    <link rel="stylesheet" type="text/css" href="<?php echo base_url('assets/plugins/elFinder/themes/Material/css/theme-gray.css?v='.get_app_version()); ?>">
     <?php echo app_stylesheet('assets/css','style.css');
-    $lng = get_media_locale($locale);
-    if(file_exists(FCPATH.'assets/plugins/elFinder/js/i18n/elfinder.'.$lng.'.js') && $lng != 'en'){ ?>
-        <script src="<?php echo base_url('assets/plugins/elFinder/js/i18n/elfinder.'.$lng.'.js'); ?>"></script>
+    if($mediaLocale != 'en' && file_exists(FCPATH.'assets/plugins/elFinder/js/i18n/elfinder.'.$mediaLocale.'.js')){ ?>
+        <script src="<?php echo base_url('assets/plugins/elFinder/js/i18n/elfinder.'.$mediaLocale.'.js?v='.get_app_version()); ?>"></script>
     <?php } ?>
     <?php do_action('elfinder_tinymce_head'); ?>
     <script>
@@ -42,8 +41,8 @@
      // Documentation for client options:
      // https://github.com/Studio-42/elFinder/wiki/Client-configuration-options
      defaultOpts: {
-         url: '<?php echo $connector ?>' // connector URL (REQUIRED)
-             ,
+         onlyMimes: ['image','video'],
+         url: '<?php echo $connector.'?editor=true' ?>', // connector URL (REQUIRED)
          commandsOptions: {
              edit: {
                  extraOptions: {
@@ -155,7 +154,7 @@
                          $('#' + id).elfinder(
                              // 1st Arg - options
                              $.extend(true, {
-                                 lang: '<?php echo get_media_locale($locale); ?>'
+                                 lang: '<?php echo $mediaLocale; ?>'
                              }, opts, mOpts || {}),
                              // 2nd Arg - before boot up function
                              function(fm, extraObj) {

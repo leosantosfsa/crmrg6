@@ -8,7 +8,9 @@
                        <h4 class="bold no-margin"><?php echo $article->subject; ?></h4>
                        <hr class="hr-panel-heading" />
                        <div class="clearfix"></div>
-                       <?php echo $article->description; ?>
+                       <div class="kb-article">
+                         <?php echo $article->description; ?>
+                       </div>
                        <hr />
                        <h4 class="mtop20"><?php echo _l('clients_knowledge_base_find_useful'); ?></h4>
                        <div class="answer_response"></div>
@@ -46,7 +48,13 @@
 <?php init_tail(); ?>
 <script>
     $(function(){
-       $('.article_useful_buttons button').on('click', function(e) {
+
+      // Lightbox for knowledge base images
+      $.each($('.kb-article').find('img'), function () {
+          $(this).wrap('<a href="'+$(this).attr('src')+'" data-lightbox="kb-attachment"></a>');
+      });
+
+      $('.article_useful_buttons button').on('click', function(e) {
            e.preventDefault();
            var data = {};
            data.answer = $(this).data('answer');

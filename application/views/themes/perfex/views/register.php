@@ -2,7 +2,7 @@
     <h1 class="text-uppercase"><?php echo _l('clients_register_heading'); ?></h1>
 </div>
 <div class="col-md-10 col-md-offset-1">
-    <?php echo form_open('clients/register'); ?>
+    <?php echo form_open('authentication/register'); ?>
     <div class="panel_s">
         <div class="panel-body">
             <div class="row">

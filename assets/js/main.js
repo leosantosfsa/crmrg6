@@ -1,4 +1,4 @@
-/* v2.0.2 */
+/* v2.1.12 */
 /* jshint expr: true */
 /* jshint sub:true */
 /* jshint loopfunc:true */
@@ -8,6 +8,14 @@
  * Use hooks to inject custom javascript code
  */
 
+$.fn.isInViewport = function() {
+    var elementTop = $(this).offset().top;
+    var elementBottom = elementTop + $(this).outerHeight();
+    var viewportTop = $(window).scrollTop();
+    var viewportBottom = viewportTop + $(window).height();
+    return elementBottom > viewportTop && elementTop < viewportBottom;
+};
+
 $(window).on('load', function() {
     init_btn_with_tooltips();
 });
@@ -15,6 +23,11 @@ $(window).on('load', function() {
 // Set datatables error throw console log
 $.fn.dataTable.ext.errMode = 'throw';
 $.fn.dataTableExt.oStdClasses.sWrapper = 'dataTables_wrapper form-inline dt-bootstrap table-loading';
+
+if (app_enable_google_picker == '1') {
+    $.fn.googleDrivePicker.defaults.clientId = app_google_client_id;
+    $.fn.googleDrivePicker.defaults.developerKey = google_api;
+}
 
 // Set dropzone not auto discover
 Dropzone.options.newsFeedDropzone = false;
@@ -24,6 +37,7 @@ Dropzone.options.salesUpload = false;
 if (("Notification" in window) && app_desktop_notifications == '1') {
     Notification.requestPermission();
 }
+
 // Jquery validate set default options
 $.validator.setDefaults({
     highlight: function(element) {
@@ -101,13 +115,22 @@ var original_top_search_val,
 
 // Custom deselect all on bootstrap ajax select input
 $("body").on('loaded.bs.select change', 'select.ajax-search', function(e) {
-    if ($(this).selectpicker('val') && !$(this).is(':disabled')) {
-        var $elmWrapper = $(this).parents('.bootstrap-select.ajax-search');
-        if ($elmWrapper.find('.ajax-clear-values').length === 0) {
-            var id = $(this).attr('id');
-            var dropdownToggle = $elmWrapper.addClass('ajax-remove-values-option').find('button.dropdown-toggle');
-            dropdownToggle.after('<span class="pointer ajax-clear-values" onclick="deselect_ajax_search(this); return false;" data-id="' + id + '"><i class="fa fa-remove"></i></span>');
-        }
+
+    var val = $(this).selectpicker('val');
+
+    if ($.isArray(val) && val.length == 0) {
+        return;
+    }
+
+    if (!val || $(this).is(':disabled')) {
+        return;
+    }
+
+    var $elmWrapper = $(this).parents('.bootstrap-select.ajax-search');
+    if ($elmWrapper.find('.ajax-clear-values').length === 0) {
+        var id = $(this).attr('id');
+        var dropdownToggle = $elmWrapper.addClass('ajax-remove-values-option').find('button.dropdown-toggle');
+        dropdownToggle.after('<span class="pointer ajax-clear-values" onclick="deselect_ajax_search(this); return false;" data-id="' + id + '"><i class="fa fa-remove"></i></span>');
     }
 });
 
@@ -115,6 +138,12 @@ $("body").on('loaded.bs.select change', 'select.ajax-search', function(e) {
 $("body").on('rendered.bs.select', 'select', function() {
     $(this).parents().removeClass('select-placeholder');
     $(this).parents('.form-group').find('.select-placeholder').removeClass('select-placeholder');
+});
+
+$("body").on('loaded.bs.select', 'select', function() {
+    if ($(this).data('toggle') == 1) {
+        $(this).selectpicker('toggle');
+    }
 });
 
 // Init bootstrap selectpicker
@@ -134,6 +163,13 @@ $(window).on("load resize", function(e) {
         mainWrapperHeightFix();
     }, e.type == 'load' ? 150 : 0);
 
+});
+
+$(document).on("mousemove", function(e) {
+    if (!is_mobile() && $('body').hasClass('hide-sidebar'))
+        if (e.pageX <= 10) {
+            $('.hide-menu').click();
+        }
 });
 
 $(function() {
@@ -472,8 +508,93 @@ $(function() {
         init_timers();
     });
 
+    // Fix for dropdown overlay in .table-responsive, last rows are overlapping e.q. on tasks table
+    $("body").on('click', '.table-responsive .dropdown-toggle', function(event) {
+        if ($(this).next().hasClass('dropdown-menu')) {
+            var elm = $(this).next(),
+                docHeight = $(document).height(),
+                docWidth = $(document).width(),
+                btn_offset = $(this).offset(),
+                btn_width = $(this).outerWidth(),
+                btn_height = $(this).outerHeight(),
+                elm_width = elm.outerWidth(),
+                elm_height = elm.outerHeight(),
+                table_offset = $(".table-responsive").offset(),
+                table_width = $(".table-responsive").width(),
+                table_height = $(".table-responsive").height(),
+
+                tableoffright = table_width + table_offset.left,
+                tableoffbottom = table_height + table_offset.top,
+                rem_tablewidth = docWidth - tableoffright,
+                rem_tableheight = docHeight - tableoffbottom,
+                elm_offsetleft = btn_offset.left,
+                elm_offsetright = btn_offset.left + btn_width,
+                elm_offsettop = btn_offset.top + btn_height,
+                btn_offsetbottom = elm_offsettop,
+
+                left_edge = (elm_offsetleft - table_offset.left) < elm_width,
+                top_edge = btn_offset.top < elm_height,
+                right_edge = (table_width - elm_offsetleft) < elm_width,
+                bottom_edge = (tableoffbottom - btn_offsetbottom) < elm_height;
+
+            var table_offset_bottom = docHeight - (table_offset.top + table_height);
+
+            var touchTableBottom = (btn_offset.top + btn_height + (elm_height * 2)) - table_offset.top;
+
+            var bottomedge = touchTableBottom > table_offset_bottom;
+
+            if (left_edge) {
+                $(this).addClass('left-edge');
+            } else {
+                $('.dropdown-menu').removeClass('left-edge');
+            }
+            if (bottom_edge) {
+                $(this).parent().addClass('dropup');
+            } else {
+                $(this).parent().removeClass('dropup');
+            }
+        }
+    });
+
+    set_search_history(userRecentSearches);
+
+    $('#search-history').on('click', '.remove-history', function(e) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        var index = $(this).parents('li').index();
+        requestGet('misc/remove_recent_search/' + index).done(function(history) {
+            var $searchHistory = $('#search-history');
+            $searchHistory.find('li:eq(' + index + ')').remove();
+            if ($searchHistory.find('li').length == 0) {
+                $searchHistory.removeClass('display-block');
+            }
+        });
+    });
+
+    $('#search_input').on('click focus', function() {
+        if ($(this).val() == '') {
+            var $searchHistory = $('#search-history');
+            if ($searchHistory.find('li').length > 0) {
+                $searchHistory.css('width', $(this).outerWidth() + 'px');
+                $searchHistory.addClass('display-block');
+            } else {
+                $searchHistory.addClass('display-block');
+            }
+        }
+    });
+
+    $('#search-history').on('click', 'a.history', function(e) {
+        e.preventDefault();
+        var recentSearch = $(this).text().trim();
+        $('#search_input').val(recentSearch);
+        $('#search_input').trigger('paste');
+    });
+
     // Top search input fetch results
     $('#search_input').on('keyup paste' + (app_user_browser == 'safari' ? ' input' : ''), function() {
+
+        var $searchHistory = $('#search-history');
+        $searchHistory.removeClass('display-block');
 
         var q = $(this).val().trim();
         var search_results = $('#search_results');
@@ -484,6 +605,7 @@ $(function() {
             search_results.html('');
             original_top_search_val = '';
             top_search_button.html('<i class="fa fa-search"></i>').removeClass('search_remove');
+            $searchHistory.addClass('display-block');
             return;
         }
 
@@ -499,11 +621,13 @@ $(function() {
             if (q == original_top_search_val) {
                 return;
             }
-            $.post(admin_url + 'misc/search', { q: q }).done(function(results) {
+            $.post(admin_url + 'misc/search', { q: q }).done(function(data) {
+                data = JSON.parse(data);
                 content_wrapper.unhighlight();
-                search_results.html(results);
+                search_results.html(data.results);
                 content_wrapper.highlight(q);
                 original_top_search_val = q;
+                set_search_history(data.history);
             });
         }, 700);
     });
@@ -569,9 +693,17 @@ $(function() {
         var rel_id = $this.find('input[name="rel_id"]').val();
         var rel_type = $this.find('input[name="rel_type"]').val();
         $this.find('form').attr('action', admin_url + 'misc/add_reminder/' + rel_id + '/' + rel_type);
+        $this.find('form').removeAttr('data-edit');
         $this.find(':input:not([type=hidden]), textarea').val('');
         $this.find('input[type="checkbox"]').prop('checked', false);
         $this.find('select').selectpicker('val', '');
+    });
+
+    // Focus the date field on reminder modal shown
+    $("body").on("shown.bs.modal", '.modal-reminder', function(e) {
+        if ($(this).find('form[data-edit="true"]').length == 0) {
+            $(this).find('#date').focus();
+        }
     });
 
     // On delete reminder reload the tables
@@ -579,6 +711,9 @@ $(function() {
         if (confirm_delete()) {
             requestGetJSON($(this).attr('href')).done(function(response) {
                 alert_float(response.alert_type, response.message);
+                if($('#task-modal').is(':visible')) {
+                    _task_append_html(response.taskHtml);
+                }
                 reload_reminders_tables();
             });
         }
@@ -802,7 +937,8 @@ $(function() {
             init_lead($(this).attr('data-lead-id'));
         }
 
-        $('body #_task_modal .datepicker').datetimepicker('destroy');
+        destroy_dynamic_scripts_in_element($('body #_task_modal'));
+
         $('#_task').empty();
 
     });
@@ -820,6 +956,9 @@ $(function() {
 
     // On task single modal hidden remove all html data
     $("body").on("hidden.bs.modal", '#task-modal', function() {
+        // Clear memory leak
+        destroy_dynamic_scripts_in_element($(this));
+
         $(this).find('.data').empty();
     });
 
@@ -1086,7 +1225,7 @@ $(function() {
                             calendar_settings.eventSources.push(_gcal);
                         }
                     } else {
-                        console.error('You have setup Google Calendar IDs but you dont have specified Google API key. To setup Google API key navigate to Setup->Settings->Misc');
+                        console.error('You have setup Google Calendar IDs but you dont have specified Google API key. To setup Google API key navigate to Setup->Settings->Google');
                     }
                 }
             }
@@ -1109,7 +1248,7 @@ $(function() {
         } else {
             sp_tax_2.prop('disabled', true);
             if (sp_tax_2.val() !== '') {
-                sp_tax_1.val(sp_tax_2.val());
+                sp_tax_1.selectpicker('val', sp_tax_2.val());
                 sp_tax_2.val('');
                 sp_tax_1.selectpicker('refresh');
             }
@@ -1235,6 +1374,7 @@ $(function() {
 
     // On hidden lead modal some actions need to be operated here
     $('#lead-modal').on("hidden.bs.modal", function(event) {
+        destroy_dynamic_scripts_in_element($(this));
         $(this).data('bs.modal', null);
         $('#lead_reminder_modal').html('');
         // clear the hash
@@ -1358,11 +1498,11 @@ $(function() {
 
         $.each(LeadsServerParams, function(i, obj) {
             $('select' + obj).on('change', function() {
-                if ($(this).val() == 'lost' || $(this).val() == 'junk') {
-                    $("[name='view_status[]']").prop('disabled', true).selectpicker('refresh');
-                } else {
-                    $("[name='view_status[]']").prop('disabled', false).selectpicker('refresh');
-                }
+
+                $("[name='view_status[]']")
+                    .prop('disabled', ($(this).val() == 'lost' || $(this).val() == 'junk'))
+                    .selectpicker('refresh');
+
                 table_leads.DataTable().ajax.reload()
                     .columns.adjust()
                     .responsive.recalc();
@@ -1491,13 +1631,13 @@ $(function() {
     // Focus search input on click
     $('#top_search_button button').on('click', function() {
         var $searchInput = $('#search_input');
-        $searchInput.focus();
         if ($(this).hasClass('search_remove')) {
             $(this).html('<i class="fa fa-search"></i>').removeClass('search_remove');
             original_top_search_val = '';
             $('#search_results').html('');
             $searchInput.val('');
         }
+        $searchInput.focus();
     });
 
     // Fix for dropdown search to close if user click anyhere on html except on dropdown
@@ -1562,6 +1702,14 @@ $(function() {
     // Activity log datepicker on change
     $('.datepicker.activity-log-date').on('change', function() {
         table_activity_log.DataTable().ajax.reload();
+    });
+
+    // Import form submit
+    $('.btn-import-submit').on('click', function() {
+        if ($(this).hasClass('simulate')) {
+            $('#import_form').append(hidden_input('simulate', true));
+        }
+        $('#import_form').submit();
     });
 
     $('body').on('change', '#unlimited_cycles', function() {
@@ -1664,28 +1812,34 @@ $(function() {
         if (!not_href[1]) { window.location.href = link; }
     });
 
-    /* Check if postid in notification url to open the newsfeed */
+    /* Custom notifications links */
     $("body").on('click', '.notifications a.notification-top, .notification_link', function(e) {
 
         e.preventDefault();
         var $notLink = $(this);
-        var not_href, not_href_id;
+        var not_href_id;
 
-        not_href = $notLink.hasClass('notification_link') ? $notLink.data('link') : e.currentTarget.href;
+        var not_href = $notLink.hasClass('notification_link') ? $notLink.data('link') : e.currentTarget.href;
 
-        not_href = not_href.split('#');
+        var not_href_array = not_href.split('#');
         var notRedirect = true;
-        if (not_href[1] && not_href[1].indexOf('=') > -1) {
+        if (not_href_array[1] && not_href_array[1].indexOf('=') > -1) {
             notRedirect = false;
-            not_href_id = not_href[1].split('=')[1];
-            if (not_href[1].indexOf('postid') > -1) {
+            not_href_id = not_href_array[1].split('=')[1];
+            if (not_href_array[1].indexOf('postid') > -1) {
                 postid = not_href_id;
                 $('.open_newsfeed').click();
-            } else if (not_href[1].indexOf('taskid') > -1) {
-                init_task_modal(not_href_id);
-            } else if (not_href[1].indexOf('leadid') > -1) {
+            } else if (not_href_array[1].indexOf('taskid') > -1) {
+
+                var comment_id = undefined;
+                if (not_href.indexOf('#comment_') > -1) {
+                    var task_comment_id = not_href.split('#comment_');
+                    comment_id = task_comment_id[task_comment_id.length - 1];
+                }
+                init_task_modal(not_href_id, comment_id);
+            } else if (not_href_array[1].indexOf('leadid') > -1) {
                 init_lead(not_href_id);
-            } else if (not_href[1].indexOf('eventid') > -1) {
+            } else if (not_href_array[1].indexOf('eventid') > -1) {
                 view_event(not_href_id);
             }
         }
@@ -1694,7 +1848,7 @@ $(function() {
         }
         if (notRedirect) {
             setTimeout(function() {
-                window.location.href = not_href;
+                window.location.href = not_href_array;
             }, 50);
         }
     });
@@ -1741,11 +1895,12 @@ $(function() {
 
         if (table_invoices.length) {
             // Invoices tables
-            initDataTable(table_invoices, (admin_url + 'invoices/table' + ($('body').hasClass('recurring') ? '?recurring=1' : '')), 'undefined', 'undefined', Invoices_Estimates_ServerParams, [
+            initDataTable(table_invoices, (admin_url + 'invoices/table' + ($('body').hasClass('recurring') ? '?recurring=1' : '')), 'undefined', 'undefined', Invoices_Estimates_ServerParams, !$('body').hasClass('recurring') ? [
                 [3, 'desc'],
                 [0, 'desc']
-            ]);
+            ] : [table_invoices.find('th.next-recurring-date').index(), 'asc']);
         }
+
         if (table_estimates.length) {
             // Estimates table
             initDataTable(table_estimates, admin_url + 'estimates/table', 'undefined', 'undefined', Invoices_Estimates_ServerParams, [
@@ -1896,6 +2051,11 @@ $(function() {
         $('#post-attachments').toggleClass('hide');
     });
 
+    // Jump to page feature
+    $(document).on("change", ".dt-page-jump-select", function() {
+        $('#' + $(this).attr('data-id')).DataTable().page($(this).val() - 1).draw(false);
+    });
+
     // Init invoices top stats
     init_invoices_total();
     // Init expenses total
@@ -1974,6 +2134,8 @@ $(function() {
                 form.append(hidden_input('save_as_draft', 'true'));
             } else if (that.hasClass('save-and-send')) {
                 form.append(hidden_input('save_and_send', 'true'));
+            } else if (that.hasClass('save-and-record-payment')) {
+                form.append(hidden_input('save_and_record_payment', 'true'));
             }
         }
         form.submit();
@@ -2054,31 +2216,7 @@ $(function() {
         if ($('#dropbox-chooser-sales').length > 0) {
             document.getElementById("dropbox-chooser-sales").appendChild(Dropbox.createChooseButton({
                 success: function(files) {
-                    var _data = {};
-                    _data.rel_id = $("body").find('input[name="_attachment_sale_id"]').val();
-                    _data.type = $("body").find('input[name="_attachment_sale_type"]').val();
-                    _data.files = files;
-                    _data.external = 'dropbox';
-                    $.post(admin_url + 'misc/add_sales_external_attachment', _data).done(function() {
-                        if (_data.type == 'invoice') {
-                            init_invoice(_data.rel_id);
-                        } else if (_data.type == 'credit_note') {
-                            init_credit_note(_data.rel_id);
-                        } else if (_data.type == 'estimate') {
-                            if ($("body").hasClass('estimates-pipeline')) {
-                                estimate_pipeline_open(_data.rel_id);
-                            } else {
-                                init_estimate(_data.rel_id);
-                            }
-                        } else if (_data.type == 'proposal') {
-                            if ($("body").hasClass('proposals-pipeline')) {
-                                proposal_pipeline_open(_data.rel_id);
-                            } else {
-                                init_proposal(_data.rel_id);
-                            }
-                        }
-                        $('#sales_attach_file').modal('hide');
-                    });
+                    salesExtenalFileUpload(files, 'dropbox');
                 },
                 linkType: "preview",
                 extensions: app_allowed_files.split(','),
@@ -2103,17 +2241,13 @@ $(function() {
                 } else if (type == 'credit_note') {
                     init_credit_note(response.rel_id);
                 } else if (type == 'estimate') {
-                    if ($("body").hasClass('estimates-pipeline')) {
-                        estimate_pipeline_open(response.rel_id);
-                    } else {
+                    $("body").hasClass('estimates-pipeline') ?
+                        estimate_pipeline_open(response.rel_id) :
                         init_estimate(response.rel_id);
-                    }
                 } else if (type == 'proposal') {
-                    if ($("body").hasClass('proposals-pipeline')) {
-                        proposal_pipeline_open(response.rel_id);
-                    } else {
+                    $("body").hasClass('proposals-pipeline') ?
+                        proposal_pipeline_open(response.rel_id) :
                         init_proposal(response.rel_id);
-                    }
                 }
                 var data = '';
                 if (response.success === true || response.success == 'true') {
@@ -2291,15 +2425,15 @@ $(function() {
                 $('input[name="include_shipping"]').prop("checked", true).change();
             }
 
-            for (var f in billingAndShippingFields) {
-                if (billingAndShippingFields[f].indexOf('shipping') > -1) {
-                    if (billingAndShippingFields[f].indexOf('country') > -1) {
-                        $('select[name="' + billingAndShippingFields[f] + '"]').selectpicker('val', response['billing_shipping'][0][billingAndShippingFields[f]]);
+            for (var fsd in billingAndShippingFields) {
+                if (billingAndShippingFields[fsd].indexOf('shipping') > -1) {
+                    if (billingAndShippingFields[fsd].indexOf('country') > -1) {
+                        $('select[name="' + billingAndShippingFields[fsd] + '"]').selectpicker('val', response['billing_shipping'][0][billingAndShippingFields[fsd]]);
                     } else {
-                        if (billingAndShippingFields[f].indexOf('shipping_street') > -1) {
-                            $('textarea[name="' + billingAndShippingFields[f] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[f]]);
+                        if (billingAndShippingFields[fsd].indexOf('shipping_street') > -1) {
+                            $('textarea[name="' + billingAndShippingFields[fsd] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[fsd]]);
                         } else {
-                            $('input[name="' + billingAndShippingFields[f] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[f]]);
+                            $('input[name="' + billingAndShippingFields[fsd] + '"]').val(response['billing_shipping'][0][billingAndShippingFields[fsd]]);
                         }
                     }
                 }
@@ -2419,13 +2553,20 @@ $(function() {
 // For manually modals where no close is defined
 $(document).keyup(function(e) {
     if (e.keyCode == 27) { // escape key maps to keycode `27`
+
         // Close modal if only modal is opened and there is no 2 modals opened
         // This will trigger only if there is only 1 modal visible/opened
+
         if ($('.modal').is(':visible') && $('.modal:visible').length === 1) {
             $("body").find('.modal:visible [onclick^="close_modal_manually"]').eq(0).click();
         }
+
         if ($('.popup-wrapper').is(':visible')) {
             $('.popup-wrapper').find('.system-popup-close').click();
+        }
+
+        if ($('#search-history').is(':visible')) {
+            $('#search-history').removeClass('display-block');
         }
     }
 });
@@ -2676,7 +2817,7 @@ function slideToggle(selector, callback) {
 }
 
 // Generate float alert
-function alert_float(type, message) {
+function alert_float(type, message, timeout) {
     var aId, el;
     aId = $("body").find('float-alert').length;
     aId++;
@@ -2685,7 +2826,7 @@ function alert_float(type, message) {
     $("body").append(el);
     setTimeout(function() {
         $('#' + aId).hide('fast', function() { $('#' + aId).remove(); });
-    }, 3500);
+    }, timeout ? timeout : 3500);
 }
 
 // Initing relation tasks tables
@@ -2942,15 +3083,25 @@ function _table_jump_to_page(table, oSettings) {
         previousDtPageJump.remove();
     }
 
-    if (paginationData.pages > 6) {
+    if (paginationData.pages > 1) {
+
         var jumpToPageSelect = $("<select></select>", {
+            "data-id": oSettings.sTableId,
             "class": "dt-page-jump-select form-control",
             'id': 'dt-page-jump-' + oSettings.sTableId
         });
-        for (i = 1; i <= paginationData.pages; i++) {
+
+        var paginationHtml = '';
+
+        for (var i = 1; i <= paginationData.pages; i++) {
             var selectedCurrentPage = ((paginationData.page + 1) === i) ? 'selected' : '';
-            jumpToPageSelect.append("<option value='" + i + "'" + selectedCurrentPage + ">" + i + "</option>");
+            paginationHtml += "<option value='" + i + "'" + selectedCurrentPage + ">" + i + "</option>";
         }
+
+        if (paginationHtml != '') {
+            jumpToPageSelect.append(paginationHtml);
+        }
+
         $("#" + oSettings.sTableId + "_wrapper .dt-page-jump").append(jumpToPageSelect);
     }
 }
@@ -3022,6 +3173,7 @@ function initDataTableInline(dt_table) {
                 if (dtOfflineEmpty.length) {
                     dtOfflineEmpty.attr('colspan', this.find('thead th').length);
                 }
+
                 this.parents('.table-loading').removeClass('table-loading');
                 var t_export = $(selector);
                 var th_last_child = t_export.find('thead th:last-child');
@@ -3054,10 +3206,7 @@ function initDataTableInline(dt_table) {
             _buttons = get_datatable_buttons(this);
             // Remove the reload button here because its not ajax request
             options.buttons = _buttons;
-            var tableApi = $(this).DataTable(options);
-            $(document).on("change", ".dt-page-jump-select", function() {
-                tableApi.page($(this).val() - 1).draw(false);
-            });
+            $(this).DataTable(options);
         });
     }
 }
@@ -3247,9 +3396,9 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
 
         // For for not blurring out when clicked on the link
         // Causing issues hidden column still to be shown as not hidden because the link is focused
-        $('body').on('click', '.buttons-columnVisibility a', function() {
-            $(this).blur();
-        });
+        /* $('body').on('click', '.buttons-columnVisibility a', function() {
+             $(this).blur();
+         });*/
         /*
                 table.on('column-visibility.dt', function(e, settings, column, state) {
                     var hidden = [];
@@ -3285,10 +3434,6 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
 
     table.on('preXhr.dt', function(e, settings, data) {
         if (settings.jqXHR) settings.jqXHR.abort();
-    });
-
-    $(document).on("change", ".dt-page-jump-select", function() {
-        tableApi.page($(this).val() - 1).draw(false);
     });
 
     return tableApi;
@@ -3417,7 +3562,7 @@ function init_datepicker(element, element_time, opts_date, opts_datetime) {
         var min_date = that.attr('data-date-min-date');
         var lazy = that.attr('data-lazy');
 
-        if(lazy) {
+        if (lazy) {
             opt.lazyInit = lazy == 'true';
         }
 
@@ -3458,7 +3603,7 @@ function init_datepicker(element, element_time, opts_date, opts_datetime) {
         var min_date = that.attr('data-date-min-date');
         var lazy = that.attr('data-lazy');
 
-        if(lazy) {
+        if (lazy) {
             opt.lazyInit = lazy == 'true';
         }
 
@@ -3712,7 +3857,7 @@ function logout() {
         return false;
     } else {
         // No timer logout free
-        window.location.href = site_url + 'authentication/logout';
+        window.location.href = admin_url + 'authentication/logout';
     }
 }
 
@@ -3901,32 +4046,90 @@ function do_hash_helper(hash) {
 }
 
 // Validate the form reminder
-function init_form_reminder() {
-    var forms = $('[id^="form-reminder-"]');
+function init_form_reminder(rel_type) {
+
+    var forms = !rel_type ? $('[id^="form-reminder-"]') : $('#form-reminder-'+rel_type);
+
     $.each(forms, function(i, form) {
         _validate_form($(form), {
             date: 'required',
             staff: 'required'
         }, reminderFormHandler);
     });
+
+}
+
+// New task reminder custom function
+function new_task_reminder(id){
+    var $container = $('#newTaskReminderToggle');
+    if(!$container.is(':visible') || $container.is(':visible') && $container.attr('data-edit') != undefined){
+
+        $container.slideDown(400, function(){
+            fix_task_modal_left_col_height();
+        });
+
+        $('#taskReminderFormSubmit').html(appLang.create_reminder);
+        $container.find('form').attr('action',admin_url+'tasks/add_reminder/'+id);
+
+        $container.find('#description').val('');
+        $container.find('#date').val('');
+        $container.find('#staff').selectpicker('val', $container.find('#staff').attr('data-current-staff'));
+        $container.find('#notify_by_email').prop('checked', false);
+        if($container.attr('data-edit') != undefined) {
+            $container.removeAttr('data-edit');
+        }
+        if(!$container.isInViewport()){
+            $('#task-modal').animate({
+                scrollTop: $container.offset().top + 'px'
+            }, 'fast');
+        }
+    } else {
+        $container.slideUp();
+    }
 }
 
 // Edit reminder function
 function edit_reminder(id, e) {
     requestGetJSON('misc/get_reminder/' + id).done(function(response) {
-        var $reminderModal = $('.reminder-modal-' + response.rel_type + '-' + response.rel_id);
-        if ($reminderModal.length === 0 && $('body').hasClass('all-reminders')) {
+        var $container = $('.reminder-modal-' + response.rel_type + '-' + response.rel_id);
+        var actionURL = admin_url + 'misc/edit_reminder/' + id;
+        if ($container.length === 0 && $('body').hasClass('all-reminders')) {
             // maybe from view all reminders?
-            $reminderModal = $('.reminder-modal--');
-            $reminderModal.find('input[name="rel_type"]').val(response.rel_type);
-            $reminderModal.find('input[name="rel_id"]').val(response.rel_id);
+            $container = $('.reminder-modal--');
+            $container.find('input[name="rel_type"]').val(response.rel_type);
+            $container.find('input[name="rel_id"]').val(response.rel_id);
+        } else if($('#task-modal').is(':visible')) {
+
+            $container = $('#newTaskReminderToggle');
+
+            if( $container.attr('data-edit') &&  $container.attr('data-edit') == id) {
+                $container.slideUp();
+                $container.removeAttr('data-edit');
+            } else {
+                $container.slideDown(400, function(){
+                    fix_task_modal_left_col_height();
+                });
+                $container.attr('data-edit', id);
+                if(!$container.isInViewport()){
+                    $('#task-modal').animate({
+                        scrollTop: $container.offset().top + 'px'
+                    }, 'fast');
+                }
+            }
+            actionURL = admin_url + 'tasks/edit_reminder/' + id;
+            $('#taskReminderFormSubmit').html(appLang.save);
         }
-        $reminderModal.find('form').attr('action', admin_url + 'misc/edit_reminder/' + id);
-        $reminderModal.find('#description').val(response.description);
-        $reminderModal.find('#date').val(response.date);
-        $reminderModal.find('#staff').selectpicker('val', response.staff);
-        $reminderModal.find('#notify_by_email').prop('checked', response.notify_by_email == 1 ? true : false);
-        $reminderModal.modal('show');
+
+        $container.find('form').attr('action', actionURL);
+        // For focusing the date field
+        $container.find('form').attr('data-edit', true);
+        $container.find('#description').val(response.description);
+        $container.find('#date').val(response.date);
+        $container.find('#staff').selectpicker('val', response.staff);
+        $container.find('#notify_by_email').prop('checked', response.notify_by_email == 1 ? true : false);
+        if($container.hasClass('modal')){
+            $container.modal('show');
+        }
     });
 }
 
@@ -3935,11 +4138,13 @@ function reminderFormHandler(form) {
     form = $(form);
     var data = form.serialize();
     $.post(form.attr('action'), data).done(function(data) {
-
         data = JSON.parse(data);
-
         if (data.message !== '') {
             alert_float(data.alert_type, data.message);
+        }
+        form.trigger('reinitialize.areYouSure');
+        if ($('#task-modal').is(':visible')) {
+            _task_append_html(data.taskHtml);
         }
         reload_reminders_tables();
     });
@@ -3997,7 +4202,6 @@ function edit_note(id) {
         });
         toggle_edit_note(id);
     }
-
 }
 
 // Toggles sales file visibility for customer eq for invoices, estimates, proposals
@@ -4658,8 +4862,8 @@ function _lead_init_data(data, id) {
     $('#lead_reminder_modal').html(data.leadView.reminder_data);
 
     $leadModal.find('.data').html(data.leadView.data);
-
     $leadModal.modal({ show: true, backdrop: 'static' });
+
     init_tags_inputs();
     init_selectpicker();
     init_form_reminder();
@@ -4667,24 +4871,25 @@ function _lead_init_data(data, id) {
     init_color_pickers();
     validate_lead_form();
 
-    if (hash == '#tab_lead_profile' || hash == '#attachments' || hash == '#lead_notes' || hash == '#lead_activity' || hash == '#gdpr') {
+    var hashes = ['#tab_lead_profile', '#attachments', '#lead_notes', '#lead_activity', '#gdpr'];
+
+    if (hashes.indexOf(hash) > -1) {
         window.location.hash = hash;
     }
 
     initDataTableInline($('#consentHistoryTable'));
 
-    if (id !== '' && typeof(id) != 'undefined') {
+    $('#lead-modal').find('.gpicker').googleDrivePicker({
+        onPick: function(pickData) {
+            leadExternalFileUpload(pickData, 'gdrive', id);
+        }
+    });
 
+    if (id !== '' && typeof(id) != 'undefined') {
         if (typeof(Dropbox) != 'undefined') {
             document.getElementById("dropbox-chooser-lead").appendChild(Dropbox.createChooseButton({
                 success: function(files) {
-                    $.post(admin_url + 'leads/add_external_attachment', {
-                        files: files,
-                        lead_id: id,
-                        external: 'dropbox'
-                    }).done(function() {
-                        init_lead_modal_data(id);
-                    });
+                    leadExternalFileUpload(files, 'dropbox', id);
                 },
                 linkType: "preview",
                 extensions: app_allowed_files.split(','),
@@ -4728,6 +4933,7 @@ function _lead_init_data(data, id) {
 
 // Fetches lead modal data, can be edit/add/view
 function init_lead_modal_data(id, url, isEdit) {
+
     var requestURL = (typeof(url) != 'undefined' ? url : 'leads/lead/') + (typeof(id) != 'undefined' ? id : '');
     if (isEdit === true) {
         var concat = '?';
@@ -4736,6 +4942,7 @@ function init_lead_modal_data(id, url, isEdit) {
         }
         requestURL += concat + 'edit=true';
     }
+
     requestGetJSON(requestURL).done(function(response) {
         _lead_init_data(response, id);
     }).fail(function(data) {
@@ -4758,35 +4965,15 @@ function print_lead_information() {
     $leadViewWrapper.find('.lead-field-heading').css('color', '#777').css('margin-bottom', '3px');
     $leadViewWrapper.find('.lead-field-heading + p').css('margin-bottom', '15px');
 
-    // Unwrap href for print
-    $leadViewWrapper.find("a[href]").contents().unwrap();
+    var mywindow = _create_print_window(name)
 
-    params = 'width=' + screen.width;
-    params += ', height=' + screen.height;
-    params += ', top=0, left=0';
-    params += ', fullscreen=yes';
-
-    var mywindow = window.open('', name, params);
-
-    mywindow.document.write('<html><head><title>' + name + '</title>');
+    mywindow.document.write('<html><head><title>' + appLang.lead + '</title>');
+    _add_print_window_default_styles(mywindow);
     mywindow.document.write('<style>');
-    mywindow.document.write('.clearfix:after { ' +
-        'clear: both;' +
-        '}' +
-        '.clearfix:before, .clearfix:after { ' +
-        'display: table; content: " ";' +
-        '}' +
-        'body { ' +
-        'font-family: Arial, Helvetica, sans-serif;color: #444; font-size:13px;' +
-        '}' +
-        '.bold { ' +
-        'font-weight: bold !important;' +
-        '}' +
-        '.lead-information-col { ' +
+    mywindow.document.write('.lead-information-col { ' +
         'float: left; width: 33.33333333%;' +
         '}' +
         '');
-
     mywindow.document.write('</style>');
 
     mywindow.document.write('</head><body>');
@@ -4801,6 +4988,85 @@ function print_lead_information() {
     mywindow.close();
 }
 
+function print_expense_information() {
+
+    var $expenseViewWrapper = $('#tab_expense').clone();
+    var $headings = $('#expenseHeadings');
+    var name = $headings.find('#expenseCategory').text().trim() + '<h4>' + $headings.find('#expenseName').text().trim() + '</h4>';
+
+    $expenseViewWrapper.find('#expenseReceipt').remove();
+
+    $expenseViewWrapper.find('#amountWrapper').css('margin-bottom', '15px');
+
+    var mywindow = _create_print_window(name)
+
+    mywindow.document.write('<html><head><title>' + appLang.expense + '</title>');
+
+    _add_print_window_default_styles(mywindow);
+
+    mywindow.document.write('</head><body>');
+    mywindow.document.write('<h1>' + name + '</h1>');
+    mywindow.document.write('<div id="#tab_expense">' + $expenseViewWrapper.html() + '</div>');
+    mywindow.document.write('</body></html>');
+
+    mywindow.document.close(); // necessary for IE >= 10
+    mywindow.focus(); // necessary for IE >= 10*/
+
+    mywindow.print();
+    mywindow.close();
+}
+
+
+function print_ticket_message(id, type) {
+
+    var printMessage = $('[data-' + type + '-id="' + id + '"]').html();
+    var printSubject = $('#ticket_subject').text().trim();
+    var mywindow = _create_print_window(printSubject)
+
+    mywindow.document.write('<html><head><title>' + appLang.ticket + '</title>');
+
+    _add_print_window_default_styles(mywindow);
+
+    mywindow.document.write('</head><body>');
+    mywindow.document.write('<h1>' + printSubject + '</h1>');
+    mywindow.document.write(printMessage);
+    mywindow.document.write('</body></html>');
+
+    mywindow.document.close(); // necessary for IE >= 10
+    mywindow.focus(); // necessary for IE >= 10*/
+
+    mywindow.print();
+    mywindow.close();
+}
+
+function _create_print_window(name) {
+
+    var params = 'width=' + screen.width;
+    params += ', height=' + screen.height;
+    params += ', top=0, left=0';
+    params += ', fullscreen=yes';
+
+    return window.open('', name, params);
+}
+
+function _add_print_window_default_styles(mywindow) {
+    mywindow.document.write('<style>');
+    mywindow.document.write('.clearfix:after { ' +
+        'clear: both;' +
+        '}' +
+        '.clearfix:before, .clearfix:after { ' +
+        'display: table; content: " ";' +
+        '}' +
+        'body { ' +
+        'font-family: Arial, Helvetica, sans-serif;color: #444; font-size:13px;' +
+        '}' +
+        '.bold { ' +
+        'font-weight: bold !important;' +
+        '}' +
+        '');
+
+    mywindow.document.write('</style>');
+}
 // Kan ban leads sorting
 function leads_kanban_sort(type) {
     kan_ban_sort(type, leads_kanban);
@@ -5411,7 +5677,7 @@ function delete_user_unfinished_timesheet(id) {
 
 // Reload all tasks possible table where the table data needs to be refreshed after an action is performed on task.
 function reload_tasks_tables() {
-    var av_tasks_tables = ['.table-tasks', '.table-rel-tasks', '.table-rel-tasks-leads', '.table-timesheets'];
+    var av_tasks_tables = ['.table-tasks', '.table-rel-tasks', '.table-rel-tasks-leads', '.table-timesheets', '.table-timesheets-report'];
     $.each(av_tasks_tables, function(i, selector) {
         if ($.fn.DataTable.isDataTable(selector)) {
             $(selector).DataTable().ajax.reload(null, false);
@@ -5509,6 +5775,9 @@ function task_form_handler(form) {
             $('#_task_modal').modal('hide');
             init_task_modal(response.id);
             reload_tasks_tables();
+            if ($('body').hasClass('kan-ban-body') && $('body').hasClass('tasks')) {
+                tasks_kanban();
+            }
         } else {
             // reload page on project area
             var location = window.location.href;
@@ -5569,7 +5838,7 @@ function system_popup(data) {
 }
 
 // Action for task timer start/stop
-function timer_action(e, task_id, timer_id) {
+function timer_action(e, task_id, timer_id, adminStop) {
 
     timer_id = typeof(timer_id) == 'undefined' ? '' : timer_id;
 
@@ -5603,20 +5872,27 @@ function timer_action(e, task_id, timer_id) {
     data.note = $("body").find('#timesheet_note').val();
     if (!data.note) { data.note = ''; }
     var taskModalVisible = $('#task-modal').is(':visible');
-    $.post(admin_url + 'tasks/timer_tracking?single_task=' + taskModalVisible, data).done(function(response) {
+    var reqUrl = admin_url + 'tasks/timer_tracking?single_task=' + taskModalVisible;
+    if (adminStop) {
+        reqUrl += '&admin_stop=' + adminStop;
+    }
+    $.post(reqUrl, data).done(function(response) {
         response = JSON.parse(response);
         if (taskModalVisible) { _task_append_html(response.taskHtml); }
+
         if ($timerSelectTask.is(':visible')) {
             $timerSelectTask.find('.system-popup-close').click();
         }
+
         _init_timers_top_html(JSON.parse(response.timers));
+
         $('.popover-top-timer-note').popover('hide');
         reload_tasks_tables();
     });
 }
 
 // Init task modal and get data from server
-function init_task_modal(task_id) {
+function init_task_modal(task_id, comment_id) {
 
     var queryStr = '';
     var $leadModal = $('#lead-modal');
@@ -5630,6 +5906,11 @@ function init_task_modal(task_id) {
 
     requestGet('tasks/get_task_data/' + task_id + queryStr).done(function(response) {
         _task_append_html(response);
+        if (typeof(comment_id) != 'undefined') {
+            setTimeout(function() {
+                $('[data-task-comment-href-id="' + comment_id + '"]').click();
+            }, 1000);
+        }
     }).fail(function(data) {
         $('#task-modal').modal('hide');
         alert_float('danger', data.responseText);
@@ -5640,15 +5921,20 @@ function init_task_modal(task_id) {
 function _task_append_html(html) {
 
     var $taskModal = $('#task-modal');
+
     $taskModal.find('.data').html(html);
     //init_tasks_checklist_items(false, task_id);
     recalculate_checklist_items_progress();
     do_task_checklist_items_height();
+
     setTimeout(function() {
         $taskModal.modal('show');
         // Init_tags_input is trigged too when task modal is shown
         // This line prevents triggering twice.
-        if ($taskModal.is(':visible')) { init_tags_inputs(); }
+        if ($taskModal.is(':visible')) {
+            init_tags_inputs();
+        }
+        init_form_reminder('task');
         fix_task_modal_left_col_height();
     }, 150);
 }
@@ -5684,7 +5970,7 @@ function edit_task_comment(id) {
 
     if (!is_ios()) {
         tinymce.remove('#task_comment_' + id);
-        var editorConfig = _simple_editor_config()
+        var editorConfig = _simple_editor_config();
         editorConfig.auto_focus = 'task_comment_' + id;
         init_editor('#task_comment_' + id, editorConfig);
         tinymce.triggerSave();
@@ -6098,7 +6384,6 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
     data = typeof(data) == 'undefined' || data == 'undefined' ? get_item_preview_values() : data;
     if (data.description === "" && data.long_description === "" && data.rate === "") { return; }
     var table_row = '';
-    var unit_placeholder = '';
     var item_key = $("body").find('tbody .item').length + 1;
 
     table_row += '<tr class="sortable item" data-merge-invoice="' + merge_invoice + '" data-bill-expense="' + bill_expense + '">';
@@ -6206,14 +6491,11 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
 
         table_row += '<td><input type="number" min="0" onblur="calculate_total();" onchange="calculate_total();" data-quantity name="newitems[' + item_key + '][qty]" value="' + data.qty + '" class="form-control">';
 
-        unit_placeholder = '';
-
         if (!data.unit || typeof(data.unit) == 'undefined') {
-            unit_placeholder = appLang.unit;
             data.unit = '';
         }
 
-        table_row += '<input type="text" placeholder="' + unit_placeholder + '" name="newitems[' + item_key + '][unit]" class="form-control input-transparent text-right" value="' + data.unit + '">';
+        table_row += '<input type="text" placeholder="' + appLang.unit + '" name="newitems[' + item_key + '][unit]" class="form-control input-transparent text-right" value="' + data.unit + '">';
 
         table_row += '</td>';
 
@@ -6302,7 +6584,7 @@ function deselect_ajax_search(e) {
     var $elm = $('select#' + $(e).attr('data-id'));
     $elm.data('AjaxBootstrapSelect').list.cache = {};
     var $elmWrapper = $elm.parents('.bootstrap-select');
-    $elm.html('').append('<option value=""></option>').selectpicker('val', '');
+    $elm.html('').append('<option value=""></option>').selectpicker('val', $elm.attr('multiple') == 'multiple' ? [] : '');
     $elmWrapper.removeClass('ajax-remove-values-option').find('.ajax-clear-values').remove();
     setTimeout(function() {
         $elm.trigger('selected.cleared.ajax.bootstrap.select', e);
@@ -6528,6 +6810,11 @@ function calculate_total() {
     $('.subtotal').html(accounting.formatNumber(subtotal) + hidden_input('subtotal', accounting.toFixed(subtotal, app_decimal_places)));
     $('.total').html(format_money(total) + hidden_input('total', accounting.toFixed(total, app_decimal_places)));
     $(document).trigger('sales-total-calculated');
+}
+
+function exclude_tax_from_amount(tax_percent, total_amount) {
+    totalTax = accounting.toFixed((total_amount * tax_percent / (100 + tax_percent)), app_decimal_places);
+    return accounting.toFixed(total_amount - totalTax, app_decimal_places);
 }
 
 // Deletes invoice items
@@ -7448,4 +7735,83 @@ function requestGetJSON(uri, params) {
     params = typeof(params) == 'undefined' ? {} : params;
     params.dataType = 'json';
     return requestGet(uri, params);
+}
+
+// Clear memory leak
+function destroy_dynamic_scripts_in_element(element) {
+    element.find('input.tagsinput').tagit('destroy')
+        .find('.manual-popover').popover('destroy')
+        .find('.datepicker').datetimepicker('destroy')
+        .find('select').selectpicker('destroy');
+}
+
+function onGoogleApiLoad() {
+    var pickers = $('.gpicker');
+    $.each(pickers, function() {
+        var that = $(this);
+        setTimeout(function() {
+            that.googleDrivePicker();
+        }, 10);
+    });
+}
+
+function salesGoogleDriveSave(pickData) {
+    salesExtenalFileUpload(pickData, 'gdrive');
+}
+
+function leadExternalFileUpload(files, externalType, leadId) {
+    $.post(admin_url + 'leads/add_external_attachment', {
+        files: files,
+        lead_id: leadId,
+        external: externalType
+    }).done(function() {
+        init_lead_modal_data(leadId);
+    });
+}
+
+function taskExternalFileUpload(files, externalType, taskId) {
+    $.post(admin_url + 'tasks/add_external_attachment', {
+        files: files,
+        task_id: taskId,
+        external: externalType
+    }).done(function() {
+        init_task_modal(taskId);
+    });
+}
+
+function salesExtenalFileUpload(files, externalType) {
+    var _data = {};
+    _data.rel_id = $("body").find('input[name="_attachment_sale_id"]').val();
+    _data.type = $("body").find('input[name="_attachment_sale_type"]').val();
+    _data.files = files;
+    _data.external = externalType;
+    $.post(admin_url + 'misc/add_sales_external_attachment', _data).done(function() {
+        if (_data.type == 'invoice') {
+            init_invoice(_data.rel_id);
+        } else if (_data.type == 'credit_note') {
+            init_credit_note(_data.rel_id);
+        } else if (_data.type == 'estimate') {
+            if ($("body").hasClass('estimates-pipeline')) {
+                estimate_pipeline_open(_data.rel_id);
+            } else {
+                init_estimate(_data.rel_id);
+            }
+        } else if (_data.type == 'proposal') {
+            if ($("body").hasClass('proposals-pipeline')) {
+                proposal_pipeline_open(_data.rel_id);
+            } else {
+                init_proposal(_data.rel_id);
+            }
+        }
+        $('#sales_attach_file').modal('hide');
+    });
+}
+
+function set_search_history(history) {
+    var $searchHistory = $('#search-history');
+    var historyHtml = '';
+    for (var i = 0; i < history.length; i++) {
+        historyHtml += '<li data-index="' + i + '"><a href="#" class="history">' + history[i] + ' <span class="remove-history pointer pull-right" style="z-index:1500"><i class="fa fa-remove"></i></span></a></li>';
+    }
+    $searchHistory.html(historyHtml);
 }

@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * Check if the user is lead creator
  * @since  Version 1.0.4

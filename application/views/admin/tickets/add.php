@@ -195,10 +195,16 @@
 			});
 
 		$('#new_ticket_form').validate();
+		setTimeout(function(){
+			$.each($('#new_ticket_form').find('[data-custom-field-required="1"]'), function () {
+				$(this).rules('add','required');
+			});
+		},10);
 
 		<?php if(isset($project_id) || isset($contact)){ ?>
 			$('body.ticket select[name="contactid"]').change();
 		<?php } ?>
+
 		<?php if(isset($project_id)){ ?>
 			$('body').on('selected.cleared.ajax.bootstrap.select','select[data-auto-project="true"]',function(e){
 				$('input[name="userid"]').val('');

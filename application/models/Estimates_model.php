@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Estimates_model extends CRM_Model
 {
     private $statuses;
@@ -1169,7 +1170,7 @@ class Estimates_model extends CRM_Model
         foreach ($contacts as $contact) {
             $this->emails_model->add_attachment([
                     'attachment' => $attach,
-                    'filename'   => $estimate_number . '.pdf',
+                    'filename'   => str_replace('/', '-', $estimate_number . '.pdf'),
                     'type'       => 'application/pdf',
                 ]);
             $merge_fields = [];
@@ -1258,15 +1259,21 @@ class Estimates_model extends CRM_Model
             if ($attachpdf) {
                 $_pdf_estimate = $this->get($estimate->id);
                 $pdf           = estimate_pdf($_pdf_estimate);
-                $attach        = $pdf->Output($estimate_number . '.pdf', 'S');
+
+                $attach = $pdf->Output($estimate_number . '.pdf', 'S');
             }
 
             foreach ($sent_to as $contact_id) {
                 if ($contact_id != '') {
                     if ($attachpdf) {
+                        $fileNameHookData = do_action('send_estimate_to_customer_file_name', [
+                            'file_name' => str_replace('/', '-', $estimate_number . '.pdf'),
+                            'estimate'  => $_pdf_estimate,
+                        ]);
+
                         $this->emails_model->add_attachment([
                             'attachment' => $attach,
-                            'filename'   => $estimate_number . '.pdf',
+                            'filename'   => $fileNameHookData['file_name'],
                             'type'       => 'application/pdf',
                         ]);
                     }

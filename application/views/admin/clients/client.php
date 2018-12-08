@@ -16,11 +16,6 @@
                <a href="<?php echo admin_url('clients/mark_as_active/'.$client->userid); ?>"><?php echo _l('mark_as_active'); ?></a>
             </div>
             <?php } ?>
-            <?php if(isset($client) && $client->leadid != NULL){ ?>
-            <div class="alert alert-info">
-               <a href="<?php echo admin_url('leads/index/'.$client->leadid); ?>" onclick="init_lead(<?php echo $client->leadid; ?>); return false;"><?php echo _l('customer_from_lead',_l('lead')); ?></a>
-            </div>
-            <?php } ?>
             <?php if(isset($client) && (!has_permission('customers','','view') && is_customer_admin($client->userid))){?>
             <div class="alert alert-info">
                <?php echo _l('customer_admin_login_as_client_message',get_staff_full_name(get_staff_user_id())); ?>
@@ -44,12 +39,13 @@
             <div class="panel_s mbot5">
                <div class="panel-body padding-10">
                   <h4 class="bold">
+                     #<?php echo $client->userid . ' ' . $title; ?>
                      <?php if(has_permission('customers','','delete') || is_admin()){ ?>
-                     <div class="btn-group pull-left mright10">
+                     <div class="btn-group">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <span class="caret"></span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-left">
+                        <ul class="dropdown-menu dropdown-menu-right">
                            <?php if(is_admin()){ ?>
                            <li>
                               <a href="<?php echo admin_url('clients/login_as_client/'.$client->userid); ?>" target="_blank">
@@ -66,7 +62,15 @@
                         </ul>
                      </div>
                      <?php } ?>
-                     #<?php echo $client->userid . ' ' . $title; ?>
+                     <?php if(isset($client) && $client->leadid != NULL){ ?>
+                        <br />
+                        <small>
+                           <?php echo _l('customer_from_lead',_l('lead')); ?>
+                           <a href="<?php echo admin_url('leads/index/'.$client->leadid); ?>" onclick="init_lead(<?php echo $client->leadid; ?>); return false;">
+                             - <?php echo _l('view'); ?>
+                          </a>
+                       </small>
+                    <?php } ?>
                   </h4>
                </div>
             </div>
@@ -103,7 +107,7 @@
    });
 </script>
 <?php } ?>
-<?php if(!empty(get_option('google_api_key')) && !empty($client->latitude) && !empty($client->longitude)){ ?>
+<?php if(get_option('google_api_key') != '' && !empty($client->latitude) && !empty($client->longitude)){ ?>
 <script>
    var latitude = '<?php echo $client->latitude; ?>';
    var longitude = '<?php echo $client->longitude; ?>';

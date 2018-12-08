@@ -412,4 +412,7 @@
    init_selectpicker();
    init_form_reminder();
    init_tabs_scrollable();
+   <?php if($record_payment) { ?>
+      record_payment(<?php echo $invoice->id; ?>);
+   <?php } ?>
 </script>

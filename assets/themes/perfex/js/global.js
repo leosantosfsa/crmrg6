@@ -60,6 +60,11 @@ $(function() {
         showSubtext: true,
     });
 
+    // Lightbox for knowledge base images
+    $.each($('.kb-article').find('img'), function() {
+        $(this).wrap('<a href="' + $(this).attr('src') + '" data-lightbox="kb-attachment"></a>');
+    });
+
     init_progress_bars();
     init_color_pickers();
     jQuery.datetimepicker.setLocale(locale);
@@ -315,4 +320,29 @@ function buildUrl(url, parameters) {
         url = url + "?" + qs;
     }
     return url;
+}
+
+function preview_right_sticky(element, stop) {
+
+    var $element = $(element);
+    var width = $(element).outerWidth();
+
+    if(!$element.attr('data-original-width')) {
+        $element.attr('data-original-width', width);
+    }
+
+    $(window).scroll(function() {
+        var scrollPos = $(this).scrollTop();
+        if (scrollPos >= stop) {
+            if (!$element.hasClass('preview-right-sticky')) {
+                $element.addClass('preview-right-sticky');
+            }
+            $element.css('top', ((scrollPos - $('.top').outerHeight() - 31)) + 'px');
+            $element.css('width', $element.attr('data-original-width')+'px');
+        } else {
+            $element.removeAttr('style');
+            $element.removeAttr('data-original-width');
+            $element.removeClass('preview-right-sticky');
+        }
+    });
 }

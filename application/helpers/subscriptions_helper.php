@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 function create_subscription_invoice_data($subscription, $invoice)
 {
     $CI     = &get_instance();
@@ -41,7 +43,7 @@ function create_subscription_invoice_data($subscription, $invoice)
     $new_invoice_data['shipping_country']         = $client->shipping_country;
     $new_invoice_data['show_shipping_on_invoice'] = 0;
     // $new_invoice_data['include_shipping']         = 0;
-    $new_invoice_data['status']                   = 1;
+    $new_invoice_data['status'] = 1;
 
     if (!empty($client->shipping_street)) {
         $new_invoice_data['show_shipping_on_invoice'] = 1;
@@ -55,6 +57,7 @@ function create_subscription_invoice_data($subscription, $invoice)
     $new_invoice_data['newitems'] = [];
     $key                          = 1;
     $items                        = is_array($invoice) ? $invoice['lines']['data'] : $invoice->lines->data;
+    $totalItems                   = count($items);
     foreach ($items as $item) {
         $descCheck1 = $item['quantity'] . ' × ';
         $descCheck2 = $item['quantity'] . ' x ';
@@ -69,7 +72,9 @@ function create_subscription_invoice_data($subscription, $invoice)
         $new_invoice_data['newitems'][$key]['rate'] = $item['amount'] / $item['quantity'] / 100;
 
         $new_invoice_data['newitems'][$key]['description']      = $item['description'];
-        $new_invoice_data['newitems'][$key]['long_description'] = '';
+        $new_invoice_data['newitems'][$key]['long_description'] = $subscription->description_in_item == 1 && $key == $totalItems
+        ? $subscription->description
+        : '';
         $new_invoice_data['newitems'][$key]['qty']              = $item['quantity'];
         $new_invoice_data['newitems'][$key]['unit']             = '';
         $new_invoice_data['newitems'][$key]['taxname']          = [];
@@ -230,4 +235,21 @@ function prepare_subscsriptions_for_export($customer_id)
     }
 
     return $subscriptions;
+}
+
+function send_email_customer_subscribed_to_subscription_to_staff($subscription)
+{
+    $CI = &get_instance();
+
+    $CI->db->where('(staffid=' . $subscription->created_from . ' OR admin=1)');
+    $CI->db->where('active', 1);
+    $members = $CI->db->get('tblstaff')->result_array();
+
+    if (!class_exists('subscriptions_model')) {
+        $CI->load->model('subscriptions_model');
+    }
+
+    foreach ($members as $staff) {
+        $CI->subscriptions_model->send_email_template($subscription->id, '', 'customer-subscribed-to-staff', $staff['email']);
+    }
 }

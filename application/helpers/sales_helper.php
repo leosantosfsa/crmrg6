@@ -933,6 +933,8 @@ if (!function_exists('get_table_items_and_taxes')) {
             return $a['taxrate'] - $b['taxrate'];
         });
 
+        $rel_data = null;
+
         return do_action('before_return_table_items_html_and_taxes', $result);
     }
 }

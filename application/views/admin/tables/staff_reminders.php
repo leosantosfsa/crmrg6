@@ -11,6 +11,8 @@ $aColumns = [
         WHEN \'proposal\' THEN tblproposals.subject
         WHEN \'expense\' THEN tblexpenses.id
         WHEN \'credit_note\' THEN tblcreditnotes.id
+        WHEN \'ticket\' THEN tbltickets.subject
+        WHEN \'task\' THEN tblstafftasks.name
         ELSE tblreminders.rel_type END as rel_type_name',
     'tblreminders.description',
     'tblreminders.date',
@@ -29,6 +31,8 @@ $join = [
     'LEFT JOIN tblproposals ON tblproposals.id = tblreminders.rel_id AND tblreminders.rel_type="proposal"',
     'LEFT JOIN tblexpenses ON tblexpenses.id = tblreminders.rel_id AND tblreminders.rel_type="expense"',
     'LEFT JOIN tblcreditnotes ON tblcreditnotes.id = tblreminders.rel_id AND tblreminders.rel_type="credit_note"',
+    'LEFT JOIN tbltickets ON tbltickets.ticketid = tblreminders.rel_id AND tblreminders.rel_type="ticket"',
+    'LEFT JOIN tblstafftasks ON tblstafftasks.id = tblreminders.rel_id AND tblreminders.rel_type="task"',
     ];
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [

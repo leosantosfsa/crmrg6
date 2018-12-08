@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Custom_fields_model extends CRM_Model
 {
     private $pdf_fields = ['estimate', 'invoice', 'credit_note', 'items'];

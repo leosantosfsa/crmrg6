@@ -260,9 +260,13 @@
          <?php echo form_close(); ?>
          <?php if(get_option('dropbox_app_key') != ''){ ?>
          <hr />
-         <div class="text-center">
-            <div id="dropbox-chooser-lead"></div>
-         </div>
+         <div class="text-right">
+          <button class="gpicker">
+            <i class="fa fa-google" aria-hidden="true"></i>
+            <?php echo _l('choose_from_google_drive'); ?>
+          </button>
+          <div id="dropbox-chooser-lead"></div>
+        </div>
          <?php } ?>
          <?php if(count($lead->attachments) > 0) { ?>
          <div class="mtop20" id="lead_attachments">

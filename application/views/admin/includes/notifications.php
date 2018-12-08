@@ -45,8 +45,9 @@
                                     $i++;
                                   }
                                 }
-                                $description = _l($notification['description'],$additional_data);
-                                if(($notification['fromcompany'] == NULL && $notification['fromuserid'] != 0) || ($notification['fromcompany'] == NULL && $notification['fromclientid'] != 0)){
+                                $description = _l($notification['description'], $additional_data);
+                                if(($notification['fromcompany'] == NULL && $notification['fromuserid'] != 0)
+                                  || ($notification['fromcompany'] == NULL && $notification['fromclientid'] != 0)){
                                  if($notification['fromuserid'] != 0){
                                   $description = $notification['from_fullname']. ' - ' . $description;
                                 } else {

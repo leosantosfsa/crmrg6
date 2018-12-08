@@ -126,7 +126,7 @@
                     <table class="table items">
                         <thead>
                             <tr>
-                                <th align="center">#</th>
+                                <th align="center"><?php echo _l('the_number_sign'); ?></th>
                                 <th class="description" width="50%" align="left"><?php echo _l('estimate_table_item_heading'); ?></th>
                                 <?php
                                     $custom_fields = get_items_custom_fields_for_table_html($estimate->id,'estimate');

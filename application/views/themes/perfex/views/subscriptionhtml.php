@@ -27,6 +27,7 @@
                data-name="' . $subscription->name . '"
                data-label="'._l('subscribe').'"
                data-billing-address="true"
+               data-locale="'.$locale.'"
                data-description="'.$subscription->description.'"
                data-currency="'.$plan->currency.'"
                data-locale="auto">
@@ -107,7 +108,7 @@
                <table class="table items">
                   <thead>
                      <tr>
-                        <th align="center">#</th>
+                        <th align="center"><?php echo _l('the_number_sign'); ?></th>
                         <th class="description" width="50%" align="left"><?php echo _l('invoice_table_item_heading'); ?></th>
                         <th align="right"><?php echo _l('invoice_table_quantity_heading'); ?></th>
                         <th align="right"><?php echo _l('invoice_table_rate_heading'); ?></th>

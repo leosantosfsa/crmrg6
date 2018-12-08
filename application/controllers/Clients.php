@@ -8,13 +8,22 @@ class Clients extends Clients_controller
     {
         parent::__construct();
         do_action('after_clients_area_init', $this);
+
+        /**
+         * The Clients.php controller methods requires a logged in contact
+         */
+        if (!is_client_logged_in()) {
+            redirect_after_login_to_current_url();
+            redirect(site_url('authentication/login'));
+        }
+
+        if (is_client_logged_in() && !is_contact_email_verified()) {
+            redirect(site_url('verification'));
+        }
     }
 
     public function index()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         $data['is_home'] = true;
         $this->load->model('reports_model');
         $data['payments_years'] = $this->reports_model->get_distinct_customer_invoices_years();
@@ -28,9 +37,6 @@ class Clients extends Clients_controller
 
     public function announcements()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         $data['title']         = _l('announcements');
         $data['announcements'] = $this->announcements_model->get();
         $this->data            = $data;
@@ -40,9 +46,6 @@ class Clients extends Clients_controller
 
     public function announcement($id)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         $data['announcement'] = $this->announcements_model->get($id);
         $data['title']        = $data['announcement']->name;
         $this->data           = $data;
@@ -52,9 +55,6 @@ class Clients extends Clients_controller
 
     public function calendar()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         $data['title'] = _l('calendar');
         $this->view    = 'calendar';
         $this->data    = $data;
@@ -63,10 +63,6 @@ class Clients extends Clients_controller
 
     public function get_calendar_data()
     {
-        if (!is_client_logged_in()) {
-            echo json_encode([]);
-            die;
-        }
         $this->load->model('utilities_model');
         $data = $this->utilities_model->get_calendar_data(
             $this->input->get('start'),
@@ -80,16 +76,10 @@ class Clients extends Clients_controller
 
     public function projects($status = '')
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
         }
-
-
         $data['project_statuses'] = $this->projects_model->get_project_statuses();
 
         $where = 'clientid=' . get_client_user_id();
@@ -119,11 +109,6 @@ class Clients extends Clients_controller
 
     public function project($id)
     {
-        if (!is_client_logged_in()) {
-            redirect_after_login_to_current_url();
-            redirect(site_url('clients/login'));
-        }
-
         if (!has_contact_permission('projects')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -264,7 +249,8 @@ class Clients extends Clients_controller
                     die;
 
                     break;
-                case 'project_file_dropbox':
+                case 'project_file_dropbox': // deprecated
+                case 'project_external_file':
                         $data                        = [];
                         $data['project_id']          = $id;
                         $data['files']               = $this->input->post('files');
@@ -414,10 +400,14 @@ class Clients extends Clients_controller
             } elseif ($group == 'project_invoices') {
                 $data['invoices'] = [];
                 if (has_contact_permission('invoices')) {
-                    $data['invoices'] = $this->invoices_model->get('', [
+                    $whereInvoices = [
                             'clientid'   => get_client_user_id(),
                             'project_id' => $id,
-                        ]);
+                        ];
+                    if (get_option('exclude_invoice_from_client_area_with_draft_status') == 1) {
+                        $whereInvoices['status !='] = 6;
+                    }
+                    $data['invoices'] = $this->invoices_model->get('', $whereInvoices);
                 }
             } elseif ($group == 'project_tickets') {
                 $data['tickets'] = [];
@@ -473,10 +463,6 @@ class Clients extends Clients_controller
 
     public function files()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         $files_where = 'visible_to_customer = 1 AND id IN (SELECT file_id FROM tblcustomerfiles_shares WHERE contact_id =' . get_contact_user_id() . ')';
 
         $files_where = do_action('customers_area_files_where', $files_where);
@@ -492,27 +478,32 @@ class Clients extends Clients_controller
 
     public function upload_files()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
+        $success = false;
         if ($this->input->post('external')) {
             $file                        = $this->input->post('files');
             $file[0]['staffid']          = 0;
             $file[0]['contact_id']       = get_contact_user_id();
             $file['visible_to_customer'] = 1;
-            $this->misc_model->add_attachment_to_database(get_client_user_id(), 'customer', $file, $this->input->post('external'));
+            $success                     = $this->misc_model->add_attachment_to_database(
+                get_client_user_id(),
+                'customer',
+                $file,
+                $this->input->post('external')
+            );
         } else {
-            handle_client_attachments_upload(get_client_user_id(), true);
+            $success = handle_client_attachments_upload(get_client_user_id(), true);
+        }
+
+        if ($success) {
+            $this->clients_model->send_notification_customer_profile_file_uploaded_to_responsible_staff(
+                get_contact_user_id(),
+                get_client_user_id()
+            );
         }
     }
 
     public function delete_file($id, $type = '')
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         if (get_option('allow_contact_to_delete_files') == 1) {
             if ($type == 'general') {
                 $file = $this->misc_model->get_file($id);
@@ -543,9 +534,6 @@ class Clients extends Clients_controller
 
     public function remove_task_comment($id)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         echo json_encode([
             'success' => $this->tasks_model->remove_comment($id),
         ]);
@@ -553,10 +541,6 @@ class Clients extends Clients_controller
 
     public function edit_comment()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         if ($this->input->post()) {
             $data            = $this->input->post();
             $data['content'] = nl2br($data['content']);
@@ -572,10 +556,6 @@ class Clients extends Clients_controller
 
     public function tickets($status = '')
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -606,7 +586,7 @@ class Clients extends Clients_controller
 
     public function change_ticket_status()
     {
-        if (is_client_logged_in() && has_contact_permission('support')) {
+        if (has_contact_permission('support')) {
             $post_data = $this->input->post();
             $response  = $this->tickets_model->change_ticket_status($post_data['ticket_id'], $post_data['status_id']);
             set_alert('alert-' . $response['alert'], $response['message']);
@@ -615,9 +595,6 @@ class Clients extends Clients_controller
 
     public function proposals()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         if (!has_contact_permission('proposals')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -644,9 +621,6 @@ class Clients extends Clients_controller
 
     public function open_ticket()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -667,7 +641,26 @@ class Clients extends Clients_controller
                 $this->form_validation->set_rules($field_name, $field['name'], 'required');
             }
             if ($this->form_validation->run() !== false) {
-                $id = $this->tickets_model->add($this->input->post());
+                $data = $this->input->post();
+
+                $id = $this->tickets_model->add([
+                    'subject'    => $data['subject'],
+                    'department' => $data['department'],
+                    'priority'   => $data['priority'],
+                    'service'    => isset($data['service']) && is_numeric($data['service'])
+                    ? $data['service']
+                    : null,
+                    'project_id' => isset($data['project_id']) && is_numeric($data['project_id'])
+                    ? $data['project_id']
+                    : 0,
+                    'custom_fields' => isset($data['custom_fields']) && is_array($data['custom_fields'])
+                    ? $data['custom_fields']
+                    : [],
+                    'message'   => $data['message'],
+                    'contactid' => get_contact_user_id(),
+                    'userid'    => get_client_user_id(),
+                ]);
+
                 if ($id) {
                     set_alert('success', _l('new_ticket_added_successfully', $id));
                     redirect(site_url('clients/ticket/' . $id));
@@ -684,11 +677,6 @@ class Clients extends Clients_controller
 
     public function ticket($id)
     {
-        if (!is_client_logged_in()) {
-            redirect_after_login_to_current_url();
-            redirect(site_url('clients/login'));
-        }
-
         if (!has_contact_permission('support')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -705,11 +693,15 @@ class Clients extends Clients_controller
 
         if ($this->input->post()) {
             $this->form_validation->set_rules('message', _l('ticket_reply'), 'required');
-            if ($this->form_validation->run() !== false) {
-                $data           = $this->input->post();
-                $data['userid'] = get_client_user_id();
 
-                $replyid = $this->tickets_model->add_reply($data, $id);
+            if ($this->form_validation->run() !== false) {
+                $data = $this->input->post();
+
+                $replyid = $this->tickets_model->add_reply([
+                    'message'   => $data['message'],
+                    'contactid' => get_contact_user_id(),
+                    'userid'    => get_client_user_id(),
+                ], $id);
                 if ($replyid) {
                     set_alert('success', _l('replied_to_ticket_successfully', $id));
                 }
@@ -726,9 +718,6 @@ class Clients extends Clients_controller
 
     public function contracts()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         if (!has_contact_permission('contracts')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -748,10 +737,6 @@ class Clients extends Clients_controller
 
     public function invoices($status = false)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -766,7 +751,8 @@ class Clients extends Clients_controller
         }
 
         if (isset($where['status'])) {
-            if ($where['status'] == 6 && get_option('exclude_invoice_from_client_area_with_draft_status') == 1) {
+            if ($where['status'] == 6
+                && get_option('exclude_invoice_from_client_area_with_draft_status') == 1) {
                 unset($where['status']);
                 $where['status !='] = 6;
             }
@@ -785,9 +771,6 @@ class Clients extends Clients_controller
 
     public function statement()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -859,10 +842,6 @@ class Clients extends Clients_controller
 
     public function statement_pdf()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
         if (!has_contact_permission('invoices')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -871,7 +850,11 @@ class Clients extends Clients_controller
         $from = $this->input->get('from');
         $to   = $this->input->get('to');
 
-        $data['statement'] = $this->clients_model->get_statement(get_client_user_id(), to_sql_date($from), to_sql_date($to));
+        $data['statement'] = $this->clients_model->get_statement(
+            get_client_user_id(),
+            to_sql_date($from),
+            to_sql_date($to)
+        );
 
         try {
             $pdf = statement_pdf($data['statement']);
@@ -891,9 +874,6 @@ class Clients extends Clients_controller
 
     public function estimates($status = '')
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         if (!has_contact_permission('estimates')) {
             set_alert('warning', _l('access_denied'));
             redirect(site_url());
@@ -923,11 +903,7 @@ class Clients extends Clients_controller
 
     public function company()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
-        if ($this->input->post()) {
+        if ($this->input->post() && is_primary_contact()) {
             if (get_option('company_is_required') == 1) {
                 $this->form_validation->set_rules('company', _l('clients_company'), 'required');
             }
@@ -950,17 +926,47 @@ class Clients extends Clients_controller
                 }
                 $this->form_validation->set_rules($field_name, $field['name'], 'required');
             }
-            if ($this->form_validation->run() !== false) {
-                $data = $this->input->post();
 
-                if (isset($data['company_form'])) {
-                    unset($data['company_form']);
+            if ($this->form_validation->run() !== false) {
+                $data['company'] = $this->input->post('company');
+
+                if (!is_null($this->input->post('vat'))) {
+                    $data['vat'] = $this->input->post('vat');
+                }
+
+                if (!is_null($this->input->post('default_language'))) {
+                    $data['default_language'] = $this->input->post('default_language');
+                }
+
+                if (!is_null($this->input->post('custom_fields'))) {
+                    $data['custom_fields'] = $this->input->post('custom_fields');
+                }
+
+                $data['phonenumber'] = $this->input->post('phonenumber');
+                $data['website']     = $this->input->post('website');
+                $data['country']     = $this->input->post('country');
+                $data['city']        = $this->input->post('city');
+                $data['address']     = $this->input->post('address');
+                $data['zip']         = $this->input->post('zip');
+                $data['state']       = $this->input->post('state');
+
+                if (get_option('allow_primary_contact_to_view_edit_billing_and_shipping') == 1
+                    && is_primary_contact()) {
+
+                    // Dynamically get the billing and shipping values from $_POST
+                    for ($i = 0; $i < 2; $i++) {
+                        $prefix = ($i == 0 ? 'billing_' : 'shipping_');
+                        foreach (['street', 'city', 'state', 'zip', 'country'] as $field) {
+                            $data[$prefix . $field] = $this->input->post($prefix . $field);
+                        }
+                    }
                 }
 
                 $success = $this->clients_model->update_company_details($data, get_client_user_id());
                 if ($success == true) {
                     set_alert('success', _l('clients_profile_updated'));
                 }
+
                 redirect(site_url('clients/company'));
             }
         }
@@ -972,9 +978,6 @@ class Clients extends Clients_controller
 
     public function profile()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         if ($this->input->post('profile')) {
             $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
             $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
@@ -996,9 +999,8 @@ class Clients extends Clients_controller
             }
             if ($this->form_validation->run() !== false) {
                 handle_contact_profile_image_upload();
+
                 $data = $this->input->post();
-                // Unset the form indicator so we wont send it to the model
-                unset($data['profile']);
 
                 $contact = $this->clients_model->get_contact(get_contact_user_id());
 
@@ -1035,15 +1037,28 @@ class Clients extends Clients_controller
                     $data['project_emails'] = $contact->project_emails;
                     $data['task_emails']    = $contact->task_emails;
                 }
-                // For all cases
-                if (isset($data['password'])) {
-                    unset($data['password']);
-                }
-                $success = $this->clients_model->update_contact($data, get_contact_user_id(), true);
+
+                $success = $this->clients_model->update_contact([
+                    'firstname'          => $this->input->post('firstname'),
+                    'lastname'           => $this->input->post('lastname'),
+                    'title'              => $this->input->post('title'),
+                    'email'              => $this->input->post('email'),
+                    'phonenumber'        => $this->input->post('phonenumber'),
+                    'direction'          => $this->input->post('direction'),
+                    'invoice_emails'     => $data['invoice_emails'],
+                    'credit_note_emails' => $data['credit_note_emails'],
+                    'estimate_emails'    => $data['estimate_emails'],
+                    'ticket_emails'      => $data['ticket_emails'],
+                    'contract_emails'    => $data['contract_emails'],
+                    'project_emails'     => $data['project_emails'],
+                    'task_emails'        => $data['task_emails'],
+                    'custom_fields'      => isset($data['custom_fields']) && is_array($data['custom_fields']) ? $data['custom_fields'] : [],
+                ], get_contact_user_id(), true);
 
                 if ($success == true) {
                     set_alert('success', _l('clients_profile_updated'));
                 }
+
                 redirect(site_url('clients/profile'));
             }
         } elseif ($this->input->post('change_password')) {
@@ -1051,12 +1066,18 @@ class Clients extends Clients_controller
             $this->form_validation->set_rules('newpassword', _l('clients_edit_profile_new_password'), 'required');
             $this->form_validation->set_rules('newpasswordr', _l('clients_edit_profile_new_password_repeat'), 'required|matches[newpassword]');
             if ($this->form_validation->run() !== false) {
-                $success = $this->clients_model->change_contact_password($this->input->post(null, false));
+                $success = $this->clients_model->change_contact_password(
+                    get_contact_user_id(),
+                    $this->input->post('oldpassword', false),
+                    $this->input->post('newpasswordr', false)
+                );
+
                 if (is_array($success) && isset($success['old_password_not_match'])) {
                     set_alert('danger', _l('client_old_password_incorrect'));
                 } elseif ($success == true) {
                     set_alert('success', _l('client_password_changed'));
                 }
+
                 redirect(site_url('clients/profile'));
             }
         }
@@ -1068,249 +1089,34 @@ class Clients extends Clients_controller
 
     public function remove_profile_image()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
+        $id = get_contact_user_id();
+
+        do_action('before_remove_contact_profile_image', $id);
+
+        if (file_exists(get_upload_path_by_type('contact_profile_images') . $id)) {
+            delete_dir(get_upload_path_by_type('contact_profile_images') . $id);
         }
-        do_action('before_remove_contact_profile_image');
-        if (file_exists(get_upload_path_by_type('contact_profile_images') . get_contact_user_id())) {
-            delete_dir(get_upload_path_by_type('contact_profile_images') . get_contact_user_id());
-        }
-        $this->db->where('id', get_contact_user_id());
+
+        $this->db->where('id', $id);
         $this->db->update('tblcontacts', [
             'profile_image' => null,
         ]);
+
         if ($this->db->affected_rows() > 0) {
             redirect(site_url('clients/profile'));
         }
     }
 
-    public function register()
-    {
-        if (get_option('allow_registration') != 1 || is_client_logged_in()) {
-            redirect(site_url());
-        }
-        if (get_option('company_is_required') == 1) {
-            $this->form_validation->set_rules('company', _l('client_company'), 'required');
-        }
-
-        if (is_gdpr() && get_option('gdpr_enable_terms_and_conditions') == 1) {
-            $this->form_validation->set_rules(
-                'accept_terms_and_conditions',
-                _l('terms_and_conditions'),
-                'required',
-                    ['required' => _l('terms_and_conditions_validation')]
-            );
-        }
-
-        $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
-        $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
-        $this->form_validation->set_rules('email', _l('client_email'), 'trim|required|is_unique[tblcontacts.email]|valid_email');
-        $this->form_validation->set_rules('password', _l('clients_register_password'), 'required');
-        $this->form_validation->set_rules('passwordr', _l('clients_register_password_repeat'), 'required|matches[password]');
-
-        if (get_option('use_recaptcha_customers_area') == 1 && get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '') {
-            $this->form_validation->set_rules('g-recaptcha-response', 'Captcha', 'callback_recaptcha');
-        }
-
-        $custom_fields = get_custom_fields('customers', [
-            'show_on_client_portal' => 1,
-            'required'              => 1,
-        ]);
-
-        $custom_fields_contacts = get_custom_fields('contacts', [
-            'show_on_client_portal' => 1,
-            'required'              => 1,
-        ]);
-
-        foreach ($custom_fields as $field) {
-            $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
-            if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
-                $field_name .= '[]';
-            }
-            $this->form_validation->set_rules($field_name, $field['name'], 'required');
-        }
-        foreach ($custom_fields_contacts as $field) {
-            $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
-            if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
-                $field_name .= '[]';
-            }
-            $this->form_validation->set_rules($field_name, $field['name'], 'required');
-        }
-        if ($this->input->post()) {
-            if ($this->form_validation->run() !== false) {
-                $data = $this->input->post();
-                // Unset recaptchafield
-                if (isset($data['g-recaptcha-response'])) {
-                    unset($data['g-recaptcha-response']);
-                }
-
-                // Auto add billing details
-                $data['billing_street']  = $data['address'];
-                $data['billing_city']    = $data['city'];
-                $data['billing_state']   = $data['state'];
-                $data['billing_zip']     = $data['zip'];
-                $data['billing_country'] = is_numeric($data['country']) ? $data['country'] : 0;
-                if (isset($data['accept_terms_and_conditions'])) {
-                    unset($data['accept_terms_and_conditions']);
-                }
-                $clientid = $this->clients_model->add($data, true);
-                if ($clientid) {
-                    do_action('after_client_register', $clientid);
-
-                    if (get_option('customers_register_require_confirmation') == '1') {
-                        send_customer_registered_email_to_administrators($clientid);
-
-                        $this->clients_model->require_confirmation($clientid);
-                        set_alert('success', _l('customer_register_account_confirmation_approval_notice'));
-                        redirect(site_url('clients/login'));
-                    }
-
-                    $this->load->model('authentication_model');
-                    $logged_in = $this->authentication_model->login($this->input->post('email'), $this->input->post('password', false), false, false);
-
-                    $redUrl = site_url();
-
-                    if ($logged_in) {
-                        do_action('after_client_register_logged_in', $clientid);
-                        set_alert('success', _l('clients_successfully_registered'));
-                    } else {
-                        set_alert('warning', _l('clients_account_created_but_not_logged_in'));
-                        $redUrl = site_url('clients/login');
-                    }
-
-                    send_customer_registered_email_to_administrators($clientid);
-                    redirect($redUrl);
-                }
-            }
-        }
-
-        $data['title']     = _l('clients_register_heading');
-        $data['bodyclass'] = 'register';
-        $this->data        = $data;
-        $this->view        = 'register';
-        $this->layout();
-    }
-
-    public function forgot_password()
-    {
-        if (is_client_logged_in()) {
-            redirect(site_url());
-        }
-
-        $this->form_validation->set_rules('email', _l('customer_forgot_password_email'), 'trim|required|valid_email|callback_contact_email_exists');
-
-        if ($this->input->post()) {
-            if ($this->form_validation->run() !== false) {
-                $this->load->model('Authentication_model');
-                $success = $this->Authentication_model->forgot_password($this->input->post('email'));
-                if (is_array($success) && isset($success['memberinactive'])) {
-                    set_alert('danger', _l('inactive_account'));
-                } elseif ($success == true) {
-                    set_alert('success', _l('check_email_for_resetting_password'));
-                } else {
-                    set_alert('danger', _l('error_setting_new_password_key'));
-                }
-                redirect(site_url('clients/forgot_password'));
-            }
-        }
-        $data['title'] = _l('customer_forgot_password');
-        $this->data    = $data;
-        $this->view    = 'forgot_password';
-
-        $this->layout();
-    }
-
-    public function reset_password($staff, $userid, $new_pass_key)
-    {
-        $this->load->model('Authentication_model');
-        if (!$this->Authentication_model->can_reset_password($staff, $userid, $new_pass_key)) {
-            set_alert('danger', _l('password_reset_key_expired'));
-            redirect(site_url('clients/login'));
-        }
-
-        $this->form_validation->set_rules('password', _l('customer_reset_password'), 'required');
-        $this->form_validation->set_rules('passwordr', _l('customer_reset_password_repeat'), 'required|matches[password]');
-        if ($this->input->post()) {
-            if ($this->form_validation->run() !== false) {
-                do_action('before_user_reset_password', [
-                    'staff'  => $staff,
-                    'userid' => $userid,
-                ]);
-                $success = $this->Authentication_model->reset_password(0, $userid, $new_pass_key, $this->input->post('passwordr', false));
-                if (is_array($success) && $success['expired'] == true) {
-                    set_alert('danger', _l('password_reset_key_expired'));
-                } elseif ($success == true) {
-                    do_action('after_user_reset_password', [
-                        'staff'  => $staff,
-                        'userid' => $userid,
-                    ]);
-                    set_alert('success', _l('password_reset_message'));
-                } else {
-                    set_alert('danger', _l('password_reset_message_fail'));
-                }
-                redirect(site_url('clients/login'));
-            }
-        }
-        $data['title'] = _l('admin_auth_reset_password_heading');
-        $this->data    = $data;
-        $this->view    = 'reset_password';
-        $this->layout();
-    }
-
     public function dismiss_announcement($id)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
         $this->misc_model->dismiss_announcement($id, false);
         redirect($_SERVER['HTTP_REFERER']);
     }
 
-    public function login()
-    {
-        if (is_client_logged_in()) {
-            redirect(site_url());
-        }
-        $this->form_validation->set_rules('password', _l('clients_login_password'), 'required');
-        $this->form_validation->set_rules('email', _l('clients_login_email'), 'trim|required|valid_email');
-        if (get_option('use_recaptcha_customers_area') == 1 && get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '') {
-            $this->form_validation->set_rules('g-recaptcha-response', 'Captcha', 'callback_recaptcha');
-        }
-        if ($this->form_validation->run() !== false) {
-            $this->load->model('Authentication_model');
-            $success = $this->Authentication_model->login($this->input->post('email'), $this->input->post('password', false), $this->input->post('remember'), false);
-            if (is_array($success) && isset($success['memberinactive'])) {
-                set_alert('danger', _l('inactive_account'));
-                redirect(site_url('clients/login'));
-            } elseif ($success == false) {
-                set_alert('danger', _l('client_invalid_username_or_password'));
-                redirect(site_url('clients/login'));
-            }
-
-            maybe_redirect_to_previous_url();
-
-            do_action('after_contact_login');
-            redirect(site_url());
-        }
-        if (get_option('allow_registration') == 1) {
-            $data['title'] = _l('clients_login_heading_register');
-        } else {
-            $data['title'] = _l('clients_login_heading_no_register');
-        }
-        $data['bodyclass'] = 'customers_login';
-
-        $this->data = $data;
-        $this->view = 'login';
-        $this->layout();
-    }
-
     public function credit_card()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
-        if (!is_primary_contact(get_contact_user_id()) || $this->stripe_gateway->getSetting('allow_primary_contact_to_update_credit_card') == 0) {
+        if (!is_primary_contact(get_contact_user_id())
+            || $this->stripe_gateway->getSetting('allow_primary_contact_to_update_credit_card') == 0) {
             redirect(site_url());
         }
 
@@ -1341,33 +1147,27 @@ class Clients extends Clients_controller
 
     public function subscriptions()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
-        if (!is_primary_contact(get_contact_user_id()) || get_option('show_subscriptions_in_customers_area') != '1') {
+        if (!is_primary_contact(get_contact_user_id())
+            || get_option('show_subscriptions_in_customers_area') != '1') {
             redirect(site_url());
         }
 
         $this->load->model('subscriptions_model');
         $data['subscriptions'] = $this->subscriptions_model->get(['clientid' => get_client_user_id()]);
 
-        $data['show_projects']  = total_rows('tblsubscriptions', 'project_id != 0 AND clientid='.get_client_user_id()) > 0 && has_contact_permission('projects');
+        $data['show_projects'] = total_rows('tblsubscriptions', 'project_id != 0 AND clientid=' . get_client_user_id()) > 0 && has_contact_permission('projects');
 
-        $data['title']         = _l('subscriptions');
-        $data['bodyclass']     = 'subscriptions';
-        $this->data            = $data;
-        $this->view            = 'subscriptions';
+        $data['title']     = _l('subscriptions');
+        $data['bodyclass'] = 'subscriptions';
+        $this->data        = $data;
+        $this->view        = 'subscriptions';
         $this->layout();
     }
 
     public function cancel_subscription($id)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
-        if (!is_primary_contact(get_contact_user_id()) || get_option('show_subscriptions_in_customers_area') != '1') {
+        if (!is_primary_contact(get_contact_user_id())
+            || get_option('show_subscriptions_in_customers_area') != '1') {
             redirect(site_url());
         }
 
@@ -1406,11 +1206,8 @@ class Clients extends Clients_controller
 
     public function resume_subscription($id)
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('clients/login'));
-        }
-
-        if (!is_primary_contact(get_contact_user_id()) || get_option('show_subscriptions_in_customers_area') != '1') {
+        if (!is_primary_contact(get_contact_user_id())
+            || get_option('show_subscriptions_in_customers_area') != '1') {
             redirect(site_url());
         }
 
@@ -1433,33 +1230,13 @@ class Clients extends Clients_controller
         redirect($_SERVER['HTTP_REFERER']);
     }
 
-    public function privacy_policy()
-    {
-        $data['policy'] = get_option('privacy_policy');
-        $data['title']  = _l('privacy_policy') . ' - ' . get_option('companyname');
-        $this->data     = $data;
-        $this->view     = 'privacy_policy';
-        $this->layout();
-    }
-
-    public function terms_and_conditions()
-    {
-        $data['terms'] = get_option('terms_and_conditions');
-        $data['title'] = _l('terms_and_conditions') . ' - ' . get_option('companyname');
-        $this->data    = $data;
-        $this->view    = 'terms_and_conditions';
-        $this->layout();
-    }
-
     public function gdpr()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('login'));
-        }
-
         $this->load->model('gdpr_model');
 
-        if (is_gdpr() && $this->input->post('removal_request') && get_option('gdpr_contact_enable_right_to_be_forgotten') == '1') {
+        if (is_gdpr()
+            && $this->input->post('removal_request')
+            && get_option('gdpr_contact_enable_right_to_be_forgotten') == '1') {
             $success = $this->gdpr_model->add_removal_request([
                 'description'  => nl2br($this->input->post('removal_description')),
                 'request_from' => get_contact_full_name(get_contact_user_id()),
@@ -1479,45 +1256,12 @@ class Clients extends Clients_controller
         $this->layout();
     }
 
-    public function logout()
-    {
-        $this->load->model('authentication_model');
-        $this->authentication_model->logout(false);
-        do_action('after_client_logout');
-        redirect(site_url('clients/login'));
-    }
-
-    public function contact_email_exists($email = '')
-    {
-        if ($email == '') {
-            $email = $this->input->post('email');
-        }
-
-        $this->db->where('email', $email);
-        $total_rows = $this->db->count_all_results('tblcontacts');
-        if ($this->input->post() && $this->input->is_ajax_request()) {
-            if ($total_rows > 0) {
-                echo json_encode(false);
-            } else {
-                echo json_encode(true);
-            }
-            die();
-        } elseif ($this->input->post()) {
-            if ($total_rows == 0) {
-                $this->form_validation->set_message('contact_email_exists', _l('auth_reset_pass_email_not_found'));
-
-                return false;
-            }
-
-            return true;
-        }
-    }
-
     public function change_language($lang = '')
     {
-        if (!is_client_logged_in() || !is_primary_contact()) {
+        if (!is_primary_contact()) {
             redirect(site_url());
         }
+
         $lang = do_action('before_customer_change_language', $lang);
         $this->db->where('userid', get_client_user_id());
         $this->db->update('tblclients', ['default_language' => $lang]);
@@ -1530,11 +1274,9 @@ class Clients extends Clients_controller
 
     public function export()
     {
-        if (!is_client_logged_in()) {
-            redirect(site_url('login'));
-        }
-
-        if (is_gdpr() && get_option('gdpr_data_portability_contacts') == '0' || !is_gdpr()) {
+        if (is_gdpr()
+            && get_option('gdpr_data_portability_contacts') == '0'
+            || !is_gdpr()) {
             show_error('This page is currently disabled, check back later.');
         }
 
@@ -1547,63 +1289,62 @@ class Clients extends Clients_controller
      */
     public function client_home_chart()
     {
-        if (is_client_logged_in()) {
-            $statuses = [
+        $statuses = [
                 1,
                 2,
                 4,
                 3,
             ];
-            $months          = [];
-            $months_original = [];
-            for ($m = 1; $m <= 12; $m++) {
-                array_push($months, _l(date('F', mktime(0, 0, 0, $m, 1))));
-                array_push($months_original, date('F', mktime(0, 0, 0, $m, 1)));
-            }
-            $chart = [
+        $months          = [];
+        $months_original = [];
+        for ($m = 1; $m <= 12; $m++) {
+            array_push($months, _l(date('F', mktime(0, 0, 0, $m, 1))));
+            array_push($months_original, date('F', mktime(0, 0, 0, $m, 1)));
+        }
+        $chart = [
                 'labels'   => $months,
                 'datasets' => [],
             ];
-            foreach ($statuses as $status) {
-                $this->db->select('total as amount, date');
-                $this->db->from('tblinvoices');
-                $this->db->where('clientid', get_client_user_id());
-                $this->db->where('status', $status);
-                $by_currency = $this->input->post('report_currency');
-                if ($by_currency) {
-                    $this->db->where('currency', $by_currency);
-                }
-                if ($this->input->post('year')) {
-                    $this->db->where('YEAR(tblinvoices.date)', $this->input->post('year'));
-                }
-                $payments      = $this->db->get()->result_array();
-                $data          = [];
-                $data['temp']  = $months_original;
-                $data['total'] = [];
-                $i             = 0;
-                foreach ($months_original as $month) {
-                    $data['temp'][$i] = [];
-                    foreach ($payments as $payment) {
-                        $_month = date('F', strtotime($payment['date']));
-                        if ($_month == $month) {
-                            $data['temp'][$i][] = $payment['amount'];
-                        }
+        foreach ($statuses as $status) {
+            $this->db->select('total as amount, date');
+            $this->db->from('tblinvoices');
+            $this->db->where('clientid', get_client_user_id());
+            $this->db->where('status', $status);
+            $by_currency = $this->input->post('report_currency');
+            if ($by_currency) {
+                $this->db->where('currency', $by_currency);
+            }
+            if ($this->input->post('year')) {
+                $this->db->where('YEAR(tblinvoices.date)', $this->input->post('year'));
+            }
+            $payments      = $this->db->get()->result_array();
+            $data          = [];
+            $data['temp']  = $months_original;
+            $data['total'] = [];
+            $i             = 0;
+            foreach ($months_original as $month) {
+                $data['temp'][$i] = [];
+                foreach ($payments as $payment) {
+                    $_month = date('F', strtotime($payment['date']));
+                    if ($_month == $month) {
+                        $data['temp'][$i][] = $payment['amount'];
                     }
-                    $data['total'][] = array_sum($data['temp'][$i]);
-                    $i++;
                 }
+                $data['total'][] = array_sum($data['temp'][$i]);
+                $i++;
+            }
 
-                if ($status == 1) {
-                    $borderColor = '#fc142b';
-                } elseif ($status == 2) {
-                    $borderColor = '#84c529';
-                } elseif ($status == 4 || $status == 3) {
-                    $borderColor = '#ff6f00';
-                }
+            if ($status == 1) {
+                $borderColor = '#fc142b';
+            } elseif ($status == 2) {
+                $borderColor = '#84c529';
+            } elseif ($status == 4 || $status == 3) {
+                $borderColor = '#ff6f00';
+            }
 
-                $backgroundColor = 'rgba(' . implode(',', hex2rgb($borderColor)) . ',0.3)';
+            $backgroundColor = 'rgba(' . implode(',', hex2rgb($borderColor)) . ',0.3)';
 
-                array_push($chart['datasets'], [
+            array_push($chart['datasets'], [
                     'label'           => format_invoice_status($status, '', false, true),
                     'backgroundColor' => $backgroundColor,
                     'borderColor'     => $borderColor,
@@ -1611,18 +1352,12 @@ class Clients extends Clients_controller
                     'tension'         => false,
                     'data'            => $data['total'],
                 ]);
-            }
-            echo json_encode($chart);
         }
+        echo json_encode($chart);
     }
 
     public function contact_email_profile_unique($email)
     {
         return total_rows('tblcontacts', 'id !=' . get_contact_user_id() . ' AND email="' . $email . '"') > 0 ? false : true;
-    }
-
-    public function recaptcha($str = '')
-    {
-        return do_recaptcha_validation($str);
     }
 }

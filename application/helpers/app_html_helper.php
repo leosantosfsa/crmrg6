@@ -47,96 +47,6 @@ function nl2br_save_html($string)
     return $output;
 }
 /**
- * Load app stylesheet based on option
- * Can load minified stylesheet and non minified
- *
- * This function also check if there is my_ prefix stylesheet to load them.
- * If in options is set to load minified files and the filename that is passed do not contain minified version the
- * original file will be used.
- *
- * @param  string $path
- * @param  string $filename
- * @return string
- */
-function app_stylesheet($path, $filename)
-{
-    $CI = &get_instance();
-
-    if (file_exists(FCPATH . $path . '/my_' . $filename)) {
-        $filename = 'my_' . $filename;
-    }
-
-    if (get_option('use_minified_files') == 1) {
-        $original_file_name = $filename;
-        $_temp              = explode('.', $filename);
-        $last               = count($_temp) - 1;
-        $extension          = $_temp[$last];
-        unset($_temp[$last]);
-        $filename = '';
-        foreach ($_temp as $t) {
-            $filename .= $t . '.';
-        }
-        $filename .= 'min.' . $extension;
-
-        if (!file_exists(FCPATH . $path . '/' . $filename)) {
-            $filename = $original_file_name;
-        }
-    }
-
-    if (file_exists(FCPATH . $path . 'my_' . $filename)) {
-        $filename = 'my_' . $filename;
-    }
-
-    if (ENVIRONMENT == 'development') {
-        $latest_version = time();
-    } else {
-        $latest_version = get_app_version();
-    }
-
-    return '<link href="' . base_url($path . '/' . $filename . '?v=' . $latest_version) . '" rel="stylesheet">' . PHP_EOL;
-}
-/**
- * Load app script based on option
- * Can load minified stylesheet and non minified
- *
- * This function also check if there is my_ prefix stylesheet to load them.
- * If in options is set to load minified files and the filename that is passed do not contain minified version the
- * original file will be used.
- *
- * @param  string $path
- * @param  string $filename
- * @return string
- */
-function app_script($path, $filename)
-{
-    $CI = &get_instance();
-
-    if (get_option('use_minified_files') == 1) {
-        $original_file_name = $filename;
-        $_temp              = explode('.', $filename);
-        $last               = count($_temp) - 1;
-        $extension          = $_temp[$last];
-        unset($_temp[$last]);
-        $filename = '';
-        foreach ($_temp as $t) {
-            $filename .= $t . '.';
-        }
-        $filename .= 'min.' . $extension;
-        if (!file_exists($path . '/' . $filename)) {
-            $filename = $original_file_name;
-        }
-    }
-
-    if (ENVIRONMENT == 'development') {
-        $latest_version = time();
-    } else {
-        $latest_version = get_app_version();
-    }
-
-    return '<script src="' . base_url($path . '/' . $filename . '?v=' . $latest_version) . '"></script>' . PHP_EOL;
-}
-
-/**
  * Check for alerts
  * @return null
  */
@@ -164,9 +74,11 @@ function app_js_alerts()
     if ($CI->session->has_userdata('system-popup')) {
         echo '<script>';
         echo '$(function(){
-            var popupData = {};
-            popupData.message = ' . json_encode(app_happy_text($CI->session->userdata('system-popup'))) . ';
-            system_popup(popupData);
+            if(typeof("system_popup") != undefined) {
+                var popupData = {};
+                popupData.message = ' . json_encode(app_happy_text($CI->session->userdata('system-popup'))) . ';
+                system_popup(popupData);
+            }
         });';
         echo '</script>';
     }
@@ -195,20 +107,16 @@ function app_external_form_footer($form)
     $date_format = explode('|', $date_format);
     $date_format = $date_format[0];
     $locale_key  = get_locale_key($form->language);
-    echo '<script src="' . base_url('assets/plugins/jquery/jquery.min.js') . '"></script>' . PHP_EOL;
-    echo '<script src="' . base_url('assets/plugins/bootstrap/js/bootstrap.min.js') . '"></script>' . PHP_EOL;
-    echo '<script src="' . base_url('assets/plugins/jquery-validation/jquery.validate.min.js') . '"></script>' . PHP_EOL;
-    echo '<script src="' . base_url('assets/plugins/app-build/moment.min.js') . '"></script>' . PHP_EOL;
-    app_select_plugin_js($locale_key);
-    if ($locale_key != 'en') {
-        if (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale_key . '.min.js')) {
-            echo '<script src="' . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale_key . '.min.js') . '"></script>' . PHP_EOL;
-        } elseif (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale_key . '_' . strtoupper($locale_key) . '.min.js')) {
-            echo '<script src="' . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale_key . '_' . strtoupper($locale_key) . '.min.js') . '"></script>' . PHP_EOL;
-        }
-    }
-    echo '<script src="' . base_url('assets/plugins/datetimepicker/jquery.datetimepicker.full.min.js') . '"></script>' . PHP_EOL;
-    echo '<script src="' . base_url('assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js') . '"></script>' . PHP_EOL; ?>
+    $assetsGroup = 'external-form';
+    $CI          = &get_instance();
+    $CI->app_scripts->add('jquery-js', 'assets/plugins/jquery/jquery.min.js', $assetsGroup);
+    $CI->app_scripts->add('bootstrap-js', 'assets/plugins/bootstrap/js/bootstrap.min.js', $assetsGroup);
+    add_jquery_validation_js_assets($assetsGroup);
+    add_moment_js_assets($assetsGroup);
+    add_bootstrap_select_js_assets($assetsGroup);
+    $CI->app_scripts->add('datetimepicker-js', 'assets/plugins/datetimepicker/jquery.datetimepicker.full.min.js', $assetsGroup);
+    $CI->app_scripts->add('colorpicker-js', 'assets/plugins/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js', $assetsGroup);
+    echo app_compile_scripts($assetsGroup); ?>
     <script>
     $(function(){
      var time_format = '<?php echo get_option('time_format'); ?>';
@@ -267,19 +175,19 @@ function app_external_form_footer($form)
      errorElement: 'p',
      errorClass: 'text-danger',
      errorPlacement: function(error, element) {
-        if (element.parent('.input-group').length || element.parents('.chk').length) {
-            if (!element.parents('.chk').length) {
-                error.insertAfter(element.parent());
+            if (element.parent('.input-group').length || element.parents('.chk').length) {
+                if (!element.parents('.chk').length) {
+                    error.insertAfter(element.parent());
+                } else {
+                    error.insertAfter(element.parents('.chk'));
+                }
+            } else if (element.is('select') && (element.hasClass('selectpicker') || element.hasClass('ajax-search'))) {
+               error.insertAfter(element.parents('.form-group *').last());
             } else {
-                error.insertAfter(element.parents('.chk'));
+                error.insertAfter(element);
             }
-        } else if (element.is('select') && (element.hasClass('selectpicker') || element.hasClass('ajax-search'))) {
-           error.insertAfter(element.parents('.form-group *').last());
-        } else {
-            error.insertAfter(element);
         }
-    }
-   });
+       });
     });
  </script>
  <?php
@@ -292,28 +200,38 @@ function app_external_form_footer($form)
  */
 function app_external_form_header($form)
 {
-    echo app_stylesheet('assets/css', 'reset.css');
-    if (get_option('favicon') != '') {
-        echo '<link href="' . base_url('uploads/company/' . get_option('favicon')) . '" rel="shortcut icon">' . PHP_EOL;
+    $CI          = &get_instance();
+    $assetsGroup = 'external-form';
+
+    add_favicon_link_asset($assetsGroup);
+    $CI->app_css->add('reset-css', 'assets/css/reset.min.css', $assetsGroup);
+
+    $CI->app_css->add('roboto-css', 'assets/plugins/roboto/roboto.css', $assetsGroup);
+    $CI->app_css->add('bootstrap-css', 'assets/plugins/bootstrap/css/bootstrap.min.css', $assetsGroup);
+
+    if (is_rtl()) {
+        $CI->app_css->add('bootstrap-rtl-css', 'assets/plugins/bootstrap-arabic/css/bootstrap-arabic.min.css', $assetsGroup);
     }
-    echo '<link href="' . base_url('assets/plugins/roboto/roboto.css') . '" rel="stylesheet">' . PHP_EOL;
-    echo '<link href="' . base_url('assets/plugins/bootstrap/css/bootstrap.min.css') . '" rel="stylesheet">' . PHP_EOL;
-    if (is_rtl(true)) {
-        echo '<link href="' . base_url('assets/plugins/bootstrap-arabic/css/bootstrap-arabic.min.css') . '" rel="stylesheet">' . PHP_EOL;
-    }
-    echo '<link href="' . base_url('assets/plugins/datetimepicker/jquery.datetimepicker.min.css') . '" rel="stylesheet">' . PHP_EOL;
-    echo '<link href="' . base_url('assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css') . '" rel="stylesheet">' . PHP_EOL;
-    echo '<link href="' . base_url('assets/plugins/font-awesome/css/font-awesome.min.css') . '" rel="stylesheet">' . PHP_EOL;
-    echo '<link href="' . base_url('assets/plugins/bootstrap-select/css/bootstrap-select.min.css') . '" rel="stylesheet">' . PHP_EOL;
+
+    $CI->app_css->add('datetimepicker-css', 'assets/plugins/datetimepicker/jquery.datetimepicker.min.css', $assetsGroup);
+    $CI->app_css->add('colorpicker-css', 'assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css', $assetsGroup);
+    $CI->app_css->add('fontawesome-css', 'assets/plugins/font-awesome/css/font-awesome.min.css', $assetsGroup);
+    $CI->app_css->add('bootstrap-select-css', 'assets/plugins/bootstrap-select/css/bootstrap-select.min.css', $assetsGroup);
+
+    echo app_compile_css($assetsGroup);
+
     echo app_stylesheet('assets/css', 'forms.css');
+
     if (get_option('recaptcha_secret_key') != '' && get_option('recaptcha_site_key') != '' && $form->recaptcha == 1) {
         echo "<script src='https://www.google.com/recaptcha/api.js'></script>" . PHP_EOL;
     }
+
     if (file_exists(FCPATH . 'assets/css/custom.css')) {
-        echo '<link href="' . base_url('assets/css/custom.css') . '" rel="stylesheet">' . PHP_EOL;
+        echo '<link href="' . base_url('assets/css/custom.css') . '" rel="stylesheet" id="custom-css">' . PHP_EOL;
     }
 
     render_custom_styles(['general', 'buttons']);
+
     do_action('app_external_form_head');
 }
 
@@ -361,7 +279,9 @@ function get_company_logo($uri = '', $href_class = '', $type = '')
     $logoURL = do_action('logo_href', $logoURL);
 
     if ($company_logo != '') {
-        $logo = '<a href="' . $logoURL . '" class="' . $href_class . ' logo img-responsive"><img src="' . base_url('uploads/company/' . $company_logo) . '" class="img-responsive" alt="' . $company_name . '"></a>';
+        $logo = '<a href="' . $logoURL . '" class="' . $href_class . ' logo img-responsive">
+            <img src="' . base_url('uploads/company/' . $company_logo) . '" class="img-responsive" alt="' . $company_name . '">
+        </a>';
     } elseif ($company_name != '') {
         $logo = '<a href="' . $logoURL . '" class="' . $href_class . ' logo logo-text">' . $company_name . '</a>';
     } else {
@@ -483,41 +403,6 @@ function payment_gateway_footer()
     $html .= '</html>' . PHP_EOL;
 
     return $html;
-}
-
-/**
- * Output the select plugin with locale
- * @param  string $locale current locale
- * @return mixed
- */
-function app_select_plugin_js($locale = 'en')
-{
-    echo "<script src='" . base_url('assets/plugins/app-build/bootstrap-select.min.js?v=' . get_app_version()) . "'></script>" . PHP_EOL;
-
-    if ($locale != 'en') {
-        if (file_exists(FCPATH . 'assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '.min.js')) {
-            echo "<script src='" . base_url('assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '.min.js') . "'></script>" . PHP_EOL;
-        } elseif (file_exists(FCPATH . 'assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '_' . strtoupper($locale) . '.min.js')) {
-            echo "<script src='" . base_url('assets/plugins/bootstrap-select/js/i18n/defaults-' . $locale . '_' . strtoupper($locale) . '.min.js') . "'></script>" . PHP_EOL;
-        }
-    }
-}
-
-/**
- * Output the validation plugin with locale
- * @param  string $locale current locale
- * @return mixed
- */
-function app_jquery_validation_plugin_js($locale = 'en')
-{
-    echo "<script src='" . base_url('assets/plugins/jquery-validation/jquery.validate.min.js?v=' . get_app_version()) . "'></script>" . PHP_EOL;
-    if ($locale != 'en') {
-        if (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale . '.min.js')) {
-            echo "<script src='" . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale . '.min.js') . "'></script>" . PHP_EOL;
-        } elseif (file_exists(FCPATH . 'assets/plugins/jquery-validation/localization/messages_' . $locale . '_' . strtoupper($locale) . '.min.js')) {
-            echo "<script src='" . base_url('assets/plugins/jquery-validation/localization/messages_' . $locale . '_' . strtoupper($locale) . '.min.js') . "'></script>" . PHP_EOL;
-        }
-    }
 }
 
 /**

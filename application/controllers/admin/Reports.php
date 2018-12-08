@@ -255,12 +255,11 @@ class Reports extends Admin_controller
                     } elseif ($aColumns[$i] == 'invoiceid') {
                         $_data = '<a href="' . admin_url('invoices/list_invoices/' . $aRow[$aColumns[$i]]) . '" target="_blank">' . format_invoice_number($aRow['invoiceid']) . '</a>';
                     } elseif ($i == 3) {
-                    if(empty($aRow['deleted_customer_name'])) {
-                       $_data = '<a href="' . admin_url('clients/client/' . $aRow['clientid']) . '" target="_blank">' . $aRow['company'] . '</a>';
-                    } else {
-                        $row[] = $aRow['deleted_customer_name'];
-                    }
-
+                        if (empty($aRow['deleted_customer_name'])) {
+                            $_data = '<a href="' . admin_url('clients/client/' . $aRow['clientid']) . '" target="_blank">' . $aRow['company'] . '</a>';
+                        } else {
+                            $row[] = $aRow['deleted_customer_name'];
+                        }
                     } elseif ($aColumns[$i] == 'amount') {
                         $footer_data['total_amount'] += $_data;
                         $_data = format_money($_data, $currency_symbol);
@@ -564,8 +563,8 @@ class Reports extends Admin_controller
 
                 $row[] = '<a href="' . admin_url('estimates/list_estimates/' . $aRow['id']) . '" target="_blank">' . format_estimate_number($aRow['id']) . '</a>';
 
-                if(empty($aRow['deleted_customer_name'])) {
-                   $row[] = '<a href="' . admin_url('clients/client/' . $aRow['userid']) . '" target="_blank">' . $aRow['company'] . '</a>';
+                if (empty($aRow['deleted_customer_name'])) {
+                    $row[] = '<a href="' . admin_url('clients/client/' . $aRow['userid']) . '" target="_blank">' . $aRow['company'] . '</a>';
                 } else {
                     $row[] = $aRow['deleted_customer_name'];
                 }
@@ -859,8 +858,8 @@ class Reports extends Admin_controller
 
                 $row[] = _d($aRow['date']);
 
-                if(empty($aRow['deleted_customer_name'])){
-                   $row[] = '<a href="' . admin_url('clients/client/' . $aRow['clientid']) . '">' . $aRow['company'] . '</a>';
+                if (empty($aRow['deleted_customer_name'])) {
+                    $row[] = '<a href="' . admin_url('clients/client/' . $aRow['clientid']) . '">' . $aRow['company'] . '</a>';
                 } else {
                     $row[] = $aRow['deleted_customer_name'];
                 }
@@ -1043,7 +1042,7 @@ class Reports extends Admin_controller
 
                 $row[] = '<a href="' . admin_url('invoices/list_invoices/' . $aRow['id']) . '" target="_blank">' . format_invoice_number($aRow['id']) . '</a>';
 
-                if(empty($aRow['deleted_customer_name'])) {
+                if (empty($aRow['deleted_customer_name'])) {
                     $row[] = '<a href="' . admin_url('clients/client/' . $aRow['userid']) . '" target="_blank">' . $aRow['company'] . '</a>';
                 } else {
                     $row[] = $aRow['deleted_customer_name'];
@@ -1163,6 +1162,8 @@ class Reports extends Admin_controller
                 $this->load->model('payment_modes_model');
 
                 $footer_data = [
+                    'tax_1'           => 0,
+                    'tax_2'           => 0,
                     'amount'          => 0,
                     'total_tax'       => 0,
                     'amount_with_tax' => 0,
@@ -1229,9 +1230,11 @@ class Reports extends Admin_controller
                             if ($aRow['tax'] != 0 || $aRow['tax2'] != 0) {
                                 if ($aRow['tax'] != 0) {
                                     $total = ($total / 100 * $_tax->taxrate);
+                                    $footer_data['tax_1'] += $total;
                                 }
                                 if ($aRow['tax2'] != 0) {
                                     $total += ($aRow['amount'] / 100 * $_tax2->taxrate);
+                                    $footer_data['tax_2'] += $total;
                                 }
                                 $_data = format_money($total, $currency_symbol);
                                 $footer_data['total_tax'] += $total;

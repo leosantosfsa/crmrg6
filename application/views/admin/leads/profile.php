@@ -382,8 +382,7 @@
 <script>
   $(function() {
       // Set all fields to disabled if lead is locked
-      var lead_fields = $('.lead-wrapper').find('input, select, textarea');
-      $.each(lead_fields, function() {
+      $.each($('.lead-wrapper').find('input, select, textarea'), function() {
           $(this).attr('disabled', true);
           if($(this).is('select')) {
               $(this).selectpicker('refresh');

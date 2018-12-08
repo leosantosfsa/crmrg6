@@ -114,8 +114,16 @@ if(isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'],'add_kb_answ
     $route['clients/knowledge-base/(:any)']  = "knowledge_base/article/$1";
 }
 // $route['knowledge-base/(:any)']  = "knowledge_base/index/$1";
-$route['terms-and-conditions']  = "clients/terms_and_conditions";
-$route['privacy-policy']  = "clients/privacy_policy";
+$route['terms-and-conditions']  = "terms_and_conditions";
+$route['privacy-policy']  = "privacy_policy";
+
+// Fallback for auth clients area, changed in version 2.2.0
+// Deprecated
+$route['clients/reset_password'] = 'authentication/reset_password';
+$route['clients/forgot_password'] = 'authentication/forgot_password';
+$route['clients/logout'] = 'authentication/logout';
+$route['clients/register'] = 'authentication/register';
+$route['clients/login'] = 'authentication/login';
 
 if(file_exists(APPPATH.'config/my_routes.php')){
     include_once(APPPATH.'config/my_routes.php');

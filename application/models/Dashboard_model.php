@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 class Dashboard_model extends CRM_Model
 {
     private $is_admin;

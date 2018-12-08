@@ -1,5 +1,41 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
+/**
+ * Check whether the contact email is verified
+ * @since  2.2.0
+ * @param  mixed  $id contact id
+ * @return boolean
+ */
+function is_contact_email_verified($id = null)
+{
+    $id = !$id ? get_contact_user_id() : $id;
+
+    if (isset($GLOBALS['contact']) && $GLOBALS['contact']->id == $id) {
+        return !is_null($GLOBALS['contact']->email_verified_at);
+    }
+
+    $CI = &get_instance();
+
+    $CI->db->select('email_verified_at');
+    $CI->db->where('id', $id);
+    $contact = $CI->db->get('tblcontacts')->row();
+
+    if (!$contact) {
+        return false;
+    }
+
+    return !is_null($contact->email_verified_at);
+}
+/**
+ * Check whether the user disabled verification emails for contacts
+ * @return boolean
+ */
+function is_email_verification_enabled()
+{
+    return total_rows('tblemailtemplates', ['slug' => 'contact-verification-email', 'active' => 0]) == 0;
+}
 /**
  * Check if client id is used in the system
  * @param  mixed  $id client id

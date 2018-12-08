@@ -103,24 +103,20 @@
         <?php $this->load->view('admin/projects/project_tabs'); ?>
       </div>
     </div>
-    <?php if($view == 'project_milestones') { ?>
-    <a href="#" class="project-tabs-and-opts-toggler screen-options-btn bold"><?php echo _l('show_tabs_and_options'); ?></a>
-    <?php } else { ?>
-    <?php if((has_permission('projects','','create') || has_permission('projects','','edit')) && $project->status == 1 && $this->projects_model->timers_started_for_project($project->id)){ ?>
+    <?php if((has_permission('projects','','create') || has_permission('projects','','edit')) && $project->status == 1 && $this->projects_model->timers_started_for_project($project->id) && $view != 'project_milestones'){ ?>
     <div class="alert alert-warning project-no-started-timers-found mbot15">
       <?php echo _l('project_not_started_status_tasks_timers_found'); ?>
     </div>
     <?php } ?>
-    <?php if($project->deadline && date('Y-m-d') > $project->deadline && $project->status == 2){ ?>
+    <?php if($project->deadline && date('Y-m-d') > $project->deadline && $project->status == 2 && $view != 'project_milestones'){ ?>
     <div class="alert alert-warning bold project-due-notice mbot15">
       <?php echo _l('project_due_notice',floor((abs(time() - strtotime($project->deadline)))/(60*60*24))); ?>
     </div>
     <?php } ?>
-    <?php if(!has_contact_permission('projects',get_primary_contact_user_id($project->clientid)) && total_rows('tblcontacts',array('userid'=>$project->clientid)) > 0){ ?>
+    <?php if(!has_contact_permission('projects',get_primary_contact_user_id($project->clientid)) && total_rows('tblcontacts',array('userid'=>$project->clientid)) > 0 && $view != 'project_milestones'){ ?>
     <div class="alert alert-warning project-permissions-warning mbot15">
       <?php echo _l('project_customer_permission_warning'); ?>
     </div>
-    <?php } ?>
     <?php } ?>
     <div class="panel_s">
       <div class="panel-body">

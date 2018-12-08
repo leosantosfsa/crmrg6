@@ -5,32 +5,24 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1" />
-    <?php if(get_option('favicon') != ''){ ?>
-    <link href="<?php echo base_url('uploads/company/'.get_option('favicon')); ?>" rel="shortcut icon">
-    <?php } ?>
-    <title><?php if (isset($title)){ echo $title; } else { echo get_option('companyname'); } ?></title>
-    <?php echo app_stylesheet('assets/css','reset.css'); ?>
-    <link href='<?php echo base_url('assets/plugins/roboto/roboto.css'); ?>' rel='stylesheet'>
-    <link href="<?php echo base_url('assets/plugins/app-build/vendor.css?v='.get_app_version()); ?>" rel="stylesheet">
-    <?php if($isRTL === 'true'){ ?>
-    <link href="<?php echo base_url('assets/plugins/bootstrap-arabic/css/bootstrap-arabic.min.css'); ?>" rel="stylesheet">
-    <?php } ?>
-    <?php if(isset($calendar_assets)){ ?>
-    <link href='<?php echo base_url('assets/plugins/fullcalendar/fullcalendar.min.css?v='.get_app_version()); ?>' rel='stylesheet' />
-    <?php } ?>
-    <?php if(isset($projects_assets)){ ?>
-    <link href='<?php echo base_url('assets/plugins/jquery-comments/css/jquery-comments.css'); ?>' rel='stylesheet' />
-    <link href='<?php echo base_url('assets/plugins/gantt/css/style.css'); ?>' rel='stylesheet' />
-    <?php } ?>
+
+    <title><?php echo isset($title) ? $title : get_option('companyname'); ?></title>
+
+    <?php echo app_compile_css(); ?>
+
     <?php echo app_stylesheet('assets/css','style.css'); ?>
+
     <?php if(file_exists(FCPATH.'assets/css/custom.css')){ ?>
-    <link href="<?php echo base_url('assets/css/custom.css'); ?>" rel="stylesheet">
+        <link href="<?php echo base_url('assets/css/custom.css'); ?>" rel="stylesheet" id="custom-css">
     <?php } ?>
+
     <?php render_custom_styles(array('general','tabs','buttons','admin','modals','tags')); ?>
     <?php render_admin_js_variables(); ?>
+
     <script>
         appLang['datatables'] = <?php echo json_encode(get_datatables_language_array()); ?>;
         var totalUnreadNotifications = <?php echo $current_user->total_unread_notifications; ?>,
+        userRecentSearches = <?php echo json_encode(get_staff_recent_search_history()); ?>,
         proposalsTemplates = <?php echo json_encode(get_proposal_templates()); ?>,
         contractsTemplates = <?php echo json_encode(get_contract_templates()); ?>,
         availableTags = <?php echo json_encode(get_tags_clean()); ?>,

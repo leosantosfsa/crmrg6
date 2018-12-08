@@ -33,19 +33,21 @@
 									<tbody>
 										<?php $backups = list_files(BACKUPS_FOLDER); ?>
 										<?php foreach($backups as $backup) {
-											$_fullpath = BACKUPS_FOLDER . $backup; ?>
+												$fullPath = BACKUPS_FOLDER . $backup;
+												$backupNameNoExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $backup);
+											?>
 											<tr>
 												<td>
-													<a href="<?php echo site_url('download/file/db_backup/' . $backup); ?>"><?php echo $backup; ?></a>
+													<a href="<?php echo site_url('download/file/db_backup/' . $backupNameNoExtension); ?>"><?php echo $backup; ?></a>
 												</td>
 												<td>
-													<?php echo bytesToSize($_fullpath); ?>
+													<?php echo bytesToSize($fullPath); ?>
 												</td>
-												<td data-order="<?php echo strftime('%Y-%m-%d %H:%M:%S', filectime($_fullpath)); ?>">
-													<?php echo date('M dS, Y, g:i a',filectime($_fullpath)); ?>
+												<td data-order="<?php echo strftime('%Y-%m-%d %H:%M:%S', filectime($fullPath)); ?>">
+													<?php echo date('M dS, Y, g:i a',filectime($fullPath)); ?>
 												</td>
 												<td>
-													<a href="<?php echo admin_url('utilities/delete_backup/'.$backup); ?>" class="btn btn-danger btn-icon _delete"><i class="fa fa-remove"></i></a>
+													<a href="<?php echo admin_url('utilities/delete_backup/'.$backupNameNoExtension); ?>" class="btn btn-danger btn-icon _delete"><i class="fa fa-remove"></i></a>
 												</td>
 											</tr>
 											<?php } ?>

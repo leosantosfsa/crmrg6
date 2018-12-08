@@ -1,8 +1,6 @@
 <?php
 
-if (!defined('BASEPATH')) {
-    exit('No direct script access allowed');
-}
+defined('BASEPATH') or exit('No direct script access allowed');
 
 class Gdpr_model extends CRM_Model
 {

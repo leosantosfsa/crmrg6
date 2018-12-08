@@ -2,15 +2,14 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 $aColumns = [
+    'id',
     'name',
     'taxrate',
     ];
 $sIndexColumn = 'id';
 $sTable       = 'tbltaxes';
 
-$result = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
-    'id',
-    ]);
+$result = data_tables_init($aColumns, $sIndexColumn, $sTable);
 $output  = $result['output'];
 $rResult = $result['rResult'];
 
