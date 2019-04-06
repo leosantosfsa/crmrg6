@@ -21,8 +21,8 @@ function create_subscription_invoice_data($subscription, $invoice)
     $new_invoice_data['show_quantity_as'] = 1;
     $new_invoice_data['currency']         = $subscription->currency;
 
-    $new_invoice_data['subtotal']         = $stripeSubtotal / 100;
-    $new_invoice_data['total']            = $stripeTotal / 100;
+    $new_invoice_data['subtotal']         = strcasecmp($subscription->currency_name, 'JPY') == 0 ? $stripeSubtotal : $stripeSubtotal / 100;
+    $new_invoice_data['total']            = strcasecmp($subscription->currency_name, 'JPY') == 0 ? $stripeSubtotal : $stripeTotal / 100;
     $new_invoice_data['adjustment']       = 0;
     $new_invoice_data['discount_percent'] = 0;
     $new_invoice_data['discount_total']   = 0;
@@ -69,15 +69,17 @@ function create_subscription_invoice_data($subscription, $invoice)
         }
 
         $item['description']                        = trim($item['description']);
-        $new_invoice_data['newitems'][$key]['rate'] = $item['amount'] / $item['quantity'] / 100;
+        $new_invoice_data['newitems'][$key]['rate'] = strcasecmp($subscription->currency_name, 'JPY') == 0
+        ? $item['amount'] / $item['quantity']
+        : $item['amount'] / $item['quantity'] / 100;
 
         $new_invoice_data['newitems'][$key]['description']      = $item['description'];
         $new_invoice_data['newitems'][$key]['long_description'] = $subscription->description_in_item == 1 && $key == $totalItems
         ? $subscription->description
         : '';
-        $new_invoice_data['newitems'][$key]['qty']              = $item['quantity'];
-        $new_invoice_data['newitems'][$key]['unit']             = '';
-        $new_invoice_data['newitems'][$key]['taxname']          = [];
+        $new_invoice_data['newitems'][$key]['qty']     = $item['quantity'];
+        $new_invoice_data['newitems'][$key]['unit']    = '';
+        $new_invoice_data['newitems'][$key]['taxname'] = [];
 
         if (!empty($stripeTaxPercent)) {
             array_push($new_invoice_data['newitems'][$key]['taxname'], $subscription->tax_name . '|' . $stripeTaxPercent);
@@ -86,6 +88,8 @@ function create_subscription_invoice_data($subscription, $invoice)
         $new_invoice_data['newitems'][$key]['order'] = $key;
         $key++;
     }
+
+    $new_invoice_data = hooks()->apply_filters('subscription_invoice_data', $new_invoice_data);
 
     return $new_invoice_data;
 }
@@ -153,17 +157,18 @@ function subscription_invoice_preview_data($subscription, $upcomingInvoice = nul
     $upcomingInvoice->recurring         = 0;
     $upcomingInvoice->is_recurring_from = null;
 
-    $CI->load->model('currencies_model');
-    $upcomingInvoice->symbol = $CI->currencies_model->get_currency_symbol($subscription->currency);
+    $currency = get_currency($subscription->currency);
+    $upcomingInvoice->symbol = $currency->symbol;
+    $upcomingInvoice->currency_name = $currency->name;
 
-    $GLOBALS['preview_rel_data'] = $upcomingInvoice;
+    $GLOBALS['items_preview_transaction'] = $upcomingInvoice;
 
     return $upcomingInvoice;
 }
 
 function get_subscriptions_statuses()
 {
-    return [
+    return hooks()->apply_filters('subscription_statuses', [
         [
             'color'          => '#84c529',
             'id'             => 'active',
@@ -189,8 +194,9 @@ function get_subscriptions_statuses()
             'id'             => 'canceled',
             'filter_default' => false,
         ],
-    ];
+    ]);
 }
+
 function subscriptions_summary()
 {
     $statuses            = get_subscriptions_statuses();
@@ -202,39 +208,19 @@ function subscriptions_summary()
             $where['created_from'] = get_staff_user_id();
         }
         $summary[] = [
-            'total' => total_rows('tblsubscriptions', $where),
+            'total' => total_rows(db_prefix() . 'subscriptions', $where),
             'color' => $status['color'],
             'id'    => $status['id'],
         ];
     }
 
     array_unshift($summary, [
-        'total' => total_rows('tblsubscriptions', 'date_subscribed IS NULL' . (!$has_permission_view ? ' AND created_from =' . get_staff_user_id() . '' : '')),
+        'total' => total_rows(db_prefix() . 'subscriptions', 'date_subscribed IS NULL' . (!$has_permission_view ? ' AND created_from =' . get_staff_user_id() . '' : '')),
         'color' => '#03a9f4',
         'id'    => 'not_subscribed',
     ]);
 
     return $summary;
-}
-
-function prepare_subscsriptions_for_export($customer_id)
-{
-    $CI = &get_instance();
-
-    $CI->db->where('clientid', $customer_id);
-    $subscriptions = $CI->db->get('tblsubscriptions')->result_array();
-
-    $CI->load->model('currencies_model');
-    foreach ($subscriptions as $subscriptionsKey => $subscription) {
-        $subscriptions[$subscriptionsKey]['currency'] = $CI->currencies_model->get($subscription['currency']);
-
-        $subscriptions[$subscriptionsKey]['tax'] = get_tax_by_id($subscription['tax_id']);
-        unset($subscriptions[$subscriptionsKey]['tax_id']);
-
-        $subscriptions[$subscriptionsKey]['tracked_emails'] = get_tracked_emails($subscription['id'], 'subscription');
-    }
-
-    return $subscriptions;
 }
 
 function send_email_customer_subscribed_to_subscription_to_staff($subscription)
@@ -243,13 +229,33 @@ function send_email_customer_subscribed_to_subscription_to_staff($subscription)
 
     $CI->db->where('(staffid=' . $subscription->created_from . ' OR admin=1)');
     $CI->db->where('active', 1);
-    $members = $CI->db->get('tblstaff')->result_array();
-
-    if (!class_exists('subscriptions_model')) {
-        $CI->load->model('subscriptions_model');
-    }
+    $members = $CI->db->get(db_prefix() . 'staff')->result_array();
 
     foreach ($members as $staff) {
-        $CI->subscriptions_model->send_email_template($subscription->id, '', 'customer-subscribed-to-staff', $staff['email']);
+        send_mail_template('subscription_customer_subscribed_to_staff', $subscription, $staff['email']);
     }
+}
+
+function can_logged_in_contact_view_subscriptions()
+{
+    if (!is_client_logged_in()) {
+        return false;
+    }
+
+    return get_option('show_subscriptions_in_customers_area') == '1'
+    && $GLOBALS['contact']->is_primary == '1'
+    && customer_has_subscriptions($GLOBALS['contact']->userid);
+}
+
+function can_logged_in_contact_update_credit_card()
+{
+    if (!is_client_logged_in()) {
+        return false;
+    }
+
+    $stripeOption = get_instance()->stripe_gateway->getSetting('allow_primary_contact_to_update_credit_card');
+
+    return $GLOBALS['contact']->is_primary == '1'
+                        && !empty($GLOBALS['client']->stripe_id)
+                        && $stripeOption == '1';
 }

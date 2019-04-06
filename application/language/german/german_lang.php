@@ -266,39 +266,6 @@ $lang['kb_group_add_edit_note']                                               = 
 $lang['group_table_name_heading']                                             = 'Name';
 $lang['group_table_isactive_heading']                                         = 'Aktivieren';
 $lang['kb_no_groups_found']                                                   = 'Keine Knowledgebase gefunden';
-# Mail Lists
-$lang['mail_lists']                                                           = 'Mailinglisten';
-$lang['mail_list']                                                            = 'Mailingliste';
-$lang['new_mail_list']                                                        = 'Mailingliste erstellen';
-$lang['mail_list_lowercase']                                                  = $lang['mail_list'];
-$lang['custom_field_deleted_success']                                         = 'Kunden Bereich gelöscht';
-$lang['custom_field_deleted_fail']                                            = 'Problem beim Löschen des Kunden-Bereichs';
-$lang['email_removed_from_list']                                              = 'E-Mail von der Liste gelöscht';
-$lang['email_remove_fail']                                                    = 'E-Mail von der Liste entfernt';
-$lang['staff_mail_lists']                                                     = 'Mitarbeiter Mailingliste';
-$lang['clients_mail_lists']                                                   = 'Kunden Mailingliste';
-$lang['mail_list_total_imported']                                             = 'Alle importierten E-Mails: %s';
-$lang['mail_list_total_duplicate']                                            = 'Alle vervielfachten E-Mails: %s';
-$lang['mail_list_total_failed_to_insert']                                     = 'Alle zum Einsetzen verfehlten E-Mails: %s';
-$lang['mail_list_total_invalid']                                              = 'Ungültige E-Mail Adressen: %s';
-$lang['cant_edit_mail_list']                                                  = 'Diese Liste kann nicht bearbeitet werden, da sie automatisch befüllt wurde.';
-$lang['mail_list_add_edit_name']                                              = 'Mailinglisten Name';
-$lang['mail_list_add_edit_customfield']                                       = 'Kunden Bereich hinzufügen';
-$lang['mail_lists_view_email_email_heading']                                  = 'E-Mail';
-$lang['mail_lists_view_email_date_heading']                                   = 'Datum hinzugefügt';
-$lang['add_new_email_to']                                                     = 'Eine neue E-Mail hinzufügen';
-$lang['import_emails_to']                                                     = 'Import E-Mails to %s';
-$lang['mail_list_new_email_edit_add_label']                                   = 'E-Mail';
-$lang['mail_list_import_file']                                                = 'Datei importieren';
-$lang['mail_list_available_custom_fields']                                    = 'Verfügbare Kunden Bereiche';
-$lang['submit_import_emails']                                                 = 'E-Mails importieren';
-$lang['btn_import_emails']                                                    = 'E-Mails (Excel) importieren';
-$lang['btn_add_email_to_list']                                                = 'Die E-Mail dieser Liste hinzufügen.';
-$lang['mail_lists_dt_list_name']                                              = 'Listenname';
-$lang['mail_lists_dt_datecreated']                                            = 'Datum erstellt';
-$lang['mail_lists_dt_creator']                                                = 'Ersteller';
-$lang['email_added_to_mail_list_successfully']                                = 'E-Mail zur Liste hinzugefügt';
-$lang['email_is_duplicate_mail_list']                                         = 'E-Mail existiert in dieser Liste bereits';
 $lang['media_files']                                                          = 'Dateien';
 # Payment modes
 $lang['new_payment_mode']                                                     = 'Zahlungsoption hinzufügen';
@@ -516,7 +483,6 @@ $lang['als_sales']                                                            = 
 $lang['als_staff']                                                            = 'Mitarbeiter';
 $lang['als_tasks']                                                            = 'Aufgaben';
 $lang['als_kb']                                                               = 'Knowledgebase';
-$lang['als_surveys']                                                          = 'Umfrage';
 $lang['als_media']                                                            = 'Medien';
 $lang['als_reports']                                                          = 'Auswertungen';
 $lang['als_reports_sales_submenu']                                            = 'Verkauf';
@@ -636,55 +602,6 @@ $lang['staff_edit_profile_change_your_password']                              = 
 $lang['staff_edit_profile_change_old_password']                               = 'Altes Kennwort';
 $lang['staff_edit_profile_change_new_password']                               = 'Neues Kennwort';
 $lang['staff_edit_profile_change_repeat_new_password']                        = 'Neues Kennwort wiederholen';
-# Surveys
-$lang['new_survey']                                                           = 'Umfrage erstellen';
-$lang['surveys']                                                              = 'Umfragen';
-$lang['survey']                                                               = 'Umfrage';
-$lang['survey_lowercase']                                                     = $lang['survey'];
-$lang['survey_no_mail_lists_selected']                                        = 'Keine Mailing Liste ausgewählt';
-$lang['survey_send_success_note']                                             = 'Alle Umfrage Mails (%s) werden mittels Cron Job innerhalb von 5 Minuten versendet';
-$lang['survey_result']                                                        = 'Ergebnis für die Umfrage: %s';
-$lang['question_string']                                                      = 'Frage';
-$lang['question_field_string']                                                = 'Feld';
-$lang['survey_list_view_tooltip']                                             = 'Umfrage anzeigen';
-$lang['survey_list_view_results_tooltip']                                     = 'Ergebnis anzeigen';
-$lang['survey_add_edit_subject']                                              = 'Umfrage Titel';
-$lang['survey_add_edit_email_description']                                    = 'Umfrage Beschreibung (E-Mail  Text)';
-$lang['survey_include_survey_link']                                           = 'Den Umfrage-Link in die Beschreibung einfügen';
-$lang['survey_available_mail_lists_custom_fields']                            = 'Verfügbare benutzerdefinierte Felder aus E-Mail-Listen';
-$lang['survey_mail_lists_custom_fields_tooltip']                              = 'Benutzerdefinierte Felder können für E-Mail-Editor verwendet werden.';
-$lang['survey_add_edit_short_description_view']                               = 'Kurze Beschreibung (Angezeigte Beschreibung)';
-$lang['survey_add_edit_from']                                                 = 'Gesendet von (Wird in der E-Mail angezeigt)';
-$lang['survey_add_edit_redirect_url']                                         = 'Umfrage Weiterleitungsadresse';
-$lang['survey_add_edit_red_url_note']                                         = 'Wohin soll der User weitergeleitet werden nach der Umfrage (Leeres Feld = Kundencenter)';
-$lang['survey_add_edit_disabled']                                             = 'Deaktivieren';
-$lang['survey_add_edit_only_for_logged_in']                                   = 'Nur für angemeldete Nutzer (Mitarbeiter, Kunden)';
-$lang['send_survey_string']                                                   = 'Umfrage senden';
-$lang['survey_send_mail_list_clients']                                        = 'Kunden';
-$lang['survey_send_mail_list_staff']                                          = 'Mitarbeiter';
-$lang['survey_send_mail_lists_string']                                        = 'Mailing Liste';
-$lang['survey_send_mail_lists_note_logged_in']                                = 'Notiz:  Wenn dies an eine Mailingliste gesendet wird, muss "nur für angemeldete Nutzer" deaktiviert sein';
-$lang['survey_send_string']                                                   = 'Senden';
-$lang['survey_send_to_total']                                                 = 'Gesendet an %s E-Mails';
-$lang['survey_send_till_now']                                                 = 'Bis jetzt';
-$lang['survey_send_finished']                                                 = 'Umfrage senden beendet: %s';
-$lang['survey_added_to_queue']                                                = 'Diese Umfrage wurde zum Warteschlangen-Cron am %s zugefügt';
-$lang['survey_questions_string']                                              = 'Fragen';
-$lang['survey_insert_field']                                                  = 'Feld einfügen';
-$lang['survey_field_checkbox']                                                = 'Checkbox';
-$lang['survey_field_radio']                                                   = 'Radiofeld';
-$lang['survey_field_input']                                                   = 'Textfeld (klein)';
-$lang['survey_field_textarea']                                                = 'Textfeld (groß)';
-$lang['survey_question_required']                                             = 'Pflichtfeld';
-$lang['survey_question_only_for_preview']                                     = 'Nur zur Vorschau';
-$lang['survey_create_first']                                                  = 'Die Umfrage muss zuerst erstellt werden, um Fragen hinzufügen zu können.';
-$lang['survey_dt_name']                                                       = 'Name';
-$lang['survey_dt_total_questions']                                            = 'Gesamt Fragen';
-$lang['survey_dt_total_participants']                                         = 'Gesamt Teilnehmer';
-$lang['survey_dt_date_created']                                               = 'Datum erstellt';
-$lang['survey_dt_active']                                                     = 'Aktiv';
-$lang['survey_text_questions_results']                                        = 'Text Fragen Ergebnis';
-$lang['survey_view_all_answers']                                              = 'Alle Antworten anzeigen';
 # Staff Tasks
 $lang['new_task']                                                             = 'Aufgabe erstellen';
 $lang['tasks']                                                                = 'Aufgaben';
@@ -992,8 +909,6 @@ $lang['payment_mode']                                                         = 
 $lang['payment_view_heading']                                                 = 'Zahlung';
 # Settings
 $lang['settings_allow_payment_amount_to_be_modified']                         = 'Kunde erlauben, den Zahl-Betrag zu bearbeiten (für Online Bezahlungen)';
-$lang['settings_survey_send_emails_per_cron_run']                             = 'Wie viele Mails sollen pro Stunde gesendet werden (Umfragen)';
-$lang['settings_survey_send_emails_per_cron_run_tooltip']                     = 'Diese Option greift beim Senden von Umfragen. Der Umfrage Cron läuft alle 5 Minuten. Es kann definiert werden, wie viele Mails alle 5 Minuten gesendet werden.';
 $lang['settings_delete_only_on_last_invoice']                                 = 'Löschen einer Rechnung nur bei der letzten erlauben.';
 $lang['settings_sales_estimate_prefix']                                       = 'Angebotsnummer Präfix';
 $lang['settings_sales_next_estimate_number']                                  = 'Nächste Angebot-Nr.';
@@ -1237,7 +1152,6 @@ $lang['contract_renewal_new_end_date']                                        = 
 $lang['contract_renewal_old_end_date']                                        = 'Altes Vertragsende war der %s';
 $lang['contract_attachment']                                                  = 'Anhänge';
 # Admin Aside Menu
-$lang['als_goals_tracking']                                                   = 'Vertriebsziele';
 $lang['als_expenses']                                                         = 'Ausgaben';
 $lang['als_reports_expenses']                                                 = 'Ausgaben';
 $lang['als_expenses_vs_income']                                               = 'Ausgaben vs Einnahmen';
@@ -1246,47 +1160,6 @@ $lang['invoice_attach_file']                                                  = 
 $lang['invoice_mark_as_sent']                                                 = 'Als versendet markieren';
 $lang['invoice_marked_as_sent']                                               = 'Die Rechnung wurde erfolgreich als versendet markiert';
 $lang['invoice_marked_as_sent_failed']                                        = 'Fehler beim Setzen auf versendet';
-# Goals Tracking
-$lang['goals']                                                                = 'Vertriebsziele';
-$lang['goal']                                                                 = 'Vertriebsziel';
-$lang['goals_tracking']                                                       = 'Vertriebsziel Auswertung';
-$lang['new_goal']                                                             = 'Vertriebsziel erstellen';
-$lang['goal_lowercase']                                                       = $lang['goal'];
-$lang['goal_start_date']                                                      = 'Start Datum';
-$lang['goal_end_date']                                                        = 'End-Datum';
-$lang['goal_subject']                                                         = 'Betreff';
-$lang['goal_description']                                                     = 'Beschreibung';
-$lang['goal_type']                                                            = 'Vertriebsziel Art';
-$lang['goal_achievement']                                                     = 'Leistung/Ziel';
-$lang['goal_contract_type']                                                   = 'Vertrags Art';
-$lang['goal_notify_when_fail']                                                = 'Mitarbeiter benachrichtigen, wenn das Ziel nicht erreicht wurde';
-$lang['goal_notify_when_achieve']                                             = 'Mitarbeiter benachrichtigen, wenn das Ziel erreicht wurde';
-$lang['goal_progress']                                                        = 'Fortschritt';
-$lang['goal_total']                                                           = 'Gesamt: %s';
-$lang['goal_result_heading']                                                  = 'Vertriebsziel Fortschritt';
-$lang['goal_income_shown_in_base_currency']                                   = 'Die Gesamterträge werden in der Standardwährung gezeigt';
-$lang['goal_notify_when_end_date_arrives']                                    = 'Die Mitarbeiter werden benachrichtigt sobald der Countdown anbricht.';
-$lang['goal_staff_members_notified_about_achievement']                        = 'Die Mitarbeiter werden benachrichtigt sobald das Vertriebsziel erreicht wurde.';
-$lang['goal_staff_members_notified_about_failure']                            = 'Mitarbeiter werden über das Verfehlen benachrichtigt.';
-$lang['goal_notify_staff_manually']                                           = 'Benachrichtige Mitarbeiter manuell';
-$lang['goal_notify_staff_notified_manually_success']                          = 'Die Mitarbeiter wurden erfolgreich über das Vertriebsziel informiert';
-$lang['goal_notify_staff_notified_manually_fail']                             = 'Fehler - Die Mitarbeiter wurden nicht über das Vertriebsziel informiert';
-$lang['goal_achieved']                                                        = 'Erreicht!';
-$lang['goal_failed']                                                          = 'Verfehlt';
-$lang['goal_close']                                                           = 'Fast erreicht!';
-$lang['goal_type_total_income']                                               = 'Erreichtes Gesamteinkommen';
-$lang['goal_type_convert_leads']                                              = 'X Interessenten konvertieren';
-$lang['goal_type_increase_customers_without_leads_conversions']               = 'Die Neukunden erhöhen';
-$lang['goal_type_increase_customers_without_leads_conversions_subtext']       = 'Interessenten Konvertierungen sind ausgeschlossen.';
-$lang['goal_type_increase_customers_with_leads_conversions']                  = 'Die Kundenanzahl erhöhen';
-$lang['goal_type_increase_customers_with_leads_conversions_subtext']          = 'Konvertierte Kunden sind inklusive';
-$lang['goal_type_make_contracts_by_type_calc_database']                       = 'Verträge nach Typ';
-$lang['goal_type_make_contracts_by_type_calc_database_subtext']               = 'Wird ab dem Zeitpunkt berechnet an dem sie hinzugefügt wurden';
-$lang['goal_type_make_contracts_by_type_calc_date']                           = 'Verträge nach Typ';
-$lang['goal_type_make_contracts_by_type_calc_date_subtext']                   = 'Ist nach dem Vertragsbeginn';
-$lang['goal_type_total_estimates_converted']                                  = 'X Angebote konvertiert';
-$lang['goal_type_total_estimates_converted_subtext']                          = 'Angebote die in Rechnungen konvertiert wurden';
-$lang['goal_type_income_subtext']                                             = 'Die Erträge werden in der Basiswährung berechnet werden (nicht konvertiert)';
 # Payments
 $lang['payment_transaction_id']                                               = 'Transaktions-ID';
 # Settings Menu
@@ -1483,7 +1356,6 @@ $lang['task_public_help']                                                     = 
 $lang['settings_general_favicon']                                             = 'Favicon';
 $lang['settings_output_client_pdfs_from_admin_area_in_client_language']       = 'Ausgabe von PDF Dokumenten im Admin Bereich in Kundensprache';
 $lang['settings_output_client_pdfs_from_admin_area_in_client_language_help']  = 'Wenn diese Option auf JA gesetzt ist und zB. die Standardsprache english ist, der Kunde aber deutsch eingestellt hat, wird das PDF in deutsch erstellt.';
-$lang['settings_cron_surveys']                                                = 'Umfragen';
 $lang['settings_default_tax']                                                 = 'Standard Steuer';
 $lang['setup_calendar_by_departments']                                        = 'Erstelle Kalender pro Abteilung';
 $lang['settings_calendar']                                                    = 'Kalender';
@@ -1543,18 +1415,7 @@ $lang['bulk_export_zip_payment_modes']                                        = 
 $lang['bulk_export_include_tag']                                              = 'Schlagwort inkludieren';
 $lang['bulk_export_include_tag_help']                                         = 'z.B. Original oder Kopie. Das Schlagwort wird in der PDF ausgegeben. Empfohlen: Nur einen Tag verwenden';
 # Backup
-$lang['auto_backup_options_updated']                                          = 'Auto Backup Optionen aktualisiert';
-$lang['auto_backup_every']                                                    = 'Backup alle X Tage erstellen';
-$lang['auto_backup_enabled']                                                  = 'Aktiviert (braucht Cron)';
-$lang['auto_backup']                                                          = 'Auto Backup';
-$lang['backup_delete']                                                        = 'Backup gelöscht';
-$lang['backup_success']                                                       = 'Backup erfolgreich erstellt';
-$lang['utility_backup']                                                       = 'Datenbank Backup';
-$lang['utility_create_new_backup_db']                                         = 'Datenbank Backup erstellen';
-$lang['utility_backup_table_backupname']                                      = 'Backup';
-$lang['utility_backup_table_backupsize']                                      = 'Backup Größe';
-$lang['utility_backup_table_backupdate']                                      = 'Datum';
-$lang['utility_db_backup_note']                                               = 'Notiz: Wegen Limits der Ausführungszeit und verfügbarem PHP-RAM, könnte das Backup von sehr große DBs nicht funktionieren. Wenn die Datenbank sehr groß ist, empfiehlt es sich, das Backup direkt vom SQL Server oder via CLI zu erstellen. Alternativ sollte das der Server Admin tun.';
+
 
 # Version 1.0.7
 ## Customers - portal
@@ -1744,24 +1605,13 @@ $lang['custom_field_show_on_table']                                           = 
 $lang['custom_field_show_on_client_portal']                                   = 'Im Frontend anzeigen';
 $lang['custom_field_show_on_client_portal_help']                              = 'Wenn das Feld aktiviert ist, wird es auch in Tabellen angezeigt';
 $lang['custom_field_visibility']                                              = 'Sichtbarkeit';
-# Utilities # Menu Builder
-$lang['utilities_menu_translate_name_help']                                   = 'Hier können auch die Übersetzungsstrings hinzugefügt werden. Wenn der Mitarbeiter / das System nicht die Standard Sprache nutzt, wird der Menüpunkt in der Mitarbeitersprache ausgegeben. Andernfalls, wenn der String in der Übersetzung nicht existiert, wird der hier eingegebene String verwendet.';
-$lang['utilities_menu_icon']                                                  = 'Icon';
-$lang['active_menu_items']                                                    = 'Aktive Menüpunkte';
-$lang['inactive_menu_items']                                                  = 'Inaktive Menüpunkte';
-$lang['utilities_menu_url']                                                   = 'URL';
-$lang['utilities_menu_name']                                                  = 'Name';
-$lang['utilities_menu_save']                                                  = 'Menü speichern';
+
 # Knowledge Base
 $lang['view_articles_list']                                                   = 'Artikel ansehen';
 $lang['view_articles_list_all']                                               = 'Alle Artikel';
 $lang['als_all_articles']                                                     = 'Alle Artikel';
 $lang['als_kb_groups']                                                        = 'Gruppen';
-# Customizer Menu
-$lang['menu_builder']                                                         = 'Menü Einstellungen';
-$lang['main_menu']                                                            = 'Hauptmenü';
-$lang['setup_menu']                                                           = 'Einstellungsmenü';
-$lang['utilities_menu_url_help']                                              = '%s wird automatisch an die Url angefügt';
+
 # Spam Filter - Tickets
 $lang['spam_filters']                                                         = 'Spam Filter';
 $lang['spam_filter']                                                          = 'Spam Filter';
@@ -1834,11 +1684,6 @@ $lang['not_received_lead_imported_email_integration']                         = 
 $lang['not_lead_imported_attachment']                                         = 'Anhang aus E-Mail importiert';
 $lang['not_estimate_status_change']                                           = 'Anhang aus E-Mail importiert';
 $lang['not_estimate_status_updated']                                          = 'Kostenvoranschlag aktualisiert: Von <b>%s</b> zu <b>%s</b>';
-$lang['not_goal_message_success']                                             = 'Juhu! Wir haben unser Ziel erreicht! <br />Ziel: %s
-<br />Ziel: %s
-<br />Umgesetzt: %s
-<br />Start Datum: %s
-<br />End Datum: %s';
 $lang['not_assigned_lead_to_you']                                             = 'hat dir einen Interessent %s zugewiesen';
 $lang['not_lead_activity_assigned_to']                                        = '%s zugewiesen an %s';
 $lang['not_lead_activity_attachment_deleted']                                 = 'Anlage löschen';
@@ -2327,8 +2172,6 @@ $lang['expense_repeat_every']                                                 = 
 
 # Version 1.1.2
 $lang['leads_switch_to_kanban']                                               = 'Zu Kanban wechseln';
-$lang['survey_no_questions']                                                  = 'Dieser Umfrage wurden bisher keine Fragen hinzugefügt.';
-$lang['survey_submit']                                                        = 'Senden';
 $lang['contract_content']                                                     = 'Vertrag';
 $lang['contract_save']                                                        = 'Vertrag speichern';
 $lang['contract_send_to_email']                                               = 'An E-Mail senden';
@@ -2432,7 +2275,6 @@ $lang['auto_stop_tasks_timers_on_new_timer']                                  = 
 $lang['notification_when_customer_pay_invoice']                               = 'Benachrichtigung erhalten, wenn Kunde Rechnung bezahlt (integriert)';
 $lang['not_invoice_payment_recorded']                                         = 'Neue Rechnungszahlung - %s';
 $lang['email_template_contact_warning']                                       = 'Wenn der Kontakt während der Aktion nicht erfasst wird, werden die Kontaktverbindungsfelder nicht ersetzt';
-$lang['theme_style']                                                          = 'Theme-Stil';
 $lang['change_role_permission_warning']                                       = 'Das Ändern der Rollenberechtigungen hat keine Auswirkungen auf aktuelle Mitarbeiter, die diese Rolle nutzen.';
 $lang['task_copied_successfully']                                             = 'Die Aufgabe wurde erfolgreich kopiert';
 $lang['failed_to_copy_task']                                                  = 'Die Aufgabe konnte nicht kopiert werden';
@@ -2467,11 +2309,6 @@ $lang['to_date']                                                              = 
 $lang['not_results_found']                                                    = 'Keine Ergebnisse gefunden';
 $lang['lead_lock_after_convert_to_customer']                                  = 'Bearbeiten des Interessenten nach der Konvertierung zum Kunden verbieten (keine Kundenbetreuer zugewiesen)';
 $lang['default_pipeline_sort']                                                = 'Standard-Pipeline-Sortierung';
-$lang['not_goal_message_failed']                                              = 'Wir haben das Ziel nicht erreicht!<br /> Zieltyp: %s
-<br />Zielerreichung: %s
-<br />Insgesamt erreicht: %s
-<br />Startdatum: %s
-<br />Enddatum: %s';
 $lang['toggle_full_view']                                                     = 'Vollständige Ansicht umschalten';
 $lang['not_estimate_invoice_deleted']                                         = 'hat die erstellte Rechnung gelöscht';
 $lang['not_task_new_comment']                                                 = 'hat Aufgabe %s kommentiert';
@@ -2740,8 +2577,6 @@ $lang['task_checklist_item_completed_by']                                     = 
 $lang['staff_email_signature_help']                                           = 'Ohne Eintrag wird die Standardsignatur aus den Einstellungen verwendet';
 $lang['default_task_priority']                                                = 'Standardpriorität';
 $lang['project_send_created_email']                                           = 'E-Mail zur Projekterstellung senden';
-$lang['survey_send_to_lists']                                                 = 'Befragungslisten';
-$lang['survey_send_notice']                                                   = 'E-Mails werden stündlich per CRON JOB gesendet.';
 
 # Version 1.2.8
 $lang['show_transactions_on_invoice_pdf']                                     = 'Rechnungszahlungen (Transaktionen) auf PDF anzeigen';
@@ -2753,7 +2588,6 @@ $lang['customer_attachments_show_in_customers_area']                          = 
 $lang['customer_attachments_show_notice']                                     = 'Nur Dateien, die aus dem Kundenprofil hochgeladen wurden, können im Kundenbereich ein- oder ausgeblendet werden.';
 $lang['customer_profile_files']                                               = 'Dateien';
 $lang['no_files_found']                                                       = 'Keine Dateien gefunden';
-$lang['survey_customers_all']                                                 = 'Alle Kunden';
 $lang['custom_field_column']                                                  = 'Grid (Bootstrap-Spalte z.B. 12) - Max ist 12';
 $lang['task_status']                                                          = 'Status';
 $lang['task_status_1']                                                        = 'Nicht angefangen';
@@ -2962,7 +2796,6 @@ $lang['proposals_report']                                                     = 
 $lang['staff_members_open_tickets_to_all_contacts_help']                      = 'Wenn der Mitarbeiter nicht über die Ansehen-Berechtigung für Kunden verfügt, kann er nur neue Tickets für Kunden aus dem Admin-Bereich an anlegen, denen er als Kunden-Administrator zugewiesen ist.';
 $lang['staff_members_open_tickets_to_all_contacts']                           = 'Mitarbeitern erlauben, für jeden Kontakt ein Ticket zu eröffnen';
 $lang['charts_based_report']                                                  = 'Diagramm basierter Bericht';
-$lang['delete_backups_older_then']                                            = 'Backups älter als X Tage automatisch löschen (0 zum deaktivieren)';
 $lang['responsible_admin']                                                    = 'Zuständiger Admin';
 $lang['tags']                                                                 = 'Tags';
 $lang['tag']                                                                  = 'Tag';
@@ -3518,46 +3351,88 @@ $lang['contract_notes']                                                       = 
 $lang['contract_add_note']                                                    = 'Notiz hinzufügen';
 
 # Version 2.1.1
-$lang['frequency']         = 'Frequency';
-$lang['frequency_every']   = 'Every %s';
-$lang['last_invoice_date'] = 'Last Invoice Date';
-$lang['next_invoice_date_list'] = 'Next Invoice Date';
-$lang['enter_new_card']    = 'Enter New Card';
+$lang['frequency']                                                            = 'Häufigkeit';
+$lang['frequency_every']                                                      = 'Jede/n %s';
+$lang['last_invoice_date']                                                    = 'Letztes Rechnungsdatum';
+$lang['next_invoice_date_list']                                               = 'Nächstes Rechnungsdatum';
+$lang['enter_new_card']                                                       = 'Neue Kreditkarte eingeben';
 
 # Version 2.2.0
-$lang['save_and_record_payment']                                     = 'Save & Record Payment';
-$lang['choose_from_google_drive']                                    = 'Choose from Google Drive';
-$lang['open_in_google']                                              = 'Open In Google';
-$lang['google_picker']                                               = 'Google Picker';
-$lang['enable_google_picker']                                        = 'Enable Google Picker';
-$lang['google_api_client_id']                                        = 'Google API Client ID';
-$lang['subtract_tax_total_from_amount']                              = 'Subtract TAX total (%s) from amount';
-$lang['expense_subtract_info_text']                                  = 'Use this option to subtract the total tax amount from the expense amount, useful when you entered the expense amount with tax included (tax inclusive).';
-$lang['company_exists_info']                                         = 'It looks that a customer with name %s already exists, if you still want to create the customer you can ignore this message.';
-$lang['import_items']                                                = 'Import Items';
-$lang['total_items_deleted']                                         = 'Total items deleted: %s';
-$lang['billable_amount']                                             = 'Billable Amount';
-$lang['last_child_invoice_date']                                     = 'Last Child Invoice Date';
-$lang['good_morning']                                                = 'Good Morning';
-$lang['good_afternoon']                                              = 'Good Afternoon';
-$lang['good_evening']                                                = 'Good Evening';
-$lang['description_in_invoice_item']                                 = 'Include description in invoice item';
-$lang['description_in_invoice_item_help']                            = 'Useful if you want to include additional information on the subscription invoice, e.q. what this subscription includes.';
-$lang['ticket_reminders']                                            = 'Reminders';
-$lang['ticket_set_reminder_title']                                   = 'Set Ticket Reminder';
-$lang['calendar_ticket_reminder']                                    = 'Ticket Reminders';
-$lang['email_verification_required']                                 = 'Email Verification Required';
-$lang['email_verification_required_message']                         = 'In order to access all the available features in the portal, first you must verify your email.';
-$lang['email_verification_required_message_mail']                    = 'We have sent you an email with verification instructions, if you haven\'t received the email please check the spam folder or click <a href="%s">here</a> to resend the verification mail.';
-$lang['email_already_verified']                                      = 'Your email is already verified';
-$lang['invalid_verification_key']                                    = 'Invalid verification key';
-$lang['verification_key_expired']                                    = 'Verification Key Expired';
-$lang['email_successfully_verified']                                 = 'Your email has been successfully verified.';
-$lang['email_successfully_verified_but_required_admin_confirmation'] = 'Your email has been successfully verified, you will be able to login once administrator confirm your account manually.';
-$lang['email_verification_mail_sent_successully']                    = 'We sent you an email with verification instructions';
-$lang['create_reminder']                                             = 'Create Reminder';
-$lang['no_reminders_for_this_task']                                  = 'No reminders for this task';
-$lang['reminder_for']                                                = 'Reminder for %s on %s';
-$lang['no_description_provided']                                     = 'No description provided';
-$lang['pay_with_card']                                               = 'Pay With Card';
-$lang['not_customer_uploaded_file']                                  = 'New File(s) Uploaded in Profile';
+$lang['save_and_record_payment']                                              = 'Speichern und Aufzeichnen von Zahlungen';
+$lang['choose_from_google_drive']                                             = 'Von Google Drive auswählen';
+$lang['open_in_google']                                                       = 'Mit Google Drive öffnen';
+$lang['google_picker']                                                        = 'Google Drive Picker';
+$lang['enable_google_picker']                                                 = 'Google Drive Picker aktivieren';
+$lang['google_api_client_id']                                                 = 'Google API Client ID';
+$lang['subtract_tax_total_from_amount']                                       = 'Die Steuergesamtsumme (%s) vom Betrag abziehen.';
+$lang['expense_subtract_info_text']                                           = 'Diese Option kann verwendet werden, um den Gesamtsteuerbetrag vom Ausgabebetrag abzuziehen, was nützlich ist, wenn der Ausgabebetrag inklusive Steuern eingegeben wurde.';
+$lang['company_exists_info']                                                  = 'Es sieht so aus, als ob ein Kunde mit dem Namen %s bereits existiert, wenn der Kunde dennoch angelegt werden soll, kann diese Meldung ignoriert werden.';
+$lang['import_items']                                                         = 'Artikel importieren';
+$lang['total_items_deleted']                                                  = 'Insgesamt gelöschte Elemente: %s';
+$lang['billable_amount']                                                      = 'Abrechenbarer Betrag';
+$lang['last_child_invoice_date']                                              = 'Datum der letzten untergeordneten Rechnung';
+$lang['good_morning']                                                         = 'Guten Morgen';
+$lang['good_afternoon']                                                       = 'Guten Tag';
+$lang['good_evening']                                                         = 'Guten Abend';
+$lang['description_in_invoice_item']                                          = 'Beschreibung in die Rechnungsposition aufnehmen';
+$lang['description_in_invoice_item_help']                                     = 'Nützlich, wenn zusätzliche Informationen auf der Abonnementrechnung angegeben werden sollen, z.B. was dieses Abonnement beinhaltet.';
+$lang['ticket_reminders']                                                     = 'Erinnerungen';
+$lang['ticket_set_reminder_title']                                            = 'Ticket-Erinnerung einstellen';
+$lang['calendar_ticket_reminder']                                             = 'Ticket-Erinnerungen';
+$lang['email_verification_required']                                          = 'E-Mail-Verifizierung erforderlich';
+$lang['email_verification_required_message']                                  = 'Um auf alle verfügbaren Funktionen des Portals zugreifen zu können, muss zuerst die E-Mail-Adresse bestätigt werden.';
+$lang['email_verification_required_message_mail']                             = 'Wir haben Ihnen eine E-Mail mit Verifizierungsanweisungen geschickt, wenn Sie die E-Mail nicht erhalten haben, überprüfen Sie bitte den Spam-Ordner oder klicken Sie auf <a href="%s">hier</a>, um die Bestätigungsmail erneut zu versenden.';
+$lang['email_already_verified']                                               = 'Diese E-Mail ist bereits verifiziert.';
+$lang['invalid_verification_key']                                             = 'Ungültiger Verifizierungsschlüssel';
+$lang['verification_key_expired']                                             = 'Verifizierungsschlüssel abgelaufen';
+$lang['email_successfully_verified']                                          = 'Die E-Mail wurde erfolgreich verifiziert.';
+$lang['email_successfully_verified_but_required_admin_confirmation']          = 'Die E-Mail wurde erfolgreich verifiziert, Sie können sich anmelden, sobald der Administrator Ihr Konto manuell bestätigt hat.';
+$lang['email_verification_mail_sent_successully']                             = 'Wir haben Ihnen eine E-Mail mit Verifizierungsanweisungen geschickt.';
+$lang['create_reminder']                                                      = 'Erinnerung erstellen';
+$lang['no_reminders_for_this_task']                                           = 'Keine Erinnerungen für diese Aufgabe';
+$lang['reminder_for']                                                         = 'Erinnerung für %s an %s';
+$lang['no_description_provided']                                              = 'Keine Beschreibung vorhanden';
+$lang['pay_with_card']                                                        = 'Mit Kreditkarte bezahlen';
+$lang['not_customer_uploaded_file']                                           = 'Neue Datei(en) im Profil hochgeladen';
+
+# Version 2.2.1
+$lang['customer_files_info_message'] = 'Files from projects and tasks linked to the customer are not shown on this table.';
+$lang['ticket_import_reply_only'] = 'Try to import only the actual ticket reply (without quoted/forwarded message)';
+$lang['learn_more'] = 'Learn More';
+$lang['sales_item']                  = 'Item';
+
+# Version 2.3.0
+
+$lang['modules']                    = 'Modules';
+$lang['module']                     = 'Module';
+$lang['module_description']         = 'Description';
+$lang['module_activate']            = 'Activate';
+$lang['module_deactivate']          = 'Deactivate';
+$lang['module_uninstall']           = 'Uninstall';
+$lang['module_upgrade_database']    = 'Upgrade Database';
+$lang['module_settings']            = 'Settings';
+$lang['module_version']             = 'Version %s';
+$lang['module_by']                  = 'By %s';
+$lang['staff_which_are_using_role'] = 'Staff members which are using this role';
+$lang['copy']                       = 'Copy';
+$lang['read_more']                  = 'Read More';
+$lang['show_less']                  = 'Show Less';
+$lang['project_progress_text']      = 'Project Progress';
+$lang['timer_not_stopped_yet']                   = 'This timer is not yet stopped';
+$lang['refunds']                                 = 'Refunds';
+$lang['refund']                                  = 'Refund';
+$lang['refund_amount']                           = 'Refunded Amount';
+$lang['not_refunds_found']                       = 'No refunds found';
+$lang['refunds_applied_cant_delete_credit_note'] = 'This credit note has refunds applied, you need first to delete the refunds in order to delete the credit note.';
+
+# Version 2.3.2
+$lang['create_recurring_from_child_error_message'] = 'You cannot set this %s as recurring because this %s is child from another recurring %s.';
+$lang['statement_credit_note_refund']              = 'Credit Note Refund - %s';
+$lang['no_validation']                             = 'No Validation';
+$lang['lead_unique_validation_on']                 = 'Perform validation for duplicate lead on the following fields:';
+$lang['phonenumber_exists']                        = 'Phone number already exists';
+$lang['company_exists']                            = 'Company already exists';
+$lang['website_exists']                            = 'Website already exists';
+$lang['send_payment_receipt_to_client']            = 'Send Payment Receipt To Client';
+$lang['payment_sent_successfully']                 = 'Payment receipt sent successfully.';
+$lang['payment_sent_failed']                       = 'Failed to send payment receipt.';

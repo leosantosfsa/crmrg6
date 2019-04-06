@@ -20,7 +20,7 @@ function is_contact_email_verified($id = null)
 
     $CI->db->select('email_verified_at');
     $CI->db->where('id', $id);
-    $contact = $CI->db->get('tblcontacts')->row();
+    $contact = $CI->db->get(db_prefix() . 'contacts')->row();
 
     if (!$contact) {
         return false;
@@ -28,13 +28,14 @@ function is_contact_email_verified($id = null)
 
     return !is_null($contact->email_verified_at);
 }
+
 /**
  * Check whether the user disabled verification emails for contacts
  * @return boolean
  */
 function is_email_verification_enabled()
 {
-    return total_rows('tblemailtemplates', ['slug' => 'contact-verification-email', 'active' => 0]) == 0;
+    return total_rows(db_prefix() . 'emailtemplates', ['slug' => 'contact-verification-email', 'active' => 0]) == 0;
 }
 /**
  * Check if client id is used in the system
@@ -45,53 +46,33 @@ function is_client_id_used($id)
 {
     $total = 0;
 
-    $total += total_rows('tblcontracts', [
+    $checkCommonTables = [db_prefix() . 'subscriptions', db_prefix() . 'creditnotes', db_prefix() . 'projects', db_prefix() . 'invoices', db_prefix() . 'expenses', db_prefix() . 'estimates'];
+
+    foreach ($checkCommonTables as $table) {
+        $total += total_rows($table, [
+            'client' => $id,
+        ]);
+    }
+
+    $total += total_rows(db_prefix() . 'contracts', [
         'client' => $id,
     ]);
 
-    $total += total_rows('tblestimates', [
-        'clientid' => $id,
-    ]);
-
-    $total += total_rows('tblexpenses', [
-        'clientid' => $id,
-    ]);
-
-    $total += total_rows('tblinvoices', [
-        'clientid' => $id,
-    ]);
-
-    $total += total_rows('tblproposals', [
+    $total += total_rows(db_prefix() . 'proposals', [
         'rel_id'   => $id,
         'rel_type' => 'customer',
     ]);
 
-    $total += total_rows('tbltickets', [
+    $total += total_rows(db_prefix() . 'tickets', [
         'userid' => $id,
     ]);
 
-    $total += total_rows('tblprojects', [
-        'clientid' => $id,
-    ]);
-
-    $total += total_rows('tblstafftasks', [
+    $total += total_rows(db_prefix() . 'tasks', [
         'rel_id'   => $id,
         'rel_type' => 'customer',
     ]);
 
-    $total += total_rows('tblcreditnotes', [
-        'clientid' => $id,
-    ]);
-
-    $total += total_rows('tblsubscriptions', [
-        'clientid' => $id,
-    ]);
-
-    if ($total > 0) {
-        return true;
-    }
-
-    return false;
+    return hooks()->apply_filters('is_client_id_used', $total > 0 ? true : false, $id);
 }
 /**
  * Check if customer has subscriptions
@@ -100,180 +81,240 @@ function is_client_id_used($id)
  */
 function customer_has_subscriptions($id)
 {
-    return total_rows('tblsubscriptions', ['clientid' => $id]) > 0;
+    return hooks()->apply_filters('customer_has_subscriptions', total_rows(db_prefix() . 'subscriptions', ['clientid' => $id]) > 0);
+}
+/**
+ * Get client by ID or current queried client
+ * @param  mixed $id client id
+ * @return mixed
+ */
+function get_client($id = null)
+{
+    if (empty($id) && isset($GLOBALS['client'])) {
+        return $GLOBALS['client'];
+    }
+
+    // Client global object not set
+    if (empty($id)) {
+        return null;
+    }
+
+    $client = get_instance()->clients_model->get($id);
+
+    return $client;
 }
 /**
  * Get predefined tabs array, used in customer profile
- * @param  mixed $customer_id customer id to prepare the urls
  * @return array
  */
-function get_customer_profile_tabs($customer_id)
+function get_customer_profile_tabs()
 {
-    $customer_tabs = [
-      [
-        'name'    => 'profile',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=profile'),
-        'icon'    => 'fa fa-user-circle',
-        'lang'    => _l('client_add_edit_profile'),
-        'visible' => true,
-        'order'   => 1,
-    ],
-    [
-        'name'    => 'contacts',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=contacts'),
-        'icon'    => 'fa fa-users',
-        'lang'    => !is_empty_customer_company($customer_id) || empty($customer_id) ? _l('customer_contacts') : _l('contact'),
-        'visible' => true,
-        'order'   => 2,
-    ],
-      [
-        'name'    => 'notes',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=notes'),
-        'icon'    => 'fa fa-sticky-note-o',
-        'lang'    => _l('contracts_notes_tab'),
-        'visible' => true,
-        'order'   => 3,
-    ],
-      [
-        'name'    => 'statement',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=statement'),
-        'icon'    => 'fa fa-area-chart',
-        'lang'    => _l('customer_statement'),
-        'visible' => (has_permission('invoices', '', 'view') && has_permission('payments', '', 'view')),
-        'order'   => 4,
-    ],
-      [
-        'name'    => 'invoices',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=invoices'),
-        'icon'    => 'fa fa-file-text',
-        'lang'    => _l('client_invoices_tab'),
-        'visible' => (has_permission('invoices', '', 'view') || has_permission('invoices', '', 'view_own') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices())),
-        'order'   => 5,
-    ],
-      [
-        'name'    => 'payments',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=payments'),
-        'icon'    => 'fa fa-line-chart',
-        'lang'    => _l('client_payments_tab'),
-        'visible' => (has_permission('payments', '', 'view') || has_permission('invoices', '', 'view_own') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices())),
-        'order'   => 6,
-    ],
-      [
-        'name'    => 'proposals',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=proposals'),
-        'icon'    => 'fa fa-file-powerpoint-o',
-        'lang'    => _l('proposals'),
-        'visible' => (has_permission('proposals', '', 'view') || has_permission('proposals', '', 'view_own') || (get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals())),
-        'order'   => 7,
-    ],
-      [
-        'name'    => 'credit_notes',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=credit_notes'),
-        'icon'    => 'fa fa-sticky-note-o',
-        'lang'    => _l('credit_notes'),
-        'visible' => (has_permission('credit_notes', '', 'view') || has_permission('credit_notes', '', 'view_own')),
-        'order'   => 8,
-    ],
-      [
-        'name'    => 'estimates',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=estimates'),
-        'icon'    => 'fa fa-clipboard',
-        'lang'    => _l('estimates'),
-        'visible' => (has_permission('estimates', '', 'view') || has_permission('estimates', '', 'view_own') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates())),
-        'order'   => 9,
-    ],
-    [
-            'name'    => 'subscriptions',
-            'url'     => admin_url('clients/client/' . $customer_id . '?group=subscriptions'),
-            'icon'    => 'fa fa-repeat',
-            'lang'    => _l('subscriptions'),
-            'visible' => (has_permission('subscriptions', '', 'view') || has_permission('subscriptions', '', 'view_own')),
-            'order'   => 10,
-      ],
-      [
-        'name'    => 'expenses',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=expenses'),
-        'icon'    => 'fa fa-file-text-o',
-        'lang'    => _l('expenses'),
-        'visible' => (has_permission('expenses', '', 'view') || has_permission('expenses', '', 'view_own')),
-        'order'   => 11,
-    ],
-      [
-        'name'    => 'contracts',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=contracts'),
-        'icon'    => 'fa fa-file',
-        'lang'    => _l('contracts'),
-        'visible' => (has_permission('contracts', '', 'view') || has_permission('contracts', '', 'view_own')),
-        'order'   => 12,
-    ],
-      [
-        'name'    => 'projects',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=projects'),
-        'icon'    => 'fa fa-bars',
-        'lang'    => _l('projects'),
-        'visible' => true,
-        'order'   => 13,
-    ],
-      [
-        'name'    => 'tasks',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=tasks'),
-        'icon'    => 'fa fa-tasks',
-        'lang'    => _l('tasks'),
-        'visible' => true,
-        'order'   => 14,
-    ],
-      [
-        'name'    => 'tickets',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=tickets'),
-        'icon'    => 'fa fa-ticket',
-        'lang'    => _l('tickets'),
-        'visible' => ((get_option('access_tickets_to_none_staff_members') == 1 && !is_staff_member()) || is_staff_member()),
-        'order'   => 15,
-    ],
-      [
-        'name'    => 'attachments',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=attachments'),
-        'icon'    => 'fa fa-paperclip',
-        'lang'    => _l('customer_attachments'),
-        'visible' => true,
-        'order'   => 16,
-    ],
-      [
-        'name'    => 'vault',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=vault'),
-        'icon'    => 'fa fa-lock',
-        'lang'    => _l('vault'),
-        'visible' => true,
-        'order'   => 17,
-    ],
-      [
-        'name'    => 'reminders',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=reminders'),
-        'icon'    => 'fa fa-clock-o',
-        'lang'    => _l('client_reminders_tab'),
-        'visible' => true,
-        'order'   => 18,
-        'id'      => 'reminders',
-    ],
-      [
-        'name'    => 'map',
-        'url'     => admin_url('clients/client/' . $customer_id . '?group=map'),
-        'icon'    => 'fa fa-map-marker',
-        'lang'    => _l('customer_map'),
-        'visible' => true,
-        'order'   => 19,
-    ],
+    return get_instance()->app_tabs->get_customer_profile_tabs();
+}
 
-  ];
+/**
+ * Filter only visible tabs selected from the profile
+ * @param  array $tabs available tabs
+ * @return array
+ */
+function filter_client_visible_tabs($tabs)
+{
+    $newTabs = [];
 
-    $hook_data     = do_action('customer_profile_tabs', ['tabs' => $customer_tabs, 'customer_id' => $customer_id]);
-    $customer_tabs = $hook_data['tabs'];
+    $visible = get_option('visible_customer_profile_tabs');
+    if ($visible != 'all') {
+        $visible = unserialize($visible);
+    }
 
-    usort($customer_tabs, function ($a, $b) {
-        return $a['order'] - $b['order'];
-    });
+    $appliedSettings = is_array($visible);
+    foreach ($tabs as $key => $tab) {
 
-    return $customer_tabs;
+        // Check visibility from settings too
+        if ($key != 'profile' && $key != 'contacts' && $appliedSettings) {
+            if (array_key_exists($key, $visible) && $visible[$key] == false) {
+                continue;
+            }
+        }
+
+        $newTabs[$key] = $tab;
+    }
+
+    return hooks()->apply_filters('client_filtered_visible_tabs', $newTabs);
+}
+/**
+ * @todo
+ * Find a way to get the customer_id inside this function or refactor the hook
+ * @param  string $group the tabs groups
+ * @return null
+ */
+function app_init_customer_profile_tabs()
+{
+    $client_id = null;
+
+    $remindersText = _l('client_reminders_tab');
+
+    if ($client = get_client()) {
+        $client_id = $client->userid;
+
+        $total_reminders = total_rows(
+              db_prefix() . 'reminders',
+            [
+             'isnotified' => 0,
+             'staff'      => get_staff_user_id(),
+             'rel_type'   => 'customer',
+             'rel_id'     => $client_id,
+           ]
+          );
+
+        if ($total_reminders > 0) {
+            $remindersText .= ' <span class="badge">' . $total_reminders . '</span>';
+        }
+    }
+
+    $CI = &get_instance();
+
+    $CI->app_tabs->add_customer_profile_tab('profile', [
+        'name'     => _l('client_add_edit_profile'),
+        'icon'     => 'fa fa-user-circle',
+        'view'     => 'admin/clients/groups/profile',
+        'position' => 5,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('contacts', [
+        'name'     => !is_empty_customer_company($client_id) || empty($client_id) ? _l('customer_contacts') : _l('contact'),
+        'icon'     => 'fa fa-users',
+        'view'     => 'admin/clients/groups/contacts',
+        'position' => 10,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('notes', [
+        'name'     => _l('contracts_notes_tab'),
+        'icon'     => 'fa fa-sticky-note-o',
+        'view'     => 'admin/clients/groups/notes',
+        'position' => 15,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('statement', [
+        'name'     => _l('customer_statement'),
+        'icon'     => 'fa fa-area-chart',
+        'view'     => 'admin/clients/groups/statement',
+        'visible'  => (has_permission('invoices', '', 'view') && has_permission('payments', '', 'view')),
+        'position' => 20,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('invoices', [
+        'name'     => _l('client_invoices_tab'),
+        'icon'     => 'fa fa-file-text',
+        'view'     => 'admin/clients/groups/invoices',
+        'visible'  => (has_permission('invoices', '', 'view') || has_permission('invoices', '', 'view_own') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices())),
+        'position' => 25,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('payments', [
+        'name'     => _l('client_payments_tab'),
+        'icon'     => 'fa fa-line-chart',
+        'view'     => 'admin/clients/groups/payments',
+        'visible'  => (has_permission('payments', '', 'view') || has_permission('invoices', '', 'view_own') || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices())),
+        'position' => 30,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('proposals', [
+        'name'     => _l('proposals'),
+        'icon'     => 'fa fa-file-powerpoint-o',
+        'view'     => 'admin/clients/groups/proposals',
+        'visible'  => (has_permission('proposals', '', 'view') || has_permission('proposals', '', 'view_own') || (get_option('allow_staff_view_proposals_assigned') == 1 && staff_has_assigned_proposals())),
+        'position' => 35,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('credit_notes', [
+        'name'     => _l('credit_notes'),
+        'icon'     => 'fa fa-sticky-note-o',
+        'view'     => 'admin/clients/groups/credit_notes',
+        'visible'  => (has_permission('credit_notes', '', 'view') || has_permission('credit_notes', '', 'view_own')),
+        'position' => 40,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('estimates', [
+        'name'     => _l('estimates'),
+        'icon'     => 'fa fa-clipboard',
+        'view'     => 'admin/clients/groups/estimates',
+        'visible'  => (has_permission('estimates', '', 'view') || has_permission('estimates', '', 'view_own') || (get_option('allow_staff_view_estimates_assigned') == 1 && staff_has_assigned_estimates())),
+        'position' => 45,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('subscriptions', [
+        'name'     => _l('subscriptions'),
+        'icon'     => 'fa fa-repeat',
+        'view'     => 'admin/clients/groups/subscriptions',
+        'visible'  => (has_permission('subscriptions', '', 'view') || has_permission('subscriptions', '', 'view_own')),
+        'position' => 50,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('expenses', [
+        'name'     => _l('expenses'),
+        'icon'     => 'fa fa-file-text-o',
+        'view'     => 'admin/clients/groups/expenses',
+        'visible'  => (has_permission('expenses', '', 'view') || has_permission('expenses', '', 'view_own')),
+        'position' => 55,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('contracts', [
+        'name'     => _l('contracts'),
+        'icon'     => 'fa fa-file',
+        'view'     => 'admin/clients/groups/contracts',
+        'visible'  => (has_permission('contracts', '', 'view') || has_permission('contracts', '', 'view_own')),
+        'position' => 60,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('projects', [
+        'name'     => _l('projects'),
+        'icon'     => 'fa fa-bars',
+        'view'     => 'admin/clients/groups/projects',
+        'position' => 65,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('tasks', [
+        'name'     => _l('tasks'),
+        'icon'     => 'fa fa-tasks',
+        'view'     => 'admin/clients/groups/tasks',
+        'position' => 70,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('tickets', [
+        'name'     => _l('tickets'),
+        'icon'     => 'fa fa-ticket',
+        'view'     => 'admin/clients/groups/tickets',
+        'visible'  => ((get_option('access_tickets_to_none_staff_members') == 1 && !is_staff_member()) || is_staff_member()),
+        'position' => 75,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('attachments', [
+        'name'     => _l('customer_attachments'),
+        'icon'     => 'fa fa-paperclip',
+        'view'     => 'admin/clients/groups/attachments',
+        'position' => 80,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('vault', [
+        'name'     => _l('vault'),
+        'icon'     => 'fa fa-lock',
+        'view'     => 'admin/clients/groups/vault',
+        'position' => 85,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('reminders', [
+        'name'     => $remindersText,
+        'icon'     => 'fa fa-clock-o',
+        'view'     => 'admin/clients/groups/reminders',
+        'position' => 90,
+    ]);
+
+    $CI->app_tabs->add_customer_profile_tab('map', [
+        'name'     => _l('customer_map'),
+        'icon'     => 'fa fa-map-marker',
+        'view'     => 'admin/clients/groups/map',
+        'position' => 95,
+    ]);
 }
 
 /**
@@ -285,7 +326,7 @@ function get_customer_profile_tabs($customer_id)
 function get_client_id_by_lead_id($id)
 {
     $CI = & get_instance();
-    $CI->db->select('userid')->from('tblclients')->where('leadid', $id);
+    $CI->db->select('userid')->from(db_prefix() . 'clients')->where('leadid', $id);
 
     return $CI->db->get()->row()->userid;
 }
@@ -302,10 +343,7 @@ function is_primary_contact($contact_id = '')
         $contact_id = get_contact_user_id();
     }
 
-    if (total_rows('tblcontacts', [
-        'id' => $contact_id,
-        'is_primary' => 1,
-    ]) > 0) {
+    if (total_rows(db_prefix() . 'contacts', ['id' => $contact_id, 'is_primary' => 1]) > 0) {
         return true;
     }
 
@@ -316,8 +354,12 @@ function is_primary_contact($contact_id = '')
  * Check if client have invoices with multiple currencies
  * @return booelan
  */
-function is_client_using_multiple_currencies($clientid = '', $table = 'tblinvoices')
+function is_client_using_multiple_currencies($clientid = '', $table = null)
 {
+    if (!$table) {
+        $table = db_prefix() . 'invoices';
+    }
+
     $CI = & get_instance();
 
     $clientid = $clientid == '' ? get_client_user_id() : $clientid;
@@ -332,13 +374,18 @@ function is_client_using_multiple_currencies($clientid = '', $table = 'tblinvoic
             $total_currencies_used++;
         }
     }
+
+    $retVal = true;
     if ($total_currencies_used > 1) {
-        return true;
+        $retVal = true;
     } elseif ($total_currencies_used == 0 || $total_currencies_used == 1) {
-        return false;
+        $retVal = false;
     }
 
-    return true;
+    return hooks()->apply_filters('is_client_using_multiple_currencies', $retVal, [
+        'client_id' => $clientid,
+        'table'     => $table,
+    ]);
 }
 
 
@@ -352,7 +399,7 @@ function is_empty_customer_company($id)
 {
     $CI = & get_instance();
     $CI->db->select('company');
-    $CI->db->from('tblclients');
+    $CI->db->from(db_prefix() . 'clients');
     $CI->db->where('userid', $id);
     $row = $CI->db->get()->row();
     if ($row) {
@@ -376,7 +423,7 @@ function get_customer_profile_file_sharing($where = [])
     $CI = & get_instance();
     $CI->db->where($where);
 
-    return $CI->db->get('tblcustomerfiles_shares')->result_array();
+    return $CI->db->get(db_prefix() . 'shared_customer_files')->result_array();
 }
 
 /**
@@ -388,15 +435,15 @@ function get_user_id_by_contact_id($id)
 {
     $CI = & get_instance();
 
-    $userid = $CI->object_cache->get('user-id-by-contact-id-' . $id);
+    $userid = $CI->app_object_cache->get('user-id-by-contact-id-' . $id);
     if (!$userid) {
         $CI->db->select('userid')
         ->where('id', $id);
-        $client = $CI->db->get('tblcontacts')->row();
+        $client = $CI->db->get(db_prefix() . 'contacts')->row();
 
         if ($client) {
             $userid = $client->userid;
-            $CI->object_cache->add('user-id-by-contact-id-' . $id, $userid);
+            $CI->app_object_cache->add('user-id-by-contact-id-' . $id, $userid);
         }
     }
 
@@ -413,7 +460,7 @@ function get_primary_contact_user_id($userid)
     $CI = & get_instance();
     $CI->db->where('userid', $userid);
     $CI->db->where('is_primary', 1);
-    $row = $CI->db->get('tblcontacts')->row();
+    $row = $CI->db->get(db_prefix() . 'contacts')->row();
 
     if ($row) {
         return $row->id;
@@ -433,13 +480,14 @@ function get_contact_full_name($contact_id = '')
 
     $CI = & get_instance();
 
-    $contact = $CI->object_cache->get('contact-full-name-data-' . $contact_id);
+    $contact = $CI->app_object_cache->get('contact-full-name-data-' . $contact_id);
 
     if (!$contact) {
         $CI->db->where('id', $contact_id);
-        $contact = $CI->db->select('firstname,lastname')->from('tblcontacts')->get()->row();
-        $CI->object_cache->add('contact-full-name-data-' . $contact_id, $contact);
+        $contact = $CI->db->select('firstname,lastname')->from(db_prefix() . 'contacts')->get()->row();
+        $CI->app_object_cache->add('contact-full-name-data-' . $contact_id, $contact);
     }
+
     if ($contact) {
         return $contact->firstname . ' ' . $contact->lastname;
     }
@@ -456,19 +504,19 @@ function contact_profile_image_url($contact_id, $type = 'small')
 {
     $url  = base_url('assets/images/user-placeholder.jpg');
     $CI   = & get_instance();
-    $path = $CI->object_cache->get('contact-profile-image-path-' . $contact_id);
+    $path = $CI->app_object_cache->get('contact-profile-image-path-' . $contact_id);
 
     if (!$path) {
-        $CI->object_cache->add('contact-profile-image-path-' . $contact_id, $url);
+        $CI->app_object_cache->add('contact-profile-image-path-' . $contact_id, $url);
 
         $CI->db->select('profile_image');
-        $CI->db->from('tblcontacts');
+        $CI->db->from(db_prefix() . 'contacts');
         $CI->db->where('id', $contact_id);
         $contact = $CI->db->get()->row();
 
         if ($contact && !empty($contact->profile_image)) {
             $path = 'uploads/client_profile_images/' . $contact_id . '/' . $type . '_' . $contact->profile_image;
-            $CI->object_cache->set('contact-profile-image-path-' . $contact_id, $path);
+            $CI->app_object_cache->set('contact-profile-image-path-' . $contact_id, $path);
         }
     }
 
@@ -498,7 +546,7 @@ function get_company_name($userid, $prevent_empty_company = false)
 
     $client = $CI->db->select($select)
     ->where('userid', $_userid)
-    ->from('tblclients')
+    ->from(db_prefix() . 'clients')
     ->get()
     ->row();
     if ($client) {
@@ -521,7 +569,7 @@ function get_client_default_language($clientid = '')
     }
     $CI = & get_instance();
     $CI->db->select('default_language');
-    $CI->db->from('tblclients');
+    $CI->db->from(db_prefix() . 'clients');
     $CI->db->where('userid', $clientid);
     $client = $CI->db->get()->row();
     if ($client) {
@@ -541,19 +589,19 @@ function is_customer_admin($id, $staff_id = '')
 {
     $staff_id = is_numeric($staff_id) ? $staff_id : get_staff_user_id();
     $CI       = &get_instance();
-    $cache    = $CI->object_cache->get($id . '-is-customer-admin-' . $staff_id);
+    $cache    = $CI->app_object_cache->get($id . '-is-customer-admin-' . $staff_id);
 
     if ($cache) {
         return $cache['retval'];
     }
 
-    $total = total_rows('tblcustomeradmins', [
+    $total = total_rows(db_prefix() . 'customer_admins', [
         'customer_id' => $id,
         'staff_id'    => $staff_id,
     ]);
 
     $retval = $total > 0 ? true : false;
-    $CI->object_cache->add($id . '-is-customer-admin-' . $staff_id, ['retval' => $retval]);
+    $CI->app_object_cache->add($id . '-is-customer-admin-' . $staff_id, ['retval' => $retval]);
 
     return $retval;
 }
@@ -566,15 +614,15 @@ function have_assigned_customers($staff_id = '')
 {
     $CI       = &get_instance();
     $staff_id = is_numeric($staff_id) ? $staff_id : get_staff_user_id();
-    $cache    = $CI->object_cache->get('staff-total-assigned-customers-' . $staff_id);
+    $cache    = $CI->app_object_cache->get('staff-total-assigned-customers-' . $staff_id);
 
     if (is_numeric($cache)) {
         $result = $cache;
     } else {
-        $result = total_rows('tblcustomeradmins', [
+        $result = total_rows(db_prefix() . 'customer_admins', [
             'staff_id' => $staff_id,
         ]);
-        $CI->object_cache->add('staff-total-assigned-customers-' . $staff_id, $result);
+        $CI->app_object_cache->add('staff-total-assigned-customers-' . $staff_id, $result);
     }
 
     return $result > 0 ? true : false;
@@ -588,23 +636,23 @@ function have_assigned_customers($staff_id = '')
 function has_contact_permission($permission, $contact_id = '')
 {
     $CI = & get_instance();
+
     if (!class_exists('app')) {
         $CI->load->library('app');
     }
+
     $permissions = get_contact_permissions();
-    // Contact id passed form function
-    if ($contact_id != '') {
-        $_contact_id = $contact_id;
-    } else {
-        // Current logged in contact
-        $_contact_id = get_contact_user_id();
+
+    if (empty($contact_id)) {
+        $contact_id = get_contact_user_id();
     }
+
     foreach ($permissions as $_permission) {
         if ($_permission['short_name'] == $permission) {
-            return total_rows('tblcontactpermissions', [
-            'permission_id' => $_permission['id'],
-            'userid'        => $_contact_id,
-        ]) > 0;
+            return total_rows(db_prefix() . 'contact_permissions', [
+                'permission_id' => $_permission['id'],
+                'userid'        => $contact_id,
+            ]) > 0;
         }
     }
 
@@ -636,7 +684,7 @@ function load_client_language($customer_id = '')
         $CI->lang->load('custom_lang', $language);
     }
 
-    $language = do_action('after_load_client_language', $language);
+    hooks()->do_action('after_load_client_language', $language);
 
     return $language;
 }
@@ -647,35 +695,25 @@ function load_client_language($customer_id = '')
  */
 function client_have_transactions($id)
 {
-    $total_transactions = 0;
+    $total = 0;
 
-    $total_transactions += total_rows('tblinvoices', [
-        'clientid' => $id,
-    ]);
+    foreach ([db_prefix() . 'invoices', db_prefix() . 'creditnotes', db_prefix() . 'estimates'] as $table) {
+        $total += total_rows($table, [
+            'clientid' => $id,
+        ]);
+    }
 
-    $total_transactions += total_rows('tblcreditnotes', [
-        'clientid' => $id,
-    ]);
-
-    $total_transactions += total_rows('tblestimates', [
-        'clientid' => $id,
-    ]);
-
-    $total_transactions += total_rows('tblexpenses', [
+    $total += total_rows(db_prefix() . 'expenses', [
         'clientid' => $id,
         'billable' => 1,
     ]);
 
-    $total_transactions += total_rows('tblproposals', [
+    $total += total_rows(db_prefix() . 'proposals', [
         'rel_id'   => $id,
         'rel_type' => 'customer',
     ]);
 
-    if ($total_transactions > 0) {
-        return true;
-    }
-
-    return false;
+    return hooks()->apply_filters('customer_have_transactions', $total > 0, $id);
 }
 
 
@@ -718,7 +756,7 @@ function get_contact_permissions()
         ],
     ];
 
-    return do_action('get_contact_permissions', $permissions);
+    return hooks()->apply_filters('get_contact_permissions', $permissions);
 }
 
 function get_contact_permission($name)
@@ -741,7 +779,10 @@ function get_contact_permission($name)
  */
 function can_contact_view_email_notifications_options()
 {
-    if (has_contact_permission('invoices') || has_contact_permission('estimates') || has_contact_permission('projects') || has_contact_permission('contracts')) {
+    if (has_contact_permission('invoices')
+        || has_contact_permission('estimates')
+        || has_contact_permission('projects')
+        || has_contact_permission('contracts')) {
         return true;
     }
 
@@ -756,16 +797,19 @@ function login_as_client($id)
 {
     $CI = &get_instance();
 
-    $CI->db->select('tblcontacts.id')
+    $CI->db->select(db_prefix() . 'contacts.id')
     ->where('userid', $id)
     ->where('is_primary', 1);
 
-    $primary = $CI->db->get('tblcontacts')->row();
+    $primary = $CI->db->get(db_prefix() . 'contacts')->row();
 
     if (!$primary) {
         set_alert('danger', _l('no_primary_contact'));
         redirect($_SERVER['HTTP_REFERER']);
     }
+
+    $CI->load->model('announcements_model');
+    $CI->announcements_model->set_announcements_as_read_except_last_one($primary->id);
 
     $user_data = [
         'client_user_id'      => $id,
@@ -783,10 +827,8 @@ function send_customer_registered_email_to_administrators($client_id)
     $CI->load->model('staff_model');
     $admins = $CI->staff_model->get('', ['active' => 1, 'admin' => 1]);
 
-    $CI->load->model('emails_model');
     foreach ($admins as $admin) {
-        $merge_fields = get_client_contact_merge_fields($client_id, get_primary_contact_user_id($client_id));
-        $CI->emails_model->send_email_template('new-client-registered-to-admin', $admin['email'], $merge_fields);
+        send_mail_template('customer_new_registration_to_admins', $admin['email'], $client_id, $admin['staffid']);
     }
 }
 
@@ -804,7 +846,7 @@ function contact_consent_url($contact_id)
     if (empty($consent_key)) {
         $consent_key = app_generate_hash() . '-' . app_generate_hash();
         $meta_id     = false;
-        if (total_rows('tblcontacts', ['id' => $contact_id]) > 0) {
+        if (total_rows(db_prefix() . 'contacts', ['id' => $contact_id]) > 0) {
             $meta_id = add_contact_meta($contact_id, 'consent_key', $consent_key);
         }
         if (!$meta_id) {
@@ -813,199 +855,6 @@ function contact_consent_url($contact_id)
     }
 
     return site_url('consent/contact/' . $consent_key);
-}
-
-function export_contact_data($contact_id)
-{
-    define('GDPR_EXPORT', true);
-    @ini_set('memory_limit', '256M');
-    @ini_set('max_execution_time', 360);
-
-    $CI = &get_instance();
-
-    // $lead = $CI->leads_model->get($id);
-    $CI->load->library('zip');
-
-    $tmpDir     = get_temp_dir();
-    $valAllowed = get_option('gdpr_contact_data_portability_allowed');
-    if (empty($valAllowed)) {
-        $valAllowed = [];
-    } else {
-        $valAllowed = unserialize($valAllowed);
-    }
-
-    $json = [];
-
-    $contactFields = $CI->db->list_fields('tblcontacts');
-
-    if ($passwordKey = array_search('password', $contactFields)) {
-        unset($contactFields[$passwordKey]);
-    }
-
-
-    $CI->db->select(implode(',', $contactFields));
-    $CI->db->where('id', $contact_id);
-    $contact = $CI->db->get('tblcontacts')->row_array();
-    $slug    = slug_it($contact['firstname'] . ' ' . $contact['lastname']);
-
-    $isIndividual = is_empty_customer_company($contact['userid']);
-    $json         = [];
-
-    $CI->db->where('show_on_client_portal', 1)
-        ->where('fieldto', 'contacts')
-        ->order_by('field_order', 'asc');
-
-    $contactsCustomFields = $CI->db->get('tblcustomfields')->result_array();
-
-    if (in_array('profile_data', $valAllowed)) {
-        $contact['additional_fields'] = [];
-
-        foreach ($contactsCustomFields as $field) {
-            $contact['additional_fields'][] = [
-                'name'  => $field['name'],
-                'value' => get_custom_field_value($contact['id'], $field['id'], 'contacts'),
-            ];
-        }
-
-        $json = $contact;
-    }
-
-    if (in_array('consent', $valAllowed)) {
-        $CI->load->model('gdpr_model');
-        $json['consent'] = $CI->gdpr_model->get_consents(['contact_id' => $contact['id']]);
-    }
-
-    if (in_array('customer_profile_data', $valAllowed)
-        && $contact['is_primary'] == '1'
-        && !$isIndividual) {
-        $CI->db->where('userid', $contact['userid']);
-        $customer = $CI->db->get('tblclients')->row_array();
-
-        $customer['country']          = get_country($customer['country']);
-        $customer['billing_country']  = get_country($customer['billing_country']);
-        $customer['shipping_country'] = get_country($customer['shipping_country']);
-
-        $CI->db->where('show_on_client_portal', 1)
-              ->where('fieldto', 'customers')
-              ->order_by('field_order', 'asc');
-
-        $custom_fields                 = $CI->db->get('tblcustomfields')->result_array();
-        $customer['additional_fields'] = [];
-
-        $groups    = $CI->clients_model->get_customer_groups($customer['userid']);
-        $groupsIds = [];
-        foreach ($groups as $group) {
-            $groupsIds[] = $group['groupid'];
-        }
-
-        $groupNames = [];
-        if (count($groupsIds) > 0) {
-            $CI->db->where('id IN (' . implode(', ', $groupsIds) . ')');
-            $groups = $CI->db->get('tblcustomersgroups')->result_array();
-            foreach ($groups as $group) {
-                $groupNames[] = $group['name'];
-            }
-        }
-
-        $customer['groups'] = $groupNames;
-
-        foreach ($custom_fields as $field) {
-            $customer['additional_fields'][] = [
-                'name'  => $field['name'],
-                'value' => get_custom_field_value($customer['userid'], $field['id'], 'customers'),
-            ];
-        }
-
-        $json['company'] = $customer;
-    }
-
-    // Notes
-    if (in_array('profile_notes', $valAllowed) && $contact['is_primary'] == '1') {
-        $CI->db->where('rel_id', $contact['userid']);
-        $CI->db->where('rel_type', 'customer');
-        $json['notes'] = $CI->db->get('tblnotes')->result_array();
-    }
-
-    // Contacts
-    if (in_array('contacts', $valAllowed) && $contact['is_primary'] == '1' && !$isIndividual) {
-        $CI->db->where('id !=', $contact['id']);
-        $CI->db->where('userid', $contact['userid']);
-        $otherContacts = $CI->db->get('tblcontacts')->result_array();
-
-        foreach ($otherContacts as $keyContact => $otherContact) {
-            $otherContacts[$keyContact]['additional_fields'] = [];
-
-            foreach ($contactsCustomFields as $field) {
-                $otherContacts[$keyContact]['additional_fields'][] = [
-                    'name'  => $field['name'],
-                    'value' => get_custom_field_value($otherContact['id'], $field['id'], 'contacts'),
-                ];
-            }
-        }
-    }
-
-    // Invoices
-    if (in_array('invoices', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['invoices'] = prepare_invoices_for_export($contact['userid']);
-    }
-
-    // Credit Notes
-    if (in_array('credit_notes', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['credit_notes'] = prepare_credit_notes_for_export($contact['userid']);
-    }
-    // Credit Notes
-    if (in_array('estimates', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['estimates'] = prepare_estimates_for_export($contact['userid']);
-    }
-
-    // Proposals
-    if (in_array('proposals', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['proposals'] = prepare_proposals_for_export($contact['userid'], 'customer');
-    }
-
-    // Subscriptions
-    if (in_array('subscriptions', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['subscriptions'] = prepare_subscsriptions_for_export($contact['userid']);
-    }
-
-    // Expenses
-    if (in_array('expenses', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['expenses'] = prepare_expenses_for_export($contact['userid']);
-    }
-
-    // Contracts
-    if (in_array('contracts', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['contracts'] = prepare_contracts_for_export($contact['userid']);
-    }
-
-    // Tickets
-    if (in_array('tickets', $valAllowed)) {
-        $json['tickets'] = prepare_tickets_for_export($contact['id']);
-    }
-
-    // Projects
-    if (in_array('projects', $valAllowed) && $contact['is_primary'] == '1') {
-        $json['projects'] = prepare_projects_for_export($contact['userid'], $contact['id']);
-    }
-
-    $tmpDirContactData = $tmpDir . '/' . $contact['id'] . time() . '-contact';
-    mkdir($tmpDirContactData, 0755);
-
-    $fp = fopen($tmpDirContactData . '/data.json', 'w');
-    fwrite($fp, json_encode($json, JSON_PRETTY_PRINT));
-    fclose($fp);
-
-    $CI->zip->read_file($tmpDirContactData . '/data.json');
-
-    if (is_dir($tmpDirContactData)) {
-        @delete_dir($tmpDirContactData);
-    }
-
-    $CI->zip->download($slug . '-data.zip');
-
-    /*header('Content-type:application/json');
-    echo json_encode($json, JSON_PRETTY_PRINT);
-    die;*/
 }
 
 /**
@@ -1039,13 +888,13 @@ function get_all_customer_attachments($id)
             $CI->db->where('addedfrom', get_staff_user_id());
         }
 
-        $CI->db->from('tblexpenses');
+        $CI->db->from(db_prefix() . 'expenses');
         $expenses = $CI->db->get()->result_array();
         $ids      = array_column($expenses, 'id');
         if (count($ids) > 0) {
             $CI->db->where_in('rel_id', $ids);
             $CI->db->where('rel_type', 'expense');
-            $_attachments = $CI->db->get('tblfiles')->result_array();
+            $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
             foreach ($_attachments as $_att) {
                 array_push($attachments['expense'], $_att);
             }
@@ -1056,22 +905,23 @@ function get_all_customer_attachments($id)
     $has_permission_invoices_view = has_permission('invoices', '', 'view');
     $has_permission_invoices_own  = has_permission('invoices', '', 'view_own');
     if ($has_permission_invoices_view || $has_permission_invoices_own || get_option('allow_staff_view_invoices_assigned') == 1) {
+        $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
         // Invoices
         $CI->db->select('clientid,id');
         $CI->db->where('clientid', $id);
 
         if (!$has_permission_invoices_view) {
-            $CI->db->where(get_invoices_where_sql_for_staff(get_staff_user_id()));
+            $CI->db->where($noPermissionQuery);
         }
 
-        $CI->db->from('tblinvoices');
+        $CI->db->from(db_prefix() . 'invoices');
         $invoices = $CI->db->get()->result_array();
 
         $ids = array_column($invoices, 'id');
         if (count($ids) > 0) {
             $CI->db->where_in('rel_id', $ids);
             $CI->db->where('rel_type', 'invoice');
-            $_attachments = $CI->db->get('tblfiles')->result_array();
+            $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
             foreach ($_attachments as $_att) {
                 array_push($attachments['invoice'], $_att);
             }
@@ -1090,14 +940,14 @@ function get_all_customer_attachments($id)
             $CI->db->where('addedfrom', get_staff_user_id());
         }
 
-        $CI->db->from('tblcreditnotes');
+        $CI->db->from(db_prefix() . 'creditnotes');
         $credit_notes = $CI->db->get()->result_array();
 
         $ids = array_column($credit_notes, 'id');
         if (count($ids) > 0) {
             $CI->db->where_in('rel_id', $ids);
             $CI->db->where('rel_type', 'credit_note');
-            $_attachments = $CI->db->get('tblfiles')->result_array();
+            $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
             foreach ($_attachments as $_att) {
                 array_push($attachments['credit_note'], $_att);
             }
@@ -1108,20 +958,21 @@ function get_all_customer_attachments($id)
     $permission_estimates_own  = has_permission('estimates', '', 'view_own');
 
     if ($permission_estimates_view || $permission_estimates_own || get_option('allow_staff_view_proposals_assigned') == 1) {
+        $noPermissionQuery = get_estimates_where_sql_for_staff(get_staff_user_id());
         // Estimates
         $CI->db->select('clientid,id');
         $CI->db->where('clientid', $id);
         if (!$permission_estimates_view) {
-            $CI->db->where(get_estimates_where_sql_for_staff(get_staff_user_id()));
+            $CI->db->where($noPermissionQuery);
         }
-        $CI->db->from('tblestimates');
+        $CI->db->from(db_prefix() . 'estimates');
         $estimates = $CI->db->get()->result_array();
 
         $ids = array_column($estimates, 'id');
         if (count($ids) > 0) {
             $CI->db->where_in('rel_id', $ids);
             $CI->db->where('rel_type', 'estimate');
-            $_attachments = $CI->db->get('tblfiles')->result_array();
+            $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
 
             foreach ($_attachments as $_att) {
                 array_push($attachments['estimate'], $_att);
@@ -1133,14 +984,15 @@ function get_all_customer_attachments($id)
     $has_permission_proposals_own  = has_permission('proposals', '', 'view_own');
 
     if ($has_permission_proposals_view || $has_permission_proposals_own || get_option('allow_staff_view_proposals_assigned') == 1) {
+        $noPermissionQuery = get_proposals_sql_where_staff(get_staff_user_id());
         // Proposals
         $CI->db->select('rel_id,id');
         $CI->db->where('rel_id', $id);
         $CI->db->where('rel_type', 'customer');
         if (!$has_permission_proposals_view) {
-            $CI->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
+            $CI->db->where($noPermissionQuery);
         }
-        $CI->db->from('tblproposals');
+        $CI->db->from(db_prefix() . 'proposals');
         $proposals = $CI->db->get()->result_array();
 
         $ids = array_column($proposals, 'id');
@@ -1148,7 +1000,7 @@ function get_all_customer_attachments($id)
         if (count($ids) > 0) {
             $CI->db->where_in('rel_id', $ids);
             $CI->db->where('rel_type', 'proposal');
-            $_attachments = $CI->db->get('tblfiles')->result_array();
+            $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
 
             foreach ($_attachments as $_att) {
                 array_push($attachments['proposal'], $_att);
@@ -1165,7 +1017,7 @@ function get_all_customer_attachments($id)
         if (!$permission_contracts_view) {
             $CI->db->where('addedfrom', get_staff_user_id());
         }
-        $CI->db->from('tblcontracts');
+        $CI->db->from(db_prefix() . 'contracts');
         $contracts = $CI->db->get()->result_array();
 
         $ids = array_column($contracts, 'id');
@@ -1173,7 +1025,7 @@ function get_all_customer_attachments($id)
         if (count($ids) > 0) {
             $CI->db->where_in('rel_id', $ids);
             $CI->db->where('rel_type', 'contract');
-            $_attachments = $CI->db->get('tblfiles')->result_array();
+            $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
 
             foreach ($_attachments as $_att) {
                 array_push($attachments['contract'], $_att);
@@ -1183,12 +1035,12 @@ function get_all_customer_attachments($id)
 
     $CI->db->select('leadid')
     ->where('userid', $id);
-    $customer = $CI->db->get('tblclients')->row();
+    $customer = $CI->db->get(db_prefix() . 'clients')->row();
 
     if ($customer->leadid != null) {
         $CI->db->where('rel_id', $customer->leadid);
         $CI->db->where('rel_type', 'lead');
-        $_attachments = $CI->db->get('tblfiles')->result_array();
+        $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
         foreach ($_attachments as $_att) {
             array_push($attachments['lead'], $_att);
         }
@@ -1196,14 +1048,14 @@ function get_all_customer_attachments($id)
 
     $CI->db->select('ticketid,userid');
     $CI->db->where('userid', $id);
-    $CI->db->from('tbltickets');
+    $CI->db->from(db_prefix() . 'tickets');
     $tickets = $CI->db->get()->result_array();
 
     $ids = array_column($tickets, 'ticketid');
 
     if (count($ids) > 0) {
         $CI->db->where_in('ticketid', $ids);
-        $_attachments = $CI->db->get('tblticketattachments')->result_array();
+        $_attachments = $CI->db->get(db_prefix() . 'ticket_attachments')->result_array();
 
         foreach ($_attachments as $_att) {
             array_push($attachments['ticket'], $_att);
@@ -1211,15 +1063,16 @@ function get_all_customer_attachments($id)
     }
 
     $has_permission_tasks_view = has_permission('tasks', '', 'view');
+    $noPermissionQuery = get_tasks_where_string(false);
     $CI->db->select('rel_id, id');
     $CI->db->where('rel_id', $id);
     $CI->db->where('rel_type', 'customer');
 
     if (!$has_permission_tasks_view) {
-        $CI->db->where(get_tasks_where_string(false));
+        $CI->db->where($noPermissionQuery);
     }
 
-    $CI->db->from('tblstafftasks');
+    $CI->db->from(db_prefix() . 'tasks');
     $tasks = $CI->db->get()->result_array();
 
     $ids = array_column($tasks, 'ticketid');
@@ -1227,7 +1080,7 @@ function get_all_customer_attachments($id)
         $CI->db->where_in('rel_id', $ids);
         $CI->db->where('rel_type', 'task');
 
-        $_attachments = $CI->db->get('tblfiles')->result_array();
+        $_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
 
         foreach ($_attachments as $_att) {
             array_push($attachments['task'], $_att);
@@ -1236,16 +1089,12 @@ function get_all_customer_attachments($id)
 
     $CI->db->where('rel_id', $id);
     $CI->db->where('rel_type', 'customer');
-    $client_main_attachments = $CI->db->get('tblfiles')->result_array();
+    $client_main_attachments = $CI->db->get(db_prefix() . 'files')->result_array();
 
     $attachments['customer'] = $client_main_attachments;
 
-    return $attachments;
+    return hooks()->apply_filters('all_client_attachments', $attachments, $id);
 }
-
-
-
-add_action('check_vault_entries_visibility', '_check_vault_entries_visibility');
 
 /**
  * Used in customer profile vaults feature to determine if the vault should be shown for staff
@@ -1265,9 +1114,27 @@ function _check_vault_entries_visibility($entries)
         }
         $new[] = $entry;
     }
+
     if (count($new) == 0) {
         $new = -1;
     }
 
     return $new;
+}
+/**
+ * Default SQL select for selecting the company
+ * @return string
+ */
+function get_sql_select_client_company()
+{
+    return 'CASE company WHEN "" THEN (SELECT CONCAT(firstname, " ", lastname) FROM ' . db_prefix() . 'contacts WHERE userid = ' . db_prefix() . 'clients.userid and is_primary = 1) ELSE company END as company';
+}
+
+function can_logged_in_contact_change_language()
+{
+    if (!isset($GLOBALS['contact'])) {
+        return false;
+    }
+
+    return $GLOBALS['contact']->is_primary == '1' && get_option('disable_language') == 0;
 }

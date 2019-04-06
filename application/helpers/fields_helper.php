@@ -1,4 +1,5 @@
 <?php
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
@@ -434,7 +435,7 @@ if (!function_exists('render_form_builder_field')) {
                 $classNames = explode(' ', $field->className);
                 if (is_array($classNames)) {
                     $classNameColArray = array_filter($classNames, function ($class) {
-                        return _startsWith($class, 'form-col');
+                        return startsWith($class, 'form-col');
                     });
 
                     $classNameCol = implode(' ', $classNameColArray);
