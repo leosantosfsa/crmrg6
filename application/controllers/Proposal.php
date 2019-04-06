@@ -2,9 +2,8 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Proposal extends Clients_controller
+class Proposal extends ClientsController
 {
-
     public function index($id, $hash)
     {
         check_proposal_restrictions($id, $hash);
@@ -55,7 +54,7 @@ class Proposal extends Clients_controller
                         process_digital_signature_image($this->input->post('signature', false), PROPOSAL_ATTACHMENTS_FOLDER . $id);
 
                         $this->db->where('id', $id);
-                        $this->db->update('tblproposals', get_acceptance_info_array());
+                        $this->db->update(db_prefix().'proposals', get_acceptance_info_array());
                         redirect($this->uri->uri_string(), 'refresh');
                     }
 
@@ -74,15 +73,15 @@ class Proposal extends Clients_controller
         if ($proposal->rel_type == 'customer') {
             $number_word_lang_rel_id = $proposal->rel_id;
         }
-        $this->load->library('numberword', [
+        $this->load->library('app_number_to_word', [
             'clientid' => $number_word_lang_rel_id,
-        ]);
+        ],'numberword');
 
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
+        $this->disableNavigation();
+        $this->disableSubMenu();
 
         $data['title']     = $proposal->subject;
-        $data['proposal']  = do_action('proposal_html_pdf_data', $proposal);
+        $data['proposal']  = hooks()->apply_filters('proposal_html_pdf_data', $proposal);
         $data['bodyclass'] = 'proposal proposal-view';
 
         $data['identity_confirmation_enabled'] = $identity_confirmation_enabled;
@@ -90,14 +89,16 @@ class Proposal extends Clients_controller
             $data['bodyclass'] .= ' identity-confirmation';
         }
 
+        $this->app_scripts->theme('sticky-js','assets/plugins/sticky/sticky.js');
+
         $data['comments'] = $this->proposals_model->get_comments($id);
         add_views_tracking('proposal', $id);
-        do_action('proposal_html_viewed', $id);
+        hooks()->do_action('proposal_html_viewed', $id);
         $this->app_css->remove('reset-css','customers-area-default');
-        $data                      = do_action('proposal_customers_area_view_data', $data);
+        $data                      = hooks()->apply_filters('proposal_customers_area_view_data', $data);
         no_index_customers_area();
-        $this->data = $data;
-        $this->view = 'viewproposal';
+        $this->data($data);
+        $this->view('viewproposal');
         $this->layout();
     }
 }

@@ -1,7 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-class Paymentmodes extends Admin_controller
+
+class Paymentmodes extends AdminController
 {
     public function __construct()
     {

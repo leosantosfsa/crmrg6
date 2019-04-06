@@ -2,13 +2,8 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Mollie extends CRM_Controller
+class Mollie extends App_Controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function verify_payment()
     {
         $invoiceid = $this->input->get('invoiceid');
@@ -16,7 +11,7 @@ class Mollie extends CRM_Controller
         check_invoice_restrictions($invoiceid, $hash);
 
         $this->db->where('id', $invoiceid);
-        $invoice = $this->db->get('tblinvoices')->row();
+        $invoice = $this->db->get(db_prefix().'invoices')->row();
 
         $oResponse = $this->mollie_gateway->fetch_payment([
             'transaction_id' => $invoice->token,
@@ -50,7 +45,7 @@ class Mollie extends CRM_Controller
 
         if ($oResponse->isSuccessful()) {
             $data = $oResponse->getData();
-            logActivity(var_export($data, true));
+
             // When key is not passed is checked at the top with the ip range
             if (!$key || $data['metadata']['webhookKey'] == $key) {
                 if ($data['status'] == 'paid') {
@@ -68,19 +63,19 @@ class Mollie extends CRM_Controller
                     if ($data['status'] == 'refunded') {
                         $this->db->where('transactionid', $trans_id);
                         $this->db->where('invoiceid', $data['metadata']['order_id']);
-                        $payment = $this->db->get('tblinvoicepaymentrecords')->row();
+                        $payment = $this->db->get(db_prefix().'invoicepaymentrecords')->row();
 
                         if ($data['amountRemaining'] == 0) {
                             $this->db->where('id', $payment->id);
-                            $this->db->delete('tblinvoicepaymentrecords');
+                            $this->db->delete(db_prefix().'invoicepaymentrecords');
                         } else {
                             $this->db->where('id', $payment->id);
-                            $this->db->update('tblinvoicepaymentrecords', ['amount' => $data['amountRemaining']]);
+                            $this->db->update(db_prefix().'invoicepaymentrecords', ['amount' => $data['amountRemaining']]);
                         }
                     } else {
                         $this->db->where('invoiceid', $data['metadata']['order_id']);
                         $this->db->where('transactionid', $trans_id);
-                        $this->db->delete('tblinvoicepaymentrecords');
+                        $this->db->delete(db_prefix().'invoicepaymentrecords');
                     }
 
                     update_invoice_status($data['metadata']['order_id']);

@@ -1,7 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-class Custom_fields extends Admin_controller
+
+class Custom_fields extends AdminController
 {
     private $pdf_fields = [];
 
@@ -79,7 +80,7 @@ class Custom_fields extends Admin_controller
         redirect(admin_url('custom_fields'));
     }
 
-    /* Change survey status active or inactive*/
+    /* Change custom field status active or inactive */
     public function change_custom_field_status($id, $status)
     {
         if ($this->input->is_ajax_request()) {

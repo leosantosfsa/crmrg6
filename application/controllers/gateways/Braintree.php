@@ -2,13 +2,8 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Braintree extends CRM_Controller
+class Braintree extends App_Controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function complete_purchase($invoice_id, $invoice_hash)
     {
         if ($this->input->post()) {
@@ -68,18 +63,14 @@ class Braintree extends CRM_Controller
         <div class="row">
           <div class="panel_s">
             <div class="panel-body">
-             <h4 class="no-margin">
-              <?php echo _l('payment_for_invoice'); ?>
+             <h3 class="no-margin">
+              <b><?php echo _l('payment_for_invoice'); ?></b>
               <a href="<?php echo site_url('invoice/' . $data['invoice']->id . '/' . $data['invoice']->hash); ?>">
-              <?php echo format_invoice_number($data['invoice']->id); ?>
+                <b><?php echo format_invoice_number($data['invoice']->id); ?></b>
               </a>
-            </h4>
+            </h3>
+            <h4><?php echo _l('payment_total', app_format_money($data['total'], $data['invoice']->currency_name)); ?></h4>
             <hr />
-            <p>
-              <span class="bold">
-                <?php echo _l('payment_total', format_money($data['total'], $data['invoice']->symbol)); ?>
-              </span>
-            </p>
               <div class="bt-drop-in-wrapper">
                   <div id="bt-dropin"></div>
               </div>

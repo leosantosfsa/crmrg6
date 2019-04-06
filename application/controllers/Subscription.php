@@ -2,9 +2,8 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Subscription extends Clients_controller
+class Subscription extends ClientsController
 {
-
     public function index($hash)
     {
         $this->load->model('subscriptions_model');
@@ -42,22 +41,23 @@ class Subscription extends Clients_controller
         $upcomingInvoice->lines->data = [];
 
         $upcomingInvoice->lines->data[] = [
-            'description' => $product->name . ' (' . format_money($plan->amount / 100, strtoupper($subscription->symbol)) . ' / ' . $plan->interval . ')',
+            'description' => $product->name . ' (' . app_format_money(strcasecmp($plan->currency, 'JPY') == 0 ? $plan->amount : $plan->amount / 100, strtoupper($subscription->currency_name)) . ' / ' . $plan->interval . ')',
             'amount'      => $plan->amount * $subscription->quantity,
             'quantity'    => $subscription->quantity,
         ];
 
-        $this->use_navigation   = false;
-        $this->use_submenu      = false;
+        $this->disableNavigation();
+        $this->disableSubMenu();
         $data['child_invoices'] = $this->subscriptions_model->get_child_invoices($subscription->id);
         $data['invoice']        = subscription_invoice_preview_data($subscription, $upcomingInvoice);
+        $this->app_scripts->theme('sticky-js','assets/plugins/sticky/sticky.js');
         $data['plan']           = $plan;
         $data['subscription']   = $subscription;
         $data['title']          = $subscription->name;
         $data['hash']           = $hash;
         $data['bodyclass']      = 'subscriptionhtml';
-        $this->data             = $data;
-        $this->view             = 'subscriptionhtml';
+        $this->data($data);
+        $this->view('subscriptionhtml');
         $this->layout();
     }
 
@@ -87,7 +87,7 @@ class Subscription extends Clients_controller
                 $stripe_customer_id = $customer->id;
 
                 $this->db->where('userid', $subscription->clientid);
-                $this->db->update('tblclients', [
+                $this->db->update(db_prefix().'clients', [
                     'stripe_id' => $stripe_customer_id,
                 ]);
             } catch (Exception $e) {
@@ -159,6 +159,8 @@ class Subscription extends Clients_controller
             $this->subscriptions_model->update($subscription->id, $update);
 
             send_email_customer_subscribed_to_subscription_to_staff($subscription);
+
+            hooks()->do_action('customer_subscribed_to_subscription', $subscription);
 
             set_alert('success', _l('customer_successfully_subscribed_to_subscription', $subscription->name));
         } catch (Exception $e) {
