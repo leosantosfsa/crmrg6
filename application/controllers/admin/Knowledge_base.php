@@ -1,8 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-
-class Knowledge_base extends AdminController
+class Knowledge_base extends Admin_controller
 {
     public function __construct()
     {
@@ -62,8 +61,6 @@ class Knowledge_base extends AdminController
             $data['article'] = $article;
             $title           = _l('edit', _l('kb_article')) . ' ' . $article->subject;
         }
-
-        $this->app_scripts->add('tinymce-stickytoolbar',site_url('assets/plugins/tinymce-stickytoolbar/stickytoolbar.js'));
         $data['bodyclass'] = 'kb-article';
         $data['title']     = $title;
         $this->load->view('admin/knowledge_base/article', $data);

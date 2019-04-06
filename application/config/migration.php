@@ -42,7 +42,7 @@ $config['migration_type'] = 'sequential';
 | will migrate up. This must be set.
 |
 */
-$config['migration_table'] = 'migrations';
+$config['migration_table'] = 'tblmigrations';
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +68,7 @@ $config['migration_auto_latest'] = FALSE;
 | be upgraded / downgraded to.
 |
 */
-$config['migration_version'] = 233; // 2.3.3
+$config['migration_version'] = 220; // 2.2.0
 
 /*
 |--------------------------------------------------------------------------

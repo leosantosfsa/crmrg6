@@ -1,10 +1,16 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Stripe extends App_Controller
+class Stripe extends CRM_Controller
 {
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     public function complete_purchase($id, $hash)
     {
+
         check_invoice_restrictions($id, $hash);
 
         if ($this->input->post()) {
@@ -26,10 +32,9 @@ class Stripe extends App_Controller
             try {
                 $charge        = $this->stripe_gateway->finish_payment($data);
                 $transactionid = $charge->id;
-
                 $success         = $this->stripe_gateway->addPayment(
                     [
-                      'amount'        => (strcasecmp($data['currency'], 'JPY') == 0 ? $charge->amount : $charge->amount / 100),
+                      'amount'        => ($charge->amount / 100),
                       'invoiceid'     => $invoice->id,
                       'transactionid' => $transactionid,
                       ]
@@ -80,16 +85,18 @@ class Stripe extends App_Controller
                     <div class="row">
                         <div class="panel_s">
                             <div class="panel-body">
-                               <h3 class="no-margin">
-                                  <b><?php echo _l('payment_for_invoice'); ?></b>
+                               <h4 class="no-margin">
+                                  <?php echo _l('payment_for_invoice'); ?>
                                   <a href="<?php echo site_url('invoice/' . $data['invoice']->id . '/' . $data['invoice']->hash); ?>">
-                                    <b>
-                                        <?php echo format_invoice_number($data['invoice']->id); ?>
-                                    </b>
+                                  <?php echo format_invoice_number($data['invoice']->id); ?>
                                   </a>
-                              </h3>
-                              <h4><?php echo _l('payment_total', app_format_money($data['total'], $data['invoice']->currency_name)); ?></h4>
+                              </h4>
                               <hr />
+                              <p>
+                                  <span class="bold">
+                                    <?php echo _l('payment_total', format_money($data['total'], $data['invoice']->symbol)); ?>
+                                  </span>
+                              </p>
                               <?php
                              if(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source)) {
                                     echo form_open(site_url('gateways/stripe/complete_purchase/'.$data['invoice']->id.'/'. $data['invoice']->hash));
@@ -104,7 +111,7 @@ class Stripe extends App_Controller
                                 src="https://checkout.stripe.com/checkout.js" class="stripe-button"
                                 data-label="'.(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source) ? _l('enter_new_card') : _l('pay_with_card')).'"
                                 data-key="' . $this->stripe_gateway->getSetting('api_publishable_key') . '"
-                                data-amount="' . (strcasecmp($data['invoice']->currency_name, 'JPY') == 0 ? $data['total'] : $data['total'] * 100) . '"
+                                data-amount="' . ($data['total'] * 100) . '"
                                 data-name="' . get_option('companyname') . '"
                                 data-billing-address="true"
                                 data-description=" ' . _l('payment_for_invoice') . ' ' . format_invoice_number($data['invoice']->id) . '";
@@ -161,7 +168,7 @@ class Stripe extends App_Controller
                 }
 
                 $this->db->select('email')
-                ->from(db_prefix().'staff')
+                ->from('tblstaff')
                 ->where('staffid', $subscription->created_from);
                 $staff = $this->db->get()->row();
                 $cc    = '';
@@ -189,7 +196,7 @@ class Stripe extends App_Controller
 
                         if ($id) {
                             $this->db->where('id', $id);
-                            $this->db->update(db_prefix().'invoices', [
+                            $this->db->update('tblinvoices', [
                                 'addedfrom' => $subscription->created_from,
                             ]);
 
@@ -205,9 +212,9 @@ class Stripe extends App_Controller
                         }
                     }
                 } elseif ($input['type'] == 'invoice.payment_failed') {
-                    $this->subscriptions_model->send_email_template($subscription->id, $cc, 'subscription_payment_failed_to_customer');
+                    $this->subscriptions_model->send_email_template($subscription->id, $cc, 'subscription-payment-failed');
                 } elseif ($input['type'] == 'customer.subscription.deleted') {
-                    $this->subscriptions_model->send_email_template($subscription->id, $cc, 'subscription_cancelled_to_customer');
+                    $this->subscriptions_model->send_email_template($subscription->id, $cc, 'subscription-canceled');
                     $this->subscriptions_model->update($subscription->id, ['status' => $input['data']['object']['status'], 'next_billing_cycle' => null]);
                 } elseif ($input['type'] == 'customer.subscription.updated') {
 
@@ -222,7 +229,7 @@ class Stripe extends App_Controller
                         $update['tax_id'] = 0;
                     } else if($subscription->tax_percent != $input['data']['object']['tax_percent']) {
                         $this->db->where('taxrate', number_format($input['data']['object']['tax_percent'], get_decimal_places(), '.', ''));
-                        $dbTax = $this->db->get(db_prefix().'taxes')->row();
+                        $dbTax = $this->db->get('tbltaxes')->row();
                         if($dbTax) {
                             $update['tax_id'] = $dbTax->id;
                         }

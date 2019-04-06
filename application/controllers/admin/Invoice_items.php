@@ -1,8 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-
-class Invoice_items extends AdminController
+class Invoice_items extends Admin_controller
 {
     private $not_importable_fields = ['id'];
 
@@ -57,7 +56,7 @@ class Invoice_items extends AdminController
                     $message = '';
                     if ($id) {
                         $success = true;
-                        $message = _l('added_successfully', _l('sales_item'));
+                        $message = _l('added_successfully', _l('invoice_item'));
                     }
                     echo json_encode([
                         'success' => $success,
@@ -73,7 +72,7 @@ class Invoice_items extends AdminController
                     $success = $this->invoice_items_model->edit($data);
                     $message = '';
                     if ($success) {
-                        $message = _l('updated_successfully', _l('sales_item'));
+                        $message = _l('updated_successfully', _l('invoice_item'));
                     }
                     echo json_encode([
                         'success' => $success,
@@ -92,7 +91,7 @@ class Invoice_items extends AdminController
 
         $this->load->library('import/import_items', [], 'import');
 
-        $this->import->setDatabaseFields($this->db->list_fields(db_prefix().'items'))
+        $this->import->setDatabaseFields($this->db->list_fields('tblitems'))
                      ->setCustomFields(get_custom_fields('items'));
 
         if ($this->input->post('download_sample') === 'true') {
@@ -167,7 +166,7 @@ class Invoice_items extends AdminController
 
     public function bulk_action()
     {
-        hooks()->do_action('before_do_bulk_action_for_items');
+        do_action('before_do_bulk_action_for_items');
         $total_deleted = 0;
         if ($this->input->post()) {
             $ids                   = $this->input->post('ids');
