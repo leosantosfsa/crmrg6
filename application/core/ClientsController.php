@@ -20,6 +20,15 @@ class ClientsController extends App_Controller
     {
         parent::__construct();
 
+        /**
+         * If database upgrade is required, redirect the user to the admin uri because there the upgrade is performed
+         * This code can prevent confusions when there are errors thrown on the client side because the database is not updated yet.
+         */
+        if (is_staff_logged_in()
+            && $this->app->is_db_upgrade_required($this->current_db_version)) {
+            redirect(admin_url());
+        }
+
         $this->load->library('app_clients_area_constructor');
 
         if (method_exists($this, 'validateContact')) {

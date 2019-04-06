@@ -261,7 +261,7 @@
                   </h4>
                   <hr />
                   <h4>
-                     <b><a href="https://clck.ru/EFSmf" target="_blank">FREE 4 ALL</a></b>
+                     <b>Looking For Help? - <a href="https://support.perfexcrm.com/" target="_blank">Open Support Ticket</a></b>
                   </h4>
                   <?php } ?>
                </div>

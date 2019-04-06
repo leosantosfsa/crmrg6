@@ -6,6 +6,9 @@ use app\services\ValidatesContact;
 
 class Clients extends ClientsController
 {
+    /**
+     * @since  2.3.3
+     */
     use ValidatesContact;
 
     public function __construct()
@@ -345,27 +348,28 @@ class Clients extends ClientsController
                     }
                 }
                 $total_tasks = total_rows(db_prefix() . 'tasks', [
-            'rel_id'            => $id,
-            'rel_type'          => 'project',
-            'visible_to_client' => 1,
-        ]);
+                    'rel_id'            => $id,
+                    'rel_type'          => 'project',
+                    'visible_to_client' => 1,
+                ]);
                 $total_tasks = hooks()->apply_filters('client_project_total_tasks', $total_tasks, $id);
 
                 $data['tasks_not_completed'] = total_rows(db_prefix() . 'tasks', [
-            'status !='         => 5,
-            'rel_id'            => $id,
-            'rel_type'          => 'project',
-            'visible_to_client' => 1,
-        ]);
-                $total_tasks = hooks()->apply_filters('client_project_tasks_not_completed', $data['tasks_not_completed'], $id);
+                'status !='         => 5,
+                'rel_id'            => $id,
+                'rel_type'          => 'project',
+                'visible_to_client' => 1,
+            ]);
+
+                $data['tasks_not_completed'] = hooks()->apply_filters('client_project_tasks_not_completed', $data['tasks_not_completed'], $id);
 
                 $data['tasks_completed'] = total_rows(db_prefix() . 'tasks', [
-            'status'            => 5,
-            'rel_id'            => $id,
-            'rel_type'          => 'project',
-            'visible_to_client' => 1,
-        ]);
-                $total_tasks = hooks()->apply_filters('client_project_tasks_completed', $data['tasks_completed'], $id);
+                'status'            => 5,
+                'rel_id'            => $id,
+                'rel_type'          => 'project',
+                'visible_to_client' => 1,
+            ]);
+                $data['tasks_completed'] = hooks()->apply_filters('client_project_tasks_completed', $data['tasks_completed'], $id);
 
                 $data['total_tasks']                  = $total_tasks;
                 $data['tasks_not_completed_progress'] = ($total_tasks > 0 ? number_format(($data['tasks_completed'] * 100) / $total_tasks, 2) : 0);

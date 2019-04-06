@@ -10,12 +10,15 @@ class Stripe_core
 
     protected $publishableKey;
 
+    protected $apiVersion = '2019-02-19';
+
     public function __construct()
     {
         $this->ci             = &get_instance();
         $this->secretKey      = $this->ci->stripe_gateway->decryptSetting('api_secret_key');
         $this->publishableKey = $this->ci->stripe_gateway->getSetting('api_publishable_key');
 
+        \Stripe\Stripe::setApiVersion($this->apiVersion);
         \Stripe\Stripe::setApiKey($this->secretKey);
     }
 
@@ -41,9 +44,19 @@ class Stripe_core
         return \Stripe\Customer::retrieve(['id' => $id, 'expand' => ['default_source']]);
     }
 
-    public function charge($data)
+    public function create_charge($data)
     {
         return \Stripe\Charge::create($data);
+    }
+
+    public function create_source($data)
+    {
+        return \Stripe\Source::create($data);
+    }
+
+    public function get_source($source)
+    {
+        return \Stripe\Source::retrieve($source);
     }
 
     public function get_publishable_key()

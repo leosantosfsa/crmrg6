@@ -811,7 +811,9 @@ function get_datatable_buttons(table) {
             if (data) {
                 // 300,00 becomes 300.00 because excel does not support decimal as coma
                 var regexFixExcelExport = new RegExp("([0-9]{1,3})(,)([0-9]{" + app.options.decimal_places + ',' + app.options.decimal_places + "})", "gm");
-                var found = data.matchAll(regexFixExcelExport);
+                // Convert to string because matchAll won't work on integers in case datatables convert the text to integer
+                var _stringData = data.toString();
+                var found = _stringData.matchAll(regexFixExcelExport);
                 if (found) {
                     data = data.replace(regexFixExcelExport, "$1.$3");
                 }

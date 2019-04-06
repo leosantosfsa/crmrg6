@@ -77,7 +77,7 @@ class App
 
         $this->init();
 
-        do_action('app_base_after_construct_action');
+        hooks()->do_action('app_base_after_construct_action');
     }
 
     /**
@@ -107,7 +107,7 @@ class App
     {
         $this->ci->db->limit(1);
 
-        return $this->ci->db->get('tblmigrations')->row()->version;
+        return $this->ci->db->get(db_prefix() . 'migrations')->row()->version;
     }
 
     /**
@@ -154,6 +154,8 @@ class App
             CURLOPT_POSTFIELDS     => [
                 'update_info'     => 'true',
                 'current_version' => $this->get_current_db_version(),
+                'php_version'     => PHP_VERSION,
+                'purchase_key'    => get_option('purchase_key'),
             ],
         ]);
 
@@ -179,9 +181,7 @@ class App
      */
     public function get_available_languages()
     {
-        $languages = $this->available_languages;
-
-        return do_action('before_get_languages', $languages);
+        return hooks()->apply_filters('before_get_languages', $this->available_languages);
     }
 
     /**
@@ -192,23 +192,26 @@ class App
      */
     public function get_table_data($table, $params = [])
     {
-        $hook_data = do_action('before_render_table_data', [
-            'table'  => $table,
-            'params' => $params,
-        ]);
+        $params = hooks()->apply_filters('table_params', $params, $table);
 
-        foreach ($hook_data['params'] as $key => $val) {
+        foreach ($params as $key => $val) {
             $$key = $val;
         }
 
-        $table = $hook_data['table'];
-
         $customFieldsColumns = [];
 
-        $path = VIEWPATH . 'admin/tables/' . $table . '.php';
+        $path = VIEWPATH . 'admin/tables/' . $table . EXT;
 
-        if (file_exists(VIEWPATH . 'admin/tables/my_' . $table . '.php')) {
-            $path = VIEWPATH . 'admin/tables/my_' . $table . '.php';
+        if (!file_exists($path)) {
+            $path = $table;
+            if (!endsWith($path, EXT)) {
+                $path .= EXT;
+            }
+        } else {
+            $myPrefixedPath = VIEWPATH . 'admin/tables/my_' . $table . EXT;
+            if (file_exists($myPrefixedPath)) {
+                $path = $myPrefixedPath;
+            }
         }
 
         include_once($path);
@@ -253,7 +256,7 @@ class App
             // is not auto loaded
             $this->ci->db->select('value');
             $this->ci->db->where('name', $name);
-            $row = $this->ci->db->get('tbloptions')->row();
+            $row = $this->ci->db->get(db_prefix() . 'options')->row();
             if ($row) {
                 $val = $row->value;
             }
@@ -261,9 +264,7 @@ class App
             $val = $this->options[$name];
         }
 
-        $hook_data = do_action('get_option', ['name' => $name, 'value' => $val]);
-
-        return $hook_data['value'];
+        return hooks()->apply_filters('get_option', $val, $name);
     }
 
     /**
@@ -272,18 +273,20 @@ class App
      */
     public function add_quick_actions_link($item = [])
     {
+        if (!isset($item['position'])) {
+            $item['position'] = null;
+        }
+
         $this->quick_actions[] = $item;
     }
 
     /**
-     * Quick actions data set from admin_controller.php
+     * Quick actions data set from core/AdminController.php
      * @return array
      */
     public function get_quick_actions_links()
     {
-        $this->quick_actions = do_action('before_build_quick_actions_links', $this->quick_actions);
-
-        return $this->quick_actions;
+        return hooks()->apply_filters('quick_actions_links', app_sort_by_position($this->quick_actions));
     }
 
     /**
@@ -301,7 +304,7 @@ class App
      */
     public function show_setup_menu()
     {
-        return do_action('show_setup_menu', $this->show_setup_menu);
+        return hooks()->apply_filters('show_setup_menu', $this->show_setup_menu);
     }
 
     /**
@@ -310,7 +313,7 @@ class App
      */
     public function get_tables_with_currency()
     {
-        return do_action('tables_with_currency', $this->tables_with_currency);
+        return hooks()->apply_filters('tables_with_currency', $this->tables_with_currency);
     }
 
     /**
@@ -319,7 +322,7 @@ class App
      */
     public function get_media_folder()
     {
-        return do_action('get_media_folder', $this->media_folder);
+        return hooks()->apply_filters('get_media_folder', $this->media_folder);
     }
 
     /**
@@ -331,26 +334,32 @@ class App
         $this->ci->load->config('migration');
 
         $beforeUpdateVersion = $this->get_current_db_version();
+        $updateToVersion     = $this->ci->config->item('migration_version');
 
         $this->ci->load->library('migration', [
             'migration_enabled'     => true,
             'migration_type'        => $this->ci->config->item('migration_type'),
             'migration_table'       => $this->ci->config->item('migration_table'),
             'migration_auto_latest' => $this->ci->config->item('migration_auto_latest'),
-            'migration_version'     => $this->ci->config->item('migration_version'),
+            'migration_version'     => $updateToVersion,
             'migration_path'        => $this->ci->config->item('migration_path'),
         ]);
+
+        hooks()->do_action('before_update_database', $updateToVersion);
+        define('DOING_DATABASE_UPGRADE', true);
         if ($this->ci->migration->current() === false) {
             return [
                 'success' => false,
                 'message' => $this->ci->migration->error_string(),
             ];
         }
-        update_option('upgraded_from_version', $beforeUpdateVersion);
 
-        return [
-                'success' => true,
-            ];
+        delete_option('upgraded_from_version');
+        add_option('upgraded_from_version', $beforeUpdateVersion);
+
+        hooks()->do_action('database_updated', $updateToVersion);
+
+        return ['success' => true];
     }
 
     /**
@@ -359,13 +368,13 @@ class App
     protected function init()
     {
         // Temporary checking for v1.8.0
-        if ($this->ci->db->field_exists('autoload', 'tbloptions')) {
+        if ($this->ci->db->field_exists('autoload', db_prefix() . 'options')) {
             $options = $this->ci->db->select('name, value')
             ->where('autoload', 1)
-            ->get('tbloptions')->result_array();
+            ->get(db_prefix() . 'options')->result_array();
         } else {
             $options = $this->ci->db->select('name, value')
-            ->get('tbloptions')->result_array();
+            ->get(db_prefix() . 'options')->result_array();
         }
 
         // Loop the options and store them in a array to prevent fetching again and again from database
@@ -386,7 +395,7 @@ class App
          * Media folder
          * @var string
          */
-        $this->media_folder = do_action('before_set_media_folder', 'media');
+        $this->media_folder = hooks()->apply_filters('before_set_media_folder', 'media');
 
         /**
          * Tables with currency
@@ -394,31 +403,31 @@ class App
          */
         $this->tables_with_currency = [
             [
-                'table' => 'tblinvoices',
+                'table' => db_prefix() . 'invoices',
                 'field' => 'currency',
             ],
             [
-                'table' => 'tblexpenses',
+                'table' => db_prefix() . 'expenses',
                 'field' => 'currency',
             ],
             [
-                'table' => 'tblproposals',
+                'table' => db_prefix() . 'proposals',
                 'field' => 'currency',
             ],
             [
-                'table' => 'tblestimates',
+                'table' => db_prefix() . 'estimates',
                 'field' => 'currency',
             ],
             [
-                'table' => 'tblclients',
+                'table' => db_prefix() . 'clients',
                 'field' => 'default_currency',
             ],
             [
-                'table' => 'tblcreditnotes',
+                'table' => db_prefix() . 'creditnotes',
                 'field' => 'currency',
             ],
             [
-                'table' => 'tblsubscriptions',
+                'table' => db_prefix() . 'subscriptions',
                 'field' => 'currency',
             ],
         ];

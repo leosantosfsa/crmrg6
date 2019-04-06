@@ -52,6 +52,7 @@ function core_merge_fields($fields)
     $fields[] = 'merge_fields/proposals_merge_fields';
     $fields[] = 'merge_fields/leads_merge_fields';
     $fields[] = 'merge_fields/projects_merge_fields';
+    $fields[] = 'merge_fields/event_merge_fields';
     $fields[] = 'merge_fields/other_merge_fields';
 
     return $fields;

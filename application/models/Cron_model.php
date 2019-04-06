@@ -101,7 +101,6 @@ class Cron_model extends App_Model
         $notified_users            = [];
         $notificationNotifiedUsers = [];
         $all_notified_events       = [];
-
         foreach ($events as $event) {
             $date_compare = date('Y-m-d H:i:s', strtotime('+' . $event['reminder_before'] . ' ' . strtoupper($event['reminder_before_type'])));
 
@@ -116,68 +115,61 @@ class Cron_model extends App_Model
                         'description'     => 'not_event',
                         'touserid'        => $event['userid'],
                         'fromcompany'     => true,
-                        'link'            => '#eventid=' . $event['eventid'],
+                        'link'            => 'utilities/calendar?eventid=' . $event['eventid'],
                         'additional_data' => serialize([
                             $event['title'],
                         ]),
                     ]);
-                    $this->db->select('email');
-                    $this->db->where('staffid', $event['userid']);
-                    $email = $this->db->get(db_prefix() . 'staff')->row()->email;
-                    load_admin_language($event['userid']);
-                    $this->emails_model->send_simple_email($email, _l('not_event', $event['title'] . ' - ' . _d($event['start'])), $event['description'] . '<br /><br />' . get_option('email_signature'));
 
-                    if ($notified) {
-                        array_push($notificationNotifiedUsers, $event['userid']);
-                    }
+                    $staff = $this->staff_model->get($event['userid']);
+
+                    send_mail_template('staff_event_notification', array_to_object($event), $staff);
+                    array_push($notificationNotifiedUsers, $event['userid']);
                 }
             }
         }
-        load_admin_language();
-        // Show public events
+
+        // Public events
+        $notified_users = array_unique($notified_users);
 
         $this->db->where('public', 1);
-        if (count($notified_users) > 0) {
-            $this->db->where('userid NOT IN (' . implode(',', $notified_users) . ')');
-        }
+
         $this->db->where('isstartnotified', 0);
         $events = $this->db->get(db_prefix() . 'events')->result_array();
 
-        $staff = $this->staff_model->get('', ['active' => 1]);
+        $whereStaff = 'active=1 AND is_not_staff=0';
+        if (count($notified_users) > 0) {
+            $whereStaff .= ' AND staffid NOT IN (' . implode(',', $notified_users) . ')';
+        }
+
+        $staff = $this->staff_model->get('', $whereStaff);
 
         foreach ($staff as $member) {
-            if (is_staff_member($member['staffid'])) {
-                foreach ($events as $event) {
-                    $date_compare = date('Y-m-d H:i:s', strtotime('+' . $event['reminder_before'] . ' ' . strtoupper($event['reminder_before_type'])));
-                    if ($event['start'] <= $date_compare) {
-                        array_push($all_notified_events, $event['eventid']);
+            foreach ($events as $event) {
+                $date_compare = date('Y-m-d H:i:s', strtotime('+' . $event['reminder_before'] . ' ' . strtoupper($event['reminder_before_type'])));
+                if ($event['start'] <= $date_compare) {
+                    array_push($all_notified_events, $event['eventid']);
 
-                        $eventNotifications = hooks()->apply_filters('event_notifications', true);
+                    $eventNotifications = hooks()->apply_filters('event_notifications', true);
 
-                        if ($eventNotifications) {
-                            $notified = add_notification([
+                    if ($eventNotifications) {
+                        $notified = add_notification([
                                 'description'     => 'not_event_public',
                                 'touserid'        => $member['staffid'],
                                 'fromcompany'     => true,
-                                'link'            => '#eventid=' . $event['eventid'],
+                                'link'            => 'utilities/calendar?eventid=' . $event['eventid'],
                                 'additional_data' => serialize([
                                     $event['title'],
                                 ]),
                             ]);
+                        send_mail_template('staff_event_notification', array_to_object($event), array_to_object($member));
 
-                            load_admin_language($member['staffid']);
-
-                            $this->emails_model->send_simple_email($member['email'], _l('not_event', $event['title'] . ' - ' . _d($event['start'])), $event['description'] . '<br /><br />' . get_option('email_signature'));
-
-                            if ($notified) {
-                                array_push($notificationNotifiedUsers, $member['staffid']);
-                            }
-                        }
+                        array_push($notificationNotifiedUsers, $member['staffid']);
                     }
                 }
             }
         }
-        load_admin_language();
+
         foreach ($all_notified_events as $id) {
             $this->db->where('eventid', $id);
             $this->db->update(db_prefix() . 'events', [
@@ -1441,7 +1433,7 @@ class Cron_model extends App_Model
                 $data['fromname'] = preg_replace('/(.*)<(.*)>/', '\\1', $email['from']);
                 $data['fromname'] = trim(str_replace('"', '', $data['fromname']));
 
-                $data   = hooks()->apply_filters('imap_auto_import_ticket_data', $data, $email);
+                $data = hooks()->apply_filters('imap_auto_import_ticket_data', $data, $email);
 
                 $status = $this->tickets_model->insert_piped_ticket($data);
 

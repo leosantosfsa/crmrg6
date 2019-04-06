@@ -15,7 +15,7 @@ hooks()->add_action('after_cron_run', 'goals_notification');
 hooks()->add_action('admin_init', 'goals_module_init_menu_items');
 hooks()->add_action('staff_member_deleted', 'goals_staff_member_deleted');
 
-hooks()->add_filter('staff_permissions', 'goals_permissions');
+hooks()->add_filter('admin_init', 'goals_permissions');
 hooks()->add_filter('migration_tables_to_replace_old_links', 'goals_migration_tables_to_replace_old_links');
 hooks()->add_filter('global_search_result_query', 'goals_global_search_result_query', 10, 3);
 hooks()->add_filter('global_search_result_output', 'goals_global_search_result_output', 10, 2);
@@ -78,19 +78,18 @@ function goals_migration_tables_to_replace_old_links($tables)
     return $tables;
 }
 
-function goals_permissions($permissions)
+function goals_permissions()
 {
-    $permissions['goals'] = [
-       'name'          => _l('goals'),
-        'capabilities' => [
-            'view' => _l('permission_view') . '(' . _l('permission_global') . ')',
-            'create'   => _l('permission_create'),
-            'edit'     => _l('permission_edit'),
-            'delete'   => _l('permission_delete'),
-        ],
+    $capabilities = [];
+
+    $capabilities['capabilities'] = [
+            'view'   => _l('permission_view') . '(' . _l('permission_global') . ')',
+            'create' => _l('permission_create'),
+            'edit'   => _l('permission_edit'),
+            'delete' => _l('permission_delete'),
     ];
 
-    return $permissions;
+    register_staff_capabilities('goals', $capabilities, _l('goals'));
 }
 
 function goals_notification()

@@ -17,6 +17,7 @@ class App_Loader extends MX_Loader
         extract($_ci_data);
 
         // CUSTOM CODE
+
         if (isset($_ci_vars) && isset($_ci_view)) {
             $hook_data = hooks()->apply_filters('app_view_data', ['data' => $_ci_vars, 'path' => $_ci_view]);
 
@@ -33,20 +34,34 @@ class App_Loader extends MX_Loader
             $_ci_file = (pathinfo($_ci_view, PATHINFO_EXTENSION)) ? $_ci_view : $_ci_view . EXT;
 
             foreach ($this->_ci_view_paths as $path => $cascade) {
-                // CUSTOM CODE
-                $_view_file              = $path . $_ci_file;
-                $_my_view_file_temp_data = explode('/', $_view_file);
-                end($_my_view_file_temp_data);
-                $last_key     = key($_my_view_file_temp_data);
-                $my_view_name = 'my_' . $_my_view_file_temp_data[$last_key];
-                unset($_my_view_file_temp_data[$last_key]);
-                $_my_view_file = '';
-                foreach ($_my_view_file_temp_data as $_my_file) {
-                    $_my_view_file .= DIRECTORY_SEPARATOR . $_my_file;
-                }
-                $_my_view_file = substr($_my_view_file, 1);
 
-                if (file_exists($_my_view_file . DIRECTORY_SEPARATOR . $my_view_name)) {
+                // CUSTOM CODE
+                $_my_view_file = null;
+                $my_view_name  = '';
+                $_view_file    = $path . $_ci_file;
+
+                $module = CI::$APP->router->fetch_module();
+
+                if (is_null($module) || (!is_null($module) && module_supports($module, 'my_prefixed_view_files'))) {
+                    $_my_view_file_temp_data = explode('/', $_view_file);
+
+                    end($_my_view_file_temp_data);
+
+                    $last_key = key($_my_view_file_temp_data);
+
+                    $my_view_name = 'my_' . $_my_view_file_temp_data[$last_key];
+
+                    unset($_my_view_file_temp_data[$last_key]);
+
+                    foreach ($_my_view_file_temp_data as $_my_file) {
+                        $_my_view_file .= DIRECTORY_SEPARATOR . $_my_file;
+                    }
+
+                    $_my_view_file = substr($_my_view_file, 1);
+                }
+
+                if (!is_null($_my_view_file)
+                    && file_exists($_my_view_file . DIRECTORY_SEPARATOR . $my_view_name)) {
                     $_ci_path    = $_my_view_file . DIRECTORY_SEPARATOR . $my_view_name;
                     $file_exists = true;
 

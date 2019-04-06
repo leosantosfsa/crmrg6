@@ -77,11 +77,11 @@
                                  <label for="language" class="control-label"><i class="fa fa-question-circle" data-toggle="tooltip" data-title="<?php echo _l('form_lang_validation_help'); ?>"></i> <?php echo _l('form_lang_validation'); ?></label>
                                  <select name="language" id="language" class="form-control selectpicker" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
                                     <option value=""></option>
-                                    <?php foreach ($languages as $language) {
+                                    <?php foreach ($languages as $availableLanguage) {
                                      ?>
-                                    <option value="<?php echo $language; ?>"<?php if ((isset($form) && $form->language == $language) || (!isset($form) && get_option('active_language') == $language)) {
+                                    <option value="<?php echo $availableLanguage; ?>"<?php if ((isset($form) && $form->language == $availableLanguage) || (!isset($form) && get_option('active_language') == $availableLanguage)) {
                                          echo ' selected';
-                                     } ?>><?php echo ucfirst($language); ?></option>
+                                     } ?>><?php echo ucfirst($availableLanguage); ?></option>
                                     <?php } ?>
                                  </select>
                               </div>

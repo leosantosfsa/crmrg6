@@ -29,7 +29,7 @@ function get_available_staff_permissions($data = [])
 
     $withNotApplicableViewOwn = array_merge(['view_own' => ['not_applicable' => true, 'name' => _l('permission_view_own')]], $withoutViewOwnPermissionsArray);
 
-    $permissions = [
+    $corePermissions = [
         'bulk_pdf_exporter' => [
             'name'         => _l('bulk_pdf_exporter'),
             'capabilities' => [
@@ -148,7 +148,7 @@ function get_available_staff_permissions($data = [])
     }
 
     if ($addLeadsPermission) {
-        $permissions['leads'] = [
+        $corePermissions['leads'] = [
             'name'         => _l('leads'),
             'capabilities' => [
                 'view'   => $viewGlobalName,
@@ -160,7 +160,7 @@ function get_available_staff_permissions($data = [])
         ];
     }
 
-    return hooks()->apply_filters('staff_permissions', $permissions, $data);
+    return hooks()->apply_filters('staff_permissions', $corePermissions, $data);
 }
 /**
  * Get staff by ID or current logged in staff

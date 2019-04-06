@@ -167,3 +167,32 @@ function get_mail_template_path($class, &$params)
 
     return $dir . ucfirst($class) . '.php';
 }
+/**
+ * Create new email template
+ * @param  string  $subject the predefined email template subject
+ * @param  string  $message the predefined email template message
+ * @param  string  $type    for what feature this email template is related e.q. invoice|ticket
+ * @param  string  $name    the email template name which user see in Setup->Email Template, this is used for easier email template recognition
+ * @param  string  $slug    unique email template slug
+ * @param  integer $active  whether by default this email template is active
+ * @return mixed
+ */
+function create_email_template($subject, $message, $type, $name, $slug, $active = 1)
+{
+    if(total_rows('emailtemplates', ['slug'=>$slug]) > 0) {
+        return false;
+    }
+
+    $data['subject']   = $subject;
+    $data['message']   = $message;
+    $data['type']      = $type;
+    $data['name']      = $name;
+    $data['slug']      = $slug;
+    $data['language']  = 'english';
+    $data['active']    = $active;
+    $data['plaintext'] = 0;
+    $CI                = &get_instance();
+    $CI->load->model('emails_model');
+
+    return $CI->emails_model->add_template($data);
+}

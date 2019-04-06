@@ -170,6 +170,22 @@ if (!function_exists('ip_in_range')) {
     }
 }
 
+if (!function_exists('array_merge_recursive_distinct')) {
+    /**
+     * @since  2.3.4
+     *
+     * Array merge recursive distinct
+     *
+     * @param  array  &$array1
+     * @param  array  &$array2
+     * @return array
+     */
+    function array_merge_recursive_distinct(array &$array1, array &$array2)
+    {
+        return \app\services\utilities\Arr::merge_recursive_distinct($array1, $array2);
+    }
+}
+
 if (!function_exists('array_to_object')) {
     /**
      * Convert array to oobject

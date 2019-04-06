@@ -194,13 +194,7 @@
 				}
 			});
 
-		$('#new_ticket_form').appFormValidator();
-
-		setTimeout(function(){
-			$.each($('#new_ticket_form').find('[data-custom-field-required="1"]'), function () {
-				$(this).rules('add','required');
-			});
-		},10);
+		validate_new_ticket_form();
 
 		<?php if(isset($project_id) || isset($contact)){ ?>
 			$('body.ticket select[name="contactid"]').change();

@@ -4,7 +4,20 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Payment_modes_model extends App_Model
 {
+    /**
+     * @deprecated 2.3.4
+     * @see gateways
+     * @var array
+     */
     private $payment_gateways = [];
+
+    /**
+     * New variable because the app_payment_gateways hook is moved in the method get_payment_gateways and the gateways be duplicated
+     * After the deprecated filters are removed and access to $payment_gateways is removed, this should work fine.
+     * @since 2.3.4
+     * @var array
+     */
+    private $gateways = null;
 
     public function __construct()
     {
@@ -22,12 +35,6 @@ class Payment_modes_model extends App_Model
          * @var array
          */
         $this->payment_gateways = apply_filters_deprecated('before_add_payment_gateways', [$this->payment_gateways], '2.3.0', 'app_payment_gateways');
-
-        /**
-         * @since 2.3.2
-         * @var array
-         */
-        $this->payment_gateways = hooks()->apply_filters('app_payment_gateways', $this->payment_gateways);
     }
 
     /**
@@ -47,17 +54,22 @@ class Payment_modes_model extends App_Model
 
             return $this->db->get(db_prefix() . 'payment_modes')->row();
         } elseif (!empty($id)) {
-            foreach ($this->payment_gateways as $gateway) {
+            foreach ($this->get_payment_gateways(true) as $gateway) {
                 if ($gateway['id'] == $id) {
+
                     if ($gateway['active'] == 0 && $force == false) {
                         continue;
                     }
-                    $mode                      = new stdCLass();
-                    $mode->id                  = $id;
-                    $mode->name                = $gateway['name'];
-                    $mode->description         = $gateway['description'];
-                    $mode->selected_by_default = $gateway['selected_by_default'];
-                    $mode->show_on_pdf         = 0;
+
+                    // The instance is already object and array_to_object is messing up
+                    $instance = $gateway['instance'];
+                    unset($gateway['instance']);
+
+                    $mode = array_to_object($gateway);
+
+                    // Add again the instance
+                    $mode->instance    = $instance;
+                    $mode->show_on_pdf = 0;
 
                     return $mode;
                 }
@@ -65,9 +77,11 @@ class Payment_modes_model extends App_Model
 
             return false;
         }
+
         if ($include_inactive !== true) {
             $this->db->where('active', 1);
         }
+
         $modes = $this->db->get(db_prefix() . 'payment_modes')->result_array();
         $modes = array_merge($modes, $this->get_payment_gateways($include_inactive));
 
@@ -83,33 +97,9 @@ class Payment_modes_model extends App_Model
         if (isset($data['id'])) {
             unset($data['id']);
         }
-        if (!isset($data['active'])) {
-            $data['active'] = 0;
-        } else {
-            $data['active'] = 1;
-        }
 
-        if (!isset($data['invoices_only'])) {
-            $data['invoices_only'] = 0;
-        } else {
-            $data['invoices_only'] = 1;
-        }
-        if (!isset($data['expenses_only'])) {
-            $data['expenses_only'] = 0;
-        } else {
-            $data['expenses_only'] = 1;
-        }
-
-        if (!isset($data['show_on_pdf'])) {
-            $data['show_on_pdf'] = 0;
-        } else {
-            $data['show_on_pdf'] = 1;
-        }
-
-        if (!isset($data['selected_by_default'])) {
-            $data['selected_by_default'] = 0;
-        } else {
-            $data['selected_by_default'] = 1;
+        foreach (['active', 'show_on_pdf', 'selected_by_default', 'invoices_only', 'expenses_only'] as $check) {
+            $data[$check] = !isset($data[$check]) ? 0 : 1;
         }
 
         $this->db->insert(db_prefix() . 'payment_modes', [
@@ -139,37 +129,11 @@ class Payment_modes_model extends App_Model
     public function edit($data)
     {
         $id = $data['paymentmodeid'];
+
         unset($data['paymentmodeid']);
-        if (!isset($data['active'])) {
-            $data['active'] = 0;
-        } else {
-            $data['active'] = 1;
-        }
 
-
-        if (!isset($data['show_on_pdf'])) {
-            $data['show_on_pdf'] = 0;
-        } else {
-            $data['show_on_pdf'] = 1;
-        }
-
-
-        if (!isset($data['selected_by_default'])) {
-            $data['selected_by_default'] = 0;
-        } else {
-            $data['selected_by_default'] = 1;
-        }
-
-
-        if (!isset($data['invoices_only'])) {
-            $data['invoices_only'] = 0;
-        } else {
-            $data['invoices_only'] = 1;
-        }
-        if (!isset($data['expenses_only'])) {
-            $data['expenses_only'] = 0;
-        } else {
-            $data['expenses_only'] = 1;
+        foreach (['active', 'show_on_pdf', 'selected_by_default', 'invoices_only', 'expenses_only'] as $check) {
+            $data[$check] = !isset($data[$check]) ? 0 : 1;
         }
 
         $this->db->where('id', $id);
@@ -221,19 +185,42 @@ class Payment_modes_model extends App_Model
     /**
      * @since  2.3.0
      * Get payment gateways
-     * @param  boolean $include_inactive whether to include the inactive ones too
+     * @param  boolean $includeInactive whether to include the inactive ones too
      * @return array
      */
-    public function get_payment_gateways($include_inactive = false)
+    public function get_payment_gateways($includeInactive = false)
     {
+        if (is_null($this->gateways)) {
+
+            /**
+             * Used for autoloading the payment gateways in App_gateway
+             * @since  2.3.4
+             */
+            hooks()->do_action('before_get_payment_gateways');
+
+            /**
+              * Moved here in 2.3.4
+              * When remove $this->payment_gateways, change filter parameter below $this->payment_gateways to empty array ([])
+              * @since 2.3.2
+              * @var array
+            */
+            $this->gateways = hooks()->apply_filters('app_payment_gateways', $this->payment_gateways);
+        }
+
         $modes = [];
-        foreach ($this->payment_gateways as $mode) {
-            if ($include_inactive !== true) {
-                if ($mode['active'] == 0) {
-                    continue;
+        foreach ($this->gateways as $mode) {
+            if ($includeInactive !== true && $mode['active'] == 0) {
+                continue;
+            }
+
+            // The the gateways unique in case duplicate ID's are found.
+            if (!value_exists_in_array_by_key($modes, 'id', $mode['id'])) {
+                $modes[] = $mode;
+            } else {
+                if (ENVIRONMENT != 'production') {
+                    trigger_error(sprintf('Payment Gateway ID "%1$s" already exists, ignoring duplicate gateway ID...', $mode['id']));
                 }
             }
-            $modes[] = $mode;
         }
 
         return $modes;
@@ -301,12 +288,31 @@ class Payment_modes_model extends App_Model
      * @param string $gateway_name payment gateway name, should equal like the libraries/classname
      * @param string $module       module name to load the gateway if not already loaded
      */
-    public function add_payment_gateway($gateway_name, $module = null)
+    public function add_payment_gateway($gateway, $module = null)
     {
-        if (!class_exists($gateway_name, false) && $module) {
-            $this->load->library($module . '/' . $gateway_name);
+        if (is_string($gateway)) {
+            $gateway = strtolower($gateway);
+
+            // Perhaps is in subfolder e.q. gateways/Example_gateway?
+            $basename = basename($gateway);
+
+            if (!$this->load->is_loaded($basename) && $module) {
+                $this->load->library($module . '/' . $gateway);
+            }
+
+            $class = $this->{$basename};
+        } else {
+            // register_payment_gateway(new Example_gateway(), '[module_name]');
+            $class = $gateway;
+            $name  = get_class($class);
+
+            if (!$class instanceof App_gateway) {
+                throw new \Exception($name . ' must be an instance of "App_gateway"');
+            }
         }
 
-        $this->payment_gateways = $this->{$gateway_name}->initMode($this->payment_gateways);
+        if (hooks()->has_filter('app_payment_gateways', [ $class, 'initMode']) === false) {
+            hooks()->add_filter('app_payment_gateways', [$class, 'initMode']);
+        }
     }
 }

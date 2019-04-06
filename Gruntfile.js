@@ -254,6 +254,15 @@ module.exports = function(grunt) {
                 }]
             }
         },
+        watch: {
+            scripts: {
+                files: ['assets/js/app.js'],
+                tasks: ['build-assets'],
+                options: {
+                    spawn: false,
+                },
+            },
+        },
         header: {
             dist: {
                 options: {
@@ -278,6 +287,7 @@ module.exports = function(grunt) {
 
     grunt.initConfig(gruntConfig);
 
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-header');
     grunt.loadNpmTasks('grunt-postcss');
     grunt.loadNpmTasks('grunt-contrib-uglify');

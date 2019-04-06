@@ -48,6 +48,7 @@ class Settings extends AdminController
             }
 
             $success = $this->settings_model->update($post_data);
+
             if ($success > 0) {
                 set_alert('success', _l('settings_updated'));
             }
@@ -125,7 +126,7 @@ class Settings extends AdminController
                 $data['update_errors'][] = 'ZIP Extension not enabled';
             }
 
-            $data['current_version'] = $this->app->get_current_db_version();
+            $data['current_version'] = $this->current_db_version;
         }
 
         $data['contacts_permissions'] = get_contact_permissions();

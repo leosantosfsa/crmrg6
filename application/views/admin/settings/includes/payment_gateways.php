@@ -8,10 +8,14 @@
       <a href="#payment_modes_general" aria-controls="payment_modes_general" role="tab" data-toggle="tab"><?php echo _l('settings_group_general'); ?></a>
     </li>
     <?php
-    foreach($payment_gateways as $gateway){
-      $class_name = $gateway['id'].'_gateway'; ?>
+    foreach($payment_gateways as $gateway){ ?>
       <li role="presentation">
-        <a href="#online_payments_<?php echo $gateway['id']; ?>_tab" aria-controls="online_payments_paypal_tab" role="tab" data-toggle="tab"><?php echo $this->$class_name->get_name(); ?></a>
+        <a href="#online_payments_<?php echo $gateway['id']; ?>_tab"
+          aria-controls="online_payments_paypal_tab"
+          role="tab"
+          data-toggle="tab">
+            <?php echo $gateway['instance']->getName(); ?>
+          </a>
       </li>
     <?php } ?>
   </ul>
@@ -22,15 +26,18 @@
     <?php render_yes_no_option('allow_payment_amount_to_be_modified','settings_allow_payment_amount_to_be_modified'); ?>
   </div>
   <?php
-  foreach($payment_gateways as $gateway){
-    $class_name = $gateway['id'].'_gateway'; ?>
+  foreach($payment_gateways as $gateway){ ?>
     <div role="tabpanel" class="tab-pane" id="online_payments_<?php echo $gateway['id']; ?>_tab">
-     <h4><?php echo $this->$class_name->get_name(); ?></h4>
-     <?php hooks()->do_action('before_render_payment_gateway_settings',$gateway); ?>
+     <h4><?php echo $gateway['instance']->getName(); ?></h4>
+     <?php hooks()->do_action('before_render_payment_gateway_settings', $gateway); ?>
      <hr />
-     <?php $settings = $this->$class_name->get_settings();
+     <?php
+     $settings = $gateway['instance']->getSettings();
+
      foreach($settings as $option){
+
       $value = get_option($option['name']);
+
       $value = isset($option['encrypted']) && $option['encrypted'] == true ? $this->encryption->decrypt($value) : $value;
 
       if(!isset($option['type'])){

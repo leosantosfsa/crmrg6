@@ -16,7 +16,7 @@ hooks()->add_action('admin_init', 'surveys_module_init_menu_items');
 
 hooks()->add_filter('numbers_of_features_using_cron_job', 'surveys_numbers_of_features_using_cron_job');
 hooks()->add_filter('used_cron_features', 'surveys_used_cron_features');
-hooks()->add_filter('staff_permissions', 'surveys_permissions');
+hooks()->add_filter('admin_init', 'surveys_permissions');
 hooks()->add_filter('migration_tables_to_replace_old_links', 'surveys_migration_tables_to_replace_old_links');
 hooks()->add_filter('global_search_result_query', 'surveys_global_search_result_query', 10, 3);
 hooks()->add_filter('global_search_result_output', 'surveys_global_search_result_output', 10, 2);
@@ -94,18 +94,18 @@ function surveys_migration_tables_to_replace_old_links($tables)
     return $tables;
 }
 
-function surveys_permissions($permissions)
+function surveys_permissions()
 {
-    $permissions['surveys'] = [
-       'name'          => _l('surveys'),
-       'capabilities' => [
+    $capabilities = [];
+
+    $capabilities['capabilities'] = [
             'view'   => _l('permission_view') . '(' . _l('permission_global') . ')',
             'create' => _l('permission_create'),
             'edit'   => _l('permission_edit'),
             'delete' => _l('permission_delete'),
-        ],
     ];
-    return $permissions;
+
+    register_staff_capabilities('surveys', $capabilities, _l('surveys'));
 }
 
 function surveys_numbers_of_features_using_cron_job($number)

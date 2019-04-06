@@ -742,14 +742,14 @@ class Imap
     protected function getTrash()
     {
         foreach ($this->getFolders() as $folder) {
-            if (strtolower($folder) === 'trash' || strtolower($folder) === 'papierkorb' || strtolower($folder) === 'inbox.trash') {
+            if (strtolower($folder) === 'trash'
+                || strtolower($folder) === 'papierkorb'
+                || strtolower($folder) === 'inbox.trash') {
                 return $folder;
             }
         }
+
         $trash_folder_name = 'Trash';
-        if (startsWith($folder, 'INBOX')) {
-            $trash_folder_name = 'INBOX.Trash';
-        }
         // no trash folder found? create one
         $this->addFolder($trash_folder_name);
 

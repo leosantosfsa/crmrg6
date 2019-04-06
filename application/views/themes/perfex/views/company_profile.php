@@ -79,13 +79,13 @@
                         </label>
                         <select data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" name="default_language" id="default_language" class="form-control selectpicker">
                             <option value="" <?php if($client->default_language == ''){echo 'selected';} ?>><?php echo _l('system_default_string'); ?></option>
-                            <?php foreach(list_folders(APPPATH .'language') as $language){
-                                $selected = '';
-                                if($client->default_language == $language){
-                                  $selected = 'selected';
-                              }
+                            <?php foreach($this->app->get_available_languages() as $availableLanguage){
+                                  $selected = '';
+                                  if($client->default_language == $availableLanguage){
+                                      $selected = 'selected';
+                                  }
                               ?>
-                              <option value="<?php echo $language; ?>" <?php echo $selected; ?>><?php echo ucfirst($language); ?></option>
+                              <option value="<?php echo $availableLanguage; ?>" <?php echo $selected; ?>><?php echo ucfirst($availableLanguage); ?></option>
                           <?php } ?>
                       </select>
                   </div>

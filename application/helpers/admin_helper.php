@@ -10,6 +10,10 @@ function app_admin_head()
     hooks()->do_action('app_admin_head');
 }
 
+/**
+ * @since 2.3.2
+ * @return null
+ */
 function app_admin_footer()
 {
     /**
@@ -21,6 +25,7 @@ function app_admin_footer()
 }
 
 /**
+ * @since  1.0.0
  * Init admin head
  * @param  boolean $aside should include aside
  */
@@ -35,6 +40,7 @@ function init_head($aside = true)
     }
 }
 /**
+ * @since  1.0.0
  * Init admin footer/tails
  */
 function init_tail()
@@ -64,12 +70,20 @@ function admin_url($url = '')
 
 /**
  * @since  2.3.3
- * Helper function for checking staff permissions, this function should be used instead of has_permission
+ * Helper function for checking staff capabilities, this function should be used instead of has_permission
  * Can be used e.q. staff_can('view', 'invoices');
  *
- * @param  string $do         view|create|edit|delete|view_own
- * @param  string $feature    the feature name e.q. invoices|estimates|contracts
- * @param  mixed $staff_id    staff id|if not passed, the logged in staff will be checked
+ * @param  string $capability         e.q. view | create | edit | delete | view_own | can_delete
+ * @param  string $feature            the feature name e.q. invoices | estimates | contracts | my_module_name
+ *
+ *    NOTE: The $feature parameter is available as optional, but it's highly recommended always to be passed
+ *    because of the uniqueness of the capability names.
+ *    For example, if there is a capability "view" for feature "estimates" and also for "invoices" a capability "view" exists too
+ *    In this case, if you don't pass the feature name, there may be inaccurate results
+ *    If you are certain that your capability name is unique e.q. my_prefixed_capability_can_create , you don't need to pass the $feature
+ *    and you can use this function as e.q. staff_can('my_prefixed_capability_can_create')
+ *
+ * @param  mixed $staff_id            staff id | if not passed, the logged in staff will be checked
  *
  * @return boolean
  */
@@ -155,6 +169,7 @@ function has_role_permission($role_id, $capability, $feature)
 }
 
 /**
+ * @since 1.0.0
  * NOTE: This function will be deprecated in future updates, use staff_can($do, $feature = null, $staff_id = '') instead
  *
  * Check if staff user has permission
@@ -167,6 +182,7 @@ function has_permission($permission, $staffid = '', $can = '')
     return staff_can($can, $permission, $staffid);
 }
 /**
+ * @since  1.0.0
  * Load language in admin area
  * @param  string $staff_id
  * @return string return loaded language
@@ -181,10 +197,9 @@ function load_admin_language($staff_id = '')
     $language = get_option('active_language');
     if (is_staff_logged_in() || $staff_id != '') {
         $staff_language = get_staff_default_language($staff_id);
-        if (!empty($staff_language)) {
-            if (file_exists(APPPATH . 'language/' . $staff_language)) {
-                $language = $staff_language;
-            }
+        if (!empty($staff_language)
+            && file_exists(APPPATH . 'language/' . $staff_language)) {
+            $language = $staff_language;
         }
     }
 
@@ -192,6 +207,9 @@ function load_admin_language($staff_id = '')
     if (file_exists(APPPATH . 'language/' . $language . '/custom_lang.php')) {
         $CI->lang->load('custom_lang', $language);
     }
+
+    $GLOBALS['language'] = $language;
+    $GLOBALS['locale']   = get_locale_key($language);
 
     hooks()->do_action('after_load_admin_language', $language);
 
@@ -210,6 +228,7 @@ function get_admin_uri()
 }
 
 /**
+ * @since  1.0.0
  * Check if current user is admin
  * @param  mixed $staffid
  * @return boolean if user is not admin

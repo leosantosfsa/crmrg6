@@ -5,6 +5,16 @@ defined('BASEPATH') or exit('No direct script access allowed');
 class App_gateway
 {
     /**
+     * Whether the gateway is registered
+     * Used when class is initialized more times to prevent registering again and again
+     * E.q. When passed via register_payment_gateway(new Example());
+     *
+     * @since 2.3.4
+     * @var boolean
+     */
+    protected static $registered = [];
+
+    /**
      * Hold Codeigniter instance
      * @var object
      */
@@ -36,11 +46,31 @@ class App_gateway
     public function __construct()
     {
         $this->ci = & get_instance();
+
+        // App_gateway is not only autoloaded, has subclass
+        if (method_exists($this, 'process_payment')) {
+            hooks()->add_action('before_get_payment_gateways', [$this, 'tryToAutoRegisterPaymentGateway'], 11, 1);
+        }
+    }
+
+    /**
+     * Try to autoload the gateway
+     * This function only works for autoloaded libraries,
+     * NOTE: This does not work with modules, with modules, you must register via register_payment_gateway($gateway, $module_name);
+     *
+     * @since  2.3.4
+     * @internal
+     * @return null
+     */
+    public function tryToAutoRegisterPaymentGateway()
+    {
+        if (!in_array(static::fqcn(), static::$registered)) {
+            register_payment_gateway($this, null);
+        }
     }
 
     public function initMode($modes)
     {
-
         /**
          * Autoload the options defined below
          * Options are used over the system while working and it's necessary to be autoloaded for performance.
@@ -64,6 +94,10 @@ class App_gateway
             add_option('paymentmethod_' . $this->getId() . '_initialized', 1);
         }
 
+        if (in_array(static::fqcn(), self::$registered)) {
+            return $modes;
+        }
+
         /**
          * Inject the mode with other modes with action hook
          */
@@ -73,7 +107,10 @@ class App_gateway
             'description'         => '',
             'selected_by_default' => $this->getSetting('default_selected'),
             'active'              => $this->getSetting('active'),
+            'instance'            => $this,
         ];
+
+        self::$registered[] = static::fqcn();
 
         return $modes;
     }
@@ -221,7 +258,16 @@ class App_gateway
      */
     private function isOptionsPage()
     {
-        return $this->ci->input->get('group') == 'online_payment_modes' && $this->ci->uri->segment(2) == 'settings';
+        return $this->ci->input->get('group') == 'payment_gateways' && $this->ci->uri->segment(2) == 'settings';
+    }
+
+    /**
+     * Get Fully Qualified Class Name
+     * @return string
+     */
+    public static function fqcn()
+    {
+        return static::class;
     }
 
     /**

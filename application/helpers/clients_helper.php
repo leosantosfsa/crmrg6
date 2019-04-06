@@ -567,6 +567,7 @@ function get_client_default_language($clientid = '')
     if (!is_numeric($clientid)) {
         $clientid = get_client_user_id();
     }
+
     $CI = & get_instance();
     $CI->db->select('default_language');
     $CI->db->from(db_prefix() . 'clients');
@@ -667,12 +668,14 @@ function load_client_language($customer_id = '')
 {
     $CI       = & get_instance();
     $language = get_option('active_language');
+
     if (is_client_logged_in() || $customer_id != '') {
+
         $client_language = get_client_default_language($customer_id);
-        if (!empty($client_language)) {
-            if (file_exists(APPPATH . 'language/' . $client_language)) {
-                $language = $client_language;
-            }
+
+        if (!empty($client_language)
+            && file_exists(APPPATH . 'language/' . $client_language)) {
+            $language = $client_language;
         }
     }
 
@@ -683,6 +686,9 @@ function load_client_language($customer_id = '')
     if (file_exists(APPPATH . 'language/' . $language . '/custom_lang.php')) {
         $CI->lang->load('custom_lang', $language);
     }
+
+    $GLOBALS['language'] = $language;
+    $GLOBALS['locale']   = get_locale_key($language);
 
     hooks()->do_action('after_load_client_language', $language);
 
@@ -1063,7 +1069,7 @@ function get_all_customer_attachments($id)
     }
 
     $has_permission_tasks_view = has_permission('tasks', '', 'view');
-    $noPermissionQuery = get_tasks_where_string(false);
+    $noPermissionQuery         = get_tasks_where_string(false);
     $CI->db->select('rel_id, id');
     $CI->db->where('rel_id', $id);
     $CI->db->where('rel_type', 'customer');

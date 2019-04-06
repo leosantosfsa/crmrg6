@@ -64,12 +64,6 @@ class Paypal_gateway extends App_gateway
                 ],
             ]
         );
-
-        /**
-         * REQUIRED
-         * Hook gateway with other online payment modes
-         */
-        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
     }
 
     /**
@@ -90,8 +84,8 @@ class Paypal_gateway extends App_gateway
 
         $logoURL = payment_gateway_logo_url();
 
-        if ($logoURL != '' && _startsWith(site_url(), 'https://')) {
-            $gateway->setlogoImageUrl(do_action('paypal_logo_url', $logoURL));
+        if ($logoURL != '' && startsWith(site_url(), 'https://')) {
+            $gateway->setlogoImageUrl(hooks()->apply_filters('paypal_logo_url', $logoURL));
         }
 
         $gateway->setbrandName(get_option('companyname'));
@@ -113,7 +107,7 @@ class Paypal_gateway extends App_gateway
                     ]);
                 // Add the token to database
                 $this->ci->db->where('id', $data['invoiceid']);
-                $this->ci->db->update('tblinvoices', [
+                $this->ci->db->update(db_prefix().'invoices', [
                     'token' => $response->getTransactionReference(),
                 ]);
                 $response->redirect();

@@ -62,12 +62,6 @@ class Instamojo_gateway extends App_gateway
                 ],
             ]
         );
-
-        /**
-         * REQUIRED
-         * Hook gateway with other online payment modes
-         */
-        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
     }
 
     /**
@@ -123,10 +117,14 @@ class Instamojo_gateway extends App_gateway
         } catch (Exception $e) {
             $errors = json_decode($e->getMessage());
 
-            foreach ($errors as $err) {
-                set_alert('warning', $err[0]);
+            if (is_array($errors)) {
+                foreach ($errors as $err) {
+                    set_alert('warning', $err[0]);
 
-                break;
+                    break;
+                }
+            } else {
+                set_alert('warning', $errors);
             }
 
             redirect(site_url('invoice/' . $data['invoice']->id . '/' . $data['invoice']->hash));

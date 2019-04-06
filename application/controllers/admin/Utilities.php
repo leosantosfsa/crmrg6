@@ -101,7 +101,11 @@ class Utilities extends AdminController
     public function view_event($id)
     {
         $data['event'] = $this->utilities_model->get_event($id);
-        $this->load->view('admin/utilities/event', $data);
+        if ($data['event']->public == 1 && !is_staff_member()
+            || $data['event']->public == 0 && $data['event']->userid != get_staff_user_id()) {
+        } else {
+            $this->load->view('admin/utilities/event', $data);
+        }
     }
 
     public function delete_event($id)

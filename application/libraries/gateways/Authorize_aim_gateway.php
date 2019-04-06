@@ -64,13 +64,7 @@ class Authorize_aim_gateway extends App_gateway
             ],
         ]);
 
-        /**
-         * REQUIRED
-         * Hook gateway with other online payment modes
-         */
-        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
-
-        add_action('before_render_payment_gateway_settings', 'authorize_aim_notice');
+        hooks()->add_action('before_render_payment_gateway_settings', 'authorize_aim_notice');
     }
 
     public function process_payment($data)

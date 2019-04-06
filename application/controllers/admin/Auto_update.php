@@ -23,7 +23,7 @@ class Auto_update extends AdminController
             $config = new app\services\upgrade\Config(
                 $purchase_key,
                 $latest_version,
-                $this->app->get_current_db_version(),
+                $this->current_db_version,
                 $url,
                 $tmp_dir,
                 FCPATH

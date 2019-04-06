@@ -48,6 +48,8 @@ class Stripe_ideal_gateway extends App_gateway
                 'label'         => 'ideal_customer_statement_descriptor',
                 'type'          => 'textarea',
                 'default_value' => 'Payment for Invoice {invoice_number}',
+                'field_attributes'=>['maxlength' => 22],
+                'after'=>'<p class="mbot15">Statement descriptors are limited to 22 characters, cannot use the special characters <, >, \', ", or *, and must not consist solely of numbers.</p>'
             ],
             [
                 'name'             => 'webhook_key',
@@ -69,57 +71,41 @@ class Stripe_ideal_gateway extends App_gateway
                 'label'         => 'settings_paymentmethod_testing_mode',
             ],
         ]);
-
-        /**
-         * REQUIRED
-         * Hook gateway with other online payment modes
-         */
-        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
-    }
-
-    public function get_source($source)
-    {
-        $stripe = \Stripe\Stripe::setApiKey($this->decryptSetting('api_secret_key'));
-        $source = \Stripe\Source::retrieve($source);
-
-        return $source;
     }
 
     public function charge($source, $amount, $invoice_id)
     {
-        $stripe = \Stripe\Stripe::setApiKey($this->decryptSetting('api_secret_key'));
-        $charge = \Stripe\Charge::create([
-            'currency'    => 'eur',
-            'amount'      => $amount,
-            'source'      => $source,
-            'description' => str_replace('{invoice_number}', format_invoice_number($invoice_id), $this->getSetting('description_dashboard')),
-            'metadata'    => [
-                'invoice_id'        => $invoice_id,
-                'pcrm-stripe-ideal' => true,
-            ],
-        ]);
+        $this->ci->load->library('stripe_core');
 
-        return $charge;
+        return $this->ci->stripe_core->create_charge([
+                'currency'    => 'eur',
+                'amount'      => $amount,
+                'source'      => $source,
+                'description' => str_replace('{invoice_number}', format_invoice_number($invoice_id), $this->getSetting('description_dashboard')),
+                'metadata'    => [
+                    'invoice_id'        => $invoice_id,
+                    'pcrm-stripe-ideal' => true,
+                ],
+            ]);
     }
 
     public function finish_payment($charge)
     {
         $success = $this->addPayment(
             [
-                      'amount'        => ($charge->amount / 100),
-                      'invoiceid'     => $charge->metadata->invoice_id,
-                      'transactionid' => $charge->id,
-                      'paymentmethod' => strtoupper($charge->source->ideal->bank),
-                      ]
-         );
+                'amount'        => ($charge->amount / 100),
+                'invoiceid'     => $charge->metadata->invoice_id,
+                'transactionid' => $charge->id,
+                'paymentmethod' => strtoupper($charge->source->ideal->bank),
+            ]
+        );
 
-        return $success ? true : false;
+        return (bool) $success;
     }
 
     public function process_payment($data)
     {
-        $stripe = \Stripe\Stripe::setApiKey($this->decryptSetting('api_secret_key'));
-        $name   = $data['invoice']->client->company;
+        $name = $data['invoice']->client->company;
         // Address information
         $country = '';
 
@@ -143,6 +129,9 @@ class Stripe_ideal_gateway extends App_gateway
 
         $stripe_data = [
             'type'     => 'ideal',
+            'ideal'=> [
+                'statement_descriptor' =>  str_replace('{invoice_number}', format_invoice_number($data['invoice']->id), $this->getSetting('statement_descriptor'))
+            ],
             'amount'   => $data['amount'] * 100,
             'currency' => 'eur',
 
@@ -155,8 +144,6 @@ class Stripe_ideal_gateway extends App_gateway
                 'return_url' => site_url('gateways/stripe_ideal/response/' . $data['invoice']->id . '/' . $data['invoice']->hash),
             ],
 
-            'statement_descriptor' => str_replace('{invoice_number}', format_invoice_number($data['invoice']->id), $this->getSetting('statement_descriptor')),
-
             'metadata' => [
                 'invoice_id'        => $data['invoice']->id,
                 'pcrm-stripe-ideal' => true,
@@ -164,7 +151,9 @@ class Stripe_ideal_gateway extends App_gateway
         ];
 
         try {
-            $source = \Stripe\Source::create($stripe_data);
+            $this->ci->load->library('stripe_core');
+            $source = $this->ci->stripe_core->create_source($stripe_data);
+
             if ($source->created != '') {
                 redirect($source->redirect->url);
             } else {

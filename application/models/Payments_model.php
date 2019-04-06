@@ -54,7 +54,7 @@ class Payments_model extends App_Model
         // Since version 1.0.1
         $this->load->model('payment_modes_model');
         $payment_gateways = $this->payment_modes_model->get_payment_gateways(true);
-        $i            = 0;
+        $i                = 0;
         foreach ($payments as $payment) {
             if (is_null($payment['id'])) {
                 foreach ($payment_gateways as $gateway) {
@@ -99,6 +99,7 @@ class Payments_model extends App_Model
                     return $id;
                 }
             }
+
             if (!is_numeric($invoiceid)) {
                 if (!isset($data['invoiceid'])) {
                     die('No invoice specified');
@@ -129,8 +130,10 @@ class Payments_model extends App_Model
             $data['invoice']   = $invoice;
             $data              = hooks()->apply_filters('before_process_gateway_func', $data);
 
-            $cf = $data['paymentmode'] . '_gateway';
-            $this->$cf->process_payment($data);
+            $this->load->model('payment_modes_model');
+            $gateway = $this->payment_modes_model->get($data['paymentmode']);
+
+            $gateway->instance->process_payment($data);
         }
 
         return false;
@@ -189,7 +192,7 @@ class Payments_model extends App_Model
             $invoice      = $this->invoices_model->get($data['invoiceid']);
             $force_update = false;
 
-            if(!class_exists('Invoices_model', false)) {
+            if (!class_exists('Invoices_model', false)) {
                 $this->load->model('invoices_model');
             }
 
@@ -215,9 +218,9 @@ class Payments_model extends App_Model
             $payment               = $this->get($insert_id);
             $payment->invoice_data = $this->invoices_model->get($payment->invoiceid);
             set_mailing_constant();
-            $paymentpdf = payment_pdf($payment);
-            $payment_pdf_filename = mb_strtoupper(slug_it(_l('payment') . '-' . $payment->paymentid), 'UTF-8').'.pdf';
-            $attach     = $paymentpdf->Output($payment_pdf_filename, 'S');
+            $paymentpdf           = payment_pdf($payment);
+            $payment_pdf_filename = mb_strtoupper(slug_it(_l('payment') . '-' . $payment->paymentid), 'UTF-8') . '.pdf';
+            $attach               = $paymentpdf->Output($payment_pdf_filename, 'S');
 
             if (!isset($do_not_send_email_template)
                 || ($subscription != false && $after_success == 'send_invoice_and_receipt')

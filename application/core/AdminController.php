@@ -4,13 +4,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class AdminController extends App_Controller
 {
-    private $current_db_version;
-
     public function __construct()
     {
         parent::__construct();
-
-        $this->current_db_version = $this->app->get_current_db_version();
 
         if ($this->app->is_db_upgrade_required($this->current_db_version)) {
             if ($this->input->post('upgrade_database')) {
@@ -24,25 +20,12 @@ class AdminController extends App_Controller
 
         hooks()->do_action('pre_admin_init');
 
-        $this->load->model('authentication_model');
-        $this->authentication_model->autologin();
-
         if (!is_staff_logged_in()) {
             if (strpos(current_full_url(), get_admin_uri() . '/authentication') === false) {
                 redirect_after_login_to_current_url();
             }
 
             redirect(admin_url('authentication'));
-        }
-
-        if (CI_VERSION != '3.1.10') {
-            echo '<h2>Additionally you will need to replace the <b>system</b> folder. We updated Codeigniter to 3.1.10.</h2>';
-            echo '<p>From the newest downloaded files upload the <b>system</b> folder to your installation directory.';
-            die;
-        }
-
-        if (!extension_loaded('mbstring') && (!function_exists('mb_strtoupper') || !function_exists('mb_strtolower'))) {
-            die('<h1>"mbstring" PHP extension is not loaded. Enable this extension from cPanel or consult with your hosting provider to assist you enabling "mbstring" extension.</h4>');
         }
 
         if ($this->uri->segment(3) != 'notifications_check') {
@@ -56,7 +39,7 @@ class AdminController extends App_Controller
 
         // Update staff last activity
         $this->db->where('staffid', get_staff_user_id());
-        $this->db->update(db_prefix() . 'staff', ['last_activity' => date('Y-m-d H:i:s')]);
+        $this->db->update('staff', ['last_activity' => date('Y-m-d H:i:s')]);
 
         $this->load->model('staff_model');
 
@@ -72,7 +55,7 @@ class AdminController extends App_Controller
 
             _maybe_system_setup_warnings();
 
-            is_mobile() ? $this->session->set_userdata(['is_mobile' => true]) : $this->session->unset_userdata('is_mobile');
+            $this->init_quick_actions_links();
         }
 
         $currentUser = $this->staff_model->get(get_staff_user_id());
@@ -84,8 +67,6 @@ class AdminController extends App_Controller
         }
 
         $GLOBALS['current_user'] = $currentUser;
-        $GLOBALS['language']     = load_admin_language();
-        $GLOBALS['locale']       = get_locale_key($GLOBALS['language']);
 
         init_admin_assets();
 
@@ -93,8 +74,6 @@ class AdminController extends App_Controller
 
         $vars = [
             'current_user'    => $currentUser,
-            'app_language'    => $GLOBALS['language'],
-            'locale'          => $GLOBALS['locale'],
             'current_version' => $this->current_db_version,
             'task_statuses'   => $this->tasks_model->get_statuses(),
         ];
@@ -110,10 +89,6 @@ class AdminController extends App_Controller
          */
         $vars = hooks()->apply_filters('admin_area_auto_loaded_vars', $vars);
         $this->load->vars($vars);
-
-        if (!$this->input->is_ajax_request()) {
-            $this->init_quick_actions_links();
-        }
     }
 
     private function init_quick_actions_links()

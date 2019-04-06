@@ -70,12 +70,7 @@ class Authorize_sim_gateway extends App_gateway
             ],
         ]);
 
-        /**
-        * REQUIRED
-        * Hook gateway with other online payment modes
-        */
-        add_action('before_add_online_payment_modes', [ $this, 'initMode' ]);
-        add_action('before_render_payment_gateway_settings', 'authorize_sim_notice');
+        hooks()->add_action('before_render_payment_gateway_settings', 'authorize_sim_notice');
     }
 
     public function process_payment($data)
@@ -118,7 +113,7 @@ class Authorize_sim_gateway extends App_gateway
         $oResponse = $gateway->purchase($requestData)->send();
         if ($oResponse->isRedirect()) {
             $this->ci->db->where('id', $data['invoice']->id);
-            $this->ci->db->update('tblinvoices', ['token' => $trans_id]);
+            $this->ci->db->update(db_prefix().'invoices', ['token' => $trans_id]);
             // redirect to offsite payment gateway
             $oResponse->redirect();
         } else {
