@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">
@@ -10,7 +11,7 @@
                        </h4>
                        <hr class="hr-panel-heading" />
                        <?php echo form_open_multipart($this->uri->uri_string(),array('id'=>'staff_profile_table','autocomplete'=>'off')); ?>
-                       <?php if(total_rows('tblemailtemplates',array('slug'=>'two-factor-authentication','active'=>0)) == 0){ ?>
+                       <?php if(total_rows(db_prefix().'emailtemplates',array('slug'=>'two-factor-authentication','active'=>0)) == 0){ ?>
                        <div class="checkbox checkbox-primary">
                          <input type="checkbox" value="1" name="two_factor_auth_enabled" id="two_factor_auth_enabled"<?php if($current_user->two_factor_auth_enabled == 1){echo ' checked';} ?>>
                          <label for="two_factor_auth_enabled"><i class="fa fa-question-circle" data-placement="right" data-toggle="tooltip" data-title="<?php echo _l('two_factor_authentication_info'); ?>"></i>
@@ -90,7 +91,7 @@
                 </div>
                 <i class="fa fa-question-circle" data-toggle="tooltip" data-title="<?php echo _l('staff_email_signature_help'); ?>"></i>
                 <?php $value = (isset($member) ? $member->email_signature : ''); ?>
-                <?php echo render_textarea('email_signature','settings_email_signature',$value); ?>
+                <?php echo render_textarea('email_signature','settings_email_signature',$value, ['data-entities-encode'=>'true']); ?>
                 <?php if(count($staff_departments) > 0){ ?>
                 <div class="form-group">
                     <label for="departments"><?php echo _l('staff_edit_profile_your_departments'); ?></label>
@@ -153,8 +154,8 @@
 <?php init_tail(); ?>
 <script>
  $(function(){
-   _validate_form($('#staff_profile_table'),{firstname:'required',lastname:'required',email:'required'});
-   _validate_form($('#staff_password_change_form'),{oldpassword:'required',newpassword:'required',newpasswordr: { equalTo: "#newpassword"}});
+   appValidateForm($('#staff_profile_table'),{firstname:'required',lastname:'required',email:'required'});
+   appValidateForm($('#staff_password_change_form'),{oldpassword:'required',newpassword:'required',newpasswordr: { equalTo: "#newpassword"}});
  });
 </script>
 </body>

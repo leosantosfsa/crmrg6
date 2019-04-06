@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
   <div class="content">
@@ -11,7 +12,7 @@
        </div>
      </div>
      <?php } ?>
-     <?php do_action('before_staff_myprofile'); ?>
+     <?php hooks()->do_action('before_staff_myprofile'); ?>
      <div class="col-md-5<?php if($this->input->get('notifications')){echo ' hide';} ?>">
       <div class="panel_s">
 

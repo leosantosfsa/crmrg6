@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Misc_model extends CRM_Model
+class Misc_model extends App_Model
 {
     public $notifications_limit;
 
@@ -14,7 +14,7 @@ class Misc_model extends CRM_Model
 
     public function get_notifications_limit()
     {
-        return do_action('notifications_limit', $this->notifications_limit);
+        return hooks()->apply_filters('notifications_limit', $this->notifications_limit);
     }
 
     public function get_taxes_dropdown_template($name, $taxname, $type = '', $item_id = '', $is_edit = false, $manual = false)
@@ -170,21 +170,21 @@ class Misc_model extends CRM_Model
             }
         }
 
-        $this->db->insert('tblfiles', $data);
+        $this->db->insert(db_prefix() . 'files', $data);
         $insert_id = $this->db->insert_id();
 
         if ($data['rel_type'] == 'customer' && isset($data['contact_id'])) {
             if (get_option('only_own_files_contacts') == 1) {
-                $this->db->insert('tblcustomerfiles_shares', [
+                $this->db->insert(db_prefix() . 'shared_customer_files', [
                     'file_id'    => $insert_id,
                     'contact_id' => $data['contact_id'],
                 ]);
             } else {
                 $this->db->select('id');
                 $this->db->where('userid', $data['rel_id']);
-                $contacts = $this->db->get('tblcontacts')->result_array();
+                $contacts = $this->db->get(db_prefix() . 'contacts')->result_array();
                 foreach ($contacts as $contact) {
-                    $this->db->insert('tblcustomerfiles_shares', [
+                    $this->db->insert(db_prefix() . 'shared_customer_files', [
                         'file_id'    => $insert_id,
                         'contact_id' => $contact['id'],
                     ]);
@@ -199,18 +199,18 @@ class Misc_model extends CRM_Model
     {
         $this->db->where('id', $id);
 
-        return $this->db->get('tblfiles')->row();
+        return $this->db->get(db_prefix() . 'files')->row();
     }
 
     public function get_staff_started_timers()
     {
-        $this->db->select('tbltaskstimers.*,tblstafftasks.name as task_subject');
-        $this->db->join('tblstaff', 'tblstaff.staffid=tbltaskstimers.staff_id');
-        $this->db->join('tblstafftasks', 'tblstafftasks.id=tbltaskstimers.task_id', 'left');
+        $this->db->select(db_prefix() . 'taskstimers.*,' . db_prefix() . 'tasks.name as task_subject');
+        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid=' . db_prefix() . 'taskstimers.staff_id');
+        $this->db->join(db_prefix() . 'tasks', db_prefix() . 'tasks.id=' . db_prefix() . 'taskstimers.task_id', 'left');
         $this->db->where('staff_id', get_staff_user_id());
         $this->db->where('end_time IS NULL');
 
-        return $this->db->get('tbltaskstimers')->result_array();
+        return $this->db->get(db_prefix() . 'taskstimers')->result_array();
     }
 
     /**
@@ -231,7 +231,7 @@ class Misc_model extends CRM_Model
         $data['date']        = to_sql_date($data['date'], true);
         $data['description'] = nl2br($data['description']);
         $data['creator']     = get_staff_user_id();
-        $this->db->insert('tblreminders', $data);
+        $this->db->insert(db_prefix() . 'reminders', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
             if ($data['rel_type'] == 'lead') {
@@ -241,7 +241,7 @@ class Misc_model extends CRM_Model
                     _dt($data['date']),
                     ]));
             }
-            logActivity('New Reminder Added [' . ucfirst($data['rel_type']) . 'ID: ' . $data['rel_id'] . ' Description: ' . $data['description'] . ']');
+            log_activity('New Reminder Added [' . ucfirst($data['rel_type']) . 'ID: ' . $data['rel_id'] . ' Description: ' . $data['description'] . ']');
 
             return true;
         } //$insert_id
@@ -260,7 +260,7 @@ class Misc_model extends CRM_Model
         $data['description'] = nl2br($data['description']);
 
         $this->db->where('id', $id);
-        $this->db->update('tblreminders', $data);
+        $this->db->update(db_prefix() . 'reminders', $data);
 
         if ($this->db->affected_rows() > 0) {
             return true;
@@ -271,14 +271,14 @@ class Misc_model extends CRM_Model
 
     public function get_notes($rel_id, $rel_type)
     {
-        $this->db->join('tblstaff', 'tblstaff.staffid=tblnotes.addedfrom');
+        $this->db->join(db_prefix() . 'staff', db_prefix() . 'staff.staffid=' . db_prefix() . 'notes.addedfrom');
         $this->db->where('rel_id', $rel_id);
         $this->db->where('rel_type', $rel_type);
         $this->db->order_by('dateadded', 'desc');
 
-        $notes = $this->db->get('tblnotes')->result_array();
-        $hookData = do_action('get_notes',['notes'=>$notes,'rel_id'=>$rel_id,'rel_type'=>$rel_type]);
-        return $hookData['notes'];
+        $notes = $this->db->get(db_prefix() . 'notes')->result_array();
+
+        return hooks()->apply_filters('get_notes', $notes, ['rel_id' => $rel_id, 'rel_type' => $rel_type]);
     }
 
     public function add_note($data, $rel_type, $rel_id)
@@ -288,7 +288,7 @@ class Misc_model extends CRM_Model
         $data['rel_type']    = $rel_type;
         $data['rel_id']      = $rel_id;
         $data['description'] = nl2br($data['description']);
-        $this->db->insert('tblnotes', $data);
+        $this->db->insert(db_prefix() . 'notes', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
             return $insert_id;
@@ -299,10 +299,10 @@ class Misc_model extends CRM_Model
 
     public function edit_note($data, $id)
     {
-        do_action('before_update_note', ['data'=>$data,'id'=>$id]);
+        hooks()->do_action('before_update_note', ['data' => $data, 'id' => $id]);
 
         $this->db->where('id', $id);
-        $this->db->update('tblnotes', [
+        $this->db->update(db_prefix() . 'notes', [
             'description' => nl2br($data['description']),
         ]);
         if ($this->db->affected_rows() > 0) {
@@ -312,35 +312,25 @@ class Misc_model extends CRM_Model
         return false;
     }
 
-    /**
-     * Get current db version
-     * @deprecated 1.9.8 Use $this->app->get_current_db_version() instead
-     * @return mixed
-     */
-    public function get_current_db_version()
-    {
-        return $this->app->get_current_db_version();
-    }
-
     public function get_activity_log($limit = 30)
     {
         $this->db->limit($limit);
         $this->db->order_by('date', 'desc');
 
-        return $this->db->get('tblactivitylog')->result_array();
+        return $this->db->get(db_prefix() . 'activity_log')->result_array();
     }
 
     public function delete_note($note_id)
     {
-        do_action('before_delete_note', $note_id);
+        hooks()->do_action('before_delete_note', $note_id);
 
         $this->db->where('id', $note_id);
-        $note = $this->db->get('tblnotes')->row();
+        $note = $this->db->get(db_prefix() . 'notes')->row();
         if ($note->addedfrom != get_staff_user_id() && !is_admin()) {
             return false;
         }
         $this->db->where('id', $note_id);
-        $this->db->delete('tblnotes');
+        $this->db->delete(db_prefix() . 'notes');
         if ($this->db->affected_rows() > 0) {
             return true;
         }
@@ -356,15 +346,15 @@ class Misc_model extends CRM_Model
      */
     public function get_reminders($id = '')
     {
-        $this->db->join('tblstaff', 'tblstaff.staffid = tblreminders.staff', 'left');
+        $this->db->join(db_prefix() . 'staff', '' . db_prefix() . 'staff.staffid = ' . db_prefix() . 'reminders.staff', 'left');
         if (is_numeric($id)) {
-            $this->db->where('tblreminders.id', $id);
+            $this->db->where(db_prefix() . 'reminders.id', $id);
 
-            return $this->db->get('tblreminders')->row();
+            return $this->db->get(db_prefix() . 'reminders')->row();
         } //is_numeric($id)
         $this->db->order_by('date', 'desc');
 
-        return $this->db->get('tblreminders')->result_array();
+        return $this->db->get(db_prefix() . 'reminders')->result_array();
     }
 
     /**
@@ -378,9 +368,9 @@ class Misc_model extends CRM_Model
         $reminder = $this->get_reminders($id);
         if ($reminder->creator == get_staff_user_id() || is_admin()) {
             $this->db->where('id', $id);
-            $this->db->delete('tblreminders');
+            $this->db->delete(db_prefix() . 'reminders');
             if ($this->db->affected_rows() > 0) {
-                logActivity('Reminder Deleted [' . ucfirst($reminder->rel_type) . 'ID: ' . $reminder->id . ' Description: ' . $reminder->description . ']');
+                log_activity('Reminder Deleted [' . ucfirst($reminder->rel_type) . 'ID: ' . $reminder->id . ' Description: ' . $reminder->description . ']');
 
                 return true;
             } //$this->db->affected_rows() > 0
@@ -391,7 +381,7 @@ class Misc_model extends CRM_Model
 
     public function get_tasks_distinct_assignees()
     {
-        return $this->db->query("SELECT DISTINCT(tblstafftaskassignees.staffid) as assigneeid, CONCAT(firstname,' ',lastname) as full_name FROM tblstafftaskassignees JOIN tblstaff ON tblstaff.staffid=tblstafftaskassignees.staffid")->result_array();
+        return $this->db->query('SELECT DISTINCT(' . db_prefix() . "task_assigned.staffid) as assigneeid, CONCAT(firstname,' ',lastname) as full_name FROM " . db_prefix() . 'task_assigned JOIN ' . db_prefix() . 'staff ON ' . db_prefix() . 'staff.staffid=' . db_prefix() . 'task_assigned.staffid')->result_array();
     }
 
     public function get_google_calendar_ids()
@@ -432,17 +422,17 @@ class Misc_model extends CRM_Model
      */
     public function get_user_notifications($read = false)
     {
-        $read = $read == false ? 0 : 1;
-        $total        = $this->notifications_limit;
+        $read     = $read == false ? 0 : 1;
+        $total    = $this->notifications_limit;
         $staff_id = get_staff_user_id();
 
-        $sql = 'SELECT COUNT(*) as total FROM tblnotifications WHERE isread=' . $read . ' AND touserid=' . $staff_id;
+        $sql = 'SELECT COUNT(*) as total FROM ' . db_prefix() . 'notifications WHERE isread=' . $read . ' AND touserid=' . $staff_id;
         $sql .= ' UNION ALL ';
-        $sql .= 'SELECT COUNT(*) as total FROM tblnotifications WHERE isread_inline=' . $read . ' AND touserid=' . $staff_id;
+        $sql .= 'SELECT COUNT(*) as total FROM ' . db_prefix() . 'notifications WHERE isread_inline=' . $read . ' AND touserid=' . $staff_id;
 
         $res = $this->db->query($sql)->result();
 
-        $total_unread = $res[0]->total;
+        $total_unread        = $res[0]->total;
         $total_unread_inline = $res[1]->total;
 
         if ($total_unread > $total) {
@@ -459,7 +449,7 @@ class Misc_model extends CRM_Model
         $this->db->limit($total);
         $this->db->order_by('date', 'desc');
 
-        return $this->db->get('tblnotifications')->result_array();
+        return $this->db->get(db_prefix() . 'notifications')->result_array();
     }
 
     /**
@@ -469,7 +459,7 @@ class Misc_model extends CRM_Model
     public function set_notifications_read()
     {
         $this->db->where('touserid', get_staff_user_id());
-        $this->db->update('tblnotifications', [
+        $this->db->update(db_prefix() . 'notifications', [
             'isread' => 1,
         ]);
         if ($this->db->affected_rows() > 0) {
@@ -483,7 +473,7 @@ class Misc_model extends CRM_Model
     {
         $this->db->where('touserid', get_staff_user_id());
         $this->db->where('id', $id);
-        $this->db->update('tblnotifications', [
+        $this->db->update(db_prefix() . 'notifications', [
             'isread_inline' => 1,
         ]);
     }
@@ -492,7 +482,7 @@ class Misc_model extends CRM_Model
     {
         $this->db->where('touserid', get_staff_user_id());
         $this->db->where('id', $id);
-        $this->db->update('tblnotifications', [
+        $this->db->update(db_prefix() . 'notifications', [
             'isread'        => 1,
             'isread_inline' => 1,
         ]);
@@ -501,7 +491,7 @@ class Misc_model extends CRM_Model
     public function mark_all_notifications_as_read_inline()
     {
         $this->db->where('touserid', get_staff_user_id());
-        $this->db->update('tblnotifications', [
+        $this->db->update(db_prefix() . 'notifications', [
             'isread_inline' => 1,
             'isread'        => 1,
         ]);
@@ -524,7 +514,7 @@ class Misc_model extends CRM_Model
         $data['announcementid'] = $id;
         $data['userid']         = $userid;
         $data['staff']          = $staff;
-        $this->db->insert('tbldismissedannouncements', $data);
+        $this->db->insert(db_prefix() . 'dismissed_announcements', $data);
 
         return true;
     }
@@ -547,19 +537,19 @@ class Misc_model extends CRM_Model
         if ($have_assigned_customers || $have_permission_customers_view) {
 
             // Clients
-            $this->db->select(implode(',', prefixed_table_fields_array('tblclients')) . ',' . get_sql_select_client_company());
+            $this->db->select(implode(',', prefixed_table_fields_array(db_prefix() . 'clients')) . ',' . get_sql_select_client_company());
 
-            $this->db->join('tblcountries', 'tblcountries.country_id = tblclients.country', 'left');
-            $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
-            $this->db->from('tblclients');
+            $this->db->join(db_prefix() . 'countries', db_prefix() . 'countries.country_id = ' . db_prefix() . 'clients.country', 'left');
+            $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.userid = ' . db_prefix() . 'clients.userid AND is_primary = 1', 'left');
+            $this->db->from(db_prefix() . 'clients');
             if ($have_assigned_customers && !$have_permission_customers_view) {
-                $this->db->where('tblclients.userid IN (SELECT customer_id FROM tblcustomeradmins WHERE staff_id=' . get_staff_user_id() . ')');
+                $this->db->where(db_prefix() . 'clients.userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . ')');
             }
 
             $this->db->where('(company LIKE "%' . $q . '%"
                 OR vat LIKE "%' . $q . '%"
-                OR tblclients.phonenumber LIKE "%' . $q . '%"
-                OR tblcontacts.phonenumber LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'clients.phonenumber LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'contacts.phonenumber LIKE "%' . $q . '%"
                 OR city LIKE "%' . $q . '%"
                 OR zip LIKE "%' . $q . '%"
                 OR state LIKE "%' . $q . '%"
@@ -567,9 +557,9 @@ class Misc_model extends CRM_Model
                 OR address LIKE "%' . $q . '%"
                 OR email LIKE "%' . $q . '%"
                 OR CONCAT(firstname, \' \', lastname) LIKE "%' . $q . '%"
-                OR tblcountries.short_name LIKE "%' . $q . '%"
-                OR tblcountries.long_name LIKE "%' . $q . '%"
-                OR tblcountries.numcode LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'countries.short_name LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'countries.long_name LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'countries.numcode LIKE "%' . $q . '%"
                 )');
 
             $this->db->limit($limit);
@@ -589,7 +579,7 @@ class Misc_model extends CRM_Model
 
         $where_contacts = '';
         if ($have_assigned_customers && !$have_permission_customers_view) {
-            $where_contacts = 'tblcontacts.userid IN (SELECT customer_id FROM tblcustomeradmins WHERE staff_id=' . get_staff_user_id() . ')';
+            $where_contacts = db_prefix() . 'contacts.userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . ')';
         }
 
 
@@ -643,20 +633,10 @@ class Misc_model extends CRM_Model
             $result[] = $contracts_search;
         }
 
-        if (has_permission('surveys', '', 'view')) {
-            // Surveys
-            $this->db->select()->from('tblsurveys')->like('subject', $q)->or_like('slug', $q)->or_like('description', $q)->or_like('viewdescription', $q)->limit($limit);
-            $this->db->order_by('subject', 'ASC');
-            $result[] = [
-                'result'         => $this->db->get()->result_array(),
-                'type'           => 'surveys',
-                'search_heading' => _l('surveys'),
-            ];
-        }
 
         if (has_permission('knowledge_base', '', 'view')) {
             // Knowledge base articles
-            $this->db->select()->from('tblknowledgebase')->like('subject', $q)->or_like('description', $q)->or_like('slug', $q)->limit($limit);
+            $this->db->select()->from(db_prefix() . 'knowledge_base')->like('subject', $q)->or_like('description', $q)->or_like('slug', $q)->limit($limit);
 
             $this->db->order_by('subject', 'ASC');
 
@@ -671,24 +651,24 @@ class Misc_model extends CRM_Model
         $tasks = has_permission('tasks', '', 'view');
         // Staff tasks
         $this->db->select();
-        $this->db->from('tblstafftasks');
+        $this->db->from(db_prefix() . 'tasks');
         if (!$is_admin) {
             if (!$tasks) {
-                $where = '(id IN (SELECT taskid FROM tblstafftaskassignees WHERE staffid = ' . get_staff_user_id() . ') OR id IN (SELECT taskid FROM tblstafftasksfollowers WHERE staffid = ' . get_staff_user_id() . ') OR (addedfrom=' . get_staff_user_id() . ' AND is_added_from_contact=0) ';
+                $where = '(id IN (SELECT taskid FROM ' . db_prefix() . 'task_assigned WHERE staffid = ' . get_staff_user_id() . ') OR id IN (SELECT taskid FROM ' . db_prefix() . 'task_followers WHERE staffid = ' . get_staff_user_id() . ') OR (addedfrom=' . get_staff_user_id() . ' AND is_added_from_contact=0) ';
                 if (get_option('show_all_tasks_for_project_member') == 1) {
-                    $where .= ' OR (rel_type="project" AND rel_id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . get_staff_user_id() . '))';
+                    $where .= ' OR (rel_type="project" AND rel_id IN (SELECT project_id FROM ' . db_prefix() . 'project_members WHERE staff_id=' . get_staff_user_id() . '))';
                 }
                 $where .= ' OR is_public = 1)';
                 $this->db->where($where);
             } //!$tasks
         } //!$is_admin
-        if (!_startsWith($q, '#')) {
+        if (!startsWith($q, '#')) {
             $this->db->where('(name LIKE "%' . $q . '%" OR description LIKE "%' . $q . '%")');
         } else {
             $this->db->where('id IN
-                (SELECT rel_id FROM tbltags_in WHERE tag_id IN
-                (SELECT id FROM tbltags WHERE name="' . strafter($q, '#') . '")
-                AND tbltags_in.rel_type=\'task\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
+                (SELECT rel_id FROM ' . db_prefix() . 'taggables WHERE tag_id IN
+                (SELECT id FROM ' . db_prefix() . 'tags WHERE name="' . strafter($q, '#') . '")
+                AND ' . db_prefix() . 'taggables.rel_type=\'task\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                 ');
         }
 
@@ -710,29 +690,29 @@ class Misc_model extends CRM_Model
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
-            } elseif (_startsWith($q, get_option('invoice_prefix'))) {
+            } elseif (startsWith($q, get_option('invoice_prefix'))) {
                 $q = strafter($q, get_option('invoice_prefix'));
                 $q = trim($q);
                 $q = ltrim($q, '0');
             }
             // Invoice payment records
-            $this->db->select('*,tblinvoicepaymentrecords.id as paymentid');
-            $this->db->from('tblinvoicepaymentrecords');
-            $this->db->join('tblinvoicepaymentsmodes', 'tblinvoicepaymentrecords.paymentmode = tblinvoicepaymentsmodes.id', 'LEFT');
-            $this->db->join('tblinvoices', 'tblinvoices.id = tblinvoicepaymentrecords.invoiceid');
+            $this->db->select('*,' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
+            $this->db->from(db_prefix() . 'invoicepaymentrecords');
+            $this->db->join(db_prefix() . 'payment_modes', '' . db_prefix() . 'invoicepaymentrecords.paymentmode = ' . db_prefix() . 'payment_modes.id', 'LEFT');
+            $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
 
             if (!$has_permission_view_payments) {
-                $this->db->where('invoiceid IN (select id from tblinvoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
+                $this->db->where('invoiceid IN (select id from ' . db_prefix() . 'invoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
             }
 
-            $this->db->where('(tblinvoicepaymentrecords.id LIKE "' . $q . '"
+            $this->db->where('(' . db_prefix() . 'invoicepaymentrecords.id LIKE "' . $q . '"
                 OR paymentmode LIKE "%' . $q . '%"
-                OR tblinvoicepaymentsmodes.name LIKE "%' . $q . '%"
-                OR tblinvoicepaymentrecords.note LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'payment_modes.name LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'invoicepaymentrecords.note LIKE "%' . $q . '%"
                 OR number LIKE "' . $q . '"
                 )');
 
-            $this->db->order_by('tblinvoicepaymentrecords.date', 'ASC');
+            $this->db->order_by(db_prefix() . 'invoicepaymentrecords.date', 'ASC');
 
             $result[] = [
                 'result'         => $this->db->get()->result_array(),
@@ -741,23 +721,9 @@ class Misc_model extends CRM_Model
             ];
         }
 
-
-        if (has_permission('goals', '', 'view')) {
-            // Goals
-            $this->db->select()->from('tblgoals')->like('description', $q)->or_like('subject', $q)->limit($limit);
-
-            $this->db->order_by('subject', 'ASC');
-
-            $result[] = [
-                'result'         => $this->db->get()->result_array(),
-                'type'           => 'goals',
-                'search_heading' => _l('goals'),
-            ];
-        }
-
         // Custom fields only admins
         if ($is_admin) {
-            $this->db->select()->from('tblcustomfieldsvalues')->like('value', $q)->limit($limit);
+            $this->db->select()->from(db_prefix() . 'customfieldsvalues')->like('value', $q)->limit($limit);
             $result[] = [
                 'result'         => $this->db->get()->result_array(),
                 'type'           => 'custom_fields',
@@ -771,12 +737,12 @@ class Misc_model extends CRM_Model
         $allow_staff_view_invoices_assigned = get_option('allow_staff_view_invoices_assigned');
 
         if ($has_permission_view_invoices || $has_permission_view_invoices_own || $allow_staff_view_invoices_assigned == '1') {
-            $this->db->select()->from('tblitems_in');
+            $this->db->select()->from(db_prefix() . 'itemable');
             $this->db->where('rel_type', 'invoice');
             $this->db->where('(description LIKE "%' . $q . '%" OR long_description LIKE "%' . $q . '%")');
 
             if (!$has_permission_view_invoices) {
-                $this->db->where('rel_id IN (select id from tblinvoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
+                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'invoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
             }
 
             $this->db->order_by('description', 'ASC');
@@ -788,15 +754,15 @@ class Misc_model extends CRM_Model
         }
 
         // Estimate Items Search
-        $has_permission_view_estimates     = has_permission('estimates', '', 'view');
-        $has_permission_view_estimates_own = has_permission('estimates', '', 'view_own');
+        $has_permission_view_estimates       = has_permission('estimates', '', 'view');
+        $has_permission_view_estimates_own   = has_permission('estimates', '', 'view_own');
         $allow_staff_view_estimates_assigned = get_option('allow_staff_view_estimates_assigned');
         if ($has_permission_view_estimates || $has_permission_view_estimates_own || $allow_staff_view_estimates_assigned) {
-            $this->db->select()->from('tblitems_in');
+            $this->db->select()->from(db_prefix() . 'itemable');
             $this->db->where('rel_type', 'estimate');
 
             if (!$has_permission_view_estimates) {
-                $this->db->where('rel_id IN (select id from tblestimates where ' . get_estimates_where_sql_for_staff(get_staff_user_id()) . ')');
+                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'estimates where ' . get_estimates_where_sql_for_staff(get_staff_user_id()) . ')');
             }
             $this->db->where('(description LIKE "%' . $q . '%" OR long_description LIKE "%' . $q . '%")');
             $this->db->order_by('description', 'ASC');
@@ -806,6 +772,8 @@ class Misc_model extends CRM_Model
                 'search_heading' => _l('estimate_items'),
             ];
         }
+
+        $result = hooks()->apply_filters('global_search_result_query', $result, $q, $limit);
 
         return $result;
     }
@@ -825,35 +793,37 @@ class Misc_model extends CRM_Model
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
-            } elseif (_startsWith($q, get_option('proposal_number_prefix'))) {
+            } elseif (startsWith($q, get_option('proposal_number_prefix'))) {
                 $q = strafter($q, get_option('proposal_number_prefix'));
                 $q = trim($q);
                 $q = ltrim($q, '0');
             }
 
+            $noPermissionQuery = get_proposals_sql_where_staff(get_staff_user_id());
+
             // Proposals
-            $this->db->select('*,tblproposals.id as id');
-            $this->db->from('tblproposals');
-            $this->db->join('tblcurrencies', 'tblcurrencies.id = tblproposals.currency');
+            $this->db->select('*,' . db_prefix() . 'proposals.id as id');
+            $this->db->from(db_prefix() . 'proposals');
+            $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'proposals.currency');
 
             if (!$has_permission_view_proposals) {
-                $this->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
+                $this->db->where($noPermissionQuery);
             }
 
             $this->db->where('(
-                tblproposals.id LIKE "' . $q . '%"
-                OR tblproposals.subject LIKE "%' . $q . '%"
-                OR tblproposals.content LIKE "%' . $q . '%"
-                OR tblproposals.proposal_to LIKE "%' . $q . '%"
-                OR tblproposals.zip LIKE "%' . $q . '%"
-                OR tblproposals.state LIKE "%' . $q . '%"
-                OR tblproposals.city LIKE "%' . $q . '%"
-                OR tblproposals.address LIKE "%' . $q . '%"
-                OR tblproposals.email LIKE "%' . $q . '%"
-                OR tblproposals.phone LIKE "%' . $q . '%"
+                ' . db_prefix() . 'proposals.id LIKE "' . $q . '%"
+                OR ' . db_prefix() . 'proposals.subject LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.content LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.proposal_to LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.zip LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.state LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.city LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.address LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.email LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'proposals.phone LIKE "%' . $q . '%"
                 )');
 
-            $this->db->order_by('tblproposals.id', 'desc');
+            $this->db->order_by(db_prefix() . 'proposals.id', 'desc');
             if ($limit != 0) {
                 $this->db->limit($limit);
             }
@@ -876,13 +846,13 @@ class Misc_model extends CRM_Model
         if (is_staff_member()) {
             // Leads
             $this->db->select();
-            $this->db->from('tblleads');
+            $this->db->from(db_prefix() . 'leads');
 
             if (!$has_permission_view) {
                 $this->db->where('(assigned = ' . get_staff_user_id() . ' OR addedfrom = ' . get_staff_user_id() . ' OR is_public=1)');
             }
 
-            if (!_startsWith($q, '#')) {
+            if (!startsWith($q, '#')) {
                 $this->db->where('(name LIKE "%' . $q . '%"
                     OR title LIKE "%' . $q . '%"
                     OR company LIKE "%' . $q . '%"
@@ -895,9 +865,9 @@ class Misc_model extends CRM_Model
                     )');
             } else {
                 $this->db->where('id IN
-                    (SELECT rel_id FROM tbltags_in WHERE tag_id IN
-                    (SELECT id FROM tbltags WHERE name="' . strafter($q, '#') . '")
-                    AND tbltags_in.rel_type=\'lead\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
+                    (SELECT rel_id FROM ' . db_prefix() . 'taggables WHERE tag_id IN
+                    (SELECT id FROM ' . db_prefix() . 'tags WHERE name="' . strafter($q, '#') . '")
+                    AND ' . db_prefix() . 'taggables.rel_type=\'lead\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                     ');
             }
 
@@ -939,32 +909,32 @@ class Misc_model extends CRM_Model
                     $departments_ids = $staff_deparments_ids;
                 }
                 if (count($departments_ids) > 0) {
-                    $where = 'department IN (SELECT departmentid FROM tblstaffdepartments WHERE departmentid IN (' . implode(',', $departments_ids) . ') AND staffid="' . get_staff_user_id() . '")';
+                    $where = 'department IN (SELECT departmentid FROM ' . db_prefix() . 'staff_departments WHERE departmentid IN (' . implode(',', $departments_ids) . ') AND staffid="' . get_staff_user_id() . '")';
                 }
             }
 
             $this->db->select();
-            $this->db->from('tbltickets');
-            $this->db->join('tbldepartments', 'tbldepartments.departmentid = tbltickets.department');
-            $this->db->join('tblclients', 'tblclients.userid = tbltickets.userid', 'left');
-            $this->db->join('tblcontacts', 'tblcontacts.id = tbltickets.contactid', 'left');
+            $this->db->from(db_prefix() . 'tickets');
+            $this->db->join(db_prefix() . 'departments', db_prefix() . 'departments.departmentid = ' . db_prefix() . 'tickets.department');
+            $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'tickets.userid', 'left');
+            $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.id = ' . db_prefix() . 'tickets.contactid', 'left');
 
 
-            if (!_startsWith($q, '#')) {
+            if (!startsWith($q, '#')) {
                 $this->db->where('(
                     ticketid LIKE "' . $q . '%"
                     OR subject LIKE "%' . $q . '%"
                     OR message LIKE "%' . $q . '%"
-                    OR tblcontacts.email LIKE "%' . $q . '%"
+                    OR ' . db_prefix() . 'contacts.email LIKE "%' . $q . '%"
                     OR CONCAT(firstname, \' \', lastname) LIKE "%' . $q . '%"
                     OR company LIKE "%' . $q . '%"
                     OR vat LIKE "%' . $q . '%"
-                    OR tblcontacts.phonenumber LIKE "%' . $q . '%"
-                    OR tblclients.phonenumber LIKE "%' . $q . '%"
+                    OR ' . db_prefix() . 'contacts.phonenumber LIKE "%' . $q . '%"
+                    OR ' . db_prefix() . 'clients.phonenumber LIKE "%' . $q . '%"
                     OR city LIKE "%' . $q . '%"
                     OR state LIKE "%' . $q . '%"
                     OR address LIKE "%' . $q . '%"
-                    OR tbldepartments.name LIKE "%' . $q . '%"
+                    OR ' . db_prefix() . 'departments.name LIKE "%' . $q . '%"
                     )');
 
                 if ($where != '') {
@@ -972,9 +942,9 @@ class Misc_model extends CRM_Model
                 }
             } else {
                 $this->db->where('ticketid IN
-                    (SELECT rel_id FROM tbltags_in WHERE tag_id IN
-                    (SELECT id FROM tbltags WHERE name="' . strafter($q, '#') . '")
-                    AND tbltags_in.rel_type=\'ticket\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
+                    (SELECT rel_id FROM ' . db_prefix() . 'taggables WHERE tag_id IN
+                    (SELECT id FROM ' . db_prefix() . 'tags WHERE name="' . strafter($q, '#') . '")
+                    AND ' . db_prefix() . 'taggables.rel_type=\'ticket\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                     ');
             }
 
@@ -1001,16 +971,16 @@ class Misc_model extends CRM_Model
 
         if ($have_assigned_customers || $have_permission_customers_view) {
             // Contacts
-            $this->db->select(implode(',', prefixed_table_fields_array('tblcontacts')) . ',company');
-            $this->db->from('tblcontacts');
+            $this->db->select(implode(',', prefixed_table_fields_array(db_prefix() . 'contacts')) . ',company');
+            $this->db->from(db_prefix() . 'contacts');
 
-            $this->db->join('tblclients', 'tblclients.userid=tblcontacts.userid', 'left');
+            $this->db->join(db_prefix() . 'clients', '' . db_prefix() . 'clients.userid=' . db_prefix() . 'contacts.userid', 'left');
             $this->db->where('(firstname LIKE "%' . $q . '%"
                 OR lastname LIKE "%' . $q . '%"
                 OR email LIKE "%' . $q . '%"
                 OR CONCAT(firstname, \' \', lastname) LIKE "%' . $q . '%"
-                OR tblcontacts.phonenumber LIKE "%' . $q . '%"
-                OR tblcontacts.title LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'contacts.phonenumber LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'contacts.title LIKE "%' . $q . '%"
                 OR company LIKE "%' . $q . '%"
                 )');
 
@@ -1040,7 +1010,7 @@ class Misc_model extends CRM_Model
         if (has_permission('staff', '', 'view')) {
             // Staff
             $this->db->select();
-            $this->db->from('tblstaff');
+            $this->db->from(db_prefix() . 'staff');
             $this->db->like('firstname', $q);
             $this->db->or_like('lastname', $q);
             $this->db->or_like("CONCAT(firstname, ' ', lastname)", $q, false);
@@ -1072,9 +1042,9 @@ class Misc_model extends CRM_Model
         if ($has_permission_view_contracts || has_permission('contracts', '', 'view_own')) {
             // Contracts
             $this->db->select();
-            $this->db->from('tblcontracts');
+            $this->db->from(db_prefix() . 'contracts');
             if (!$has_permission_view_contracts) {
-                $this->db->where('tblcontracts.addedfrom', get_staff_user_id());
+                $this->db->where(db_prefix() . 'contracts.addedfrom', get_staff_user_id());
             }
 
             $this->db->where('(description LIKE "%' . $q . '%" OR subject LIKE "%' . $q . '%")');
@@ -1100,15 +1070,15 @@ class Misc_model extends CRM_Model
         $projects = has_permission('projects', '', 'view');
         // Projects
         $this->db->select();
-        $this->db->from('tblprojects');
-        $this->db->join('tblclients', 'tblclients.userid = tblprojects.clientid');
+        $this->db->from(db_prefix() . 'projects');
+        $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'projects.clientid');
         if (!$projects) {
-            $this->db->where('tblprojects.id IN (SELECT project_id FROM tblprojectmembers WHERE staff_id=' . get_staff_user_id() . ')');
+            $this->db->where(db_prefix() . 'projects.id IN (SELECT project_id FROM ' . db_prefix() . 'project_members WHERE staff_id=' . get_staff_user_id() . ')');
         }
         if ($where != false) {
             $this->db->where($where);
         }
-        if (!_startsWith($q, '#')) {
+        if (!startsWith($q, '#')) {
             $this->db->where('(company LIKE "%' . $q . '%"
                 OR description LIKE "%' . $q . '%"
                 OR name LIKE "%' . $q . '%"
@@ -1122,9 +1092,9 @@ class Misc_model extends CRM_Model
                 )');
         } else {
             $this->db->where('id IN
-                (SELECT rel_id FROM tbltags_in WHERE tag_id IN
-                (SELECT id FROM tbltags WHERE name="' . strafter($q, '#') . '")
-                AND tbltags_in.rel_type=\'project\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
+                (SELECT rel_id FROM ' . db_prefix() . 'taggables WHERE tag_id IN
+                (SELECT id FROM ' . db_prefix() . 'tags WHERE name="' . strafter($q, '#') . '")
+                AND ' . db_prefix() . 'taggables.rel_type=\'project\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                 ');
         }
 
@@ -1152,84 +1122,85 @@ class Misc_model extends CRM_Model
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
-            } elseif (_startsWith($q, get_option('invoice_prefix'))) {
+            } elseif (startsWith($q, get_option('invoice_prefix'))) {
                 $q = strafter($q, get_option('invoice_prefix'));
                 $q = trim($q);
                 $q = ltrim($q, '0');
             }
-            $invoice_fields = prefixed_table_fields_array('tblinvoices');
-            $clients_fields = prefixed_table_fields_array('tblclients');
+            $invoice_fields = prefixed_table_fields_array(db_prefix() . 'invoices');
+            $clients_fields = prefixed_table_fields_array(db_prefix() . 'clients');
+            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
             // Invoices
-            $this->db->select(implode(',', $invoice_fields) . ',' . implode(',', $clients_fields) . ',tblinvoices.id as invoiceid,' . get_sql_select_client_company());
-            $this->db->from('tblinvoices');
-            $this->db->join('tblclients', 'tblclients.userid = tblinvoices.clientid', 'left');
-            $this->db->join('tblcurrencies', 'tblcurrencies.id = tblinvoices.currency');
-            $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
+            $this->db->select(implode(',', $invoice_fields) . ',' . implode(',', $clients_fields) . ',' . db_prefix() . 'invoices.id as invoiceid,' . get_sql_select_client_company());
+            $this->db->from(db_prefix() . 'invoices');
+            $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'invoices.clientid', 'left');
+            $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency');
+            $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.userid = ' . db_prefix() . 'clients.userid AND is_primary = 1', 'left');
 
             if (!$has_permission_view_invoices) {
-                $this->db->where(get_invoices_where_sql_for_staff(get_staff_user_id()));
+                $this->db->where($noPermissionQuery);
             }
-            if (!_startsWith($q, '#')) {
+            if (!startsWith($q, '#')) {
                 $this->db->where('(
-                tblinvoices.number LIKE "' . $q . '"
+                ' . db_prefix() . 'invoices.number LIKE "' . $q . '"
                 OR
-                tblclients.company LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.company LIKE "%' . $q . '%"
                 OR
-                tblinvoices.clientnote LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.clientnote LIKE "%' . $q . '%"
                 OR
-                tblclients.vat LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.vat LIKE "%' . $q . '%"
                 OR
-                tblclients.phonenumber LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.phonenumber LIKE "%' . $q . '%"
                 OR
-                tblclients.city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.city LIKE "%' . $q . '%"
                 OR
-                tblclients.state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.state LIKE "%' . $q . '%"
                 OR
-                tblclients.zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.zip LIKE "%' . $q . '%"
                 OR
-                tblclients.address LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.address LIKE "%' . $q . '%"
                 OR
-                tblinvoices.adminnote LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.adminnote LIKE "%' . $q . '%"
                 OR
                 CONCAT(firstname,\' \',lastname) LIKE "%' . $q . '%"
                 OR
-                tblinvoices.billing_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.billing_street LIKE "%' . $q . '%"
                 OR
-                tblinvoices.billing_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.billing_city LIKE "%' . $q . '%"
                 OR
-                tblinvoices.billing_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.billing_state LIKE "%' . $q . '%"
                 OR
-                tblinvoices.billing_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.billing_zip LIKE "%' . $q . '%"
                 OR
-                tblinvoices.shipping_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.shipping_street LIKE "%' . $q . '%"
                 OR
-                tblinvoices.shipping_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.shipping_city LIKE "%' . $q . '%"
                 OR
-                tblinvoices.shipping_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.shipping_state LIKE "%' . $q . '%"
                 OR
-                tblinvoices.shipping_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'invoices.shipping_zip LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_street LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_city LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_state LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_zip LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_street LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_city LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_state LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_zip LIKE "%' . $q . '%"
                 )');
             } else {
-                $this->db->where('tblinvoices.id IN
-                (SELECT rel_id FROM tbltags_in WHERE tag_id IN
-                (SELECT id FROM tbltags WHERE name="' . strafter($q, '#') . '")
-                AND tbltags_in.rel_type=\'invoice\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
+                $this->db->where(db_prefix() . 'invoices.id IN
+                (SELECT rel_id FROM ' . db_prefix() . 'taggables WHERE tag_id IN
+                (SELECT id FROM ' . db_prefix() . 'tags WHERE name="' . strafter($q, '#') . '")
+                AND ' . db_prefix() . 'taggables.rel_type=\'invoice\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                 ');
             }
 
@@ -1260,78 +1231,78 @@ class Misc_model extends CRM_Model
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
-            } elseif (_startsWith($q, get_option('credit_note_prefix'))) {
+            } elseif (startsWith($q, get_option('credit_note_prefix'))) {
                 $q = strafter($q, get_option('credit_note_prefix'));
                 $q = trim($q);
                 $q = ltrim($q, '0');
             }
-            $credit_note_fields = prefixed_table_fields_array('tblcreditnotes');
-            $clients_fields     = prefixed_table_fields_array('tblclients');
+            $credit_note_fields = prefixed_table_fields_array(db_prefix() . 'creditnotes');
+            $clients_fields     = prefixed_table_fields_array(db_prefix() . 'clients');
             // Invoices
-            $this->db->select(implode(',', $credit_note_fields) . ',' . implode(',', $clients_fields) . ',tblcreditnotes.id as credit_note_id,' . get_sql_select_client_company());
-            $this->db->from('tblcreditnotes');
-            $this->db->join('tblclients', 'tblclients.userid = tblcreditnotes.clientid', 'left');
-            $this->db->join('tblcurrencies', 'tblcurrencies.id = tblcreditnotes.currency');
-            $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
+            $this->db->select(implode(',', $credit_note_fields) . ',' . implode(',', $clients_fields) . ',' . db_prefix() . 'creditnotes.id as credit_note_id,' . get_sql_select_client_company());
+            $this->db->from(db_prefix() . 'creditnotes');
+            $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'creditnotes.clientid', 'left');
+            $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'creditnotes.currency');
+            $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.userid = ' . db_prefix() . 'clients.userid AND is_primary = 1', 'left');
 
             if (!$has_permission_view_credit_notes) {
-                $this->db->where('tblcreditnotes.addedfrom', get_staff_user_id());
+                $this->db->where(db_prefix() . 'creditnotes.addedfrom', get_staff_user_id());
             }
 
             $this->db->where('(
-                tblcreditnotes.number LIKE "' . $q . '"
+                ' . db_prefix() . 'creditnotes.number LIKE "' . $q . '"
                 OR
-                tblclients.company LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.company LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.clientnote LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.clientnote LIKE "%' . $q . '%"
                 OR
-                tblclients.vat LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.vat LIKE "%' . $q . '%"
                 OR
-                tblclients.phonenumber LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.phonenumber LIKE "%' . $q . '%"
                 OR
-                tblclients.city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.city LIKE "%' . $q . '%"
                 OR
-                tblclients.state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.state LIKE "%' . $q . '%"
                 OR
-                tblclients.zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.zip LIKE "%' . $q . '%"
                 OR
-                tblclients.address LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.address LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.adminnote LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.adminnote LIKE "%' . $q . '%"
                 OR
                 CONCAT(firstname,\' \',lastname) LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.billing_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.billing_street LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.billing_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.billing_city LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.billing_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.billing_state LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.billing_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.billing_zip LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.shipping_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.shipping_street LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.shipping_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.shipping_city LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.shipping_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.shipping_state LIKE "%' . $q . '%"
                 OR
-                tblcreditnotes.shipping_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'creditnotes.shipping_zip LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_street LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_city LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_state LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_zip LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_street LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_city LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_state LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_zip LIKE "%' . $q . '%"
                 )');
 
 
@@ -1361,77 +1332,78 @@ class Misc_model extends CRM_Model
             if (is_numeric($q)) {
                 $q = trim($q);
                 $q = ltrim($q, '0');
-            } elseif (_startsWith($q, get_option('estimate_prefix'))) {
+            } elseif (startsWith($q, get_option('estimate_prefix'))) {
                 $q = strafter($q, get_option('estimate_prefix'));
                 $q = trim($q);
                 $q = ltrim($q, '0');
             }
             // Estimates
-            $estimates_fields = prefixed_table_fields_array('tblestimates');
-            $clients_fields   = prefixed_table_fields_array('tblclients');
+            $estimates_fields = prefixed_table_fields_array(db_prefix() . 'estimates');
+            $clients_fields   = prefixed_table_fields_array(db_prefix() . 'clients');
+            $noPermissionQuery = get_estimates_where_sql_for_staff(get_staff_user_id());
 
-            $this->db->select(implode(',', $estimates_fields) . ',' . implode(',', $clients_fields) . ',tblestimates.id as estimateid,' . get_sql_select_client_company());
-            $this->db->from('tblestimates');
-            $this->db->join('tblclients', 'tblclients.userid = tblestimates.clientid', 'left');
-            $this->db->join('tblcurrencies', 'tblcurrencies.id = tblestimates.currency');
-            $this->db->join('tblcontacts', 'tblcontacts.userid = tblclients.userid AND is_primary = 1', 'left');
+            $this->db->select(implode(',', $estimates_fields) . ',' . implode(',', $clients_fields) . ',' . db_prefix() . 'estimates.id as estimateid,' . get_sql_select_client_company());
+            $this->db->from(db_prefix() . 'estimates');
+            $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'estimates.clientid', 'left');
+            $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'estimates.currency');
+            $this->db->join(db_prefix() . 'contacts', db_prefix() . 'contacts.userid = ' . db_prefix() . 'clients.userid AND is_primary = 1', 'left');
 
             if (!$has_permission_view_estimates) {
-                $this->db->where(get_estimates_where_sql_for_staff(get_staff_user_id()));
+                $this->db->where($noPermissionQuery);
             }
 
             $this->db->where('(
-                tblestimates.number LIKE "' . $q . '"
+                ' . db_prefix() . 'estimates.number LIKE "' . $q . '"
                 OR
-                tblclients.company LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.company LIKE "%' . $q . '%"
                 OR
-                tblestimates.clientnote LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.clientnote LIKE "%' . $q . '%"
                 OR
-                tblclients.vat LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.vat LIKE "%' . $q . '%"
                 OR
-                tblclients.phonenumber LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.phonenumber LIKE "%' . $q . '%"
                 OR
-                tblclients.city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.city LIKE "%' . $q . '%"
                 OR
-                tblclients.state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.state LIKE "%' . $q . '%"
                 OR
-                tblclients.zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.zip LIKE "%' . $q . '%"
                 OR
                 address LIKE "%' . $q . '%"
                 OR
-                tblestimates.adminnote LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.adminnote LIKE "%' . $q . '%"
                 OR
-                tblestimates.billing_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.billing_street LIKE "%' . $q . '%"
                 OR
-                tblestimates.billing_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.billing_city LIKE "%' . $q . '%"
                 OR
-                tblestimates.billing_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.billing_state LIKE "%' . $q . '%"
                 OR
-                tblestimates.billing_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.billing_zip LIKE "%' . $q . '%"
                 OR
-                tblestimates.shipping_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.shipping_street LIKE "%' . $q . '%"
                 OR
-                tblestimates.shipping_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.shipping_city LIKE "%' . $q . '%"
                 OR
-                tblestimates.shipping_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.shipping_state LIKE "%' . $q . '%"
                 OR
-                tblestimates.shipping_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'estimates.shipping_zip LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_street LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_city LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_state LIKE "%' . $q . '%"
                 OR
-                tblclients.billing_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.billing_zip LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_street LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_street LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_city LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_city LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_state LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_state LIKE "%' . $q . '%"
                 OR
-                tblclients.shipping_zip LIKE "%' . $q . '%"
+                ' . db_prefix() . 'clients.shipping_zip LIKE "%' . $q . '%"
                 )');
 
             $this->db->order_by('number,YEAR(date)', 'desc');
@@ -1457,29 +1429,29 @@ class Misc_model extends CRM_Model
 
         if ($has_permission_expenses_view || $has_permission_expenses_view_own) {
             // Expenses
-            $this->db->select('*,tblexpenses.amount as amount,tblexpensescategories.name as category_name,tblinvoicepaymentsmodes.name as payment_mode_name,tbltaxes.name as tax_name, tblexpenses.id as expenseid');
-            $this->db->from('tblexpenses');
-            $this->db->join('tblclients', 'tblclients.userid = tblexpenses.clientid', 'left');
-            $this->db->join('tblinvoicepaymentsmodes', 'tblinvoicepaymentsmodes.id = tblexpenses.paymentmode', 'left');
-            $this->db->join('tbltaxes', 'tbltaxes.id = tblexpenses.tax', 'left');
-            $this->db->join('tblexpensescategories', 'tblexpensescategories.id = tblexpenses.category');
-
+            $this->db->select('*,' . db_prefix() . 'expenses.amount as amount,' . db_prefix() . 'expenses_categories.name as category_name,' . db_prefix() . 'payment_modes.name as payment_mode_name,' . db_prefix() . 'taxes.name as tax_name, ' . db_prefix() . 'expenses.id as expenseid,'.db_prefix().'currencies.name as currency_name');
+            $this->db->from(db_prefix() . 'expenses');
+            $this->db->join(db_prefix() . 'clients', db_prefix() . 'clients.userid = ' . db_prefix() . 'expenses.clientid', 'left');
+            $this->db->join(db_prefix() . 'payment_modes', db_prefix() . 'payment_modes.id = ' . db_prefix() . 'expenses.paymentmode', 'left');
+            $this->db->join(db_prefix() . 'taxes', db_prefix() . 'taxes.id = ' . db_prefix() . 'expenses.tax', 'left');
+            $this->db->join(db_prefix() . 'expenses_categories', db_prefix() . 'expenses_categories.id = ' . db_prefix() . 'expenses.category');
+            $this->db->join(db_prefix() . 'currencies', '' . db_prefix() . 'currencies.id = ' . db_prefix() . 'expenses.currency', 'left');
             if (!$has_permission_expenses_view) {
-                $this->db->where('tblexpenses.addedfrom', get_staff_user_id());
+                $this->db->where(db_prefix() . 'expenses.addedfrom', get_staff_user_id());
             }
 
             $this->db->where('(company LIKE "%' . $q . '%"
                 OR paymentmode LIKE "%' . $q . '%"
-                OR tblinvoicepaymentsmodes.name LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'payment_modes.name LIKE "%' . $q . '%"
                 OR vat LIKE "%' . $q . '%"
                 OR phonenumber LIKE "%' . $q . '%"
                 OR city LIKE "%' . $q . '%"
                 OR zip LIKE "%' . $q . '%"
                 OR address LIKE "%' . $q . '%"
                 OR state LIKE "%' . $q . '%"
-                OR tblexpensescategories.name LIKE "%' . $q . '%"
-                OR tblexpenses.note LIKE "%' . $q . '%"
-                OR tblexpenses.expense_name LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'expenses_categories.name LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'expenses.note LIKE "%' . $q . '%"
+                OR ' . db_prefix() . 'expenses.expense_name LIKE "%' . $q . '%"
                 )');
 
             if ($limit != 0) {

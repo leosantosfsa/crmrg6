@@ -1,15 +1,18 @@
-<div class="panel_s<?php if(!isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (isset($invoice) && !isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == 5))){echo ' hide';} ?>" id="invoice_top_info">
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
+<div class="panel_s<?php if(!isset($invoice) || (isset($invoice) && count($invoices_to_merge) == 0 && (isset($invoice) && !isset($invoice_from_project) && count($expenses_to_bill) == 0 || $invoice->status == Invoices_model::STATUS_CANCELLED))){echo ' hide';} ?>" id="invoice_top_info">
    <div class="panel-body">
       <div class="row">
          <div id="merge" class="col-md-6">
-            <?php if(isset($invoice)){
-               $this->load->view('admin/invoices/merge_invoice',array('invoices_to_merge'=>$invoices_to_merge));
-               } ?>
+            <?php
+              if(isset($invoice)){
+                 $this->load->view('admin/invoices/merge_invoice', array('invoices_to_merge'=>$invoices_to_merge));
+              }
+            ?>
          </div>
          <!--  When invoicing from project area the expenses are not visible here because you can select to bill expenses while trying to invoice project -->
          <?php if(!isset($invoice_from_project)){ ?>
            <div id="expenses_to_bill" class="col-md-6">
-              <?php if(isset($invoice) && $invoice->status != 5){
+              <?php if(isset($invoice) && $invoice->status != Invoices_model::STATUS_CANCELLED){
                  $this->load->view('admin/invoices/bill_expenses',array('expenses_to_bill'=>$expenses_to_bill));
               } ?>
            </div>
@@ -24,7 +27,7 @@
       <?php  echo format_invoice_status($invoice->status); ?>
       <hr class="hr-panel-heading" />
       <?php } ?>
-      <?php do_action('before_render_invoice_template'); ?>
+      <?php hooks()->do_action('before_render_invoice_template'); ?>
       <?php if(isset($invoice)){
         echo form_hidden('merge_current_invoice',$invoice->id);
       } ?>
@@ -289,11 +292,12 @@
                <div class="row">
                   <div class="col-md-6">
                      <?php
-                        $s_attrs = array('disabled'=>true,'data-show-subtext'=>true);
-                        $s_attrs = do_action('invoice_currency_disabled',$s_attrs);
+                        $currency_attr = array('disabled'=>true,'data-show-subtext'=>true);
+                        $currency_attr = apply_filters_deprecated('invoice_currency_disabled', [$currency_attr], '2.3.0', 'invoice_currency_attributes');
+
                         foreach($currencies as $currency){
                          if($currency['isdefault'] == 1){
-                           $s_attrs['data-base'] = $currency['id'];
+                           $currency_attr['data-base'] = $currency['id'];
                          }
                          if(isset($invoice)){
                           if($currency['id'] == $invoice->currency){
@@ -305,8 +309,9 @@
                          }
                         }
                         }
+                        $currency_attr = hooks()->apply_filters('invoice_currency_attributes',$currency_attr);
                         ?>
-                     <?php echo render_select('currency',$currencies,array('id','name','symbol'),'invoice_add_edit_currency',$selected,$s_attrs); ?>
+                     <?php echo render_select('currency', $currencies, array('id','name','symbol'), 'invoice_add_edit_currency', $selected, $currency_attr); ?>
                   </div>
                   <div class="col-md-6">
                      <?php
@@ -324,11 +329,19 @@
                         ?>
                   </div>
                   <div class="col-md-6">
-                     <div class="form-group select-placeholder">
+                     <div class="form-group select-placeholder"<?php if(isset($invoice) && !empty($invoice->is_recurring_from)){ ?> data-toggle="tooltip" data-title="<?php echo _l('create_recurring_from_child_error_message', [_l('invoice_lowercase'),_l('invoice_lowercase'), _l('invoice_lowercase')]); ?>"<?php } ?>>
                         <label for="recurring" class="control-label">
                         <?php echo _l('invoice_add_edit_recurring'); ?>
                         </label>
-                        <select class="selectpicker" data-width="100%" name="recurring" data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
+                        <select class="selectpicker"
+                        data-width="100%"
+                        name="recurring"
+                        data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>"
+                        <?php
+                        // The problem is that this invoice was generated from previous recurring invoice
+                        // Then this new invoice you set it as recurring but the next invoice date was still taken from the previous invoice.
+                        if(isset($invoice) && !empty($invoice->is_recurring_from)){echo 'disabled';} ?>
+                        >
                            <?php for($i = 0; $i <=12; $i++){ ?>
                            <?php
                               $selected = '';
@@ -464,7 +477,7 @@
       </div>
       <?php if(isset($invoice_from_project)){ echo '<hr class="no-mtop" />'; } ?>
       <div class="table-responsive s_table">
-         <table class="table invoice-items-table items table-main-invoice-edit no-mtop">
+         <table class="table invoice-items-table items table-main-invoice-edit has-calculations no-mtop">
             <thead>
                <tr>
                   <th></th>
@@ -558,7 +571,7 @@
                     }
                     $table_row .= form_hidden('' . $items_indicator . '[' . $i . '][itemid]', $item['id']);
                     $amount = $item['rate'] * $item['qty'];
-                    $amount = _format_number($amount);
+                    $amount = app_format_number($amount);
                     // order input
                     $table_row .= '<input type="hidden" class="order" name="' . $items_indicator . '[' . $i . '][order]">';
                     $table_row .= '</td>';

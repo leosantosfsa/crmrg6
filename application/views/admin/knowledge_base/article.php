@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
  <div class="content">
@@ -22,7 +23,7 @@
     <?php if(isset($article)){ ?>
     <p>
     <small>
-       <?php echo _l('article_total_views'); ?>: <?php echo total_rows('tblviewstracking',array('rel_type'=>'kb_article','rel_id'=>$article->articleid)); ?>
+       <?php echo _l('article_total_views'); ?>: <?php echo total_rows(db_prefix().'views_tracking',array('rel_type'=>'kb_article','rel_id'=>$article->articleid)); ?>
      </small>
      <?php if(has_permission('knowledge_base','','create')){ ?>
      <a href="<?php echo admin_url('knowledge_base/article'); ?>" class="btn btn-success pull-right"><?php echo _l('kb_article_new_article'); ?></a>
@@ -59,7 +60,7 @@
  </div>
  <p class="bold"><?php echo _l('kb_article_description'); ?></p>
  <?php $contents = ''; if(isset($article)){$contents = $article->description;} ?>
- <?php echo render_textarea('description','',$contents,array(),array(),'','tinymce'); ?>
+ <?php echo render_textarea('description','',$contents,array(),array(),'','tinymce tinymce-manual'); ?>
 
 </div>
 </div>
@@ -76,7 +77,8 @@
 <?php init_tail(); ?>
 <script>
   $(function(){
-    _validate_form($('#article-form'),{subject:'required',articlegroup:'required'});
+    init_editor('#description', {append_plugins: 'stickytoolbar'});
+    appValidateForm($('#article-form'),{subject:'required',articlegroup:'required'});
   });
 </script>
 </body>

@@ -1,15 +1,15 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 /**
  * Stripe Credit Cards UPDATE
  */
 ?>
-<div class="panel_s">
+<div class="panel_s section-heading section-credit-card">
     <div class="panel-body">
-        <h4 class="no-margin"><?php echo _l('update_credit_card'); ?></h4>
+        <h4 class="no-margin section-text"><?php echo _l('update_credit_card'); ?></h4>
     </div>
 </div>
 <div class="panel_s">
-    <div class="panel-body">
+    <div class="panel-body credit-card">
         <?php if(!empty($stripe_customer->default_source)){ ?>
         <h4><?php echo _l('credit_card_update_info'); ?></h4>
         <hr />

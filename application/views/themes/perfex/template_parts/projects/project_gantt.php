@@ -1,10 +1,11 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div id="gantt"></div>
 <script>
   jQuery(function() {
     var gantt_data = <?php echo json_encode($gantt_data); ?>;
     gantt = $("#gantt").gantt({
       source: gantt_data,
-      months:JSON.parse(months_json),
+      months:JSON.parse(app.months_json),
       itemsPerPage: 25,
       navigate: 'scroll',
       onRender:function(){

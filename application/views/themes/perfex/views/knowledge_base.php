@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="panel_s">
 	<div class="panel-body">
 		<?php if(count($articles) == 0){ ?>
@@ -13,7 +14,7 @@
 			// Default page
 			get_template_part('knowledge_base/categories', array('articles'=>$articles));
 		}
-		do_action('after_kb_groups_customers_area');
+		hooks()->do_action('after_kb_groups_customers_area');
 		?>
 	</div>
 </div>

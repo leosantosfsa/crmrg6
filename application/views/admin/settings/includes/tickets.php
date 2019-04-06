@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" class="active">
     <a href="#set_tickets_general" aria-controls="set_tickets_general" role="tab" data-toggle="tab"><?php echo _l('settings_group_general'); ?></a>
@@ -42,11 +43,13 @@
     <?php echo render_input('settings[ticket_attachments_file_extensions]','settings_tickets_allowed_file_extensions',get_option('ticket_attachments_file_extensions')); ?>
   </div>
   <div role="tabpanel" class="tab-pane" id="set_tickets_piping">
-    cPanel forwarder path: <code><?php echo do_action('cpanel_tickets_forwarder_path',FCPATH .'pipe.php'); ?></code>
+    cPanel forwarder path: <code><?php echo hooks()->apply_filters('cpanel_tickets_forwarder_path', FCPATH .'pipe.php'); ?></code>
     <hr />
     <?php render_yes_no_option('email_piping_only_registered','email_piping_only_registered'); ?>
     <hr />
     <?php render_yes_no_option('email_piping_only_replies','email_piping_only_replies'); ?>
+    <hr />
+    <?php render_yes_no_option('ticket_import_reply_only','ticket_import_reply_only'); ?>
     <hr />
     <?php echo render_select('settings[email_piping_default_priority]',$ticket_priorities,array('priorityid','name'),'email_piping_default_priority',get_option('email_piping_default_priority')); ?>
   </div>
@@ -59,7 +62,7 @@
       </a>
      </span>
     </p>
-    <p><b>Form file location:</b> <code><?php echo do_action('ticket_form_file_location_settings',VIEWPATH.'forms\ticket.php'); ?></code></p>
+    <p><b>Form file location:</b> <code><?php echo hooks()->apply_filters('ticket_form_file_location_settings', VIEWPATH.'forms\ticket.php'); ?></code></p>
     <hr />
     <h4 class="bold">Embed form</h4>
     <p><?php echo _l('form_integration_code_help'); ?></p>

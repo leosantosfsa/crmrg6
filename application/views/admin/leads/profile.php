@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="<?php if($openEdit == true){echo 'open-edit ';} ?>lead-wrapper" <?php if(isset($lead) && ($lead->junk == 1 || $lead->lost == 1)){ echo 'lead-is-junk-or-lost';} ?>>
    <?php if(isset($lead)){ ?>
    <div class="btn-group pull-left lead-actions-left">
@@ -11,7 +12,7 @@
       </a>
       <ul class="dropdown-menu dropdown-menu-left" id="lead-more-dropdown">
          <?php if($lead->junk == 0){
-         if($lead->lost == 0 && (total_rows('tblclients',array('leadid'=>$lead->id)) == 0)){ ?>
+         if($lead->lost == 0 && (total_rows(db_prefix().'clients',array('leadid'=>$lead->id)) == 0)){ ?>
          <li>
             <a href="#" onclick="lead_mark_as_lost(<?php echo $lead->id; ?>); return false;">
               <i class="fa fa-mars"></i>
@@ -29,7 +30,7 @@
          <?php } ?>
          <!-- mark as junk -->
          <?php if($lead->lost == 0){
-         if($lead->junk == 0 && (total_rows('tblclients',array('leadid'=>$lead->id)) == 0)){ ?>
+         if($lead->junk == 0 && (total_rows(db_prefix().'clients',array('leadid'=>$lead->id)) == 0)){ ?>
          <li>
             <a href="#" onclick="lead_mark_as_junk(<?php echo $lead->id; ?>); return false;">
               <i class="fa fa fa-times"></i>
@@ -61,10 +62,10 @@
        <?php
            $client = false;
            $convert_to_client_tooltip_email_exists = '';
-           if(total_rows('tblcontacts',array('email'=>$lead->email)) > 0 && total_rows('tblclients',array('leadid'=>$lead->id)) == 0){
+           if(total_rows(db_prefix().'contacts',array('email'=>$lead->email)) > 0 && total_rows(db_prefix().'clients',array('leadid'=>$lead->id)) == 0){
              $convert_to_client_tooltip_email_exists = _l('lead_email_already_exists');
              $text = _l('lead_convert_to_client');
-          } else if (total_rows('tblclients',array('leadid'=>$lead->id))){
+          } else if (total_rows(db_prefix().'clients',array('leadid'=>$lead->id))){
              $client = true;
           } else {
              $text = _l('lead_convert_to_client');
@@ -82,7 +83,7 @@
       <i class="fa fa-user-o"></i>
       </a>
    <?php } ?>
-   <?php if(total_rows('tblclients',array('leadid'=>$lead->id)) == 0){ ?>
+   <?php if(total_rows(db_prefix().'clients',array('leadid'=>$lead->id)) == 0){ ?>
       <a href="#" data-toggle="tooltip" data-title="<?php echo $convert_to_client_tooltip_email_exists; ?>" class="btn btn-success pull-right lead-convert-to-customer lead-top-btn lead-view" onclick="convert_lead_to_customer(<?php echo $lead->id; ?>); return false;">
             <i class="fa fa-user-o"></i>
             <?php echo $text; ?>
@@ -153,7 +154,7 @@
             <p class="bold font-medium-xs mbot15"><?php echo (isset($lead) && $lead->source_name != '' ? $lead->source_name : '-') ?></p>
             <?php if(get_option('disable_language') == 0){ ?>
             <p class="text-muted lead-field-heading"><?php echo _l('localization_default_language'); ?></p>
-            <p class="bold font-medium-xs mbot15"><?php echo (isset($lead) && $lead->default_language != '' ? $lead->default_language : _l('system_default_string')) ?></p>
+            <p class="bold font-medium-xs mbot15"><?php echo (isset($lead) && $lead->default_language != '' ? ucfirst($lead->default_language) : _l('system_default_string')) ?></p>
             <?php } ?>
             <p class="text-muted lead-field-heading"><?php echo _l('lead_add_edit_assigned'); ?></p>
             <p class="bold font-medium-xs mbot15"><?php echo (isset($lead) && $lead->assigned != 0 ? get_staff_full_name($lead->assigned) : '-') ?></p>
@@ -194,7 +195,7 @@
             <?php } ?>
          </div>
          <div class="col-md-4 col-xs-12 lead-information-col">
-            <?php if(total_rows('tblcustomfields',array('fieldto'=>'leads','active'=>1)) > 0 && isset($lead)){ ?>
+            <?php if(total_rows(db_prefix().'customfields',array('fieldto'=>'leads','active'=>1)) > 0 && isset($lead)){ ?>
             <div class="lead-info-heading">
                <h4 class="no-margin font-medium-xs bold">
                   <?php echo _l('custom_fields'); ?>
@@ -224,11 +225,6 @@
               $selected = $lead->status;
             } else if(isset($status_id)){
               $selected = $status_id;
-            }
-            foreach($statuses as $key => $status) {
-              if($status['isdefault'] == 1) {
-                  $statuses[$key]['option_attributes'] = array('data-subtext'=>_l('leads_converted_to_client'));
-              }
             }
             echo render_leads_status_select($statuses, $selected,'lead_add_edit_status');
           ?>

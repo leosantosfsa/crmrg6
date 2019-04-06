@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="row">
     <?php if($ticket->project_id != 0){ ?>
     <div class="col-md-12">
@@ -28,6 +29,13 @@
                             <?php echo _l('clients_ticket_single_submitted','<span class="pull-right bold">'._dt($ticket->date).'</span>'); ?>
                         </p>
                         <hr class="hr-10" />
+                        <p>
+                            <?php echo _l('ticket_dt_submitter'); ?>:
+                            <span class="pull-right bold">
+                                 <?php echo $ticket->submitter; ?>
+                            </span>
+                        </p>
+                        <hr class="hr-10" />
                         <div class="row">
                             <div class="col-md-4">
                                 <?php echo _l('clients_ticket_single_status'); ?>
@@ -40,12 +48,14 @@
                                         <i class="fa fa-pencil-square-o pointer toggle-change-ticket-status"></i></span>
                                         <?php } ?>
                                     </div>
-                                    <?php if(get_option('allow_customer_to_change_ticket_status') == 1){ ?>
+                                    <?php if(can_change_ticket_status_in_clients_area()){ ?>
                                     <div class="ticket-status hide">
                                         <div class="input-group">
                                             <select data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>" id="ticket_status_single" class="form-control" name="ticket_status_single">
                                                 <?php foreach($ticket_statuses as $status){
-                                                    if($status['ticketstatusid'] == 3 || $status['ticketstatusid'] == 4){continue;}
+                                                    if(!can_change_ticket_status_in_clients_area($status['ticketstatusid'])){
+                                                        continue;
+                                                    }
                                                     ?>
                                                     <option value="<?php echo $status['ticketstatusid']; ?>" <?php if($status['ticketstatusid'] == $ticket->ticketstatusid){echo 'selected';}?>>
                                                         <?php echo ticket_status_translate($status['ticketstatusid']); ?>
@@ -62,6 +72,12 @@
                                 <p>
                                     <?php echo _l('clients_ticket_single_priority','<span class="pull-right bold">'.ticket_priority_translate($ticket->priorityid).'</span>'); ?>
                                 </p>
+                                <?php if(get_option('services') == 1 && !empty($ticket->service_name)){ ?>
+                                     <hr class="hr-10" />
+                                    <p>
+                                        <?php echo _l('service') . ': <span class="pull-right bold">'.$ticket->service_name.'</span>'; ?>
+                                    </p>
+                                <?php } ?>
                                 <?php
                                 $custom_fields = get_custom_fields('tickets',array('show_on_client_portal'=>1));
                                 foreach($custom_fields as $field){
@@ -97,7 +113,7 @@
                                     <div class="input-group">
                                      <input type="file" extension="<?php echo str_replace('.','',get_option('ticket_attachments_file_extensions')); ?>" filesize="<?php echo file_upload_max_size(); ?>" class="form-control" name="attachments[0]" accept="<?php echo get_ticket_form_accepted_mimes(); ?>">
                                      <span class="input-group-btn">
-                                        <button class="btn btn-success add_more_attachments p8-half" data-ticket="true" type="button"><i class="fa fa-plus"></i></button>
+                                        <button class="btn btn-success add_more_attachments p8-half" data-max="<?php echo get_option('maximum_allowed_ticket_attachments'); ?>" type="button"><i class="fa fa-plus"></i></button>
                                     </span>
                                 </div>
                             </div>

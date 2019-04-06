@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php if(isset($subscription_error)) { ?>
 <div class="alert alert-warning">
    <?php echo $subscription_error; ?>
@@ -17,7 +18,7 @@
                if(isset($subscription) && $subscription->stripe_plan_id == $plan->id) {
                  $selected = ' selected';
                }
-               $subtext = format_money($plan->amount / 100, strtoupper($plan->currency));
+               $subtext = app_format_money(strcasecmp($plan->currency, 'JPY') == 0 ? $plan->amount : $plan->amount / 100, strtoupper($plan->currency));
                if($plan->interval_count == 1) {
                   $subtext .= ' / ' . $plan->interval;
                } else {

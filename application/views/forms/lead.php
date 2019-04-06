@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="panel_s mtop25">
  <div class="panel-body">
   <h4 class="pull-left"><?php echo $lead->name; ?><br /><small><?php echo get_option('companyname'); ?></small></h4>

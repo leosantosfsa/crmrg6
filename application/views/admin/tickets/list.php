@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
 	<div class="content">
@@ -61,7 +62,7 @@
           </div>
         </div>
         <hr class="hr-panel-heading" />
-        <?php do_action('before_render_tickets_list_table'); ?>
+        <?php hooks()->do_action('before_render_tickets_list_table'); ?>
         <?php $this->load->view('admin/tickets/summary'); ?>
         <a href="#" data-toggle="modal" data-target="#tickets_bulk_actions" class="bulk-actions-btn table-btn hide" data-table=".table-tickets"><?php echo _l('bulk_actions'); ?></a>
         <div class="clearfix"></div>
@@ -109,7 +110,6 @@
 </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 <?php init_tail(); ?>
-<?php echo app_script('assets/js','tickets.js'); ?>
 <script>
   var chart;
   var chart_data = <?php echo $weekly_tickets_opening_statistics; ?>;

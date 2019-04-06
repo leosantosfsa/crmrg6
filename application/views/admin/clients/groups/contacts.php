@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php if(isset($client)){ ?>
 <h4 class="customer-profile-group-heading"><?php echo is_empty_customer_company($client->userid) ? _l('contact') : _l('customer_contacts'); ?></h4>
 <?php if($this->session->flashdata('gdpr_delete_warning')){ ?>
@@ -7,7 +8,7 @@
 <?php } ?>
 <?php if((has_permission('customers','','create') || is_customer_admin($client->userid)) && $client->registration_confirmed == '1'){
    $disable_new_contacts = false;
-   if(is_empty_customer_company($client->userid) && total_rows('tblcontacts',array('userid'=>$client->userid)) == 1){
+   if(is_empty_customer_company($client->userid) && total_rows(db_prefix().'contacts',array('userid'=>$client->userid)) == 1){
       $disable_new_contacts = true;
    }
    ?>

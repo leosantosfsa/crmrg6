@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
    <div class="content">
@@ -41,7 +42,7 @@
                            $lang_template = $this->emails_model->get(array('slug'=>$template->slug,'language'=>$language));
                            if(count($lang_template) > 0){
                              $lang_used = false;
-                             if(get_option('active_language') == $language || total_rows('tblstaff',array('default_language'=>$language)) > 0 || total_rows('tblclients',array('default_language'=>$language)) > 0){
+                             if(get_option('active_language') == $language || total_rows(db_prefix().'staff',array('default_language'=>$language)) > 0 || total_rows(db_prefix().'clients',array('default_language'=>$language)) > 0){
                                $lang_used = true;
                              }
                              $hide_template_class = '';
@@ -50,7 +51,9 @@
                              }
                              ?>
                         <hr />
-                        <h4 class="font-medium pointer bold" onclick='slideToggle("#temp_<?php echo $language; ?>");'><?php echo ucfirst($language); ?></h4>
+                        <h4 class="font-medium pointer bold" onclick='slideToggle("#temp_<?php echo $language; ?>");'>
+                           <?php echo ucfirst($language); ?>
+                        </h4>
                         <?php
                            $lang_template = $lang_template[0];
                            array_push($editors,'message['.$lang_template['emailtemplateid'].']');
@@ -158,7 +161,7 @@
       e.preventDefault();
       tinymce.activeEditor.execCommand('mceInsertContent', false, $(this).text());
     });
-     _validate_form($('form'), {
+     appValidateForm($('form'), {
        name: 'required',
        fromname: 'required',
      });

@@ -9,5 +9,6 @@ return array(
     'Twocheckout' => array($vendorDir . '/2checkout/2checkout-php/lib'),
     'Parsedown' => array($vendorDir . '/erusev/parsedown'),
     'ForceUTF8\\' => array($vendorDir . '/neitanod/forceutf8/src'),
+    'Doctrine\\Common\\Inflector\\' => array($vendorDir . '/doctrine/inflector/lib'),
     'Braintree' => array($vendorDir . '/braintree/braintree_php/lib'),
 );

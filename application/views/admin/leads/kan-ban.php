@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 $is_admin = is_admin();
 $i = 0;
 foreach ($statuses as $status) {

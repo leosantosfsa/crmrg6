@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="row">
     <div class="col-md-12 text-right">
         <div class="form-group pull-right">

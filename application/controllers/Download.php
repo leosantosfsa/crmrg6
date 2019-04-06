@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Download extends CRM_Controller
+class Download extends App_Controller
 {
     public function __construct()
     {
@@ -31,7 +31,12 @@ class Download extends CRM_Controller
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-        do_action('before_output_preview_video');
+
+        if(ob_get_contents()) {
+             ob_end_clean();
+        }
+
+        hooks()->do_action('before_output_preview_video');
 
         $file = fopen($path, 'rb');
         if ($file !== false) {
@@ -70,7 +75,12 @@ class Download extends CRM_Controller
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-        do_action('before_output_preview_image');
+
+        if(ob_get_contents()) {
+             ob_end_clean();
+        }
+
+        hooks()->do_action('before_output_preview_image');
         $file = fopen($path, 'rb');
         if ($file !== false) {
             while (!feof($file)) {
@@ -86,7 +96,7 @@ class Download extends CRM_Controller
         if ($folder_indicator == 'ticket') {
             if (is_logged_in()) {
                 $this->db->where('id', $attachmentid);
-                $attachment = $this->db->get('tblticketattachments')->row();
+                $attachment = $this->db->get(db_prefix().'ticket_attachments')->row();
                 if (!$attachment) {
                     show_404();
                 }
@@ -105,7 +115,7 @@ class Download extends CRM_Controller
                     show_404();
                 }
                 $this->db->where('id', $attachmentid);
-                $attachment = $this->db->get('tblfiles')->row();
+                $attachment = $this->db->get(db_prefix().'files')->row();
                 if (!$attachment) {
                     show_404();
                 }
@@ -117,7 +127,7 @@ class Download extends CRM_Controller
             }
 
             $this->db->where('attachment_key', $attachmentid);
-            $attachment = $this->db->get('tblfiles')->row();
+            $attachment = $this->db->get(db_prefix().'files')->row();
             if (!$attachment) {
                 show_404();
             }
@@ -125,7 +135,7 @@ class Download extends CRM_Controller
             if(!is_staff_logged_in()) {
                 $this->db->select('not_visible_to_client');
                 $this->db->where('id', $attachment->rel_id);
-                $contract = $this->db->get('tblcontracts')->row();
+                $contract = $this->db->get(db_prefix().'contracts')->row();
                 if($contract->not_visible_to_client == 1) {
                     show_404();
                 }
@@ -138,7 +148,7 @@ class Download extends CRM_Controller
             }
 
             $this->db->where('attachment_key', $attachmentid);
-            $attachment = $this->db->get('tblfiles')->row();
+            $attachment = $this->db->get(db_prefix().'files')->row();
 
             if (!$attachment) {
                 show_404();
@@ -150,7 +160,7 @@ class Download extends CRM_Controller
             }
 
             $this->db->where('attachment_key', $attachmentid);
-            $attachment = $this->db->get('tblfiles')->row();
+            $attachment = $this->db->get(db_prefix().'files')->row();
             if (!$attachment) {
                 show_404();
             }
@@ -162,7 +172,7 @@ class Download extends CRM_Controller
             }
             $this->db->where('rel_id', $attachmentid);
             $this->db->where('rel_type', 'expense');
-            $file = $this->db->get('tblfiles')->row();
+            $file = $this->db->get(db_prefix().'files')->row();
             $path = get_upload_path_by_type('expense') . $file->rel_id . '/' . $file->file_name;
         // l_attachment_key is if request is coming from public form
         } elseif ($folder_indicator == 'lead_attachment' || $folder_indicator == 'l_attachment_key') {
@@ -178,21 +188,16 @@ class Download extends CRM_Controller
                 $this->db->where('attachment_key', $attachmentid);
             }
 
-            $attachment = $this->db->get('tblfiles')->row();
+            $attachment = $this->db->get(db_prefix().'files')->row();
 
             if (!$attachment) {
                 show_404();
             }
 
             $path = get_upload_path_by_type('lead') . $attachment->rel_id . '/' . $attachment->file_name;
-        } elseif ($folder_indicator == 'db_backup') {
-            if (!is_admin()) {
-                die('Access forbidden');
-            }
-            $path = BACKUPS_FOLDER . $attachmentid.'.zip';
-        } elseif ($folder_indicator == 'client') {
+        }  elseif ($folder_indicator == 'client') {
             $this->db->where('attachment_key', $attachmentid);
-            $attachment = $this->db->get('tblfiles')->row();
+            $attachment = $this->db->get(db_prefix().'files')->row();
             if (!$attachment) {
                 show_404();
             }

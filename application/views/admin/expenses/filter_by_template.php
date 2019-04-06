@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 if(!isset($filter_table_name)){
     $filter_table_name = '.table-expenses';
 }

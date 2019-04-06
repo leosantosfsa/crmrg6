@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php echo form_hidden('project_id',$project->id); ?>
 <div class="panel_s">
     <div class="panel-body">

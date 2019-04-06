@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php echo form_open_multipart(admin_url('projects/upload_file/'.$project->id),array('class'=>'dropzone','id'=>'project-files-upload')); ?>
 <input type="file" name="file" multiple />
 <?php echo form_close(); ?>
@@ -95,7 +96,7 @@
             }
             ?>
           </td>
-          <?php $total_file_comments = total_rows('tblprojectdiscussioncomments',array('discussion_id'=>$file['id'],'discussion_type'=>'file')); ?>
+          <?php $total_file_comments = total_rows(db_prefix().'projectdiscussioncomments',array('discussion_id'=>$file['id'],'discussion_type'=>'file')); ?>
           <td data-order="<?php echo $total_file_comments; ?>">
             <?php echo $total_file_comments; ?>
           </td>

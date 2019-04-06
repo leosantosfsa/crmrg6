@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Proposals_model extends CRM_Model
+class Proposals_model extends App_Model
 {
     private $statuses;
 
@@ -11,7 +11,7 @@ class Proposals_model extends CRM_Model
     public function __construct()
     {
         parent::__construct();
-        $this->statuses = do_action('before_set_proposal_statuses', [
+        $this->statuses = hooks()->apply_filters('before_set_proposal_statuses', [
             6,
             4,
             1,
@@ -28,12 +28,12 @@ class Proposals_model extends CRM_Model
 
     public function get_sale_agents()
     {
-        return $this->db->query('SELECT DISTINCT(assigned) as sale_agent FROM tblproposals WHERE assigned != 0')->result_array();
+        return $this->db->query('SELECT DISTINCT(assigned) as sale_agent FROM ' . db_prefix() . 'proposals WHERE assigned != 0')->result_array();
     }
 
     public function get_proposals_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM tblproposals')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(date)) as year FROM ' . db_prefix() . 'proposals')->result_array();
     }
 
     public function do_kanban_query($status, $search = '', $page = 1, $sort = [], $count = false)
@@ -47,14 +47,16 @@ class Proposals_model extends CRM_Model
         $allow_staff_view_proposals_assigned = get_option('allow_staff_view_proposals_assigned');
         $staffId                             = get_staff_user_id();
 
+        $noPermissionQuery = get_proposals_sql_where_staff(get_staff_user_id());
+
         $this->db->select('id,invoice_id,estimate_id,subject,rel_type,rel_id,total,date,open_till,currency,proposal_to,status');
-        $this->db->from('tblproposals');
+        $this->db->from(db_prefix() . 'proposals');
         $this->db->where('status', $status);
         if (!$has_permission_view) {
-            $this->db->where(get_proposals_sql_where_staff(get_staff_user_id()));
+            $this->db->where($noPermissionQuery);
         }
         if ($search != '') {
-            if (!_startsWith($search, '#')) {
+            if (!startsWith($search, '#')) {
                 $this->db->where('(
                 phone LIKE "%' . $search . '%"
                 OR
@@ -76,10 +78,10 @@ class Proposals_model extends CRM_Model
                 OR
                 subject LIKE "%' . $search . '%")');
             } else {
-                $this->db->where('tblproposals.id IN
-                (SELECT rel_id FROM tbltags_in WHERE tag_id IN
-                (SELECT id FROM tbltags WHERE name="' . strafter($search, '#') . '")
-                AND tbltags_in.rel_type=\'proposal\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
+                $this->db->where(db_prefix() . 'proposals.id IN
+                (SELECT rel_id FROM ' . db_prefix() . 'taggables WHERE tag_id IN
+                (SELECT id FROM ' . db_prefix() . 'tags WHERE name="' . strafter($search, '#') . '")
+                AND ' . db_prefix() . 'taggables.rel_type=\'proposal\' GROUP BY rel_id HAVING COUNT(tag_id) = 1)
                 ');
             }
         }
@@ -151,15 +153,15 @@ class Proposals_model extends CRM_Model
             $data['content'] = '{proposal_items}';
         }
 
-        $hook_data = do_action('before_create_proposal', [
+        $hook = hooks()->apply_filters('before_create_proposal', [
             'data'  => $data,
             'items' => $items,
         ]);
 
-        $data  = $hook_data['data'];
-        $items = $hook_data['items'];
+        $data  = $hook['data'];
+        $items = $hook['items'];
 
-        $this->db->insert('tblproposals', $data);
+        $this->db->insert(db_prefix() . 'proposals', $data);
         $insert_id = $this->db->insert_id();
 
         if ($insert_id) {
@@ -200,14 +202,15 @@ class Proposals_model extends CRM_Model
                 ]));
             }
 
-            update_sales_total_tax_column($insert_id, 'proposal', 'tblproposals');
-            logActivity('New Proposal Created [ID:' . $insert_id . ']');
+            update_sales_total_tax_column($insert_id, 'proposal', db_prefix() . 'proposals');
+
+            log_activity('New Proposal Created [ID: ' . $insert_id . ']');
 
             if ($save_and_send === true) {
-                $this->send_proposal_to_email($insert_id, 'proposal-send-to-customer', true);
+                $this->send_proposal_to_email($insert_id);
             }
 
-            do_action('proposal_created', $insert_id);
+            hooks()->do_action('proposal_created', $insert_id);
 
             return $insert_id;
         }
@@ -270,18 +273,17 @@ class Proposals_model extends CRM_Model
         $data['address'] = trim($data['address']);
         $data['address'] = nl2br($data['address']);
 
-        $hook_data = do_action('before_proposal_updated', [
+        $hook = hooks()->apply_filters('before_proposal_updated', [
             'data'          => $data,
-            'id'            => $id,
             'items'         => $items,
             'newitems'      => $newitems,
             'removed_items' => isset($data['removed_items']) ? $data['removed_items'] : [],
-        ]);
+        ], $id);
 
-        $data                  = $hook_data['data'];
-        $data['removed_items'] = $hook_data['removed_items'];
-        $newitems              = $hook_data['newitems'];
-        $items                 = $hook_data['items'];
+        $data                  = $hook['data'];
+        $data['removed_items'] = $hook['removed_items'];
+        $newitems              = $hook['newitems'];
+        $items                 = $hook['items'];
 
         // Delete items checked to be removed from database
         foreach ($data['removed_items'] as $remove_item_id) {
@@ -293,7 +295,7 @@ class Proposals_model extends CRM_Model
         unset($data['removed_items']);
 
         $this->db->where('id', $id);
-        $this->db->update('tblproposals', $data);
+        $this->db->update(db_prefix() . 'proposals', $data);
         if ($this->db->affected_rows() > 0) {
             $affectedRows++;
             $proposal_now = $this->get($id);
@@ -340,7 +342,7 @@ class Proposals_model extends CRM_Model
                 foreach ($_item_taxes_names as $_item_tax) {
                     if (!in_array($_item_tax, $item['taxname'])) {
                         $this->db->where('id', $item_taxes[$i]['id'])
-                        ->delete('tblitemstax');
+                        ->delete(db_prefix() . 'item_tax');
                         if ($this->db->affected_rows() > 0) {
                             $affectedRows++;
                         }
@@ -361,16 +363,16 @@ class Proposals_model extends CRM_Model
         }
 
         if ($affectedRows > 0) {
-            update_sales_total_tax_column($id, 'proposal', 'tblproposals');
-            logActivity('Proposal Updated [ID:' . $id . ']');
+            update_sales_total_tax_column($id, 'proposal', db_prefix() . 'proposals');
+            log_activity('Proposal Updated [ID:' . $id . ']');
         }
 
         if ($save_and_send === true) {
-            $this->send_proposal_to_email($id, 'proposal-send-to-customer', true);
+            $this->send_proposal_to_email($id);
         }
 
         if ($affectedRows > 0) {
-            do_action('after_proposal_updated', $id);
+            hooks()->do_action('after_proposal_updated', $id);
 
             return true;
         }
@@ -391,12 +393,12 @@ class Proposals_model extends CRM_Model
             $this->db->where('status !=', 0);
         }
 
-        $this->db->select('*,tblcurrencies.id as currencyid, tblproposals.id as id, tblcurrencies.name as currency_name');
-        $this->db->from('tblproposals');
-        $this->db->join('tblcurrencies', 'tblcurrencies.id = tblproposals.currency', 'left');
+        $this->db->select('*,' . db_prefix() . 'currencies.id as currencyid, ' . db_prefix() . 'proposals.id as id, ' . db_prefix() . 'currencies.name as currency_name');
+        $this->db->from(db_prefix() . 'proposals');
+        $this->db->join(db_prefix() . 'currencies', db_prefix() . 'currencies.id = ' . db_prefix() . 'proposals.currency', 'left');
 
         if (is_numeric($id)) {
-            $this->db->where('tblproposals.id', $id);
+            $this->db->where(db_prefix() . 'proposals.id', $id);
             $proposal = $this->db->get()->row();
             if ($proposal) {
                 $proposal->attachments                           = $this->get_attachments($id);
@@ -424,11 +426,11 @@ class Proposals_model extends CRM_Model
     {
         $this->db->select('signature');
         $this->db->where('id', $id);
-        $proposal = $this->db->get('tblproposals')->row();
+        $proposal = $this->db->get(db_prefix() . 'proposals')->row();
 
         if ($proposal) {
             $this->db->where('id', $id);
-            $this->db->update('tblproposals', ['signature' => null]);
+            $this->db->update(db_prefix() . 'proposals', ['signature' => null]);
 
             if (!empty($proposal->signature)) {
                 unlink(get_upload_path_by_type('proposal') . $id . '/' . $proposal->signature);
@@ -445,7 +447,7 @@ class Proposals_model extends CRM_Model
         $this->mark_action_status($data['status'], $data['proposalid']);
         foreach ($data['order'] as $order_data) {
             $this->db->where('id', $order_data[0]);
-            $this->db->update('tblproposals', [
+            $this->db->update(db_prefix() . 'proposals', [
                 'pipeline_order' => $order_data[1],
             ]);
         }
@@ -460,7 +462,7 @@ class Proposals_model extends CRM_Model
             $this->db->where('rel_id', $proposal_id);
         }
         $this->db->where('rel_type', 'proposal');
-        $result = $this->db->get('tblfiles');
+        $result = $this->db->get(db_prefix() . 'files');
         if (is_numeric($id)) {
             return $result->row();
         }
@@ -482,10 +484,10 @@ class Proposals_model extends CRM_Model
                 unlink(get_upload_path_by_type('proposal') . $attachment->rel_id . '/' . $attachment->file_name);
             }
             $this->db->where('id', $attachment->id);
-            $this->db->delete('tblfiles');
+            $this->db->delete(db_prefix() . 'files');
             if ($this->db->affected_rows() > 0) {
                 $deleted = true;
-                logActivity('Proposal Attachment Deleted [ID: ' . $attachment->rel_id . ']');
+                log_activity('Proposal Attachment Deleted [ID: ' . $attachment->rel_id . ']');
             }
             if (is_dir(get_upload_path_by_type('proposal') . $attachment->rel_id)) {
                 // Check if no attachments left, so we can delete the folder also
@@ -519,7 +521,7 @@ class Proposals_model extends CRM_Model
             $data['staffid'] = get_staff_user_id();
         }
         $data['content'] = nl2br($data['content']);
-        $this->db->insert('tblproposalcomments', $data);
+        $this->db->insert(db_prefix() . 'proposal_comments', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
             $proposal = $this->get($data['proposalid']);
@@ -529,20 +531,12 @@ class Proposals_model extends CRM_Model
                 return true;
             }
 
-            $merge_fields = [];
-            $merge_fields = array_merge($merge_fields, get_proposal_merge_fields($proposal->id));
-
-            $this->load->model('emails_model');
-
-            $this->emails_model->set_rel_id($data['proposalid']);
-            $this->emails_model->set_rel_type('proposal');
-
             if ($client == true) {
                 // Get creator and assigned
                 $this->db->select('staffid,email,phonenumber');
                 $this->db->where('staffid', $proposal->addedfrom);
                 $this->db->or_where('staffid', $proposal->assigned);
-                $staff_proposal = $this->db->get('tblstaff')->result_array();
+                $staff_proposal = $this->db->get(db_prefix() . 'staff')->result_array();
                 $notifiedUsers  = [];
                 foreach ($staff_proposal as $member) {
                     $notified = add_notification([
@@ -560,15 +554,19 @@ class Proposals_model extends CRM_Model
                         array_push($notifiedUsers, $member['staffid']);
                     }
 
+                    $template     = mail_template('proposal_comment_to_staff', $proposal->id, $member['email']);
+                    $merge_fields = $template->get_merge_fields();
+                    $template->send();
                     // Send email/sms to admin that client commented
-                    $this->emails_model->send_email_template('proposal-comment-to-admin', $member['email'], $merge_fields);
-                    $this->sms->trigger(SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_STAFF, $member['phonenumber'], $merge_fields);
+                    $this->app_sms->trigger(SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_STAFF, $member['phonenumber'], $merge_fields);
                 }
                 pusher_trigger_notification($notifiedUsers);
             } else {
                 // Send email/sms to client that admin commented
-                $this->emails_model->send_email_template('proposal-comment-to-client', $proposal->email, $merge_fields);
-                $this->sms->trigger(SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_CUSTOMER, $proposal->phone, $merge_fields);
+                $template     = mail_template('proposal_comment_to_customer', $proposal);
+                $merge_fields = $template->get_merge_fields();
+                $template->send();
+                $this->app_sms->trigger(SMS_TRIGGER_PROPOSAL_NEW_COMMENT_TO_CUSTOMER, $proposal->phone, $merge_fields);
             }
 
             return true;
@@ -580,7 +578,7 @@ class Proposals_model extends CRM_Model
     public function edit_comment($data, $id)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblproposalcomments', [
+        $this->db->update(db_prefix() . 'proposal_comments', [
             'content' => nl2br($data['content']),
         ]);
         if ($this->db->affected_rows() > 0) {
@@ -600,7 +598,7 @@ class Proposals_model extends CRM_Model
         $this->db->where('proposalid', $id);
         $this->db->order_by('dateadded', 'ASC');
 
-        return $this->db->get('tblproposalcomments')->result_array();
+        return $this->db->get(db_prefix() . 'proposal_comments')->result_array();
     }
 
     /**
@@ -612,7 +610,7 @@ class Proposals_model extends CRM_Model
     {
         $this->db->where('id', $id);
 
-        return $this->db->get('tblproposalcomments')->row();
+        return $this->db->get(db_prefix() . 'proposal_comments')->row();
     }
 
     /**
@@ -624,9 +622,9 @@ class Proposals_model extends CRM_Model
     {
         $comment = $this->get_comment($id);
         $this->db->where('id', $id);
-        $this->db->delete('tblproposalcomments');
+        $this->db->delete(db_prefix() . 'proposal_comments');
         if ($this->db->affected_rows() > 0) {
-            logActivity('Proposal Comment Removed [ProposalID:' . $comment->proposalid . ', Comment Content: ' . $comment->content . ']');
+            log_activity('Proposal Comment Removed [ProposalID:' . $comment->proposalid . ', Comment Content: ' . $comment->content . ']');
 
             return true;
         }
@@ -660,7 +658,7 @@ class Proposals_model extends CRM_Model
             'acceptance_date',
             'acceptance_ip',
         ];
-        $fields      = $this->db->list_fields('tblproposals');
+        $fields      = $this->db->list_fields(db_prefix() . 'proposals');
         $insert_data = [];
         foreach ($fields as $field) {
             if (!in_array($field, $not_copy_fields)) {
@@ -714,7 +712,7 @@ class Proposals_model extends CRM_Model
                 if ($value == '') {
                     continue;
                 }
-                $this->db->insert('tblcustomfieldsvalues', [
+                $this->db->insert(db_prefix() . 'customfieldsvalues', [
                     'relid'   => $id,
                     'fieldid' => $field['id'],
                     'fieldto' => 'proposal',
@@ -725,7 +723,7 @@ class Proposals_model extends CRM_Model
             $tags = get_tags_in($proposal->id, 'proposal');
             handle_tags_save($tags, $id, 'proposal');
 
-            logActivity('Copied Proposal ' . format_proposal_number($proposal->id));
+            log_activity('Copied Proposal ' . format_proposal_number($proposal->id));
 
             return $id;
         }
@@ -744,7 +742,7 @@ class Proposals_model extends CRM_Model
     {
         $original_proposal = $this->get($id);
         $this->db->where('id', $id);
-        $this->db->update('tblproposals', [
+        $this->db->update(db_prefix() . 'proposals', [
             'status' => $status,
         ]);
 
@@ -764,19 +762,17 @@ class Proposals_model extends CRM_Model
                 // This is protection that only 3 and 4 statuses can be taken as action from the client side
                 if ($revert == true) {
                     $this->db->where('id', $id);
-                    $this->db->update('tblproposals', [
+                    $this->db->update(db_prefix() . 'proposals', [
                         'status' => $original_proposal->status,
                     ]);
 
                     return false;
                 }
-                $merge_fields = [];
-                $merge_fields = array_merge($merge_fields, get_proposal_merge_fields($original_proposal->id));
 
                 // Get creator and assigned;
                 $this->db->where('staffid', $original_proposal->addedfrom);
                 $this->db->or_where('staffid', $original_proposal->assigned);
-                $staff_proposal = $this->db->get('tblstaff')->result_array();
+                $staff_proposal = $this->db->get(db_prefix() . 'staff')->result_array();
                 $notifiedUsers  = [];
                 foreach ($staff_proposal as $member) {
                     $notified = add_notification([
@@ -795,36 +791,36 @@ class Proposals_model extends CRM_Model
 
                 pusher_trigger_notification($notifiedUsers);
 
-                $this->load->model('emails_model');
-
-                $this->emails_model->set_rel_id($id);
-                $this->emails_model->set_rel_type('proposal');
-
                 // Send thank you to the customer email template
                 if ($status == 3) {
                     foreach ($staff_proposal as $member) {
-                        $this->emails_model->send_email_template('proposal-client-accepted', $member['email'], $merge_fields);
+                        send_mail_template('proposal_accepted_to_staff', $original_proposal, $member['email']);
                     }
-                    $this->emails_model->send_email_template('proposal-client-thank-you', $original_proposal->email, $merge_fields);
-                    do_action('proposal_accepted', $id);
+
+                    send_mail_template('proposal_accepted_to_customer', $original_proposal);
+
+                    hooks()->do_action('proposal_accepted', $id);
                 } else {
+
                     // Client declined send template to admin
                     foreach ($staff_proposal as $member) {
-                        $this->emails_model->send_email_template('proposal-client-declined', $member['email'], $merge_fields);
+                        send_mail_template('proposal_declined_to_staff', $original_proposal, $member['email']);
                     }
-                    do_action('proposal_declined', $id);
+
+                    hooks()->do_action('proposal_declined', $id);
                 }
             } else {
                 // in case admin mark as open the the open till date is smaller then current date set open till date 7 days more
                 if ((date('Y-m-d', strtotime($original_proposal->open_till)) < date('Y-m-d')) && $status == 1) {
                     $open_till = date('Y-m-d', strtotime('+7 DAY', strtotime(date('Y-m-d'))));
                     $this->db->where('id', $id);
-                    $this->db->update('tblproposals', [
+                    $this->db->update(db_prefix() . 'proposals', [
                         'open_till' => $open_till,
                     ]);
                 }
             }
-            logActivity('Proposal Status Changes [ProposalID:' . $id . ', Status:' . format_proposal_status($status, '', false) . ',Client Action: ' . (int) $client . ']');
+
+            log_activity('Proposal Status Changes [ProposalID:' . $id . ', Status:' . format_proposal_status($status, '', false) . ',Client Action: ' . (int) $client . ']');
 
             return true;
         }
@@ -843,17 +839,17 @@ class Proposals_model extends CRM_Model
         $proposal = $this->get($id);
 
         $this->db->where('id', $id);
-        $this->db->delete('tblproposals');
+        $this->db->delete(db_prefix() . 'proposals');
         if ($this->db->affected_rows() > 0) {
             delete_tracked_emails($id, 'proposal');
 
             $this->db->where('proposalid', $id);
-            $this->db->delete('tblproposalcomments');
+            $this->db->delete(db_prefix() . 'proposal_comments');
             // Get related tasks
             $this->db->where('rel_type', 'proposal');
             $this->db->where('rel_id', $id);
 
-            $tasks = $this->db->get('tblstafftasks')->result_array();
+            $tasks = $this->db->get(db_prefix() . 'tasks')->result_array();
             foreach ($tasks as $task) {
                 $this->tasks_model->delete_task($task['id']);
             }
@@ -865,39 +861,39 @@ class Proposals_model extends CRM_Model
 
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'proposal');
-            $this->db->delete('tblnotes');
+            $this->db->delete(db_prefix() . 'notes');
 
-            $this->db->where('relid IN (SELECT id from tblitems_in WHERE rel_type="proposal" AND rel_id="' . $id . '")');
+            $this->db->where('relid IN (SELECT id from ' . db_prefix() . 'itemable WHERE rel_type="proposal" AND rel_id="' . $id . '")');
             $this->db->where('fieldto', 'items');
-            $this->db->delete('tblcustomfieldsvalues');
+            $this->db->delete(db_prefix() . 'customfieldsvalues');
 
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'proposal');
-            $this->db->delete('tblitems_in');
+            $this->db->delete(db_prefix() . 'itemable');
 
 
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'proposal');
-            $this->db->delete('tblitemstax');
+            $this->db->delete(db_prefix() . 'item_tax');
 
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'proposal');
-            $this->db->delete('tbltags_in');
+            $this->db->delete(db_prefix() . 'taggables');
 
             // Delete the custom field values
             $this->db->where('relid', $id);
             $this->db->where('fieldto', 'proposal');
-            $this->db->delete('tblcustomfieldsvalues');
+            $this->db->delete(db_prefix() . 'customfieldsvalues');
 
             $this->db->where('rel_type', 'proposal');
             $this->db->where('rel_id', $id);
-            $this->db->delete('tblreminders');
+            $this->db->delete(db_prefix() . 'reminders');
 
             $this->db->where('rel_type', 'proposal');
             $this->db->where('rel_id', $id);
-            $this->db->delete('tblviewstracking');
+            $this->db->delete(db_prefix() . 'views_tracking');
 
-            logActivity('Proposal Deleted [ProposalID:' . $id . ']');
+            log_activity('Proposal Deleted [ProposalID:' . $id . ']');
 
             return true;
         }
@@ -916,7 +912,7 @@ class Proposals_model extends CRM_Model
         $data = new StdClass();
         if ($rel_type == 'customer') {
             $this->db->where('userid', $rel_id);
-            $_data = $this->db->get('tblclients')->row();
+            $_data = $this->db->get(db_prefix() . 'clients')->row();
 
             $primary_contact_id = get_primary_contact_user_id($rel_id);
 
@@ -948,7 +944,7 @@ class Proposals_model extends CRM_Model
             }
         } elseif ($rel_type = 'lead') {
             $this->db->where('id', $rel_id);
-            $_data       = $this->db->get('tblleads')->row();
+            $_data       = $this->db->get(db_prefix() . 'leads')->row();
             $data->phone = $_data->phonenumber;
 
             $data->is_using_company = false;
@@ -982,88 +978,46 @@ class Proposals_model extends CRM_Model
     public function send_expiry_reminder($id)
     {
         $proposal = $this->get($id);
-        $pdf      = proposal_pdf($proposal);
-        $attach   = $pdf->Output(slug_it($proposal->subject) . '.pdf', 'S');
 
         // For all cases update this to prevent sending multiple reminders eq on fail
         $this->db->where('id', $proposal->id);
-        $this->db->update('tblproposals', [
+        $this->db->update(db_prefix() . 'proposals', [
             'is_expiry_notified' => 1,
         ]);
 
-        $this->load->model('emails_model');
+        $template     = mail_template('proposal_expiration_reminder', $proposal);
+        $merge_fields = $template->get_merge_fields();
 
-        $this->emails_model->set_rel_id($id);
-        $this->emails_model->set_rel_type('proposal');
-
-        $this->emails_model->add_attachment([
-            'attachment' => $attach,
-            'filename'   => slug_it($proposal->subject) . '.pdf',
-            'type'       => 'application/pdf',
-        ]);
-
-        $merge_fields = [];
-        $merge_fields = array_merge($merge_fields, get_proposal_merge_fields($proposal->id));
-        $sent         = $this->emails_model->send_email_template('proposal-expiry-reminder', $proposal->email, $merge_fields);
+        $template->send();
 
         if (can_send_sms_based_on_creation_date($proposal->datecreated)) {
-            $sms_sent = $this->sms->trigger(SMS_TRIGGER_PROPOSAL_EXP_REMINDER, $proposal->phone, $merge_fields);
+            $sms_sent = $this->app_sms->trigger(SMS_TRIGGER_PROPOSAL_EXP_REMINDER, $proposal->phone, $merge_fields);
         }
 
         return true;
     }
 
-    public function send_proposal_to_email($id, $template = '', $attachpdf = true, $cc = '')
+    public function send_proposal_to_email($id, $attachpdf = true, $cc = '')
     {
-        $this->load->model('emails_model');
-
-        $this->emails_model->set_rel_id($id);
-        $this->emails_model->set_rel_type('proposal');
+        // Proposal status is draft update to sent
+        if (total_rows(db_prefix() . 'proposals', ['id' => $id, 'status' => 6]) > 0) {
+            $this->db->where('id', $id);
+            $this->db->update(db_prefix() . 'proposals', ['status' => 4]);
+        }
 
         $proposal = $this->get($id);
 
-        // Proposal status is draft update to sent
-        if ($proposal->status == 6) {
-            $this->db->where('id', $id);
-            $this->db->update('tblproposals', ['status' => 4]);
-            $proposal = $this->get($id);
-        }
+        $sent = send_mail_template('proposal_send_to_customer', $proposal, $attachpdf, $cc);
 
-        if ($attachpdf) {
-            $pdf    = proposal_pdf($proposal);
-            $attach = $pdf->Output(slug_it($proposal->subject) . '.pdf', 'S');
-            $this->emails_model->add_attachment([
-                'attachment' => $attach,
-                'filename'   => slug_it($proposal->subject) . '.pdf',
-                'type'       => 'application/pdf',
-            ]);
-        }
-
-        if ($this->input->post('email_attachments')) {
-            $_other_attachments = $this->input->post('email_attachments');
-            foreach ($_other_attachments as $attachment) {
-                $_attachment = $this->get_attachments($id, $attachment);
-                $this->emails_model->add_attachment([
-                    'attachment' => get_upload_path_by_type('proposal') . $id . '/' . $_attachment->file_name,
-                    'filename'   => $_attachment->file_name,
-                    'type'       => $_attachment->filetype,
-                    'read'       => true,
-                ]);
-            }
-        }
-
-        $merge_fields = [];
-        $merge_fields = array_merge($merge_fields, get_proposal_merge_fields($proposal->id));
-        $sent         = $this->emails_model->send_email_template($template, $proposal->email, $merge_fields, '', $cc);
         if ($sent) {
 
             // Set to status sent
             $this->db->where('id', $id);
-            $this->db->update('tblproposals', [
+            $this->db->update(db_prefix() . 'proposals', [
                 'status' => 4,
             ]);
 
-            do_action('proposal_sent', $id);
+            hooks()->do_action('proposal_sent', $id);
 
             return true;
         }

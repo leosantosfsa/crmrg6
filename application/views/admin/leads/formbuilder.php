@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <?php if (isset($form)) {
     echo form_hidden('form_id', $form->id);
@@ -157,7 +158,7 @@
 
                                  echo render_leads_source_select($sources, (isset($form) ? $form->lead_source : get_option('leads_default_source')), 'lead_import_source', 'lead_source');
 
-                                  echo render_leads_status_select($statuses, (isset($form) ? $form->lead_status : get_option('leads_default_status')), 'lead_import_status', 'lead_status');
+                                  echo render_leads_status_select($statuses, (isset($form) ? $form->lead_status : get_option('leads_default_status')), 'lead_import_status', 'lead_status', [], true);
 
                                  $selected = '';
                                  foreach ($members as $staff) {
@@ -244,7 +245,7 @@ var formData = <?php echo json_encode($formData); ?>;
 
 if(formData.length){
   // If user paste with styling eq from some editor word and the Codeigniter XSS feature remove and apply xss=remove, may break the json.
-  formData = formData.replace(/=\\>/gm, ">");
+  formData = formData.replace(/=\\/gm, "=''");
 }
 </script>
 <?php $this->load->view('admin/includes/_form_js_formatter'); ?>
@@ -300,7 +301,7 @@ if(formData.length){
        });
      });
 
-     _validate_form('#form_info',{
+     appValidateForm('#form_info',{
        name:'required',
        lead_source: 'required',
        lead_status: 'required',

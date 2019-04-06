@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget" id="widget-<?php echo basename(__FILE__,".php"); ?>" data-name="<?php echo _l('user_widget'); ?>">
    <div class="panel_s user-data">
       <div class="panel-body home-activity">
@@ -21,7 +22,7 @@
                      <a href="#home_my_reminders" onclick="initDataTable('.table-my-reminders', admin_url + 'misc/my_reminders', undefined, undefined,undefined,[2,'asc']);" aria-controls="home_my_reminders" role="tab" data-toggle="tab">
                      <i class="fa fa-clock-o menu-icon"></i> <?php echo _l('my_reminders'); ?>
                      <?php
-                        $total_reminders = total_rows('tblreminders',
+                        $total_reminders = total_rows(db_prefix().'reminders',
                           array(
                            'isnotified'=>0,
                            'staff'=>get_staff_user_id(),
@@ -66,7 +67,7 @@
                            echo form_hidden('my_tasks',true);
                            foreach($task_statuses as $status){
                             $val = 'true';
-                            if($status['id'] == 5){
+                            if($status['id'] == Tasks_model::STATUS_COMPLETE){
                               $val = '';
                            }
                            echo form_hidden('task_status_'.$status['id'],$val);

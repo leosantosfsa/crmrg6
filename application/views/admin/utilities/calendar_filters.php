@@ -1,8 +1,10 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div id="calendar_filters" style="<?php if(!$this->input->post('calendar_filters')){ echo 'display:none;'; } ?>">
     <?php echo form_open(); ?>
     <?php echo form_hidden('calendar_filters',true); ?>
     <div class="row">
         <div class="col-md-3">
+            <?php hooks()->do_action('before_calendar_filters'); ?>
             <div class="checkbox">
                 <input type="checkbox" value="1" name="events" id="cf_events"<?php if($this->input->post('events')){echo ' checked';} ?>>
                 <label for="cf_events"><?php echo _l('events'); ?></label>
@@ -99,6 +101,7 @@
                 <label for="cf_ticket_reminders"><?php echo _l('calendar_ticket_reminder'); ?></label>
             </div>
         <?php } ?>
+        <?php hooks()->do_action('after_calendar_filters'); ?>
     </div>
     <div class="col-md-3 text-right">
         <a class="btn btn-default" href="<?php echo site_url($this->uri->uri_string()); ?>"><?php echo _l('clear'); ?></a>

@@ -1,7 +1,8 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <h4 class="no-mtop">
-  The right to data portability
+  <?php echo _l('gdpr_right_to_data_portability'); ?>
   <small>
-    <a href="https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/individual-rights/right-to-data-portability/" target="_blank">Learn More</a>
+    <a href="https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/individual-rights/right-to-data-portability/" target="_blank"><?php echo _l('learn_more'); ?></a>
   </small>
 </h4>
 <hr class="hr-panel-heading" />

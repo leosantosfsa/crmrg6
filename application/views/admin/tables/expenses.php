@@ -1,25 +1,26 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 $aColumns = [
-    'tblexpenses.id as id',
-    'tblexpensescategories.name as category_name',
+    db_prefix() . 'expenses.id as id',
+    db_prefix() . 'expenses_categories.name as category_name',
     'amount',
     'expense_name',
     'file_name',
     'date',
-    'tblprojects.name as project_name',
+    db_prefix() . 'projects.name as project_name',
     get_sql_select_client_company(),
     'invoiceid',
     'reference_no',
     'paymentmode',
 ];
 $join = [
-    'LEFT JOIN tblclients ON tblclients.userid = tblexpenses.clientid',
-    'JOIN tblexpensescategories ON tblexpensescategories.id = tblexpenses.category',
-    'LEFT JOIN tblprojects ON tblprojects.id = tblexpenses.project_id',
-    'LEFT JOIN tblfiles ON tblfiles.rel_id = tblexpenses.id AND rel_type="expense"',
-    'LEFT JOIN tblcurrencies ON tblcurrencies.id = tblexpenses.currency',
+    'LEFT JOIN ' . db_prefix() . 'clients ON ' . db_prefix() . 'clients.userid = ' . db_prefix() . 'expenses.clientid',
+    'JOIN ' . db_prefix() . 'expenses_categories ON ' . db_prefix() . 'expenses_categories.id = ' . db_prefix() . 'expenses.category',
+    'LEFT JOIN ' . db_prefix() . 'projects ON ' . db_prefix() . 'projects.id = ' . db_prefix() . 'expenses.project_id',
+    'LEFT JOIN ' . db_prefix() . 'files ON ' . db_prefix() . 'files.rel_id = ' . db_prefix() . 'expenses.id AND rel_type="expense"',
+    'LEFT JOIN ' . db_prefix() . 'currencies ON ' . db_prefix() . 'currencies.id = ' . db_prefix() . 'expenses.currency',
 ];
 
 $custom_fields = get_table_custom_fields('expenses');
@@ -28,7 +29,7 @@ foreach ($custom_fields as $key => $field) {
     $selectAs = (is_cf_date($field) ? 'date_picker_cvalue_' . $key : 'cvalue_' . $key);
     array_push($customFieldsColumns, $selectAs);
     array_push($aColumns, 'ctable_' . $key . '.value as ' . $selectAs);
-    array_push($join, 'LEFT JOIN tblcustomfieldsvalues as ctable_' . $key . ' ON tblexpenses.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
+    array_push($join, 'LEFT JOIN ' . db_prefix() . 'customfieldsvalues as ctable_' . $key . ' ON ' . db_prefix() . 'expenses.id = ctable_' . $key . '.relid AND ctable_' . $key . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $key . '.fieldid=' . $field['id']);
 }
 
 $where  = [];
@@ -36,17 +37,17 @@ $filter = [];
 include_once(APPPATH . 'views/admin/tables/includes/expenses_filter.php');
 
 if ($clientid != '') {
-    array_push($where, 'AND tblexpenses.clientid=' . $clientid);
+    array_push($where, 'AND ' . db_prefix() . 'expenses.clientid=' . $clientid);
 }
 
 if (!has_permission('expenses', '', 'view')) {
-    array_push($where, 'AND tblexpenses.addedfrom=' . get_staff_user_id());
+    array_push($where, 'AND ' . db_prefix() . 'expenses.addedfrom=' . get_staff_user_id());
 }
 
 $sIndexColumn = 'id';
-$sTable       = 'tblexpenses';
+$sTable       = db_prefix() . 'expenses';
 
-$aColumns = do_action('expenses_table_sql_columns', $aColumns);
+$aColumns = hooks()->apply_filters('expenses_table_sql_columns', $aColumns);
 
 // Fix for big queries. Some hosting have max_join_limit
 if (count($custom_fields) > 4) {
@@ -56,12 +57,12 @@ if (count($custom_fields) > 4) {
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'category',
     'billable',
-    'symbol',
-    'tblexpenses.clientid',
+    db_prefix().'currencies.name as currency_name',
+    db_prefix() . 'expenses.clientid',
     'tax',
     'tax2',
     'project_id',
-    'recurring'
+    'recurring',
 ]);
 $output  = $result['output'];
 $rResult = $result['rResult'];
@@ -81,7 +82,7 @@ foreach ($rResult as $aRow) {
         $categoryOutput = '<a href="' . admin_url('expenses/list_expenses/' . $aRow['id']) . '" onclick="init_expense(' . $aRow['id'] . ');return false;">' . $aRow['category_name'] . '</a>';
     }
 
-    if($aRow['recurring'] == 1) {
+    if ($aRow['recurring'] == 1) {
         $categoryOutput .= '<br /><span class="label label-primary inline-block mtop4"> ' . _l('expense_recurring_indicator') . '</span>';
     }
 
@@ -89,7 +90,7 @@ foreach ($rResult as $aRow) {
         if ($aRow['invoiceid'] == null) {
             $categoryOutput .= ' <p class="text-danger">' . _l('expense_list_unbilled') . '</p>';
         } else {
-            if (total_rows('tblinvoices', [
+            if (total_rows(db_prefix() . 'invoices', [
                 'id' => $aRow['invoiceid'],
                 'status' => 2,
                 ]) > 0) {
@@ -128,7 +129,7 @@ foreach ($rResult as $aRow) {
         $total += ($tmpTotal / 100 * $tax->taxrate);
     }
 
-    $row[] = format_money($total, $aRow['symbol']);
+    $row[] = app_format_money($total, $aRow['currency_name']);
 
     $row[] = '<a href="' . admin_url('expenses/list_expenses/' . $aRow['id']) . '" onclick="init_expense(' . $aRow['id'] . ');return false;">' . $aRow['expense_name'] . '</a>';
 
@@ -168,12 +169,9 @@ foreach ($rResult as $aRow) {
         $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);
     }
 
-    $hook = do_action('expenses_table_row_data', [
-        'output' => $row,
-        'row'    => $aRow,
-    ]);
+    $row['DT_RowClass'] = 'has-row-options';
 
-    $row = $hook['output'];
+    $row = hooks()->apply_filters('expenses_table_row_data', $row, $aRow);
 
     $output['aaData'][] = $row;
 }

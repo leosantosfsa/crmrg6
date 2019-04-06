@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 $data = '<div class="row">';
 foreach($attachments as $attachment) {
     $attachment_url = site_url('download/file/lead_attachment/'.$attachment['id']);

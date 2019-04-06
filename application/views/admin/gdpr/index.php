@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
    <div class="content">
@@ -40,7 +41,7 @@
          <div class="col-md-9">
             <div class="panel_s">
                <div class="panel-body">
-                  <?php do_action('before_admin_gdpr_settings'); ?>
+                  <?php hooks()->do_action('before_admin_gdpr_settings'); ?>
                   <?php $this->load->view('admin/gdpr/pages/'.$page); ?>
                </div>
             </div>

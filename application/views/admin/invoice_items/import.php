@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
   <div class="content">
@@ -42,7 +43,7 @@
 <script src="<?php echo base_url('assets/plugins/jquery-validation/additional-methods.min.js'); ?>"></script>
 <script>
   $(function(){
-   _validate_form($('#import_form'),{file_csv:{required:true,extension: "csv"}});
+   appValidateForm($('#import_form'),{file_csv:{required:true,extension: "csv"}});
  });
 </script>
 </body>

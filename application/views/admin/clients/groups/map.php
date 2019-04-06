@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 if(isset($client)){ ?>
 <?php if(has_permission('customers', '', 'edit')) { ?>
 <div class="row" data-address="<?php echo htmlentities($client->address); ?>" data-city="<?php echo htmlentities($client->city); ?>" data-country="<?php echo htmlentities(get_country_name($client->country)); ?>" id="long_lat_wrapper">

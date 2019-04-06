@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="row">
   <?php if(count($expenses_years) > 1 || isset($currencies)){ ?>
   <div class="col-md-12 simple-bootstrap-select mbot5">

@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 $lead_already_client_tooltip = '';
 $lead_is_client = $lead['is_lead_client'] !== '0';
 if ($lead_is_client) {

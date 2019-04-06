@@ -1,7 +1,8 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <h4 class="no-mtop">
-    Consent
+    <?php echo _l('gdpr_consent'); ?>
     <small>
-        <a href="https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/lawful-basis-for-processing/consent/" target="_blank">Learn More</a>
+        <a href="https://ico.org.uk/for-organisations/guide-to-the-general-data-protection-regulation-gdpr/lawful-basis-for-processing/consent/" target="_blank"><?php echo _l('learn_more'); ?></a>
     </small>
 </h4>
 <hr class="hr-panel-heading">
@@ -59,7 +60,7 @@
             $('#consentModal').modal('show');
             var $consentForm = $('#consentForm');
             $consentForm.attr('action', url);
-            _validate_form($consentForm, {
+            appValidateForm($consentForm, {
                 name:'required',
             });
         });

@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="modal fade" tabindex="-1" id="sales_attach_file" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">

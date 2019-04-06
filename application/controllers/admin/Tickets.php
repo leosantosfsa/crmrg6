@@ -1,7 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-class Tickets extends Admin_controller
+
+class Tickets extends AdminController
 {
     public function __construct()
     {
@@ -52,8 +53,8 @@ class Tickets extends Admin_controller
         $data['services']             = $this->tickets_model->get_service();
         $data['ticket_assignees']     = $this->tickets_model->get_tickets_assignes_disctinct();
         $data['bodyclass']            = 'tickets-page';
-
-        $data['default_tickets_list_statuses'] = do_action('default_tickets_list_statuses', [1, 2, 4]);
+        add_admin_tickets_js_assets();
+        $data['default_tickets_list_statuses'] = hooks()->apply_filters('default_tickets_list_statuses', [1, 2, 4]);
         $this->load->view('admin/tickets/list', $data);
     }
 
@@ -93,7 +94,7 @@ class Tickets extends Admin_controller
             // request from project area to create new ticket
             $data['project_id'] = $this->input->get('project_id');
             $data['userid']     = get_client_id_by_project_id($data['project_id']);
-            if (total_rows('tblcontacts', ['active' => 1, 'userid' => $data['userid']]) == 1) {
+            if (total_rows(db_prefix().'contacts', ['active' => 1, 'userid' => $data['userid']]) == 1) {
                 $contact = $this->clients_model->get_contacts($data['userid']);
                 if (isset($contact[0])) {
                     $data['contact'] = $contact[0];
@@ -101,13 +102,14 @@ class Tickets extends Admin_controller
             }
         } elseif ($this->input->get('contact_id') && $this->input->get('contact_id') > 0 && $this->input->get('userid')) {
             $contact_id = $this->input->get('contact_id');
-            if (total_rows('tblcontacts', ['active' => 1, 'id' => $contact_id]) == 1) {
+            if (total_rows(db_prefix().'contacts', ['active' => 1, 'id' => $contact_id]) == 1) {
                 $contact = $this->clients_model->get_contact($contact_id);
                 if ($contact) {
                     $data['contact'] = (array) $contact;
                 }
             }
         }
+        add_admin_tickets_js_assets();
         $this->load->view('admin/tickets/add', $data);
     }
 
@@ -136,9 +138,8 @@ class Tickets extends Admin_controller
     {
         if (is_admin() || (!is_admin() && get_option('allow_non_admin_staff_to_delete_ticket_attachments') == '1')) {
             if (get_option('staff_access_only_assigned_departments') == 1 && !is_admin()) {
-
                 $attachment = $this->tickets_model->get_ticket_attachment($id);
-                $ticket = $this->tickets_model->get_ticket_by_id($attachment->ticketid);
+                $ticket     = $this->tickets_model->get_ticket_by_id($attachment->ticketid);
 
                 $this->load->model('departments_model');
                 $staff_departments = $this->departments_model->get_staff_departments(get_staff_user_id(), true);
@@ -220,6 +221,7 @@ class Tickets extends Admin_controller
         $data['bodyclass']            = 'top-tabs ticket single-ticket';
         $data['title']                = $data['ticket']->subject;
         $data['ticket']->ticket_notes = $this->misc_model->get_notes($id, 'ticket');
+        add_admin_tickets_js_assets();
         $this->load->view('admin/tickets/single', $data);
     }
 
@@ -231,12 +233,12 @@ class Tickets extends Admin_controller
 
             if ($data['type'] == 'reply') {
                 $this->db->where('id', $data['id']);
-                $this->db->update('tblticketreplies', [
+                $this->db->update(db_prefix().'ticket_replies', [
                     'message' => $data['data'],
                 ]);
             } elseif ($data['type'] == 'ticket') {
                 $this->db->where('ticketid', $data['id']);
-                $this->db->update('tbltickets', [
+                $this->db->update(db_prefix().'tickets', [
                     'message' => $data['data'],
                 ]);
             }
@@ -367,7 +369,7 @@ class Tickets extends Admin_controller
                 'name',
             ];
             $sIndexColumn = 'id';
-            $sTable       = 'tblpredefinedreplies';
+            $sTable       = db_prefix().'tickets_predefined_replies';
             $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
                 'id',
             ]);
@@ -542,7 +544,7 @@ class Tickets extends Admin_controller
                 'name',
             ];
             $sIndexColumn = 'serviceid';
-            $sTable       = 'tblservices';
+            $sTable       = db_prefix().'services';
             $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
                 'serviceid',
             ]);
@@ -625,96 +627,13 @@ class Tickets extends Admin_controller
         redirect(admin_url('tickets/services'));
     }
 
-    public function spam_filters($type = '')
-    {
-        if (!is_admin()) {
-            access_denied('Tickets Spam Filters');
-        }
-        if ($this->input->is_ajax_request()) {
-            $aColumns = [
-                'value',
-            ];
-            $sIndexColumn = 'id';
-            $sTable       = 'tblticketsspamcontrol';
-            $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [
-                'AND type ="' . $type . '"',
-            ], [
-                'id',
-            ]);
-            $output  = $result['output'];
-            $rResult = $result['rResult'];
-            foreach ($rResult as $aRow) {
-                $row = [];
-                for ($i = 0; $i < count($aColumns); $i++) {
-                    $_data = $aRow[$aColumns[$i]];
-                    $row[] = $_data;
-                }
-                $options = icon_btn('#', 'pencil-square-o', 'btn-default', [
-                    'onclick'    => 'edit_spam_filter(this,' . $aRow['id'] . '); return false;',
-                    'data-value' => $aRow['value'],
-                    'data-type'  => $type,
-                ]);
-                $row[]              = $options .= icon_btn('tickets/delete_spam_filter/' . $aRow['id'], 'remove', 'btn-danger _delete');
-                $output['aaData'][] = $row;
-            }
-            echo json_encode($output);
-            die();
-        }
-        $data['title'] = _l('spam_filters');
-        $this->load->view('admin/tickets/spam_filters', $data);
-    }
-
-    public function spam_filter()
-    {
-        if (!is_admin()) {
-            access_denied('Manage Tickets Spam Filters');
-        }
-        if ($this->input->post()) {
-            if ($this->input->post('id')) {
-                $success = $this->tickets_model->edit_spam_filter($this->input->post());
-                $message = '';
-                if ($success == true) {
-                    $message = _l('updated_successfully', _l('spam_filter'));
-                }
-                echo json_encode([
-                    'success' => $success,
-                    'message' => $message,
-                ]);
-            } else {
-                $success = $this->tickets_model->add_spam_filter($this->input->post());
-                $message = '';
-                if ($success == true) {
-                    $message = _l('added_successfully', _l('spam_filter'));
-                }
-                echo json_encode([
-                    'success' => $success,
-                    'message' => $message,
-                ]);
-            }
-        }
-    }
-
-    public function delete_spam_filter($id)
-    {
-        if (!is_admin()) {
-            access_denied('Delete Ticket Spam Filter');
-        }
-        $success = $this->tickets_model->delete_spam_filter($id);
-        if ($success) {
-            set_alert('success', _l('deleted', _l('spam_filter')));
-        }
-        redirect(admin_url('tickets/spam_filters'));
-    }
-
     public function block_sender()
     {
         if ($this->input->post()) {
-            $this->db->insert('tblticketsspamcontrol', [
-                'type'  => 'sender',
-                'value' => $this->input->post('sender'),
-            ]);
-            $insert_id = $this->db->insert_id();
-            if ($insert_id) {
+            $this->load->model('spam_filters_model');
+            $sender  = $this->input->post('sender');
+            $success = $this->spam_filters_model->add(['type' => 'sender', 'value' => $sender], 'tickets');
+            if ($success) {
                 set_alert('success', _l('sender_blocked_successfully'));
             }
         }
@@ -722,7 +641,7 @@ class Tickets extends Admin_controller
 
     public function bulk_action()
     {
-        do_action('before_do_bulk_action_for_tickets');
+        hooks()->do_action('before_do_bulk_action_for_tickets');
         if ($this->input->post()) {
             $total_deleted = 0;
             $ids           = $this->input->post('ids');
@@ -743,26 +662,26 @@ class Tickets extends Admin_controller
                     } else {
                         if ($status) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', [
+                            $this->db->update(db_prefix().'tickets', [
                                 'status' => $status,
                             ]);
                         }
                         if ($department) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', [
+                            $this->db->update(db_prefix().'tickets', [
                                 'department' => $department,
                             ]);
                         }
                         if ($priority) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', [
+                            $this->db->update(db_prefix().'tickets', [
                                 'priority' => $priority,
                             ]);
                         }
 
                         if ($service) {
                             $this->db->where('ticketid', $id);
-                            $this->db->update('tbltickets', [
+                            $this->db->update(db_prefix().'tickets', [
                                 'service' => $service,
                             ]);
                         }

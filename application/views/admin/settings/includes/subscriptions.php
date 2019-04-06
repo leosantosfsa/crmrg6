@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php render_yes_no_option('show_subscriptions_in_customers_area','show_subscriptions_in_customers_area','show_subscriptions_in_customers_area_help'); ?>
 <hr />
 <h4 class="mbot20 font-medium"><?php echo _l('after_subscription_payment_succeeded'); ?></h4>

@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content">
@@ -101,7 +102,7 @@
     <script>
         $(function(){
            initDataTable('.table-departments', window.location.href, [4], [4], undefined, [1, 'asc']);
-           _validate_form($('form'),{name:'required',email:{
+           appValidateForm($('form'),{name:'required',email:{
             email: true,
             remote: {
                 url: admin_url + "departments/email_exists",

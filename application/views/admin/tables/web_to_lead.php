@@ -1,10 +1,11 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-$aColumns = ['id', 'name', '(SELECT COUNT(id) FROM tblleads WHERE tblleads.from_form_id = tblwebtolead.id)', 'dateadded'];
+
+$aColumns = ['id', 'name', '(SELECT COUNT(id) FROM '.db_prefix().'leads WHERE '.db_prefix().'leads.from_form_id = '.db_prefix().'web_to_lead.id)', 'dateadded'];
 
 $sIndexColumn = 'id';
-$sTable       = 'tblwebtolead';
+$sTable       = db_prefix().'web_to_lead';
 
 $result  = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], ['form_key', 'id']);
 $output  = $result['output'];

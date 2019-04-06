@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php
 /**
  * Included in application/views/admin/clients/client.php
@@ -9,7 +10,7 @@ var customer_id = $('input[name="userid"]').val();
 $(function() {
 
     if ($('#client-attachments-upload').length > 0) {
-        new Dropzone('#client-attachments-upload',$.extend({},_dropzone_defaults(),{
+        new Dropzone('#client-attachments-upload', appCreateDropzoneOptions({
             paramName: "file",
             accept: function(file, done) {
                 done();
@@ -92,7 +93,7 @@ $(function() {
                 saveCustomerProfileExternalFile(files, 'dropbox');
             },
             linkType: "preview",
-            extensions: app_allowed_files.split(','),
+            extensions: app.options.allowed_files.split(','),
         }));
     }
 
@@ -165,16 +166,16 @@ $(function() {
         'undefined', [6, 'desc']);
 
     /* Custome profile projects table */
-    initDataTable('.table-projects-single-client', admin_url + 'projects/table/' + customer_id, undefined, undefined, 'undefined', <?php echo do_action('projects_table_default_order',json_encode(array(5,'asc'))); ?>);
+    initDataTable('.table-projects-single-client', admin_url + 'projects/table/' + customer_id, undefined, undefined, 'undefined', <?php echo hooks()->apply_filters('projects_table_default_order', json_encode(array(5,'asc'))); ?>);
 
     var vRules = {};
-    if (app_company_is_required == 1) {
+    if (app.options.company_is_required == 1) {
         vRules = {
             company: 'required',
         }
     }
 
-    _validate_form($('.client-form'), vRules);
+    appValidateForm($('.client-form'), vRules);
 
     if(typeof(customer_id) == 'undefined'){
         $('#company').on('blur', function() {
@@ -252,7 +253,7 @@ function saveCustomerProfileExternalFile(files, externalType) {
 }
 
 function validate_contact_form() {
-    _validate_form('#contact-form', {
+    appValidateForm('#contact-form', {
         firstname: 'required',
         lastname: 'required',
         password: {
@@ -268,12 +269,12 @@ function validate_contact_form() {
             }
         },
         email: {
-            <?php if(do_action('contact_email_required',"true") === "true"){ ?>
+            <?php if(hooks()->apply_filters('contact_email_required', "true") === "true"){ ?>
             required: true,
             <?php } ?>
             email: true,
             // Use this hook only if the contacts are not logging into the customers area and you are not using support tickets piping.
-            <?php if(do_action('contact_email_unique',"true") === "true"){ ?>
+            <?php if(hooks()->apply_filters('contact_email_unique', "true") === "true"){ ?>
             remote: {
                 url: admin_url + "misc/contact_email_exists",
                 type: 'post',
@@ -312,7 +313,7 @@ function contactFormHandler(form) {
         processData: false,
         url: formURL
     }).done(function(response){
-             response = JSON.parse(response);
+           response = JSON.parse(response);
             if (response.success) {
                 alert_float('success', response.message);
                 if(typeof(response.is_individual) != 'undefined' && response.is_individual) {
@@ -322,9 +323,13 @@ function contactFormHandler(form) {
                     }
                 }
             }
+
             if ($.fn.DataTable.isDataTable('.table-contacts')) {
                 $('.table-contacts').DataTable().ajax.reload(null,false);
+            } else if ($.fn.DataTable.isDataTable('.table-all-contacts')) {
+                $('.table-all-contacts').DataTable().ajax.reload(null,false);
             }
+
             if (response.proposal_warning && response.proposal_warning != false) {
                 $('body').find('#contact_proposal_warning').removeClass('hide');
                 $('body').find('#contact_update_proposals_emails').attr('data-original-email', response.original_email);
@@ -344,7 +349,7 @@ function contact(client_id, contact_id) {
     if (typeof(contact_id) == 'undefined') {
         contact_id = '';
     }
-    requestGet('clients/contact/' + client_id + '/' + contact_id).done(function(response) {
+    requestGet('clients/form_contact/' + client_id + '/' + contact_id).done(function(response) {
         $('#contact_data').html(response);
         $('#contact').modal({
             show: true,
@@ -365,6 +370,7 @@ function contact(client_id, contact_id) {
         alert_float('danger', response.message);
     });
 }
+
 
 function update_all_proposal_emails_linked_to_contact(contact_id) {
     var data = {};

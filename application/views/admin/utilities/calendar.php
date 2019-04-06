@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
 	<div class="content">
@@ -16,7 +17,7 @@
 </div>
 <?php $this->load->view('admin/utilities/calendar_template'); ?>
 <script>
-calendarIDs = '<?php echo json_encode($google_ids_calendars); ?>';
+app.calendarIDs = '<?php echo json_encode($google_ids_calendars); ?>';
 </script>
 <?php init_tail(); ?>
 </body>

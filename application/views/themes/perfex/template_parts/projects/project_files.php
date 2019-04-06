@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php if($project->settings->upload_files == 1){ ?>
   <?php echo form_open_multipart(site_url('clients/project/'.$project->id),array('class'=>'dropzone mbot15','id'=>'project-files-upload')); ?>
   <input type="file" name="file" multiple class="hide"/>
@@ -47,7 +48,7 @@
         }
         ?>
       </td>
-      <?php $total_file_comments = total_rows('tblprojectdiscussioncomments',array('discussion_id'=>$file['id'],'discussion_type'=>'file')); ?>
+      <?php $total_file_comments = total_rows(db_prefix().'projectdiscussioncomments',array('discussion_id'=>$file['id'],'discussion_type'=>'file')); ?>
       <td data-order="<?php echo $total_file_comments; ?>">
         <?php echo $total_file_comments; ?>
       </td>

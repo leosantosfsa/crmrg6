@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 $aColumns = [
     'name',
     'date',
@@ -17,7 +18,7 @@ if ($this->ci->input->post('activity_log_date')) {
 }
 
 $sIndexColumn = 'id';
-$sTable       = 'tblticketpipelog';
+$sTable       = db_prefix().'tickets_pipe_log';
 $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], $sWhere);
 $output       = $result['output'];
 $rResult      = $result['rResult'];

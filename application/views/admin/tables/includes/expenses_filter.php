@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 
 if ($this->ci->input->post('invoiced')) {
     array_push($filter, 'OR invoiceid IS NOT NULL');

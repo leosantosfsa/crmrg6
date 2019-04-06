@@ -8,7 +8,7 @@ $aColumns = [
     'active',
     ];
 $sIndexColumn = 'id';
-$sTable       = 'tblinvoicepaymentsmodes';
+$sTable       = db_prefix().'payment_modes';
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, [], [], [
     'id',

@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php if(!isset($discussion)){ ?>
 <a href="#" onclick="new_discussion();return false;" class="btn btn-info mbot25"><?php echo _l('new_project_discussion'); ?></a>
 <?php
@@ -20,7 +21,7 @@
         }
         ?>
 </p>
-<p><?php echo _l('project_discussion_total_comments'); ?>: <?php echo total_rows('tblprojectdiscussioncomments',array('discussion_id'=>$discussion->id)); ?>
+<p><?php echo _l('project_discussion_total_comments'); ?>: <?php echo total_rows(db_prefix().'projectdiscussioncomments',array('discussion_id'=>$discussion->id)); ?>
 <p class="text-muted"><?php echo $discussion->description; ?></p>
 <hr />
 <div id="discussion-comments"></div>

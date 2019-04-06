@@ -1,6 +1,6 @@
 #!/usr/local/bin/php
 <?php
-
+define('TICKETS_PIPE', true);
 error_reporting(1);
 
 $environment = 'development';
@@ -19,6 +19,13 @@ define('BASEPATH', str_replace('\\', '/', $system_path));
 define('APPPATH', $application_folder . '/');
 define('EXT', '.php');
 define('ENVIRONMENT', $environment ? $environment : 'development');
+define('FCPATH', dirname(__FILE__) . '/');
+
+if (file_exists(APPPATH . 'config/' . ENVIRONMENT . '/constants.php')) {
+    require(APPPATH . 'config/' . ENVIRONMENT . '/constants.php');
+} else {
+    require(APPPATH . 'config/constants.php');
+}
 
 require(BASEPATH . 'core/Common.php');
 
@@ -39,13 +46,34 @@ if ($composer_autoload = config_item('composer_autoload')) {
     }
 }
 
-define('FCPATH', dirname(__FILE__) . '/');
+// Only uses the hooks() function.
+require_once(APPPATH . 'config/hooks.php');
+// Load the classes autoloader
+require_once(APPPATH . 'hooks/App_Autoloader.php');
+(new App_Autoloader)->register();
 
-if (file_exists(APPPATH . 'config/' . ENVIRONMENT . '/constants.php')) {
-    require(APPPATH . 'config/' . ENVIRONMENT . '/constants.php');
+if (extension_loaded('mbstring')) {
+    define('MB_ENABLED', true);
+    // mbstring.internal_encoding is deprecated starting with PHP 5.6
+    // and it's usage triggers E_DEPRECATED messages.
+    @ini_set('mbstring.internal_encoding', $charset);
+    // This is required for mb_convert_encoding() to strip invalid characters.
+    // That's utilized by CI_Utf8, but it's also done for consistency with iconv.
+    mb_substitute_character('none');
 } else {
-    require(APPPATH . 'config/constants.php');
+    define('MB_ENABLED', false);
 }
+
+    // There's an ICONV_IMPL constant, but the PHP manual says that using
+    // iconv's predefined constants is "strongly discouraged".
+    if (extension_loaded('iconv')) {
+        define('ICONV_ENABLED', true);
+        // iconv.internal_encoding is deprecated starting with PHP 5.6
+        // and it's usage triggers E_DEPRECATED messages.
+        @ini_set('iconv.internal_encoding', $charset);
+    } else {
+        define('ICONV_ENABLED', false);
+    }
 
 $GLOBALS['CFG'] = & load_class('Config', 'core');
 $GLOBALS['UNI'] = & load_class('Utf8', 'core');
@@ -54,7 +82,6 @@ if (file_exists(BASEPATH . 'core/Security.php')) {
     $GLOBALS['SEC'] = & load_class('Security', 'core');
 }
 
-load_class('Loader', 'core');
 load_class('Router', 'core');
 load_class('Input', 'core');
 load_class('Lang', 'core');
@@ -76,11 +103,14 @@ while (!feof($fd)) {
     $input .= fread($fd, 1024);
 }
 fclose($fd);
+require_once(APPPATH . 'hooks/InitHook.php');
+_app_init_load();
 
 $instance->load->model('tickets_model');
 $instance->load->helper('files');
 $instance->load->helper('func');
 $instance->load->helper('misc');
+$instance->load->helper('database');
 
 $mailParser = new \ZBateson\MailMimeParser\MailMimeParser();
 $message    = $mailParser->parse($input);
@@ -133,6 +163,7 @@ if ($reply_to = $message->getHeaderValue('reply-to')) {
     $fromemail = $reply_to;
 }
 
+$toemails = [];
 foreach (['to', 'cc', 'bcc'] as $checkHeader) {
     $addreses = $message->getHeader($checkHeader);
     if ($addreses) {
@@ -147,6 +178,7 @@ $to = implode(',', $toemails);
 $body = handle_google_drive_links_in_text($body);
 
 if (class_exists('EmailReplyParser\EmailReplyParser')
+    && get_option('ticket_import_reply_only') === '1'
     && (mb_substr_count($subject, 'FWD:') == 0 && mb_substr_count($subject, 'FW:') == 0)) {
     $parsedBody = \EmailReplyParser\EmailReplyParser::parseReply($body);
 

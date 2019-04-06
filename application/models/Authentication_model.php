@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Authentication_model extends CRM_Model
+class Authentication_model extends App_Model
 {
     public function __construct()
     {
@@ -21,36 +21,45 @@ class Authentication_model extends CRM_Model
     public function login($email, $password, $remember, $staff)
     {
         if ((!empty($email)) and (!empty($password))) {
-            $table = 'tblcontacts';
+            $table = db_prefix() . 'contacts';
             $_id   = 'id';
             if ($staff == true) {
-                $table = 'tblstaff';
+                $table = db_prefix() . 'staff';
                 $_id   = 'staffid';
             }
             $this->db->where('email', $email);
             $user = $this->db->get($table)->row();
             if ($user) {
                 // Email is okey lets check the password now
-                $this->load->helper('phpass');
-                $hasher = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-                if (!$hasher->CheckPassword($password, $user->password)) {
-                    do_action('failed_login_attempt', [
+                if (!app_hasher()->CheckPassword($password, $user->password)) {
+                    hooks()->do_action('failed_login_attempt', [
                         'user'            => $user,
                         'is_staff_member' => $staff,
                     ]);
 
-                    logActivity('Failed Login Attempt [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
+                    log_activity('Failed Login Attempt [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
+
                     // Password failed, return
                     return false;
                 }
             } else {
-                logActivity('Non Existing User Tried to Login [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
+
+                hooks()->do_action('non_existent_user_login_attempt', [
+                        'email'           => $email,
+                        'is_staff_member' => $staff,
+                ]);
+
+                log_activity('Non Existing User Tried to Login [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
 
                 return false;
             }
 
             if ($user->active == 0) {
-                logActivity('Inactive User Tried to Login [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
+                hooks()->do_action('inactive_user_login_attempt', [
+                        'user'            => $user,
+                        'is_staff_member' => $staff,
+                ]);
+                log_activity('Inactive User Tried to Login [Email: ' . $email . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
 
                 return [
                     'memberinactive' => true,
@@ -62,10 +71,11 @@ class Authentication_model extends CRM_Model
                 $twoFactorAuth = $user->two_factor_auth_enabled == 0 ? false : true;
 
                 if (!$twoFactorAuth) {
-                    do_action('before_staff_login', [
+                    hooks()->do_action('before_staff_login', [
                         'email'  => $email,
                         'userid' => $user->$_id,
                     ]);
+
                     $user_data = [
                         'staff_user_id'   => $user->$_id,
                         'staff_logged_in' => true,
@@ -77,7 +87,7 @@ class Authentication_model extends CRM_Model
                     }
                 }
             } else {
-                do_action('before_client_login', [
+                hooks()->do_action('before_client_login', [
                     'email'           => $email,
                     'userid'          => $user->userid,
                     'contact_user_id' => $user->$_id,
@@ -115,15 +125,19 @@ class Authentication_model extends CRM_Model
     public function logout($staff = true)
     {
         $this->delete_autologin($staff);
+
         if (is_client_logged_in()) {
-            do_action('before_client_logout', get_client_user_id());
+            hooks()->do_action('before_contact_logout', get_client_user_id());
+
             $this->session->unset_userdata('client_user_id');
             $this->session->unset_userdata('client_logged_in');
         } else {
-            do_action('before_staff_logout', get_client_user_id());
+            hooks()->do_action('before_staff_logout', get_staff_user_id());
+
             $this->session->unset_userdata('staff_user_id');
             $this->session->unset_userdata('staff_logged_in');
         }
+
         $this->session->sess_destroy();
     }
 
@@ -189,7 +203,7 @@ class Authentication_model extends CRM_Model
                             // Get the customer id
                             $this->db->select('userid');
                             $this->db->where('id', $user->id);
-                            $contact = $this->db->get('tblcontacts')->row();
+                            $contact = $this->db->get(db_prefix() . 'contacts')->row();
 
                             $user_data = [
                                 'client_user_id'   => $contact->userid,
@@ -223,10 +237,10 @@ class Authentication_model extends CRM_Model
      */
     private function update_login_info($user_id, $staff)
     {
-        $table = 'tblcontacts';
+        $table = db_prefix() . 'contacts';
         $_id   = 'id';
         if ($staff == true) {
-            $table = 'tblstaff';
+            $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
         $this->db->set('last_ip', $this->input->ip_address());
@@ -236,20 +250,14 @@ class Authentication_model extends CRM_Model
     }
 
     /**
-     * Send set password email
+     * Send set password email for contacts
      * @param string $email
-     * @param boolean $staff is staff of contact
      */
-    public function set_password_email($email, $staff)
+    public function set_password_email($email)
     {
-        $table = 'tblcontacts';
-        $_id   = 'id';
-        if ($staff == true) {
-            $table = 'tblstaff';
-            $_id   = 'staffid';
-        }
         $this->db->where('email', $email);
-        $user = $this->db->get($table)->row();
+        $user = $this->db->get(db_prefix() . 'contacts')->row();
+
         if ($user) {
             if ($user->active == 0) {
                 return [
@@ -258,28 +266,21 @@ class Authentication_model extends CRM_Model
             }
 
             $new_pass_key = app_generate_hash();
-            $this->db->where($_id, $user->$_id);
-            $this->db->update($table, [
+            $this->db->where('id', $user->id);
+            $this->db->update(db_prefix() . 'contacts', [
                 'new_pass_key'           => $new_pass_key,
                 'new_pass_key_requested' => date('Y-m-d H:i:s'),
             ]);
             if ($this->db->affected_rows() > 0) {
-                $this->load->model('emails_model');
                 $data['new_pass_key'] = $new_pass_key;
-                $data['staff']        = $staff;
-                $data['userid']       = $user->$_id;
+                $data['userid']       = $user->id;
                 $data['email']        = $email;
 
-                $merge_fields = [];
-                if ($staff == false) {
-                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($user->userid, $user->$_id));
-                } else {
-                    $merge_fields = array_merge($merge_fields, get_staff_merge_fields($user->$_id));
-                }
-                $merge_fields = array_merge($merge_fields, get_password_merge_field($data, $staff, 'set'));
-                $sent         = $this->emails_model->send_email_template('contact-set-password', $user->email, $merge_fields);
+                $sent = send_mail_template('customer_contact_set_password', $user, $data);
 
                 if ($sent) {
+                    hooks()->do_action('set_password_email_sent', ['is_staff_member' => false, 'user' => $user]);
+
                     return true;
                 }
 
@@ -300,10 +301,10 @@ class Authentication_model extends CRM_Model
      */
     public function forgot_password($email, $staff = false)
     {
-        $table = 'tblcontacts';
+        $table = db_prefix() . 'contacts';
         $_id   = 'id';
         if ($staff == true) {
-            $table = 'tblstaff';
+            $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
         $this->db->where('email', $email);
@@ -324,21 +325,20 @@ class Authentication_model extends CRM_Model
             ]);
 
             if ($this->db->affected_rows() > 0) {
-                $this->load->model('emails_model');
                 $data['new_pass_key'] = $new_pass_key;
                 $data['staff']        = $staff;
                 $data['userid']       = $user->$_id;
                 $merge_fields         = [];
+
                 if ($staff == false) {
-                    $template     = 'contact-forgot-password';
-                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($user->userid, $user->$_id));
+                    $sent = send_mail_template('customer_contact_forgot_password', $user->email, $user->userid, $user->$_id, $data);
                 } else {
-                    $template     = 'staff-forgot-password';
-                    $merge_fields = array_merge($merge_fields, get_staff_merge_fields($user->$_id));
+                    $sent = send_mail_template('staff_forgot_password', $user->email, $user->$_id, $data);
                 }
-                $merge_fields = array_merge($merge_fields, get_password_merge_field($data, $staff, 'forgot'));
-                $sent         = $this->emails_model->send_email_template($template, $user->email, $merge_fields);
+
                 if ($sent) {
+                    hooks()->do_action('forgot_password_email_sent', ['is_staff_member' => $staff, 'user' => $user]);
+
                     return true;
                 }
 
@@ -365,13 +365,12 @@ class Authentication_model extends CRM_Model
                 'expired' => true,
             ];
         }
-        $this->load->helper('phpass');
-        $hasher   = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-        $password = $hasher->HashPassword($password);
-        $table    = 'tblcontacts';
+
+        $password = app_hash_password($password);
+        $table    = db_prefix() . 'contacts';
         $_id      = 'id';
         if ($staff == true) {
-            $table = 'tblstaff';
+            $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
         $this->db->where($_id, $userid);
@@ -380,7 +379,7 @@ class Authentication_model extends CRM_Model
             'password' => $password,
         ]);
         if ($this->db->affected_rows() > 0) {
-            logActivity('User Set Password [User ID: ' . $userid . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
+            log_activity('User Set Password [User ID: ' . $userid . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
             $this->db->set('new_pass_key', null);
             $this->db->set('new_pass_key_requested', null);
             $this->db->set('last_password_change', date('Y-m-d H:i:s'));
@@ -409,13 +408,11 @@ class Authentication_model extends CRM_Model
                 'expired' => true,
             ];
         }
-        $this->load->helper('phpass');
-        $hasher   = new PasswordHash(PHPASS_HASH_STRENGTH, PHPASS_HASH_PORTABLE);
-        $password = $hasher->HashPassword($password);
-        $table    = 'tblcontacts';
+        $password = app_hash_password($password);
+        $table    = db_prefix() . 'contacts';
         $_id      = 'id';
         if ($staff == true) {
-            $table = 'tblstaff';
+            $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
 
@@ -425,29 +422,26 @@ class Authentication_model extends CRM_Model
             'password' => $password,
         ]);
         if ($this->db->affected_rows() > 0) {
-            logActivity('User Reseted Password [User ID: ' . $userid . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
+            log_activity('User Reseted Password [User ID: ' . $userid . ', Is Staff Member: ' . ($staff == true ? 'Yes' : 'No') . ', IP: ' . $this->input->ip_address() . ']');
             $this->db->set('new_pass_key', null);
             $this->db->set('new_pass_key_requested', null);
             $this->db->set('last_password_change', date('Y-m-d H:i:s'));
             $this->db->where($_id, $userid);
             $this->db->where('new_pass_key', $new_pass_key);
             $this->db->update($table);
-            $this->load->model('emails_model');
             $this->db->where($_id, $userid);
-            $user          = $this->db->get($table)->row();
-            $data['email'] = $user->email;
+            $user = $this->db->get($table)->row();
 
             $merge_fields = [];
             if ($staff == false) {
-                $template     = 'contact-password-reseted';
-                $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($user->userid, $user->$_id));
+                $sent = send_mail_template('customer_contact_password_resetted', $user->email, $user->userid, $user->$_id);
             } else {
-                $template     = 'staff-password-reseted';
-                $merge_fields = array_merge($merge_fields, get_staff_merge_fields($user->$_id));
+                $sent = send_mail_template('staff_password_resetted', $user->email, $user->$_id);
             }
-            $this->emails_model->send_email_template($template, $user->email, $merge_fields);
 
-            return true;
+            if ($sent) {
+                return true;
+            }
         }
 
         return null;
@@ -462,16 +456,17 @@ class Authentication_model extends CRM_Model
      */
     public function can_reset_password($staff, $userid, $new_pass_key)
     {
-        $table = 'tblcontacts';
+        $table = db_prefix() . 'contacts';
         $_id   = 'id';
         if ($staff == true) {
-            $table = 'tblstaff';
+            $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
 
         $this->db->where($_id, $userid);
         $this->db->where('new_pass_key', $new_pass_key);
         $user = $this->db->get($table)->row();
+
         if ($user) {
             $timestamp_now_minus_1_hour = time() - (60 * 60);
             $new_pass_key_requested     = strtotime($user->new_pass_key_requested);
@@ -494,10 +489,10 @@ class Authentication_model extends CRM_Model
      */
     public function can_set_password($staff, $userid, $new_pass_key)
     {
-        $table = 'tblcontacts';
+        $table = db_prefix() . 'contacts';
         $_id   = 'id';
         if ($staff == true) {
-            $table = 'tblstaff';
+            $table = db_prefix() . 'staff';
             $_id   = 'staffid';
         }
         $this->db->where($_id, $userid);
@@ -525,7 +520,7 @@ class Authentication_model extends CRM_Model
     {
         $this->db->where('two_factor_auth_code', $code);
 
-        return $this->db->get('tblstaff')->row();
+        return $this->db->get(db_prefix() . 'staff')->row();
     }
 
     /**
@@ -535,13 +530,10 @@ class Authentication_model extends CRM_Model
      */
     public function two_factor_auth_login($user)
     {
-        do_action(
-            'before_staff_login',
-            [
-                'email'  => $user->email,
-                'userid' => $user->staffid,
-                ]
-        );
+        hooks()->do_action('before_staff_login', [
+            'email'  => $user->email,
+            'userid' => $user->staffid,
+        ]);
 
         $this->session->set_userdata(
             [
@@ -574,7 +566,7 @@ class Authentication_model extends CRM_Model
     {
         $this->db->select('two_factor_auth_code_requested');
         $this->db->where('two_factor_auth_code', $code);
-        $user = $this->db->get('tblstaff')->row();
+        $user = $this->db->get(db_prefix() . 'staff')->row();
 
         // Code not exists because no user is found
         if (!$user) {
@@ -599,7 +591,7 @@ class Authentication_model extends CRM_Model
     public function clear_two_factor_auth_code($id)
     {
         $this->db->where('staffid', $id);
-        $this->db->update('tblstaff', [
+        $this->db->update(db_prefix() . 'staff', [
             'two_factor_auth_code' => null,
         ]);
 
@@ -616,7 +608,7 @@ class Authentication_model extends CRM_Model
         $code .= $id;
 
         $this->db->where('staffid', $id);
-        $this->db->update('tblstaff', [
+        $this->db->update(db_prefix() . 'staff', [
             'two_factor_auth_code'           => $code,
             'two_factor_auth_code_requested' => date('Y-m-d H:i:s'),
         ]);

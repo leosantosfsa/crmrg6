@@ -2,14 +2,14 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Settings_model extends CRM_Model
+class Settings_model extends App_Model
 {
     private $encrypted_fields = ['smtp_password'];
 
     public function __construct()
     {
         parent::__construct();
-        $payment_gateways = $this->payment_modes_model->get_online_payment_modes(true);
+        $payment_gateways = $this->payment_modes_model->get_payment_gateways(true);
         foreach ($payment_gateways as $gateway) {
             $class_name = $gateway['id'] . '_gateway';
             $settings   = $this->$class_name->get_settings();
@@ -33,11 +33,12 @@ class Settings_model extends CRM_Model
             $original_encrypted_fields[$ef] = get_option($ef);
         }
         $affectedRows = 0;
-        $data         = do_action('before_settings_updated', $data);
+        $data         = hooks()->apply_filters('before_settings_updated', $data);
+
         if (isset($data['tags'])) {
             foreach ($data['tags'] as $id => $name) {
                 $this->db->where('id', $id);
-                $this->db->update('tbltags', ['name' => $name]);
+                $this->db->update(db_prefix() . 'tags', ['name' => $name]);
                 $affectedRows += $this->db->affected_rows();
             }
         } else {
@@ -53,33 +54,41 @@ class Settings_model extends CRM_Model
                     $val = trim($val);
                 }
 
-
-
                 array_push($all_settings_looped, $name);
 
                 $hook_data['name']  = $name;
                 $hook_data['value'] = $val;
-                $hook_data          = do_action('before_single_setting_updated_in_loop', $hook_data);
+                $hook_data          = hooks()->apply_filters('before_single_setting_updated_in_loop', $hook_data);
                 $name               = $hook_data['name'];
                 $val                = $hook_data['value'];
 
                 // Check if the option exists
                 $this->db->where('name', $name);
-                $exists = $this->db->count_all_results('tbloptions');
+                $exists = $this->db->count_all_results(db_prefix() . 'options');
                 if ($exists == 0) {
                     continue;
                 }
 
                 if ($name == 'default_contact_permissions') {
                     $val = serialize($val);
+                } elseif ($name == 'lead_unique_validation') {
+                    $val = json_encode($val);
                 } elseif ($name == 'visible_customer_profile_tabs') {
                     if ($val == '') {
                         $val = 'all';
                     } else {
-                        $val = serialize($val);
+                        $tabs           = get_customer_profile_tabs();
+                        $newVisibleTabs = [];
+                        foreach ($tabs as $tabKey => $tab) {
+                            $newVisibleTabs[$tabKey] = in_array($tabKey, $val);
+                        }
+                        $val = serialize($newVisibleTabs);
                     }
                 } elseif ($name == 'email_signature') {
                     $val = nl2br_save_html($val);
+                    $val = html_entity_decode($val);
+                } elseif ($name == 'email_header' || $name == 'email_footer') {
+                    $val = html_entity_decode($val);
                 } elseif ($name == 'default_tax') {
                     $val = array_filter($val, function ($value) {
                         return $value !== '';
@@ -105,14 +114,14 @@ class Settings_model extends CRM_Model
                 }
 
                 $this->db->where('name', $name);
-                $this->db->update('tbloptions', [
+                $this->db->update(db_prefix() . 'options', [
                     'value' => $val,
                 ]);
 
                 if ($this->db->affected_rows() > 0) {
                     $affectedRows++;
-                    if($name == 'save_last_order_for_tables') {
-                        $this->db->query('DELETE FROM tblusermeta where meta_key like "%-table-last-order"');
+                    if ($name == 'save_last_order_for_tables') {
+                        $this->db->query('DELETE FROM ' . db_prefix() . 'user_meta where meta_key like "%-table-last-order"');
                     }
                 }
             }
@@ -121,7 +130,7 @@ class Settings_model extends CRM_Model
             if (!in_array('default_contact_permissions', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
                 $this->db->where('name', 'default_contact_permissions');
-                $this->db->update('tbloptions', [
+                $this->db->update(db_prefix() . 'options', [
                 'value' => serialize([]),
             ]);
                 if ($this->db->affected_rows() > 0) {
@@ -130,8 +139,17 @@ class Settings_model extends CRM_Model
             } elseif (!in_array('visible_customer_profile_tabs', $all_settings_looped)
                 && in_array('customer_settings', $all_settings_looped)) {
                 $this->db->where('name', 'visible_customer_profile_tabs');
-                $this->db->update('tbloptions', [
+                $this->db->update(db_prefix() . 'options', [
                 'value' => 'all',
+            ]);
+                if ($this->db->affected_rows() > 0) {
+                    $affectedRows++;
+                }
+            } elseif (!in_array('lead_unique_validation', $all_settings_looped)
+                && in_array('_leads_settings', $all_settings_looped)) {
+                $this->db->where('name', 'lead_unique_validation');
+                $this->db->update(db_prefix() . 'options', [
+                'value' => json_encode([]),
             ]);
                 if ($this->db->affected_rows() > 0) {
                     $affectedRows++;

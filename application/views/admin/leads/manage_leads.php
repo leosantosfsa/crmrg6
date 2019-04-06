@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
    <div class="content">
@@ -273,7 +274,7 @@
                               foreach($custom_fields as $field){
                               array_push($table_data,$field['name']);
                               }
-                              $table_data = do_action('leads_table_columns',$table_data);
+                              $table_data = hooks()->apply_filters('leads_table_columns', $table_data);
                               render_datatable($table_data,'leads',
                               array('customizable-table'),
                               array(

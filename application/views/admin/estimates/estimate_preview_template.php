@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php echo form_hidden('_attachment_sale_id',$estimate->id); ?>
 <?php echo form_hidden('_attachment_sale_type','estimate'); ?>
 <div class="col-md-12 no-padding">
@@ -27,7 +28,7 @@
                      <a href="#tab_reminders" onclick="initDataTable('.table-reminders', admin_url + 'misc/get_reminders/' + <?php echo $estimate->id ;?> + '/' + 'estimate', undefined, undefined, undefined,[1,'asc']); return false;" aria-controls="tab_reminders" role="tab" data-toggle="tab">
                      <?php echo _l('estimate_reminders'); ?>
                      <?php
-                        $total_reminders = total_rows('tblreminders',
+                        $total_reminders = total_rows(db_prefix().'reminders',
                           array(
                            'isnotified'=>0,
                            'staff'=>get_staff_user_id(),
@@ -121,6 +122,7 @@
                            <?php echo _l('view_estimate_as_client'); ?>
                            </a>
                         </li>
+                        <?php hooks()->do_action('after_estimate_view_as_client_link', $estimate); ?>
                         <?php if((!empty($estimate->expirydate) && date('Y-m-d') < $estimate->expirydate && ($estimate->status == 2 || $estimate->status == 5)) && is_estimates_expiry_reminders_enabled()){ ?>
                         <li>
                            <a href="<?php echo admin_url('estimates/send_expiry_reminder/'.$estimate->id); ?>">
@@ -290,41 +292,10 @@
                   <div class="row">
                      <div class="col-md-12">
                         <div class="table-responsive">
-                           <table class="table items estimate-items-preview">
-                              <thead>
-                                 <tr>
-                                    <th align="left"><?php echo _l('the_number_sign'); ?></th>
-                                    <th class="description" width="50%" align="left"><?php echo _l('estimate_table_item_heading'); ?></th>
-                                    <?php
-                                       $custom_fields = get_items_custom_fields_for_table_html($estimate->id,'estimate');
-                                       foreach($custom_fields as $cf){
-                                         echo '<th class="custom_field" align="left">' . $cf['name'] . '</th>';
-                                       }
-                                       ?>
-                                    <?php
-                                       $qty_heading = _l('estimate_table_quantity_heading');
-                                       if($estimate->show_quantity_as == 2){
-                                        $qty_heading = _l('estimate_table_hours_heading');
-                                       } else if($estimate->show_quantity_as == 3){
-                                        $qty_heading = _l('estimate_table_quantity_heading') .'/'._l('estimate_table_hours_heading');
-                                       }
-                                       ?>
-                                    <th align="right"><?php echo $qty_heading; ?></th>
-                                    <th align="right"><?php echo _l('estimate_table_rate_heading'); ?></th>
-                                    <?php if(get_option('show_tax_per_item') == 1){ ?>
-                                    <th align="right"><?php echo _l('estimate_table_tax_heading'); ?></th>
-                                    <?php } ?>
-                                    <th align="right"><?php echo _l('estimate_table_amount_heading'); ?></th>
-                                 </tr>
-                              </thead>
-                              <tbody>
-                                 <?php
-                                    $items_data = get_table_items_and_taxes($estimate->items,'estimate',true);
-                                    $taxes = $items_data['taxes'];
-                                    echo $items_data['html'];
-                                    ?>
-                              </tbody>
-                           </table>
+                              <?php
+                                 $items = get_items_table_data($estimate, 'estimate', 'html', true);
+                                 echo $items->table();
+                              ?>
                         </div>
                      </div>
                      <div class="col-md-5 col-md-offset-7">
@@ -334,7 +305,7 @@
                                  <td><span class="bold"><?php echo _l('estimate_subtotal'); ?></span>
                                  </td>
                                  <td class="subtotal">
-                                    <?php echo format_money($estimate->subtotal,$estimate->symbol); ?>
+                                    <?php echo app_format_money($estimate->subtotal, $estimate->currency_name); ?>
                                  </td>
                               </tr>
                               <?php if(is_sale_discount_applied($estimate)){ ?>
@@ -342,17 +313,17 @@
                                  <td>
                                     <span class="bold"><?php echo _l('estimate_discount'); ?>
                                     <?php if(is_sale_discount($estimate,'percent')){ ?>
-                                    (<?php echo _format_number($estimate->discount_percent,true); ?>%)
+                                    (<?php echo app_format_number($estimate->discount_percent,true); ?>%)
                                     <?php } ?></span>
                                  </td>
                                  <td class="discount">
-                                    <?php echo '-' . format_money($estimate->discount_total,$estimate->symbol); ?>
+                                    <?php echo '-' . app_format_money($estimate->discount_total, $estimate->currency_name); ?>
                                  </td>
                               </tr>
                               <?php } ?>
                               <?php
-                                 foreach($taxes as $tax){
-                                     echo '<tr class="tax-area"><td class="bold">'.$tax['taxname'].' ('._format_number($tax['taxrate']).'%)</td><td>'.format_money($tax['total_tax'], $estimate->symbol).'</td></tr>';
+                                 foreach($items->taxes() as $tax){
+                                     echo '<tr class="tax-area"><td class="bold">'.$tax['taxname'].' ('.app_format_number($tax['taxrate']).'%)</td><td>'.app_format_money($tax['total_tax'], $estimate->currency_name).'</td></tr>';
                                  }
                                  ?>
                               <?php if((int)$estimate->adjustment != 0){ ?>
@@ -361,7 +332,7 @@
                                     <span class="bold"><?php echo _l('estimate_adjustment'); ?></span>
                                  </td>
                                  <td class="adjustment">
-                                    <?php echo format_money($estimate->adjustment,$estimate->symbol); ?>
+                                    <?php echo app_format_money($estimate->adjustment, $estimate->currency_name); ?>
                                  </td>
                               </tr>
                               <?php } ?>
@@ -369,7 +340,7 @@
                                  <td><span class="bold"><?php echo _l('estimate_total'); ?></span>
                                  </td>
                                  <td class="total">
-                                    <?php echo format_money($estimate->total,$estimate->symbol); ?>
+                                    <?php echo app_format_money($estimate->total, $estimate->currency_name); ?>
                                  </td>
                               </tr>
                            </tbody>

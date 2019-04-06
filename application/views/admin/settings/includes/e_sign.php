@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <p class="bold"><?php echo _l('proposal'); ?></p>
 <?php render_yes_no_option('proposal_accept_identity_confirmation','accept_identity_confirmation_and_signature_sign'); ?>
 <hr />

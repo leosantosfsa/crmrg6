@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <ul class="nav nav-tabs no-margin" role="tablist">
 
     <li role="presentation" class="active project_tab_overview">

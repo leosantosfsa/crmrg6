@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="panel-body mtop10">
    <div class="row">
       <div class="col-md-4">
@@ -22,7 +23,7 @@
       </div>
    </div>
    <div class="table-responsive s_table">
-      <table class="table estimate-items-table items table-main-estimate-edit no-mtop">
+      <table class="table estimate-items-table items table-main-estimate-edit has-calculations no-mtop">
          <thead>
             <tr>
                <th></th>
@@ -119,7 +120,7 @@
                }
                $table_row .= form_hidden('' . $items_indicator . '[' . $i . '][itemid]', $item['id']);
                $amount = $item['rate'] * $item['qty'];
-               $amount = _format_number($amount);
+               $amount = app_format_number($amount);
                // order input
                $table_row .= '<input type="hidden" class="order" name="' . $items_indicator . '[' . $i . '][order]">';
                $table_row .= '</td>';

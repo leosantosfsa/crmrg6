@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
  <div class="content">
@@ -10,7 +11,7 @@
       </div>
       <div class="clearfix"></div>
       <hr class="hr-panel-heading" />
-      <?php do_action('forms_table_start'); ?>
+      <?php hooks()->do_action('forms_table_start'); ?>
       <div class="clearfix"></div>
       <?php render_datatable(array(
        _l('id'),

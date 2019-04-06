@@ -4,9 +4,9 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 define('CRON', true);
 
-class Cron_model extends CRM_Model
+class Cron_model extends App_Model
 {
-    private $manually = false;
+    public $manually = false;
 
     private $lock_handle;
 
@@ -14,9 +14,10 @@ class Cron_model extends CRM_Model
     {
         if (!defined('APP_DISABLE_CRON_LOCK') || defined('APP_DISABLE_CRON_LOCK') && !APP_DISABLE_CRON_LOCK) {
             register_shutdown_function([$this, '__destruct']);
-            $f = fopen(get_temp_dir() . 'pcrm-cron-lock', 'c');
+            $f = fopen(get_temp_dir() . 'pcrm-cron-lock', 'w+');
+
             if (!$f) {
-                $this->lock_handle = fopen(TEMP_FOLDER . 'pcrm-cron-lock', 'c');
+                $this->lock_handle = fopen(TEMP_FOLDER . 'pcrm-cron-lock', 'w+');
                 // Again? Disable the lock
                 if (!$this->lock_handle && !defined('APP_DISABLE_CRON_LOCK')) {
                     // Defined this constant manually here so the cron is able to run
@@ -36,6 +37,8 @@ class Cron_model extends CRM_Model
     public function run($manually = false)
     {
         if ($this->can_cron_run()) {
+            hooks()->do_action('before_cron_run', $manually);
+
             update_option('last_cron_run', time());
 
             if ($manually == true) {
@@ -45,7 +48,7 @@ class Cron_model extends CRM_Model
                     @ini_set('memory_limit', '-1');
                 }
 
-                logActivity('Cron Invoked Manually');
+                log_activity('Cron Invoked Manually');
             }
 
             $this->staff_reminders();
@@ -59,8 +62,6 @@ class Cron_model extends CRM_Model
             $this->autoclose_tickets();
             $this->recurring_invoices();
             $this->recurring_expenses();
-            $this->goals_notification();
-            $this->surveys();
 
             $this->auto_import_imap_tickets();
             $this->check_leads_email_integration();
@@ -73,17 +74,21 @@ class Cron_model extends CRM_Model
 
             $last_email_queue_retry = get_option('last_email_queue_retry');
 
+            $retryQueue = hooks()->apply_filters('cron_retry_email_queue_seconds', 600);
             // Retry queue failed emails every 10 minutes
-            if ($last_email_queue_retry == '' || (time() > ($last_email_queue_retry + do_action('cron_retry_email_queue_seconds', 600)))) {
+            if ($last_email_queue_retry == '' || (time() > ($last_email_queue_retry + $retryQueue))) {
                 $this->email->retry_queue();
                 update_option('last_email_queue_retry', time());
             }
 
             $this->_maybe_fix_duplicate_tasks_assignees_and_followers();
 
-            $this->make_backup_db();
+            app_maybe_delete_old_temporary_files();
 
-            $this->maybe_delete_old_temporary_files();
+            hooks()->do_action('after_cron_run', $manually);
+
+            // For all cases try to release the lock after everything is finished
+            $this->lockHandle();
         }
     }
 
@@ -91,7 +96,7 @@ class Cron_model extends CRM_Model
     {
         // User events
         $this->db->where('isstartnotified', 0);
-        $events = $this->db->get('tblevents')->result_array();
+        $events = $this->db->get(db_prefix() . 'events')->result_array();
 
         $notified_users            = [];
         $notificationNotifiedUsers = [];
@@ -104,7 +109,7 @@ class Cron_model extends CRM_Model
                 array_push($all_notified_events, $event['eventid']);
                 array_push($notified_users, $event['userid']);
 
-                $eventNotifications = do_action('event_notifications', true);
+                $eventNotifications = hooks()->apply_filters('event_notifications', true);
 
                 if ($eventNotifications) {
                     $notified = add_notification([
@@ -118,7 +123,7 @@ class Cron_model extends CRM_Model
                     ]);
                     $this->db->select('email');
                     $this->db->where('staffid', $event['userid']);
-                    $email = $this->db->get('tblstaff')->row()->email;
+                    $email = $this->db->get(db_prefix() . 'staff')->row()->email;
                     load_admin_language($event['userid']);
                     $this->emails_model->send_simple_email($email, _l('not_event', $event['title'] . ' - ' . _d($event['start'])), $event['description'] . '<br /><br />' . get_option('email_signature'));
 
@@ -136,7 +141,7 @@ class Cron_model extends CRM_Model
             $this->db->where('userid NOT IN (' . implode(',', $notified_users) . ')');
         }
         $this->db->where('isstartnotified', 0);
-        $events = $this->db->get('tblevents')->result_array();
+        $events = $this->db->get(db_prefix() . 'events')->result_array();
 
         $staff = $this->staff_model->get('', ['active' => 1]);
 
@@ -147,7 +152,7 @@ class Cron_model extends CRM_Model
                     if ($event['start'] <= $date_compare) {
                         array_push($all_notified_events, $event['eventid']);
 
-                        $eventNotifications = do_action('event_notifications', true);
+                        $eventNotifications = hooks()->apply_filters('event_notifications', true);
 
                         if ($eventNotifications) {
                             $notified = add_notification([
@@ -175,7 +180,7 @@ class Cron_model extends CRM_Model
         load_admin_language();
         foreach ($all_notified_events as $id) {
             $this->db->where('eventid', $id);
-            $this->db->update('tblevents', [
+            $this->db->update(db_prefix() . 'events', [
                 'isstartnotified' => 1,
             ]);
         }
@@ -195,7 +200,10 @@ class Cron_model extends CRM_Model
         $this->db->where('status !=', 5); // Closed
         $this->db->where('status !=', 4); // On Hold
         $this->db->where('status !=', 2); // In Progress
-        $tickets = $this->db->get('tbltickets')->result_array();
+        $tickets = $this->db->get(db_prefix() . 'tickets')->result_array();
+
+        $this->load->model('tickets_model');
+
         foreach ($tickets as $ticket) {
             $close_ticket = false;
             if (!is_null($ticket['lastreply'])) {
@@ -209,9 +217,10 @@ class Cron_model extends CRM_Model
                     $close_ticket = true;
                 }
             }
+
             if ($close_ticket == true) {
                 $this->db->where('ticketid', $ticket['ticketid']);
-                $this->db->update('tbltickets', [
+                $this->db->update(db_prefix() . 'tickets', [
                     'status' => 5,
                 ]);
                 if ($this->db->affected_rows() > 0) {
@@ -223,14 +232,12 @@ class Cron_model extends CRM_Model
                         $email = $ticket['email'];
                     }
                     $sendEmail = true;
-                    if ($isContact && total_rows('tblcontacts', ['ticket_emails' => 1, 'id' => $ticket['contactid']]) == 0) {
+                    if ($isContact && total_rows(db_prefix() . 'contacts', ['ticket_emails' => 1, 'id' => $ticket['contactid']]) == 0) {
                         $sendEmail = false;
                     }
                     if ($sendEmail) {
-                        $merge_fields = [];
-                        $merge_fields = array_merge($merge_fields, get_ticket_merge_fields('auto-close-ticket', $ticket['ticketid']));
-                        $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($ticket['userid'], $ticket['contactid']));
-                        $this->emails_model->send_email_template('auto-close-ticket', $email, $merge_fields, $ticket['ticketid']);
+                        $ticket = $this->tickets_model->get($ticket['ticketid']);
+                        send_mail_template('ticket_auto_close_to_customer', $ticket, $email);
                     }
                 }
             }
@@ -244,9 +251,9 @@ class Cron_model extends CRM_Model
         if ($contracts_auto_operations_hour == '') {
             $contracts_auto_operations_hour = 9;
         }
-
-        $hour_now = date('G');
-        if ($hour_now < $contracts_auto_operations_hour && $this->manually === false) {
+        $contracts_auto_operations_hour = intval($contracts_auto_operations_hour);
+        $hour_now                       = date('G');
+        if ($hour_now != $contracts_auto_operations_hour && $this->manually === false) {
             return;
         }
 
@@ -254,30 +261,26 @@ class Cron_model extends CRM_Model
         $this->db->where('isexpirynotified', 0);
         $this->db->where('dateend is NOT NULL');
         $this->db->where('trash', 0);
-        $contracts = $this->db->get('tblcontracts')->result_array();
+        $contracts = $this->db->get(db_prefix() . 'contracts')->result_array();
         $now       = new DateTime(date('Y-m-d'));
 
         $notifiedUsers = [];
         if (count($contracts) > 0) {
             $staff = $this->staff_model->get('', ['active' => 1]);
         }
+
         foreach ($contracts as $contract) {
             if ($contract['dateend'] > date('Y-m-d')) {
                 $dateend = new DateTime($contract['dateend']);
                 $diff    = $dateend->diff($now)->format('%a');
                 if ($diff <= get_option('contract_expiration_before')) {
                     $this->db->where('id', $contract['id']);
-                    $this->db->update('tblcontracts', [
+                    $this->db->update(db_prefix() . 'contracts', [
                         'isexpirynotified' => 1,
                     ]);
 
                     foreach ($staff as $member) {
                         if ($member['staffid'] == $contract['addedfrom'] || is_admin($member['staffid'])) {
-                            $merge_fields = [];
-                            $merge_fields = array_merge($merge_fields, get_staff_merge_fields($member['staffid']));
-                            $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract['client']));
-                            $merge_fields = array_merge($merge_fields, get_contract_merge_fields($contract['id']));
-
                             $notified = add_notification([
                                 'description'     => 'not_contract_expiry_reminder',
                                 'touserid'        => $member['staffid'],
@@ -288,24 +291,26 @@ class Cron_model extends CRM_Model
                                     $contract['subject'],
                                 ]),
                             ]);
+
                             if ($notified) {
                                 array_push($notifiedUsers, $member['staffid']);
                             }
 
-                            $this->emails_model->send_email_template('contract-expiration-to-staff', $member['email'], $merge_fields);
+                            send_mail_template('contract_expiration_reminder_to_staff', $contract, $member);
                         }
                     }
 
                     if ($contract['not_visible_to_client'] == 0) {
                         $contacts = $this->clients_model->get_contacts($contract['client'], ['active' => 1, 'contract_emails' => 1]);
                         foreach ($contacts as $contact) {
-                            $merge_fields = [];
-                            $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract['client'], $contact['id']));
-                            $merge_fields = array_merge($merge_fields, get_contract_merge_fields($contract['id']));
-                            $this->emails_model->send_email_template('contract-expiration', $contact['email'], $merge_fields);
+                            $template = mail_template('contract_expiration_reminder_to_customer', $contract, $contact);
+
+                            $merge_fields = $template->get_merge_fields();
+
+                            $template->send();
 
                             if (can_send_sms_based_on_creation_date($contract['dateadded'])) {
-                                $this->sms->trigger(SMS_TRIGGER_CONTRACT_EXP_REMINDER, $contact['phonenumber'], $merge_fields);
+                                $this->app_sms->trigger(SMS_TRIGGER_CONTRACT_EXP_REMINDER, $contact['phonenumber'], $merge_fields);
                             }
                         }
                     }
@@ -321,7 +326,7 @@ class Cron_model extends CRM_Model
         $this->db->select('id,addedfrom,recurring_type,repeat_every,last_recurring_date,startdate,duedate');
         $this->db->where('recurring', 1);
         $this->db->where('(cycles != total_cycles OR cycles=0)');
-        $recurring_tasks = $this->db->get('tblstafftasks')->result_array();
+        $recurring_tasks = $this->db->get(db_prefix() . 'tasks')->result_array();
 
         foreach ($recurring_tasks as $task) {
             $type                = $task['recurring_type'];
@@ -347,7 +352,7 @@ class Cron_model extends CRM_Model
 
                 $overwrite_params = [
                     'startdate'           => $re_create_at,
-                    'status'              => do_action('recurring_task_status', 1),
+                    'status'              => hooks()->apply_filters('recurring_task_status', 1),
                     'recurring_type'      => null,
                     'repeat_every'        => 0,
                     'cycles'              => 0,
@@ -368,16 +373,16 @@ class Cron_model extends CRM_Model
 
                 if ($newTaskID) {
                     $this->db->where('id', $task['id']);
-                    $this->db->update('tblstafftasks', [
+                    $this->db->update(db_prefix() . 'tasks', [
                         'last_recurring_date' => $re_create_at,
                     ]);
 
                     $this->db->where('id', $task['id']);
                     $this->db->set('total_cycles', 'total_cycles+1', false);
-                    $this->db->update('tblstafftasks');
+                    $this->db->update(db_prefix() . 'tasks');
 
                     $this->db->where('taskid', $task['id']);
-                    $assigned = $this->db->get('tblstafftaskassignees')->result_array();
+                    $assigned = $this->db->get(db_prefix() . 'task_assigned')->result_array();
                     foreach ($assigned as $assignee) {
                         $assigneeId = $this->tasks_model->add_task_assignees([
                             'taskid'   => $newTaskID,
@@ -386,7 +391,7 @@ class Cron_model extends CRM_Model
 
                         if ($assigneeId) {
                             $this->db->where('id', $assigneeId);
-                            $this->db->update('tblstafftaskassignees', ['assigned_from' => $task['addedfrom']]);
+                            $this->db->update(db_prefix() . 'task_assigned', ['assigned_from' => $task['addedfrom']]);
                         }
                     }
                 }
@@ -402,15 +407,15 @@ class Cron_model extends CRM_Model
             $expenses_hour_auto_operations = 9;
         }
 
-        $hour_now = date('G');
-
-        if ($hour_now < $expenses_hour_auto_operations && $this->manually === false) {
+        $expenses_hour_auto_operations = intval($expenses_hour_auto_operations);
+        $hour_now                      = date('G');
+        if ($hour_now != $expenses_hour_auto_operations && $this->manually === false) {
             return;
         }
 
         $this->db->where('recurring', 1);
         $this->db->where('(cycles != total_cycles OR cycles=0)');
-        $recurring_expenses = $this->db->get('tblexpenses')->result_array();
+        $recurring_expenses = $this->db->get(db_prefix() . 'expenses')->result_array();
         // Load the necessary models
         $this->load->model('invoices_model');
         $this->load->model('expenses_model');
@@ -438,7 +443,7 @@ class Cron_model extends CRM_Model
             if (date('Y-m-d') >= $re_create_at) {
                 // Ok we can repeat the expense now
                 $new_expense_data = [];
-                $expense_fields   = $this->db->list_fields('tblexpenses');
+                $expense_fields   = $this->db->list_fields(db_prefix() . 'expenses');
                 foreach ($expense_fields as $field) {
                     if (isset($expense[$field])) {
                         // We dont need the invoiceid field
@@ -461,7 +466,7 @@ class Cron_model extends CRM_Model
                 $new_expense_data['custom_recurring']    = 0;
                 $new_expense_data['last_recurring_date'] = null;
 
-                $this->db->insert('tblexpenses', $new_expense_data);
+                $this->db->insert(db_prefix() . 'expenses', $new_expense_data);
                 $insert_id = $this->db->insert_id();
                 if ($insert_id) {
                     // Get the old expense custom field and add to the new
@@ -469,7 +474,7 @@ class Cron_model extends CRM_Model
                     foreach ($custom_fields as $field) {
                         $value = get_custom_field_value($expense['id'], $field['id'], 'expenses', false);
                         if ($value != '') {
-                            $this->db->insert('tblcustomfieldsvalues', [
+                            $this->db->insert(db_prefix() . 'customfieldsvalues', [
                                 'relid'   => $insert_id,
                                 'fieldid' => $field['id'],
                                 'fieldto' => 'expenses',
@@ -479,14 +484,14 @@ class Cron_model extends CRM_Model
                     }
                     $total_renewed++;
                     $this->db->where('id', $expense['id']);
-                    $this->db->update('tblexpenses', [
+                    $this->db->update(db_prefix() . 'expenses', [
                         'last_recurring_date' => $re_create_at,
                         // In case cron job is late use the date actually when the recurring supposed to happen
                     ]);
 
                     $this->db->where('id', $expense['id']);
                     $this->db->set('total_cycles', 'total_cycles+1', false);
-                    $this->db->update('tblexpenses');
+                    $this->db->update(db_prefix() . 'expenses');
 
                     $sent               = false;
                     $created_invoice_id = '';
@@ -495,7 +500,7 @@ class Cron_model extends CRM_Model
                         if ($invoiceid) {
                             $created_invoice_id = $invoiceid;
                             if ($expense['send_invoice_to_customer'] == 1) {
-                                $sent = $this->invoices_model->send_invoice_to_client($invoiceid, 'invoice-send-to-client', true);
+                                $sent = $this->invoices_model->send_invoice_to_client($invoiceid, 'invoice_send_to_customer', true);
                             }
                         }
                     }
@@ -512,7 +517,7 @@ class Cron_model extends CRM_Model
             }
         }
 
-        $send_recurring_expenses_email = do_action('send_recurring_system_expenses_email', 'true');
+        $send_recurring_expenses_email = hooks()->apply_filters('send_recurring_system_expenses_email', 'true');
         if ($total_renewed > 0 && $send_recurring_expenses_email == 'true') {
             $this->load->model('currencies_model');
             $email_send_to_by_staff_and_expense = [];
@@ -531,10 +536,13 @@ class Cron_model extends CRM_Model
                         if (in_array($unique_send, $email_send_to_by_staff_and_expense)) {
                             $sent = false;
                         }
-                        $expense  = $this->expenses_model->get($data['from']);
-                        $currency = $this->currencies_model->get($expense->currency);
-                        $recurring_expenses_email_data .= _l('not_recurring_expenses_action_taken_from') . ': <a href="' . admin_url('expenses/list_expenses/' . $data['from']) . '">' . $expense->category_name . (!empty($expense->expense_name) ? ' (' . $expense->expense_name . ')' : '') . '</a> - ' . _l('expense_amount') . ' ' . format_money($expense->amount, $currency->symbol) . '<br />';
+
+                        $expense = $this->expenses_model->get($data['from']);
+
+                        $recurring_expenses_email_data .= _l('not_recurring_expenses_action_taken_from') . ': <a href="' . admin_url('expenses/list_expenses/' . $data['from']) . '">' . $expense->category_name . (!empty($expense->expense_name) ? ' (' . $expense->expense_name . ')' : '') . '</a> - ' . _l('expense_amount') . ' ' . app_format_money($expense->amount, get_currency($expense->currency)) . '<br />';
+
                         $recurring_expenses_email_data .= _l('not_expense_renewed') . ' <a href="' . admin_url('expenses/list_expenses/' . $data['renewed']) . '">' . _l('id') . ' ' . $data['renewed'] . '</a>';
+
                         if ($data['create_invoice_billable'] == 1) {
                             $recurring_expenses_email_data .= '<br />' . _l('not_invoice_created') . ' ';
                             if (is_numeric($data['created_invoice_id'])) {
@@ -571,8 +579,9 @@ class Cron_model extends CRM_Model
             $invoice_hour_auto_operations = 9;
         }
 
-        $hour_now = date('G');
-        if ($hour_now < $invoice_hour_auto_operations && $this->manually === false) {
+        $invoice_hour_auto_operations = intval($invoice_hour_auto_operations);
+        $hour_now                     = date('G');
+        if ($hour_now != $invoice_hour_auto_operations && $this->manually === false) {
             return;
         }
 
@@ -581,7 +590,7 @@ class Cron_model extends CRM_Model
         $invoices_create_invoice_from_recurring_only_on_paid_invoices = get_option('invoices_create_invoice_from_recurring_only_on_paid_invoices');
         $this->load->model('invoices_model');
         $this->db->select('id,recurring,date,last_recurring_date,number,duedate,recurring_type,custom_recurring,addedfrom,sale_agent,clientid');
-        $this->db->from('tblinvoices');
+        $this->db->from(db_prefix() . 'invoices');
         $this->db->where('recurring !=', 0);
         $this->db->where('(cycles != total_cycles OR cycles=0)');
 
@@ -699,7 +708,7 @@ class Cron_model extends CRM_Model
                 $id = $this->invoices_model->add($new_invoice_data);
                 if ($id) {
                     $this->db->where('id', $id);
-                    $this->db->update('tblinvoices', [
+                    $this->db->update(db_prefix() . 'invoices', [
                         'addedfrom'                => $_invoice->addedfrom,
                         'sale_agent'               => $_invoice->sale_agent,
                         'cancel_overdue_reminders' => $_invoice->cancel_overdue_reminders,
@@ -714,7 +723,7 @@ class Cron_model extends CRM_Model
                     foreach ($custom_fields as $field) {
                         $value = get_custom_field_value($invoice['id'], $field['id'], 'invoice', false);
                         if ($value != '') {
-                            $this->db->insert('tblcustomfieldsvalues', [
+                            $this->db->insert(db_prefix() . 'customfieldsvalues', [
                                 'relid'   => $id,
                                 'fieldid' => $field['id'],
                                 'fieldto' => 'invoice',
@@ -726,16 +735,16 @@ class Cron_model extends CRM_Model
                     $total_renewed++;
                     // Update last recurring date to this invoice
                     $this->db->where('id', $invoice['id']);
-                    $this->db->update('tblinvoices', [
+                    $this->db->update(db_prefix() . 'invoices', [
                         'last_recurring_date' => $re_create_at,
                     ]);
 
                     $this->db->where('id', $invoice['id']);
                     $this->db->set('total_cycles', 'total_cycles+1', false);
-                    $this->db->update('tblinvoices');
+                    $this->db->update(db_prefix() . 'invoices');
 
                     if ($new_recurring_invoice_action == 'generate_and_send') {
-                        $this->invoices_model->send_invoice_to_client($id, 'invoice-send-to-client', true);
+                        $this->invoices_model->send_invoice_to_client($id, 'invoice_send_to_customer', true);
                     }
 
                     $_renewals_ids_data[] = [
@@ -749,7 +758,7 @@ class Cron_model extends CRM_Model
             }
         }
 
-        $send_recurring_invoices_email = do_action('send_recurring_invoices_system_email', 'true');
+        $send_recurring_invoices_email = hooks()->apply_filters('send_recurring_invoices_system_email', 'true');
         if ($total_renewed > 0 && $send_recurring_invoices_email == 'true') {
             $date                               = _dt(date('Y-m-d H:i:s'));
             $email_send_to_by_staff_and_invoice = [];
@@ -786,7 +795,8 @@ class Cron_model extends CRM_Model
         $this->db->where('status !=', 5);
         $this->db->where('duedate IS NOT NULL');
         $this->db->where('deadline_notified', 0);
-        $tasks = $this->db->get('tblstafftasks')->result_array();
+
+        $tasks = $this->db->get(db_prefix() . 'tasks')->result_array();
         $now   = new DateTime(date('Y-m-d'));
 
         $notifiedUsers = [];
@@ -801,13 +811,14 @@ class Cron_model extends CRM_Model
                 $duedate                 = strtotime($task['duedate']);
                 $start_and_due_date_diff = $duedate - $start_date;
                 $start_and_due_date_diff = floor($start_and_due_date_diff / (60 * 60 * 24));
+
                 if ($diff <= $reminder_before && $start_and_due_date_diff > $reminder_before) {
                     $assignees = $this->tasks_model->get_task_assignees($task['id']);
 
                     foreach ($assignees as $member) {
                         $this->db->select('email');
                         $this->db->where('staffid', $member['assigneeid']);
-                        $row = $this->db->get('tblstaff')->row();
+                        $row = $this->db->get(db_prefix() . 'staff')->row();
                         if ($row) {
                             $notified = add_notification([
                                 'description'     => 'not_task_deadline_reminder',
@@ -824,14 +835,10 @@ class Cron_model extends CRM_Model
                                 array_push($notifiedUsers, $member['assigneeid']);
                             }
 
-                            $this->emails_model->set_staff_id($member['assigneeid']);
+                            send_mail_template('task_deadline_reminder_to_staff', $row->email, $member['assigneeid'], $task['id']);
 
-                            $merge_fields = [];
-                            $merge_fields = array_merge($merge_fields, get_staff_merge_fields($member['assigneeid']));
-                            $merge_fields = array_merge($merge_fields, get_task_merge_fields($task['id']));
-                            $this->emails_model->send_email_template('task-deadline-notification', $row->email, $merge_fields);
                             $this->db->where('id', $task['id']);
-                            $this->db->update('tblstafftasks', [
+                            $this->db->update(db_prefix() . 'tasks', [
                                 'deadline_notified' => 1,
                             ]);
                         }
@@ -843,94 +850,18 @@ class Cron_model extends CRM_Model
         pusher_trigger_notification($notifiedUsers);
     }
 
-    private function surveys()
-    {
-        $last_survey_cron = get_option('last_survey_send_cron');
-        if ($last_survey_cron == '' || (time() > ($last_survey_cron + 3600)) || $this->manually === true) {
-            $found_emails = $this->db->count_all_results('tblsurveysemailsendcron');
-            if ($found_emails > 0) {
-                $total_emails_per_cron = get_option('survey_send_emails_per_cron_run');
-                // Initialize mail library
-                $this->email->initialize();
-                $this->load->library('email');
-                // Load survey model
-                $this->load->model('surveys_model');
-                // Get all surveys send log where sending emails is not finished
-                $this->db->where('iscronfinished', 0);
-                $unfinished_surveys_send_log = $this->db->get('tblsurveysendlog')->result_array();
-                foreach ($unfinished_surveys_send_log as $_survey) {
-                    $surveyid = $_survey['surveyid'];
-                    // Get survey emails that has been not sent yet.
-                    $this->db->where('surveyid', $surveyid);
-                    $this->db->limit($total_emails_per_cron);
-                    $emails = $this->db->get('tblsurveysemailsendcron')->result_array();
-                    $survey = $this->surveys_model->get($surveyid);
-                    if ($survey->fromname == '' || $survey->fromname == null) {
-                        $survey->fromname = get_option('companyname');
-                    }
-                    if (stripos($survey->description, '{survey_link}') !== false) {
-                        $survey->description = str_ireplace('{survey_link}', '<a href="' . site_url('survey/' . $survey->surveyid . '/' . $survey->hash) . '" target="_blank">' . $survey->subject . '</a>', $survey->description);
-                    }
-                    $total = $_survey['total'];
-                    foreach ($emails as $data) {
-                        if (isset($data['emailid']) && isset($data['listid'])) {
-                            $customfields = $this->surveys_model->get_list_custom_fields($data['listid']);
-                            foreach ($customfields as $custom_field) {
-                                $value                     = $this->surveys_model->get_email_custom_field_value($data['emailid'], $data['listid'], $custom_field['customfieldid']);
-                                $custom_field['fieldslug'] = '{' . $custom_field['fieldslug'] . '}';
-                                if ($value != '') {
-                                    if (stripos($survey->description, $custom_field['fieldslug']) !== false) {
-                                        $survey->description = str_ireplace($custom_field['fieldslug'], $value, $survey->description);
-                                    }
-                                }
-                            }
-                        }
-                        $this->email->clear();
-                        $this->email->from(get_option('smtp_email'), $survey->fromname);
-                        $this->email->to($data['email']);
-                        $this->email->subject($survey->subject);
-                        $this->email->message($survey->description);
-
-                        if ($this->email->send(true)) {
-                            $total++;
-                        }
-
-                        $this->db->where('id', $data['id']);
-                        $this->db->delete('tblsurveysemailsendcron');
-                    }
-                    // Update survey send log
-                    $this->db->where('id', $_survey['id']);
-                    $this->db->update('tblsurveysendlog', [
-                        'total' => $total,
-                    ]);
-                    // Check if all emails send
-                    $this->db->where('surveyid', $surveyid);
-                    $found_emails = $this->db->count_all_results('tblsurveysemailsendcron');
-                    if ($found_emails == 0) {
-                        // Update that survey send is finished
-                        $this->db->where('id', $_survey['id']);
-                        $this->db->update('tblsurveysendlog', [
-                            'iscronfinished' => 1,
-                        ]);
-                    }
-                }
-                update_option('last_survey_send_cron', time());
-            }
-        }
-    }
-
     private function staff_reminders()
     {
-        $this->db->select('tblreminders.*, email, phonenumber');
-        $this->db->join('tblstaff', 'tblstaff.staffid=tblreminders.staff');
+        $this->db->select('' . db_prefix() . 'reminders.*, email, phonenumber');
+        $this->db->join(db_prefix() . 'staff', '' . db_prefix() . 'staff.staffid=' . db_prefix() . 'reminders.staff');
         $this->db->where('isnotified', 0);
-        $reminders     = $this->db->get('tblreminders')->result_array();
+        $reminders     = $this->db->get(db_prefix() . 'reminders')->result_array();
         $notifiedUsers = [];
 
         foreach ($reminders as $reminder) {
             if (date('Y-m-d H:i:s') >= $reminder['date']) {
                 $this->db->where('id', $reminder['id']);
-                $this->db->update('tblreminders', [
+                $this->db->update(db_prefix() . 'reminders', [
                     'isnotified' => 1,
                 ]);
 
@@ -954,15 +885,13 @@ class Cron_model extends CRM_Model
                     array_push($notifiedUsers, $reminder['staff']);
                 }
 
-                $merge_fields = [];
-                $merge_fields = array_merge($merge_fields, get_staff_merge_fields($reminder['staff']));
-                $merge_fields = array_merge($merge_fields, get_staff_reminder_merge_fields($reminder));
+                $template = mail_template('staff_reminder', $reminder['email'], $reminder['staff'], $reminder);
 
                 if ($reminder['notify_by_email'] == 1) {
-                    $this->emails_model->send_email_template('reminder-email-staff', $reminder['email'], $merge_fields);
+                    $template->send();
                 }
 
-                $this->sms->trigger(SMS_TRIGGER_STAFF_REMINDER, $reminder['phonenumber'], $merge_fields);
+                $this->app_sms->trigger(SMS_TRIGGER_STAFF_REMINDER, $reminder['phonenumber'], $template->get_merge_fields());
             }
         }
 
@@ -976,14 +905,15 @@ class Cron_model extends CRM_Model
             $invoice_auto_operations_hour = 9;
         }
 
-        $hour_now = date('G');
-        if ($hour_now < $invoice_auto_operations_hour && $this->manually === false) {
+        $invoice_auto_operations_hour = intval($invoice_auto_operations_hour);
+        $hour_now                     = date('G');
+        if ($hour_now != $invoice_auto_operations_hour && $this->manually === false) {
             return;
         }
 
         $this->load->model('invoices_model');
         $this->db->select('id,date,status,last_overdue_reminder,duedate,cancel_overdue_reminders');
-        $this->db->from('tblinvoices');
+        $this->db->from(db_prefix() . 'invoices');
         $this->db->where('(duedate != "" AND duedate IS NOT NULL)'); // We dont need invoices with no duedate
         $this->db->where('status !=', 2); // We dont need paid status
         $this->db->where('status !=', 5); // We dont need cancelled status
@@ -995,8 +925,10 @@ class Cron_model extends CRM_Model
             $statusid = update_invoice_status($invoice['id']);
 
             if ($invoice['cancel_overdue_reminders'] == 0 && is_invoices_overdue_reminders_enabled()) {
-                if ($invoice['status'] == '4' || $statusid == '4' || $invoice['status'] == 3) {
-                    if ($invoice['status'] == 3) {
+                if ($invoice['status'] == Invoices_model::STATUS_OVERDUE
+                    || $statusid == Invoices_model::STATUS_OVERDUE
+                    || $invoice['status'] == Invoices_model::STATUS_PARTIALLY) {
+                    if ($invoice['status'] == Invoices_model::STATUS_PARTIALLY) {
                         // Invoice is with status partialy paid and its not due
                         if (date('Y-m-d') <= date('Y-m-d', strtotime($invoice['duedate']))) {
                             continue;
@@ -1034,8 +966,9 @@ class Cron_model extends CRM_Model
             $proposals_auto_operations_hour = 9;
         }
 
-        $hour_now = date('G');
-        if ($hour_now < $proposals_auto_operations_hour && $this->manually === false) {
+        $proposals_auto_operations_hour = intval($proposals_auto_operations_hour);
+        $hour_now                       = date('G');
+        if ($hour_now != $proposals_auto_operations_hour && $this->manually === false) {
             return;
         }
 
@@ -1045,7 +978,7 @@ class Cron_model extends CRM_Model
         // Only 1 = open, 4 = sent
         $this->db->where('status IN (1,4)');
         $this->db->where('is_expiry_notified', 0);
-        $proposals = $this->db->get('tblproposals')->result_array();
+        $proposals = $this->db->get(db_prefix() . 'proposals')->result_array();
         $now       = new DateTime(date('Y-m-d'));
 
         foreach ($proposals as $proposal) {
@@ -1074,14 +1007,14 @@ class Cron_model extends CRM_Model
         if ($estimates_auto_operations_hour == '') {
             $estimates_auto_operations_hour = 9;
         }
-
-        $hour_now = date('G');
-        if ($hour_now < $estimates_auto_operations_hour && $this->manually === false) {
+        $estimates_auto_operations_hour = intval($estimates_auto_operations_hour);
+        $hour_now                       = date('G');
+        if ($hour_now != $estimates_auto_operations_hour && $this->manually === false) {
             return;
         }
 
         $this->db->select('id,expirydate,status,is_expiry_notified,date');
-        $this->db->from('tblestimates');
+        $this->db->from(db_prefix() . 'estimates');
         // Only get sent estimates
         $this->db->where('status', 2);
         $estimates = $this->db->get()->result_array();
@@ -1091,7 +1024,7 @@ class Cron_model extends CRM_Model
             if ($estimate['expirydate'] != null) {
                 if (date('Y-m-d') > $estimate['expirydate']) {
                     $this->db->where('id', $estimate['id']);
-                    $this->db->update('tblestimates', [
+                    $this->db->update(db_prefix() . 'estimates', [
                         'status' => 5,
                     ]);
                     if ($this->db->affected_rows() > 0) {
@@ -1119,33 +1052,11 @@ class Cron_model extends CRM_Model
         }
     }
 
-    public function goals_notification()
-    {
-        $this->load->model('goals_model');
-        $goals = $this->goals_model->get('', true);
-        foreach ($goals as $goal) {
-            $achievement = $this->goals_model->calculate_goal_achievement($goal['id']);
-            if ($achievement['percent'] >= 100) {
-                if ($goal['notify_when_achieve'] == 1) {
-                    if (date('Y-m-d') >= $goal['end_date']) {
-                        $this->goals_model->notify_staff_members($goal['id'], 'success', $achievement);
-                    }
-                }
-            } else {
-                // not yet achieved, check for end date
-                if ($goal['notify_when_fail'] == 1) {
-                    if (date('Y-m-d') > $goal['end_date']) {
-                        $this->goals_model->notify_staff_members($goal['id'], 'failed', $achievement);
-                    }
-                }
-            }
-        }
-    }
-
     public function check_leads_email_integration()
     {
         $this->load->model('leads_model');
         $mail = $this->leads_model->get_email_integration();
+
         if ($mail->active == 0) {
             return false;
         }
@@ -1153,14 +1064,16 @@ class Cron_model extends CRM_Model
         require_once(APPPATH . 'third_party/php-imap/Imap.php');
 
         if (empty($mail->last_run) || (time() > $mail->last_run + ($mail->check_every * 60))) {
+            $this->load->model('spam_filters_model');
+
             $this->db->where('id', 1);
-            $this->db->update('tblleadsintegration', [
+            $this->db->update(db_prefix() . 'leads_email_integration', [
                 'last_run' => time(),
             ]);
             $ps = $this->encryption->decrypt($mail->password);
             if (!$ps) {
                 if (ENVIRONMENT !== 'production') {
-                    logActivity('Failed to decrypt email integration password', null);
+                    log_activity('Failed to decrypt email integration password', null);
                 }
 
                 return false;
@@ -1184,18 +1097,67 @@ class Cron_model extends CRM_Model
                 $emails = $imap->getMessages();
             }
 
+            include_once(APPPATH . 'third_party/simple_html_dom.php');
+
             foreach ($emails as $email) {
-                $from     = $email['from'];
+                $html                    = str_get_html($email['body']);
+                $lead_form_fields        = [];
+                $lead_form_custom_fields = [];
+                if ($html) {
+                    foreach ($html->find('[id^="field_"],[id^="custom_field_"]') as $data) {
+                        if (isset($data->plaintext)) {
+                            $value = trim($data->plaintext);
+                            $value = strip_tags($value);
+                            if ($value && isset($data->attr['id']) && !empty($data->attr['id'])) {
+                                $lead_form_fields[$data->attr['id']] = $this->security->xss_clean($value);
+                            }
+                        }
+                    }
+                }
+
+                foreach ($lead_form_fields as $key => $val) {
+                    $field = (strpos($key, 'custom_field_') !== false ? strafter($key, 'custom_field_') : strafter($key, 'field_'));
+
+                    if (strpos($key, 'custom_field_') !== false) {
+                        $lead_form_custom_fields[$field] = $val;
+                    } elseif ($this->db->field_exists($field, db_prefix() . 'leads')) {
+                        $lead_form_fields[$field] = $val;
+                    }
+
+                    unset($lead_form_fields[$key]);
+                }
+
+                $from    = $email['from'];
+                $replyTo = $imap->getReplyToAddresses($email['uid']);
+                if (count($replyTo) === 1) {
+                    $from = $replyTo[0];
+                }
                 $fromname = preg_replace('/(.*)<(.*)>/', '\\1', $from);
                 $fromname = trim(str_replace('"', '', $fromname));
 
-                $fromemail = trim(preg_replace('/(.*)<(.*)>/', '\\2', $from));
-                $body      = do_action('leads_email_integration_email_body_for_database', $this->prepare_imap_email_body_html($email['body']));
+                $fromemail = isset($lead_form_fields['email']) ? $lead_form_fields['email'] : trim(preg_replace('/(.*)<(.*)>/', '\\2', $from));
+
+                $email['subject'] = trim($email['subject']);
+
+                $mailstatus = $this->spam_filters_model->check($fromemail, $email['subject'], $email['body'], 'leads');
+
+                if ($mailstatus) {
+                    $imap->setUnseenMessage($email['uid']);
+                    log_activity('Lead Email Integration Blocked Email by Spam Filters [' . $mailstatus . ']');
+
+                    continue;
+                }
+
+                $body = hooks()->apply_filters(
+                    'leads_email_integration_email_body_for_database',
+                    $this->prepare_imap_email_body_html($email['body'])
+                );
+
                 // Okey everything good now let make some statements
                 // Check if this email exists in customers table first
                 $this->db->select('id,userid');
                 $this->db->where('email', $fromemail);
-                $contact = $this->db->get('tblcontacts')->row();
+                $contact = $this->db->get(db_prefix() . 'contacts')->row();
                 if ($contact) {
 
                     // Set message to seen to in the next time we dont need to loop over this message
@@ -1218,8 +1180,8 @@ class Cron_model extends CRM_Model
                                         'description' => $body,
                                         ];
 
-                        $task_data = do_action('before_add_task', $task_data);
-                        $this->db->insert('tblstafftasks', $task_data);
+                        $task_data = hooks()->apply_filters('before_add_task', $task_data);
+                        $this->db->insert(db_prefix() . 'tasks', $task_data);
 
                         $task_id = $this->db->insert_id();
                         if ($task_id) {
@@ -1230,7 +1192,7 @@ class Cron_model extends CRM_Model
 
                             $this->tasks_model->add_task_assignees($assignee_data, true);
                             $this->_check_lead_email_integration_attachments($email, false, $imap, $task_id);
-                            do_action('after_add_task', $task_id);
+                            hooks()->do_action('after_add_task', $task_id);
                         }
                     }
 
@@ -1240,14 +1202,9 @@ class Cron_model extends CRM_Model
                 // Not exists its okey.
                 // Now we need to check the leads table
                 $this->db->where('email', $fromemail);
-                $lead = $this->db->get('tblleads')->row();
+                $lead = $this->db->get(db_prefix() . 'leads')->row();
 
-                $hook_data = do_action('leads_email_integration_lead_check', [
-                        'email' => $email,
-                        'lead'  => $lead,
-                    ]);
-
-                $lead = $hook_data['lead'];
+                $lead = hooks()->apply_filters('leads_email_integration_lead_check', $lead, $email);
 
                 if ($lead) {
                     // Check if the lead uid is the same with the email uid
@@ -1259,7 +1216,7 @@ class Cron_model extends CRM_Model
                     }
                     // Check if this uid exists in the emails data log table
                     $this->db->where('emailid', $email['uid']);
-                    $exists_in_emails = $this->db->count_all_results('tblleadsemailintegrationemails');
+                    $exists_in_emails = $this->db->count_all_results(db_prefix() . 'lead_integration_emails');
                     if ($exists_in_emails > 0) {
                         // Set message to seen to in the next time we dont need to loop over this message
                         $imap->setUnseenMessage($email['uid']);
@@ -1274,9 +1231,9 @@ class Cron_model extends CRM_Model
                         continue;
                     }
                     // More the one time email from this lead, insert into the lead emails log table
-                    $this->db->insert('tblleadsemailintegrationemails', [
+                    $this->db->insert(db_prefix() . 'lead_integration_emails', [
                             'leadid'    => $lead->id,
-                            'subject'   => trim($email['subject']),
+                            'subject'   => $email['subject'],
                             'body'      => $body,
                             'dateadded' => date('Y-m-d H:i:s'),
                             'emailid'   => $email['uid'],
@@ -1286,7 +1243,7 @@ class Cron_model extends CRM_Model
                     $imap->setUnseenMessage($email['uid']);
                     $this->_notification_lead_email_integration('not_received_one_or_more_messages_lead', $mail, $lead->id);
                     $this->_check_lead_email_integration_attachments($email, $lead->id, $imap);
-                    do_action('existing_lead_email_inserted_from_email_integration', [
+                    hooks()->do_action('existing_lead_email_inserted_from_email_integration', [
                             'email'    => $email,
                             'lead'     => $lead,
                             'email_id' => $inserted_email_id,
@@ -1310,42 +1267,12 @@ class Cron_model extends CRM_Model
                         'is_public'                          => $mail->mark_public,
                     ];
 
-                $lead_data = do_action('before_insert_lead_from_email_integration', $lead_data);
+                $lead_data = hooks()->apply_filters('before_insert_lead_from_email_integration', $lead_data);
 
-                $this->db->insert('tblleads', $lead_data);
+                $this->db->insert(db_prefix() . 'leads', $lead_data);
                 $insert_id = $this->db->insert_id();
                 if ($insert_id) {
-                    $this->load->helper('simple_html_dom');
-                    $html                      = str_get_html($email['body']);
-                    $insert_lead_fields        = [];
-                    $insert_lead_custom_fields = [];
-                    if ($html) {
-                        foreach ($html->find('[id^="field_"],[id^="custom_field_"]') as $data) {
-                            if (isset($data->plaintext)) {
-                                $value = trim($data->plaintext);
-                                $value = strip_tags($value);
-                                if ($value) {
-                                    if (isset($data->attr['id']) && !empty($data->attr['id'])) {
-                                        $insert_lead_fields[$data->attr['id']] = $value;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    foreach ($insert_lead_fields as $key => $val) {
-                        $field = (strpos($key, 'custom_field_') !== false ? strafter($key, 'custom_field_') : strafter($key, 'field_'));
-
-                        if (strpos($key, 'custom_field_') !== false) {
-                            $insert_lead_custom_fields[$field] = $val;
-                        } elseif ($this->db->field_exists($field, 'tblleads')) {
-                            $insert_lead_fields[$field] = $val;
-                        }
-
-                        unset($insert_lead_fields[$key]);
-                    }
-
-                    foreach ($insert_lead_fields as $field => $value) {
+                    foreach ($lead_form_fields as $field => $value) {
                         if ($field == 'country') {
                             if ($value == '') {
                                 $value = 0;
@@ -1353,7 +1280,7 @@ class Cron_model extends CRM_Model
                                 $this->db->where('iso2', $value);
                                 $this->db->or_where('short_name', $value);
                                 $this->db->or_where('long_name', $value);
-                                $country = $this->db->get('tblcountries')->row();
+                                $country = $this->db->get(db_prefix() . 'countries')->row();
                                 if ($country) {
                                     $value = $country->country_id;
                                 } else {
@@ -1361,19 +1288,19 @@ class Cron_model extends CRM_Model
                                 }
                             }
                         }
+
                         if ($field == 'address' || $field == 'description') {
                             $value = nl2br($value);
                         }
-                        $value = $this->security->xss_clean($value);
+
                         $this->db->where('id', $insert_id);
-                        $this->db->update('tblleads', [
+                        $this->db->update(db_prefix() . 'leads', [
                                 $field => $value,
                             ]);
                     }
 
-                    foreach ($insert_lead_custom_fields as $cf_id => $value) {
-                        $value = $this->security->xss_clean($value);
-                        $this->db->insert('tblcustomfieldsvalues', [
+                    foreach ($lead_form_custom_fields as $cf_id => $value) {
+                        $this->db->insert(db_prefix() . 'customfieldsvalues', [
                                 'relid'   => $insert_id,
                                 'fieldto' => 'leads',
                                 'fieldid' => $cf_id,
@@ -1381,9 +1308,9 @@ class Cron_model extends CRM_Model
                             ]);
                     }
 
-                    $this->db->insert('tblleadsemailintegrationemails', [
+                    $this->db->insert(db_prefix() . 'lead_integration_emails', [
                             'leadid'    => $insert_id,
-                            'subject'   => trim($email['subject']),
+                            'subject'   => $email['subject'],
                             'body'      => $body,
                             'dateadded' => date('Y-m-d H:i:s'),
                             'emailid'   => $email['uid'],
@@ -1400,8 +1327,10 @@ class Cron_model extends CRM_Model
                     $this->leads_model->log_lead_activity($insert_id, 'not_received_lead_imported_email_integration', true);
                     $this->_check_lead_email_integration_attachments($email, $insert_id, $imap);
                     $this->leads_model->lead_assigned_member_notification($insert_id, $mail->responsible, true);
-                    do_action('lead_created', $insert_id);
-                    do_action('lead_created_from_email_integration', $insert_id);
+
+                    hooks()->do_action('lead_created', $insert_id);
+
+                    hooks()->do_action('lead_created_from_email_integration', $insert_id);
                 }
             }
         }
@@ -1409,12 +1338,12 @@ class Cron_model extends CRM_Model
 
     public function auto_import_imap_tickets()
     {
-        $this->db->select('host,encryption,password,email,delete_after_import,imap_username')->from('tbldepartments')->where('host !=', '')->where('password !=', '')->where('email !=', '');
+        $this->db->select('host,encryption,password,email,delete_after_import,imap_username')->from(db_prefix() . 'departments')->where('host !=', '')->where('password !=', '')->where('email !=', '');
         $dep_emails = $this->db->get()->result_array();
         foreach ($dep_emails as $e) {
             $password = $this->encryption->decrypt($e['password']);
             if (!$password) {
-                logActivity('Failed to decrypt department password', null);
+                log_activity('Failed to decrypt department password', null);
 
                 continue;
             }
@@ -1429,13 +1358,14 @@ class Cron_model extends CRM_Model
             // open connection
             $imap = new Imap($mailbox, $username, $password, $encryption);
             if ($imap->isConnected() === false) {
-                logActivity('Failed to connect to IMAP auto importing tickets from departments.', null);
+                log_activity('Failed to connect to IMAP auto importing tickets from departments.', null);
 
                 continue;
             }
             $imap->selectFolder('INBOX');
             $emails = $imap->getUnreadMessages();
             $this->load->model('tickets_model');
+
             foreach ($emails as $email) {
                 // Check if empty body
                 if (isset($email['body']) && $email['body'] == '' || !isset($email['body'])) {
@@ -1452,6 +1382,7 @@ class Cron_model extends CRM_Model
                 $email['body'] = handle_google_drive_links_in_text($email['body']);
 
                 if (class_exists('EmailReplyParser\EmailReplyParser')
+                    && get_option('ticket_import_reply_only') === '1'
                     && (mb_substr_count($email['subject'], 'FWD:') == 0 && mb_substr_count($email['subject'], 'FW:') == 0)) {
                     $parsedBody = \EmailReplyParser\EmailReplyParser::parseReply($email['body']);
                     $parsedBody = trim($parsedBody);
@@ -1483,12 +1414,24 @@ class Cron_model extends CRM_Model
 
                 $data['subject'] = $email['subject'];
                 $data['body']    = $email['body'];
-                // To is the department name
-                $data['to'] = $e['email'];
 
-                // TODO, testing, beta
-                if (do_action('imap_fetch_from_email_by_reply_to_header', 'false') == 'true') {
+                $data['to'] = [];
+
+                // To is the department name
+                $data['to'][] = $e['email'];
+
+                // Check for CC
+                if (isset($email['cc'])) {
+                    foreach ($email['cc'] as $cc) {
+                        $data['to'][] = trim(preg_replace('/(.*)<(.*)>/', '\\2', $cc));
+                    }
+                }
+
+                $data['to'] = implode(',', $data['to']);
+
+                if (hooks()->apply_filters('imap_fetch_from_email_by_reply_to_header', 'true') == 'true') {
                     $replyTo = $imap->getReplyToAddresses($email['uid']);
+
                     if (count($replyTo) === 1) {
                         $email['from'] = $replyTo[0];
                     }
@@ -1498,10 +1441,10 @@ class Cron_model extends CRM_Model
                 $data['fromname'] = preg_replace('/(.*)<(.*)>/', '\\1', $email['from']);
                 $data['fromname'] = trim(str_replace('"', '', $data['fromname']));
 
-                $hookData = do_action('imap_auto_import_ticket_data', ['data' => $data, 'email_contents' => $email]);
-                $data     = $hookData['data'];
+                $data   = hooks()->apply_filters('imap_auto_import_ticket_data', $data, $email);
 
                 $status = $this->tickets_model->insert_piped_ticket($data);
+
                 if ($status == 'Ticket Imported Successfully' || $status == 'Ticket Reply Imported Successfully') {
                     if ($e['delete_after_import'] == 0) {
                         $imap->setUnseenMessage($email['uid']);
@@ -1524,184 +1467,25 @@ class Cron_model extends CRM_Model
             return;
         }
 
-        $this->db->query('DELETE FROM tblactivitylog WHERE date < DATE_SUB(NOW(), INTERVAL ' . $older_then_months . ' MONTH);');
-        $this->db->query('DELETE FROM tblticketpipelog WHERE date < DATE_SUB(NOW(), INTERVAL ' . $older_then_months . ' MONTH);');
+        $this->db->query('DELETE FROM ' . db_prefix() . 'activity_log WHERE date < DATE_SUB(NOW(), INTERVAL ' . $older_then_months . ' MONTH);');
+        $this->db->query('DELETE FROM ' . db_prefix() . 'tickets_pipe_log WHERE date < DATE_SUB(NOW(), INTERVAL ' . $older_then_months . ' MONTH);');
     }
 
     private function _maybe_fix_duplicate_tasks_assignees_and_followers()
     {
-        $query = $this->db->query('SELECT `staffid`, `taskid`, COUNT(*) AS c FROM tblstafftaskassignees GROUP BY `staffid`, `taskid` HAVING c > 1')->result_array();
+        $query = $this->db->query('SELECT `staffid`, `taskid`, COUNT(*) AS c FROM ' . db_prefix() . 'task_assigned GROUP BY `staffid`, `taskid` HAVING c > 1')->result_array();
         foreach ($query as $res) {
             $this->db->where('staffid', $res['staffid']);
             $this->db->where('taskid', $res['taskid']);
             $this->db->limit($res['c'] - 1);
-            $this->db->delete('tblstafftaskassignees');
+            $this->db->delete(db_prefix() . 'task_assigned');
         }
-        $query = $this->db->query('SELECT `staffid`, `taskid`, COUNT(*) AS c FROM tblstafftasksfollowers GROUP BY `staffid`, `taskid` HAVING c > 1')->result_array();
+        $query = $this->db->query('SELECT `staffid`, `taskid`, COUNT(*) AS c FROM ' . db_prefix() . 'task_followers GROUP BY `staffid`, `taskid` HAVING c > 1')->result_array();
         foreach ($query as $res) {
             $this->db->where('staffid', $res['staffid']);
             $this->db->where('taskid', $res['taskid']);
             $this->db->limit($res['c'] - 1);
-            $this->db->delete('tblstafftasksfollowers');
-        }
-    }
-
-    public function make_backup_db($manual = false)
-    {
-        if ((get_option('auto_backup_enabled') == '1' && time() > (get_option('last_auto_backup') + get_option('auto_backup_every') * 24 * 60 * 60)) || $manual == true) {
-            if (!file_exists(BACKUPS_FOLDER . '/.htaccess') && is_writable(BACKUPS_FOLDER)) {
-                fopen(BACKUPS_FOLDER . '/.htaccess', 'w');
-                $fp = fopen(BACKUPS_FOLDER . '/.htaccess', 'a+');
-                if ($fp) {
-                    fwrite($fp, 'Order Deny,Allow' . PHP_EOL . 'Deny from all');
-                    fclose($fp);
-                }
-            }
-
-            $manager = defined('APP_DATABASE_BACKUP_MANAGER') ? APP_DATABASE_BACKUP_MANAGER : 'codeigniter';
-
-            if ($manager == 'backup_manager') {
-                $configFileSystemProvider = new \BackupManager\Config\Config([
-                'local' => [
-                    'type' => 'Local',
-                    'root' => BACKUPS_FOLDER,
-                ],
-            ]);
-                // Only mysql is supported, not sure if this do the job
-                if ($this->db->dbdriver != 'mysqli') {
-                    return $this->database_backup_codeigniter();
-                }
-
-                $port = '';
-                if ($parsePort = parse_url(APP_DB_HOSTNAME, PHP_URL_PORT)) {
-                    if (is_int($parsePort)) {
-                        $port = $parsePort;
-                    }
-                }
-
-                $configDatabase = new \BackupManager\Config\Config([
-                'production' => [
-                    'type'     => 'mysql',
-                    'host'     => APP_DB_HOSTNAME,
-                    'port'     => $port,
-                    'user'     => APP_DB_USERNAME,
-                    'pass'     => APP_DB_PASSWORD,
-                    'database' => APP_DB_NAME,
-                ],
-            ]);
-
-                // build providers
-                $filesystems = new \BackupManager\Filesystems\FilesystemProvider($configFileSystemProvider);
-                $filesystems->add(new \BackupManager\Filesystems\LocalFilesystem);
-                $databases = new \BackupManager\Databases\DatabaseProvider($configDatabase);
-                $databases->add(new \BackupManager\Databases\MysqlDatabase);
-                $compressors = new \BackupManager\Compressors\CompressorProvider;
-                $compressors->add(new \BackupManager\Compressors\GzipCompressor);
-                $compressors->add(new \BackupManager\Compressors\NullCompressor);
-
-                // build manager
-                $manager = new \BackupManager\Manager($filesystems, $databases, $compressors);
-
-                $backup_name = date('Y-m-d-H-i-s') . '_backup.sql';
-
-                try {
-
-                  /*
-                      Restore example, not working
-                      $manager->makeRestore()->run('local', '2018-06-12-12-02-28_backup.sql.gz', 'production', 'gzip');
-                      die;
-                   */
-
-                    $manager->makeBackup()
-                    ->run('production', [
-                        new \BackupManager\Filesystems\Destination('local', $backup_name),
-                    ], 'gzip');
-
-                    logActivity('Database Backup [' . $backup_name . '.gz' . ']', null);
-
-                    if ($manual == false) {
-                        update_option('last_auto_backup', time());
-                    }
-
-                    $this->maybe_delete_old_backups();
-
-                    return true;
-                } catch (Exception $e) {
-                    if (ENVIRONMENT !== 'production') {
-                        logActivity('NEW BACKUP MANAGER ERROR [' . $e->getMessage() . ']');
-                    }
-
-                    return false;
-                }
-            } elseif ($manager == 'codeigniter') {
-                return $this->database_backup_codeigniter($manual);
-            }
-        }
-
-        return false;
-    }
-
-    private function database_backup_codeigniter($manual)
-    {
-        $this->load->dbutil();
-
-        $prefs = [
-                'format'   => 'zip',
-                'filename' => date('Y-m-d-H-i-s') . '_backup.sql',
-            ];
-
-        $backup           = $this->dbutil->backup($prefs);
-        $backup_name      = unique_filename(BACKUPS_FOLDER, 'database_backup_' . date('Y-m-d-H-i-s') . '.zip');
-        $save_backup_path = BACKUPS_FOLDER . $backup_name;
-        $this->load->helper('file');
-
-        if (write_file($save_backup_path, $backup)) {
-            logActivity('Database Backup [' . $backup_name . ']', null);
-
-            if ($manual == false) {
-                update_option('last_auto_backup', time());
-            }
-            $this->maybe_delete_old_backups();
-
-            return true;
-        }
-
-        return false;
-    }
-
-    // Remove temporary files older than 15 minutes
-    private function maybe_delete_old_temporary_files()
-    {
-        $older_than = do_action('delete_old_temporary_files_older_than', 900);
-        $files      = list_files(TEMP_FOLDER);
-        foreach ($files as $file) {
-            $path = TEMP_FOLDER . $file;
-            if ((time() - filectime($path)) > $older_than) {
-                @unlink($path);
-            }
-        }
-
-        $folders = list_folders(TEMP_FOLDER);
-        foreach ($folders as $folder) {
-            $path = TEMP_FOLDER . $folder;
-            if ((time() - filectime($path)) > $older_than) {
-                @delete_dir($path);
-            }
-        }
-    }
-
-    private function maybe_delete_old_backups()
-    {
-        $delete_backups = get_option('delete_backups_older_then');
-        // After write backup check for delete
-        if ($delete_backups != '0') {
-            $backups                 = list_files(BACKUPS_FOLDER);
-            $backups_days_to_seconds = ($delete_backups * 24 * 60 * 60);
-            foreach ($backups as $b) {
-                if ((time() - filectime(BACKUPS_FOLDER . $b)) > $backups_days_to_seconds) {
-                    @unlink(BACKUPS_FOLDER . $b);
-                }
-            }
+            $this->db->delete(db_prefix() . 'task_followers');
         }
     }
 
@@ -1727,7 +1511,7 @@ class Cron_model extends CRM_Model
 
             $this->db->where('active', 1);
             $this->db->where_in($field, $ids);
-            $staff = $this->db->get('tblstaff')->result_array();
+            $staff = $this->db->get(db_prefix() . 'staff')->result_array();
 
             $notifiedUsers = [];
 
@@ -1760,8 +1544,11 @@ class Cron_model extends CRM_Model
                 }
                 $file_name = unique_filename($path, $attachment['name']);
                 if (!file_exists($path)) {
-                    mkdir($path);
-                    fopen($path . 'index.html', 'w');
+                    mkdir($path, 0755);
+                    $fp = fopen($path . 'index.html', 'w');
+                    if ($fp) {
+                        fclose($fp);
+                    }
                 }
                 $path = $path . $file_name;
                 $fp   = fopen($path, 'w+');
@@ -1786,8 +1573,14 @@ class Cron_model extends CRM_Model
 
     public function __destruct()
     {
+        $this->lockHandle();
+    }
+
+    private function lockHandle()
+    {
         if ($this->lock_handle) {
             flock($this->lock_handle, LOCK_UN);
+            fclose($this->lock_handle);
             $this->lock_handle = null;
         }
     }

@@ -1,13 +1,14 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 $aColumns = [
     'subject',
     'articlegroup',
     'datecreated',
     ];
 $sIndexColumn     = 'articleid';
-$sTable           = 'tblknowledgebase';
+$sTable           = db_prefix() . 'knowledge_base';
 $additionalSelect = [
     'name',
     'groupid',
@@ -16,7 +17,7 @@ $additionalSelect = [
     'staff_article',
     ];
 $join = [
-    'LEFT JOIN tblknowledgebasegroups ON tblknowledgebasegroups.groupid = tblknowledgebase.articlegroup',
+    'LEFT JOIN ' . db_prefix() . 'knowledge_base_groups ON ' . db_prefix() . 'knowledge_base_groups.groupid = ' . db_prefix() . 'knowledge_base.articlegroup',
     ];
 
 $where   = [];
@@ -36,7 +37,7 @@ if (count($filter) > 0) {
 }
 
 if (!has_permission('knowledge_base', '', 'create') && !has_permission('knowledge_base', '', 'edit')) {
-    array_push($where, ' AND tblknowledgebase.active=1');
+    array_push($where, ' AND ' . db_prefix() . 'knowledge_base.active=1');
 }
 
 $result  = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, $additionalSelect);
@@ -57,7 +58,7 @@ foreach ($rResult as $aRow) {
 
             $_data = '<b>' . $_data . '</b>';
             if (has_permission('knowledge_base', '', 'edit')) {
-                $_data = '<a href="'.admin_url('knowledge_base/article/' . $aRow['articleid']).'" class="font-size-14">' . $_data . '</a>';
+                $_data = '<a href="' . admin_url('knowledge_base/article/' . $aRow['articleid']) . '" class="font-size-14">' . $_data . '</a>';
             } else {
                 $_data = '<a href="' . $link . '" target="_blank" class="font-size-14">' . $_data . '</a>';
             }
@@ -71,11 +72,11 @@ foreach ($rResult as $aRow) {
             $_data .= '<a href="' . $link . '" target="_blank">' . _l('view') . '</a>';
 
             if (has_permission('knowledge_base', '', 'edit')) {
-                $_data .= ' | <a href="'.admin_url('knowledge_base/article/' . $aRow['articleid']).'">' . _l('edit') . '</a>';
+                $_data .= ' | <a href="' . admin_url('knowledge_base/article/' . $aRow['articleid']) . '">' . _l('edit') . '</a>';
             }
 
             if (has_permission('knowledge_base', '', 'delete')) {
-                $_data .= ' | <a href="'.admin_url('knowledge_base/delete_article/' . $aRow['articleid']).'" class="_delete text-danger">' . _l('delete') . '</a>';
+                $_data .= ' | <a href="' . admin_url('knowledge_base/delete_article/' . $aRow['articleid']) . '" class="_delete text-danger">' . _l('delete') . '</a>';
             }
 
             $_data .= '</div>';
@@ -83,7 +84,7 @@ foreach ($rResult as $aRow) {
             $_data = _dt($_data);
         }
 
-        $row[] = $_data;
+        $row[]              = $_data;
         $row['DT_RowClass'] = 'has-row-options';
     }
 

@@ -2,20 +2,15 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Authorize_sim extends CRM_Controller
+class Authorize_sim extends App_Controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function complete_purchase()
     {
         if ($this->input->post()) {
             $data = $this->input->post();
 
             $this->db->where('token', $data['omnipay_transaction_id']);
-            $invoice = $this->db->get('tblinvoices')->row();
+            $invoice = $this->db->get(db_prefix().'invoices')->row();
             $success = false;
             if ($invoice) {
                 check_invoice_restrictions($invoice->id, $invoice->hash);
@@ -41,7 +36,7 @@ class Authorize_sim extends CRM_Controller
                 }
 
                 $this->db->where('id', $invoice->id);
-                $this->db->update('tblinvoices', [
+                $this->db->update(db_prefix().'invoices', [
                     'token' => '',
                 ]);
             } else {
@@ -61,11 +56,13 @@ class Authorize_sim extends CRM_Controller
             $message_styling = 'color:#ff6f00';
         }
         echo '<h1 style="' . $message_styling . '">' . $message . '</h1>';
-        do_action('after_authorize_sim_receipt_is_shown', [
+
+        hooks()->do_action('after_authorize_sim_receipt_is_shown', [
             'success' => $success,
             'invoice' => $invoice,
             'message' => $message,
         ]);
+
         if ($invoice) {
             echo '<a href="' . site_url('invoice/' . $invoice->id . '/' . $invoice->hash) . '">Back to invoice</a>';
         } else {

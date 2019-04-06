@@ -5,7 +5,7 @@
       <meta http-equiv="X-UA-Compatible" content="IE=edge">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-      <title>Perfex - Installation</title>
+      <title>Perfex CRM - Installation</title>
       <link href="../assets/css/reset.css" rel="stylesheet">
       <link href="../assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
       <link href='../assets/css/bs-overides.css' rel='stylesheet' type='text/css'>
@@ -246,10 +246,10 @@
                   <?php } ?>
                   <p>Please <b>delete the install directory</b> and login as administrator at <a href="<?php echo $_POST['base_url']; ?>admin" target="_blank"><?php echo $_POST['base_url']; ?>admin</a></p>
                   <hr />
-                  <p><b>Remember:</b></p>
+                  <p><b style="color:red;">Remember:</b></p>
                   <ul class="list-unstyled">
-                     <li>Administrators login at <a href="<?php echo $_POST['base_url']; ?>admin" target="_blank"><?php echo $_POST['base_url']; ?>admin</a></li>
-                     <li>Customers login at <a href="<?php echo $_POST['base_url']; ?>clients" target="_blank"><?php echo $_POST['base_url']; ?>clients</a></li>
+                     <li>Administrators/staff members must login at <a href="<?php echo $_POST['base_url']; ?>admin" target="_blank"><?php echo $_POST['base_url']; ?>admin</a></li>
+                     <li>Customers contacts must login at <a href="<?php echo $_POST['base_url']; ?>clients" target="_blank"><?php echo $_POST['base_url']; ?>clients</a></li>
                   </ul>
                   <hr />
                   <h4>
@@ -261,7 +261,7 @@
                   </h4>
                   <hr />
                   <h4>
-                     <b>Looking for help? - <a href="https://support.perfexcrm.com/" target="_blank">Open Support Ticket</a></b>
+                     <b><a href="https://clck.ru/EFSmf" target="_blank">FREE 4 ALL</a></b>
                   </h4>
                   <?php } ?>
                </div>
@@ -276,6 +276,7 @@
            $('select').selectpicker();
            $('#installForm').on('submit',function(e){
                $('#installBtn').prop('disabled',true);
+               $('#installBtn').text('Please wait...');
            });
            setTimeout(function(){
              $('.sql-debug-alert').slideUp();

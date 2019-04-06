@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
 	<div class="content">
@@ -70,7 +71,7 @@
 <?php init_tail(); ?>
 <script>
 	$(function(){
-		_validate_form($('form'),{name:'required'},manage_ticket_priorities);
+		appValidateForm($('form'),{name:'required'},manage_ticket_priorities);
 		$('#priority').on('hidden.bs.modal', function(event) {
 			$('#additional').html('');
 			$('#priority input[name="name"]').val('');

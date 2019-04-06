@@ -1,10 +1,11 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 $aColumns = [
     'description',
     'date',
-    'tblactivitylog.staffid',
+    db_prefix().'activity_log.staffid',
     ];
 
 $sWhere = [];
@@ -12,7 +13,7 @@ if ($this->ci->input->post('activity_log_date')) {
     array_push($sWhere, 'AND date LIKE "' . to_sql_date($this->ci->input->post('activity_log_date')) . '%"');
 }
 $sIndexColumn = 'id';
-$sTable       = 'tblactivitylog';
+$sTable       = db_prefix().'activity_log';
 $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, [], $sWhere);
 $output       = $result['output'];
 $rResult      = $result['rResult'];

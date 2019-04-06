@@ -1,5 +1,6 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <h4 class="no-mtop">
-    General Config
+    <?php echo _l('settings_group_general'); ?>
 </h4>
 <hr class="hr-panel-heading" />
 <?php render_yes_no_option('enable_gdpr','Enable GDPR'); ?>

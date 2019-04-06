@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Authentication extends CRM_Controller
+class Authentication extends App_Controller
 {
     public function __construct()
     {
@@ -19,6 +19,8 @@ class Authentication extends CRM_Controller
         $this->form_validation->set_message('required', _l('form_validation_required'));
         $this->form_validation->set_message('valid_email', _l('form_validation_valid_email'));
         $this->form_validation->set_message('matches', _l('form_validation_matches'));
+
+        hooks()->do_action('admin_auth_init');
     }
 
     public function index()
@@ -51,13 +53,7 @@ class Authentication extends CRM_Controller
                 } elseif (is_array($data) && isset($data['two_factor_auth'])) {
                     $this->Authentication_model->set_two_factor_auth_code($data['user']->staffid);
 
-                    $this->load->model('emails_model');
-
-                    $sent = $this->emails_model->send_email_template(
-                        'two-factor-authentication',
-                        $email,
-                        get_staff_merge_fields($data['user']->staffid)
-                    );
+                    $sent = send_mail_template('staff_two_factor_auth_key', $data['user']);
 
                     if (!$sent) {
                         set_alert('danger', _l('two_factor_auth_failed_to_send_code'));
@@ -69,11 +65,15 @@ class Authentication extends CRM_Controller
                 } elseif ($data == false) {
                     set_alert('danger', _l('admin_auth_invalid_email_or_password'));
                     redirect(admin_url('authentication'));
-                } else {
-                    // is logged in
-                    maybe_redirect_to_previous_url();
                 }
-                do_action('after_staff_login');
+
+                $this->load->model('announcements_model');
+                $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
+
+                // is logged in
+                maybe_redirect_to_previous_url();
+
+                hooks()->do_action('after_staff_login');
                 redirect(admin_url());
             }
         }
@@ -94,8 +94,13 @@ class Authentication extends CRM_Controller
                     $user = $this->Authentication_model->get_user_by_two_factor_auth_code($code);
                     $this->Authentication_model->clear_two_factor_auth_code($user->staffid);
                     $this->Authentication_model->two_factor_auth_login($user);
+
+                    $this->load->model('announcements_model');
+                    $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
+
                     maybe_redirect_to_previous_url();
-                    do_action('after_staff_login');
+
+                    hooks()->do_action('after_staff_login');
                     redirect(admin_url());
                 } else {
                     set_alert('danger', _l('two_factor_code_not_valid'));
@@ -104,11 +109,6 @@ class Authentication extends CRM_Controller
             }
         }
         $this->load->view('authentication/set_two_factor_auth_code');
-    }
-
-    public function recaptcha($str = '')
-    {
-        return do_recaptcha_validation($str);
     }
 
     public function forgot_password()
@@ -145,7 +145,7 @@ class Authentication extends CRM_Controller
         $this->form_validation->set_rules('passwordr', _l('admin_auth_reset_password_repeat'), 'required|matches[password]');
         if ($this->input->post()) {
             if ($this->form_validation->run() !== false) {
-                do_action('before_user_reset_password', [
+                hooks()->do_action('before_user_reset_password', [
                     'staff'  => $staff,
                     'userid' => $userid,
                 ]);
@@ -153,7 +153,7 @@ class Authentication extends CRM_Controller
                 if (is_array($success) && $success['expired'] == true) {
                     set_alert('danger', _l('password_reset_key_expired'));
                 } elseif ($success == true) {
-                    do_action('after_user_reset_password', [
+                    hooks()->do_action('after_user_reset_password', [
                         'staff'  => $staff,
                         'userid' => $userid,
                     ]);
@@ -203,13 +203,13 @@ class Authentication extends CRM_Controller
     public function logout()
     {
         $this->Authentication_model->logout();
-        do_action('after_user_logout');
+        hooks()->do_action('after_user_logout');
         redirect(admin_url('authentication'));
     }
 
     public function email_exists($email)
     {
-        $total_rows = total_rows('tblstaff', [
+        $total_rows = total_rows(db_prefix().'staff', [
             'email' => $email,
         ]);
         if ($total_rows == 0) {
@@ -219,5 +219,10 @@ class Authentication extends CRM_Controller
         }
 
         return true;
+    }
+
+    public function recaptcha($str = '')
+    {
+        return do_recaptcha_validation($str);
     }
 }

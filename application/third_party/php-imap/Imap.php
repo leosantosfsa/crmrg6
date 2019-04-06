@@ -684,10 +684,27 @@ class Imap
      */
     public function getReplyToAddresses($id)
     {
-        $header       = $this->getMessageHeader($id);
+        $header = $this->getMessageHeader($id);
+
         $replyToArray = [];
-        if (isset($header->reply_toaddress) && '' != $header->reply_toaddress) {
-            $replyToArray = explode(', ', $header->reply_toaddress);
+        if (isset($header->reply_to) && is_array($header->reply_to)) {
+            foreach ($header->reply_to as $key => $replyToAddress) {
+                $email   = '';
+                $name    = '';
+                $charset = '';
+                if (isset($header->reply_to[$key]->mailbox) && isset($header->reply_to[$key]->host)) {
+                    $email = $header->reply_to[$key]->mailbox . '@' . $header->reply_to[$key]->host;
+                }
+                if (!empty($header->reply_to[$key]->personal)) {
+                    $name    = imap_mime_header_decode($header->reply_to[$key]->personal);
+                    $charset = $name[0]->charset;
+                    $name    = $name[0]->text;
+                } else {
+                    $name = $email;
+                }
+                $name           = $this->convertToUtf8($name, $charset);
+                $replyToArray[] = $name . ' <' . $email . '>';
+            }
         }
 
         return $replyToArray;
@@ -730,7 +747,7 @@ class Imap
             }
         }
         $trash_folder_name = 'Trash';
-        if (_startsWith($folder, 'INBOX')) {
+        if (startsWith($folder, 'INBOX')) {
             $trash_folder_name = 'INBOX.Trash';
         }
         // no trash folder found? create one
@@ -884,6 +901,7 @@ class Imap
     public function convertToUtf8($text, $fromCharset)
     {
         $utf8Aliases = [
+            'UTF-8UTF-8' => true,
             'utf8'       => true,
             'utf-8'      => true,
             'UTF8'       => true,
@@ -904,6 +922,11 @@ class Imap
 
         if ($fromCharset == 'iso-8859-8-i') {
             $fromCharset = 'iso-8859-8';
+        }
+
+        // Fix for null charset
+        if (!$fromCharset) {
+            $fromCharset = 'UTF-8';
         }
 
         $iconvDecodedText = iconv($fromCharset, 'UTF-8//IGNORE', $text);

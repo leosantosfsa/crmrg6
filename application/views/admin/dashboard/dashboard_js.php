@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <script>
     var weekly_payments_statistics;
     var user_dashboard_visibility = <?php echo $user_dashboard_visibility; ?>;
@@ -30,6 +31,13 @@
                     $.post(admin_url+'staff/save_dashboard_widgets_order', data, "json");
                 }
             }
+        });
+
+        // Read more for dashboard todo items
+        $('.read-more').readmore({
+            collapsedHeight:150,
+            moreLink: "<a href=\"#\"><?php echo _l('read_more'); ?></a>",
+            lessLink: "<a href=\"#\"><?php echo _l('show_less'); ?></a>",
         });
 
         $('body').on('click','#viewWidgetableArea',function(e){
@@ -173,8 +181,8 @@
         });
     });
     function fix_user_data_widget_tabs(){
-        if((app_user_browser != 'firefox'
-                && isRTL == 'false' && is_mobile()) || (app_user_browser == 'firefox'
+        if((app.browser != 'firefox'
+                && isRTL == 'false' && is_mobile()) || (app.browser == 'firefox'
                 && isRTL == 'false' && is_mobile())){
                 $('.horizontal-scrollable-tabs ul.nav-tabs-horizontal').css('margin-bottom','26px');
         }

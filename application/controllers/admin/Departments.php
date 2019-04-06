@@ -1,7 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-class Departments extends Admin_controller
+
+class Departments extends AdminController
 {
     public function __construct()
     {
@@ -89,13 +90,13 @@ class Departments extends Admin_controller
         $departmentid = $this->input->post('departmentid');
         if ($departmentid) {
             $this->db->where('departmentid', $departmentid);
-            $_current_email = $this->db->get('tbldepartments')->row();
+            $_current_email = $this->db->get(db_prefix().'departments')->row();
             if ($_current_email->email == $this->input->post('email')) {
                 echo json_encode(true);
                 die();
             }
         }
-        $exists = total_rows('tbldepartments', [
+        $exists = total_rows(db_prefix().'departments', [
             'email' => $this->input->post('email'),
         ]);
         if ($exists > 0) {
@@ -107,6 +108,8 @@ class Departments extends Admin_controller
 
     public function test_imap_connection()
     {
+        app_check_imap_open_function();
+
         $email         = $this->input->post('email');
         $password      = $this->input->post('password', false);
         $host          = $this->input->post('host');
@@ -146,6 +149,6 @@ class Departments extends Admin_controller
 
     private function email_exist_as_staff()
     {
-        return total_rows('tbldepartments', 'email IN (SELECT email FROM tblstaff)') > 0;
+        return total_rows(db_prefix().'departments', 'email IN (SELECT email FROM '.db_prefix().'staff)') > 0;
     }
 }

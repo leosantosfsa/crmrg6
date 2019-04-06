@@ -1,7 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-class Currencies extends Admin_controller
+
+class Currencies extends AdminController
 {
     public function __construct()
     {

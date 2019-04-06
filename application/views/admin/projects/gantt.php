@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
 	<div class="content">
@@ -57,7 +58,7 @@
 			$("#gantt").gantt({
 				source: gantt_data,
 				itemsPerPage: 25,
-				months: JSON.parse(monthsJSON),
+				months: app.months_json,
 				navigate: 'scroll',
 				onRender: function() {
 					$('#gantt .leftPanel .name .fn-label:empty').parents('.name').css('background', 'initial');

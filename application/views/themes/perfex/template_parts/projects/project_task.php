@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div id="task">
    <div class="row">
       <div class="col-md-12">
@@ -21,12 +22,12 @@
                      <?php echo _l('task_single_start_date'); ?>: <?php echo _d($view_task->startdate); ?>
                   </h5>
                </div>
-                 <div class="task-info pull-left <?php if(!$view_task->status != 5){echo ' text-danger'; }else{echo 'text-info';} ?><?php if(!$view_task->duedate){ echo ' hide';} ?>">
+               <div class="task-info pull-left <?php if(!$view_task->status != Tasks_model::STATUS_COMPLETE){echo ' text-danger'; }else{echo 'text-info';} ?><?php if(!$view_task->duedate){ echo ' hide';} ?>">
                   <h5 class="no-margin"><i class="fa fa-hourglass-end"></i>
                      <?php echo _l('task_single_due_date'); ?>: <?php echo _d($view_task->duedate); ?>
                   </h5>
                </div>
-               <?php if($view_task->status == 5){ ?>
+               <?php if($view_task->status == Tasks_model::STATUS_COMPLETE){ ?>
                <div class="pull-left task-info text-success">
                   <h5 class="no-margin"><i class="fa fa-check"></i>
                      <?php echo _l('task_single_finished'); ?>: <?php echo _dt($view_task->datefinished); ?>
@@ -34,7 +35,7 @@
                </div>
                <?php } ?>
                <?php if($project->settings->view_task_total_logged_time == 1){ ?>
-                 <div class="pull-left task-info">
+               <div class="pull-left task-info">
                   <h5 class="no-margin"><i class="fa fa-clock-o"></i>
                      <?php echo _l('task_total_logged_time'); ?> <?php echo seconds_to_time_format($this->tasks_model->calc_task_total_time($view_task->id)); ?>
                   </h5>
@@ -124,12 +125,12 @@
                         <li class="mbot10 task-attachment">
                            <div class="mbot10 pull-right task-attachment-user">
                               <?php
-                              echo _l('project_file_uploaded_by') . ' ' . (
-                                 $attachment['staffid'] != 0
-                                 ? get_staff_full_name($attachment['staffid'])
-                                 : get_contact_full_name($attachment['contact_id'])
-                              );
-                              ?>
+                                 echo _l('project_file_uploaded_by') . ' ' . (
+                                    $attachment['staffid'] != 0
+                                    ? get_staff_full_name($attachment['staffid'])
+                                    : get_contact_full_name($attachment['contact_id'])
+                                 );
+                                 ?>
                               <?php if(get_option('allow_contact_to_delete_files') == 1 && $attachment['contact_id'] == get_contact_user_id()){ ?>
                               <a href="<?php echo site_url('clients/delete_file/'.$attachment['id'].'/task?project_id='.$project->id); ?>" class="text-danger _delete pull-right"><i class="fa fa-remove"></i></a>
                               <?php } ?>
@@ -153,10 +154,10 @@
                                $href_url = $attachment['external_link'];
                               }
                               if(!empty($attachment['external']) && $attachment['external'] == 'dropbox' && $is_image){ ?>
-                              <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-external" data-toggle="tooltip" data-title="<?php echo _l('open_in_dropbox'); ?>"><i class="fa fa-dropbox" aria-hidden="true"></i></a>
-                               <?php } else if(!empty($attachment['external']) && $attachment['external'] == 'gdrive'){ ?>
-                                  <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-external" data-toggle="tooltip" data-title="<?php echo _l('open_in_google'); ?>"><i class="fa fa-google" aria-hidden="true"></i></a>
-                                 <?php }
+                           <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-external" data-toggle="tooltip" data-title="<?php echo _l('open_in_dropbox'); ?>"><i class="fa fa-dropbox" aria-hidden="true"></i></a>
+                           <?php } else if(!empty($attachment['external']) && $attachment['external'] == 'gdrive'){ ?>
+                           <a href="<?php echo $href_url; ?>" target="_blank" class="open-in-external" data-toggle="tooltip" data-title="<?php echo _l('open_in_google'); ?>"><i class="fa fa-google" aria-hidden="true"></i></a>
+                           <?php }
                               ob_start();
                               ?>
                            <div class="<?php if($is_image){echo 'preview-image';}else if(!$isHtml5Video){echo 'task-attachment-no-preview';} ?>">
@@ -205,16 +206,25 @@
          <?php echo form_close(); ?>
          <div class="text-right mtop15">
             <button class="gpicker" data-on-pick="taskFileGoogleDriveSave">
-               <i class="fa fa-google" aria-hidden="true"></i>
-               <?php echo _l('choose_from_google_drive'); ?>
-           </button>
+            <i class="fa fa-google" aria-hidden="true"></i>
+            <?php echo _l('choose_from_google_drive'); ?>
+            </button>
             <div id="dropbox-chooser-task"></div>
          </div>
-
          <?php } ?>
          <?php if($project->settings->view_task_comments == 1){ ?>
          <hr />
          <h4 class="bold mbot15"><?php echo _l('task_view_comments'); ?></h4>
+         <?php
+            if($project->settings->comment_on_tasks == 1){
+            echo form_open($this->uri->uri_string());
+            echo form_hidden('action','new_task_comment');
+            echo form_hidden('taskid',$view_task->id);
+            ?>
+         <textarea name="content" rows="5" class="form-control mtop15"></textarea>
+         <button type="submit" class="btn btn-info mtop10 pull-right" data-loading-text="<?php echo _l('wait_text'); ?>" autocomplete="off"><?php echo _l('task_single_add_new_comment'); ?></button>
+         <div class="clearfix"></div>
+         <?php echo form_close(); } ?>
          <?php
             if(count($view_task->comments) > 0){
               echo '<div id="task-comments">';
@@ -271,16 +281,9 @@
             </div>
             <hr />
          </div>
-         <?php } }
-            if($project->settings->comment_on_tasks == 1){
-             echo form_open($this->uri->uri_string());
-             echo form_hidden('action','new_task_comment');
-             echo form_hidden('taskid',$view_task->id);
-             ?>
-         <textarea name="content" rows="5" class="form-control mtop15"></textarea>
-         <button type="submit" class="btn btn-info mtop10 pull-right" data-loading-text="<?php echo _l('wait_text'); ?>" autocomplete="off"><?php echo _l('task_single_add_new_comment'); ?></button>
-         <div class="clearfix"></div>
-         <?php echo form_close(); } ?>
+         <?php }
+            }
+            ?>
       </div>
       <?php } ?>
    </div>

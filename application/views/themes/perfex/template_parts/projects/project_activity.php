@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="mtop15"></div>
 <div class="activity-feed">
     <?php if($project->settings->view_activity_log == 1){ ?>

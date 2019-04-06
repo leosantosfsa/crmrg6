@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <!-- Copy Project -->
 <div class="modal fade" id="copy_project" tabindex="-1" role="dialog">
     <div class="modal-dialog">
@@ -85,7 +86,7 @@ function copy_project(id) {
         $('#copy_form').attr('action', $('#copy_form').data('copy-url') + id);
     }
 
-    _validate_form($('#copy_form'), {
+    appValidateForm($('#copy_form'), {
         start_date: 'required',
         clientid_copy_project: 'required',
     });

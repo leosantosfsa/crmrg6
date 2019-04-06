@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php foreach($articles as $category){ ?>
 <div class="col-md-12">
     <div class="article_group_wrapper">

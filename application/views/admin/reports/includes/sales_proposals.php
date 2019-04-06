@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div id="proposals-reports" class="hide">
  <div class="row">
    <div class="col-md-4">

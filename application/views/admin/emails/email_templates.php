@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
     <div class="content email-templates">
@@ -6,6 +7,7 @@
                 <div class="panel_s">
                     <div class="panel-body">
                         <div class="row">
+                            <?php hooks()->do_action('before_tickets_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="no-margin"><?php echo _l('email_templates'); ?></h4>
                                  <hr class="hr-panel-heading" />
@@ -41,6 +43,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_estimates_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('estimates'); ?>
@@ -76,6 +79,7 @@
                                 </div>
                             </div>
                             <div class="clearfix"></div>
+                            <?php hooks()->do_action('before_contracts_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('email_template_contracts_fields_heading'); ?>
@@ -110,6 +114,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_invoices_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('email_template_invoices_fields_heading'); ?>
@@ -145,6 +150,7 @@
                                 </div>
                             </div>
                                 <div class="clearfix"></div>
+                                <?php hooks()->do_action('before_subscriptions_email_templates'); ?>
                              <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('subscriptions'); ?>
@@ -180,6 +186,7 @@
                                 </div>
                             </div>
                             <div class="clearfix"></div>
+                            <?php hooks()->do_action('before_credit_notes_email_templates'); ?>
                               <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('credit_note'); ?>
@@ -215,6 +222,7 @@
                                 </div>
                             </div>
                             <div class="clearfix"></div>
+                            <?php hooks()->do_action('before_tasks_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('tasks'); ?>
@@ -249,6 +257,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_customers_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('email_template_clients_fields_heading'); ?>
@@ -267,7 +276,7 @@
                                         </thead>
                                         <tbody>
                                             <?php foreach($client as $client_template){
-                                                if($client_template['slug'] == 'client-registration-confirmed' && get_option('customers_register_require_confirmation') == '0' && total_rows('tblclients','registration_confirmed=0') == 0) {
+                                                if($client_template['slug'] == 'client-registration-confirmed' && get_option('customers_register_require_confirmation') == '0' && total_rows(db_prefix().'clients','registration_confirmed=0') == 0) {
                                                     continue;
                                                 }
                                              ?>
@@ -288,6 +297,7 @@
                                 </div>
                             </div>
                             <div class="clearfix"></div>
+                            <?php hooks()->do_action('before_proposals_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('email_template_proposals_fields_heading'); ?>
@@ -322,6 +332,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_projects_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('projects'); ?>
@@ -355,6 +366,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_staff_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('staff_members'); ?>
@@ -389,6 +401,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_leads_email_templates'); ?>
                             <div class="col-md-12">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('leads'); ?>
@@ -423,6 +436,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('before_gdpr_email_templates'); ?>
                             <div class="col-md-12<?php if(!is_gdpr()){echo ' hide';} ?>">
                                 <h4 class="bold well email-template-heading">
                                     <?php echo _l('gdpr'); ?>
@@ -457,6 +471,7 @@
                                     </table>
                                 </div>
                             </div>
+                            <?php hooks()->do_action('after_email_templates'); ?>
                             <div class="clearfix"></div>
                         </div>
                     </div>

@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <!-- Timesheet Modal -->
 <div class="modal fade" id="timesheet" tabindex="-1" role="dialog">
     <div class="modal-dialog">

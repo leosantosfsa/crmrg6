@@ -24,6 +24,7 @@ use Twilio\VersionInfo;
  * @property \Twilio\Rest\Autopilot autopilot
  * @property \Twilio\Rest\Chat chat
  * @property \Twilio\Rest\Fax fax
+ * @property \Twilio\Rest\FlexApi flexApi
  * @property \Twilio\Rest\IpMessaging ipMessaging
  * @property \Twilio\Rest\Lookups lookups
  * @property \Twilio\Rest\Monitor monitor
@@ -40,11 +41,13 @@ use Twilio\VersionInfo;
  * @property \Twilio\Rest\Studio studio
  * @property \Twilio\Rest\Verify verify
  * @property \Twilio\Rest\Voice voice
+ * @property \Twilio\Rest\Insights insights
  * @property \Twilio\Rest\Api\V2010\AccountInstance account
  * @property \Twilio\Rest\Api\V2010\Account\AddressList addresses
  * @property \Twilio\Rest\Api\V2010\Account\ApplicationList applications
  * @property \Twilio\Rest\Api\V2010\Account\AuthorizedConnectAppList authorizedConnectApps
  * @property \Twilio\Rest\Api\V2010\Account\AvailablePhoneNumberCountryList availablePhoneNumbers
+ * @property \Twilio\Rest\Api\V2010\Account\BalanceList balance
  * @property \Twilio\Rest\Api\V2010\Account\CallList calls
  * @property \Twilio\Rest\Api\V2010\Account\ConferenceList conferences
  * @property \Twilio\Rest\Api\V2010\Account\ConnectAppList connectApps
@@ -99,6 +102,7 @@ class Client {
     protected $_autopilot = null;
     protected $_chat = null;
     protected $_fax = null;
+    protected $_flexApi = null;
     protected $_ipMessaging = null;
     protected $_lookups = null;
     protected $_monitor = null;
@@ -115,6 +119,7 @@ class Client {
     protected $_studio = null;
     protected $_verify = null;
     protected $_voice = null;
+    protected $_insights = null;
 
     /**
      * Initializes the Twilio Client
@@ -310,7 +315,7 @@ class Client {
     }
 
     /**
-     * @param string $sid The sid
+     * @param string $sid The unique string that identifies the resource
      * @return \Twilio\Rest\Api\V2010\Account\AddressContext 
      */
     protected function contextAddresses($sid) {
@@ -325,7 +330,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique Application Sid
+     * @param string $sid The unique string that identifies the resource
      * @return \Twilio\Rest\Api\V2010\Account\ApplicationContext 
      */
     protected function contextApplications($sid) {
@@ -340,7 +345,7 @@ class Client {
     }
 
     /**
-     * @param string $connectAppSid The connect_app_sid
+     * @param string $connectAppSid The SID of the Connect App to fetch
      * @return \Twilio\Rest\Api\V2010\Account\AuthorizedConnectAppContext 
      */
     protected function contextAuthorizedConnectApps($connectAppSid) {
@@ -355,11 +360,19 @@ class Client {
     }
 
     /**
-     * @param string $countryCode The country_code
+     * @param string $countryCode The ISO country code of the country to fetch
+     *                            available phone number information about
      * @return \Twilio\Rest\Api\V2010\Account\AvailablePhoneNumberCountryContext 
      */
     protected function contextAvailablePhoneNumbers($countryCode) {
         return $this->api->v2010->account->availablePhoneNumbers($countryCode);
+    }
+
+    /**
+     * @return \Twilio\Rest\Api\V2010\Account\BalanceList 
+     */
+    protected function getBalance() {
+        return $this->api->v2010->account->balance;
     }
 
     /**
@@ -370,7 +383,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Call Sid that uniquely identifies the Call to fetch
+     * @param string $sid The unique string that identifies this resource
      * @return \Twilio\Rest\Api\V2010\Account\CallContext 
      */
     protected function contextCalls($sid) {
@@ -385,7 +398,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique conference Sid
+     * @param string $sid The unique string that identifies this resource
      * @return \Twilio\Rest\Api\V2010\Account\ConferenceContext 
      */
     protected function contextConferences($sid) {
@@ -400,7 +413,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique connect-app Sid
+     * @param string $sid The unique string that identifies the resource
      * @return \Twilio\Rest\Api\V2010\Account\ConnectAppContext 
      */
     protected function contextConnectApps($sid) {
@@ -415,7 +428,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique incoming-phone-number Sid
+     * @param string $sid The unique string that identifies the resource
      * @return \Twilio\Rest\Api\V2010\Account\IncomingPhoneNumberContext 
      */
     protected function contextIncomingPhoneNumbers($sid) {
@@ -474,7 +487,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique notification Sid
+     * @param string $sid The unique string that identifies the resource
      * @return \Twilio\Rest\Api\V2010\Account\NotificationContext 
      */
     protected function contextNotifications($sid) {
@@ -489,7 +502,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique outgoing-caller-id Sid
+     * @param string $sid The unique string that identifies the resource
      * @return \Twilio\Rest\Api\V2010\Account\OutgoingCallerIdContext 
      */
     protected function contextOutgoingCallerIds($sid) {
@@ -504,7 +517,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique queue Sid
+     * @param string $sid The unique string that identifies this resource
      * @return \Twilio\Rest\Api\V2010\Account\QueueContext 
      */
     protected function contextQueues($sid) {
@@ -556,7 +569,7 @@ class Client {
     }
 
     /**
-     * @param string $sid Fetch by unique short-code Sid
+     * @param string $sid The unique string that identifies this resource
      * @return \Twilio\Rest\Api\V2010\Account\ShortCodeContext 
      */
     protected function contextShortCodes($sid) {
@@ -645,6 +658,18 @@ class Client {
             $this->_fax = new Fax($this);
         }
         return $this->_fax;
+    }
+
+    /**
+     * Access the FlexApi Twilio Domain
+     * 
+     * @return \Twilio\Rest\FlexApi FlexApi Twilio Domain
+     */
+    protected function getFlexApi() {
+        if (!$this->_flexApi) {
+            $this->_flexApi = new FlexApi($this);
+        }
+        return $this->_flexApi;
     }
 
     /**
@@ -837,6 +862,18 @@ class Client {
             $this->_voice = new Voice($this);
         }
         return $this->_voice;
+    }
+
+    /**
+     * Access the Insights Twilio Domain
+     * 
+     * @return \Twilio\Rest\Insights Insights Twilio Domain
+     */
+    protected function getInsights() {
+        if (!$this->_insights) {
+            $this->_insights = new Insights($this);
+        }
+        return $this->_insights;
     }
 
     /**

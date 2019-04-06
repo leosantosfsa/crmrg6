@@ -1,7 +1,8 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
-class Expenses extends Admin_controller
+
+class Expenses extends AdminController
 {
     public function __construct()
     {
@@ -310,7 +311,7 @@ class Expenses extends Admin_controller
     {
         $this->db->where('rel_id', $id);
         $this->db->where('rel_type', 'expense');
-        $file = $this->db->get('tblfiles')->row();
+        $file = $this->db->get(db_prefix().'files')->row();
 
         if ($file->staffid == get_staff_user_id() || is_admin()) {
             $success = $this->expenses_model->delete_expense_attachment($id);

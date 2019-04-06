@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <h4 class="no-mtop">
     <a href="<?php echo lead_consent_url($lead->id); ?>" target="_blank">
      <small>

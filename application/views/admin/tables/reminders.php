@@ -10,12 +10,12 @@ $aColumns = [
     ];
 
 $sIndexColumn = 'id';
-$sTable       = 'tblreminders';
+$sTable       = db_prefix().'reminders';
 $where        = [
     'AND rel_id=' . $id . ' AND rel_type="' . $rel_type . '"',
     ];
 $join = [
-    'JOIN tblstaff ON tblstaff.staffid = tblreminders.staff',
+    'JOIN '.db_prefix().'staff ON '.db_prefix().'staff.staffid = '.db_prefix().'reminders.staff',
     ];
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'firstname',

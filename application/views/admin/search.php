@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <ul class="dropdown-menu search-results animated fadeIn no-mtop display-block" id="top_search_dropdown">
     <?php
     $total = 0;
@@ -22,9 +23,6 @@
             break;
             case 'tickets':
             $output = '<a href="'.admin_url('tickets/ticket/'.$_result['ticketid']).'">#'.$_result['ticketid'].' - '.$_result['subject'].'</a>';
-            break;
-            case 'surveys':
-            $output = '<a href="'.admin_url('surveys/survey/'.$_result['surveyid']).'">'.$_result['subject'].'</a>';
             break;
             case 'knowledge_base_articles':
             $output = '<a href="'.admin_url('knowledge_base/article/'.$_result['articleid']).'">'.$_result['subject'].'</a>';
@@ -52,13 +50,10 @@
             $output = '<a href="'.admin_url('estimates/list_estimates/'.$_result['estimateid']).'">'.format_estimate_number($_result['estimateid']).'<span class="pull-right">'.date('Y',strtotime($_result['date'])).'</span></a>';
             break;
             case 'expenses':
-            $output = '<a href="'.admin_url('expenses/list_expenses/'.$_result['expenseid']).'">'.$_result['category_name']. ' - ' ._format_number($_result['amount']).'</a>';
+            $output = '<a href="'.admin_url('expenses/list_expenses/'.$_result['expenseid']).'">'.$_result['category_name']. ' - ' .app_format_money($_result['amount'], $_result['currency_name']).'</a>';
             break;
             case 'proposals':
             $output = '<a href="'.admin_url('proposals/list_proposals/'.$_result['id']).'">'.format_proposal_number($_result['id']) .' - ' . $_result['subject'] .'</a>';
-            break;
-            case 'goals':
-            $output = '<a href="'.admin_url('goals/goal/'.$_result['id']).'">'.$_result['subject'].'</a>';
             break;
             case 'custom_fields':
             $rel_data   = get_relation_data($_result['fieldto'], $_result['relid']);
@@ -82,7 +77,7 @@
             break;
         }
         ?>
-        <li><?php echo $output; ?></li>
+        <li><?php echo hooks()->apply_filters('global_search_result_output', $output, ['result'=>$_result, 'type'=>$data['type']]); ?></li>
     <?php } ?>
 <?php } ?>
 <?php if($total == 0){ ?>

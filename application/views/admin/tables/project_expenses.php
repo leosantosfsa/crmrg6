@@ -3,7 +3,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 $aColumns = [
-    'tblexpenses.id',
+    db_prefix() . 'expenses.id',
     'category',
     'amount',
     'expense_name',
@@ -14,9 +14,9 @@ $aColumns = [
     'paymentmode',
 ];
 $join = [
-    'LEFT JOIN tblclients ON tblclients.userid = tblexpenses.clientid',
-    'LEFT JOIN tblexpensescategories ON tblexpensescategories.id = tblexpenses.category',
-    'LEFT JOIN tblfiles ON tblfiles.rel_id = tblexpenses.id AND rel_type="expense"',
+    'LEFT JOIN ' . db_prefix() . 'clients ON ' . db_prefix() . 'clients.userid = ' . db_prefix() . 'expenses.clientid',
+    'LEFT JOIN ' . db_prefix() . 'expenses_categories ON ' . db_prefix() . 'expenses_categories.id = ' . db_prefix() . 'expenses.category',
+    'LEFT JOIN ' . db_prefix() . 'files ON ' . db_prefix() . 'files.rel_id = ' . db_prefix() . 'expenses.id AND rel_type="expense"',
 ];
 $custom_fields = get_custom_fields('expenses', [
     'show_on_table' => 1,
@@ -24,7 +24,7 @@ $custom_fields = get_custom_fields('expenses', [
 $i = 0;
 foreach ($custom_fields as $field) {
     array_push($aColumns, 'ctable_' . $i . '.value as cvalue_' . $i);
-    array_push($join, 'LEFT JOIN tblcustomfieldsvalues as ctable_' . $i . ' ON tblexpenses.id = ctable_' . $i . '.relid AND ctable_' . $i . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $i . '.fieldid=' . $field['id']);
+    array_push($join, 'LEFT JOIN ' . db_prefix() . 'customfieldsvalues as ctable_' . $i . ' ON ' . db_prefix() . 'expenses.id = ctable_' . $i . '.relid AND ctable_' . $i . '.fieldto="' . $field['fieldto'] . '" AND ctable_' . $i . '.fieldid=' . $field['id']);
     $i++;
 }
 $where  = [];
@@ -34,10 +34,10 @@ include_once(APPPATH . 'views/admin/tables/includes/expenses_filter.php');
 array_push($where, 'AND project_id=' . $project_id);
 
 if (!has_permission('expenses', '', 'view')) {
-    array_push($where, 'AND tblexpenses.addedfrom=' . get_staff_user_id());
+    array_push($where, 'AND ' . db_prefix() . 'expenses.addedfrom=' . get_staff_user_id());
 }
 $sIndexColumn = 'id';
-$sTable       = 'tblexpenses';
+$sTable       = db_prefix() . 'expenses';
 $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'name',
     'billable',
@@ -48,7 +48,6 @@ $result       = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $wher
 ]);
 $output  = $result['output'];
 $rResult = $result['rResult'];
-$this->ci->load->model('currencies_model');
 $this->ci->load->model('payment_modes_model');
 foreach ($rResult as $aRow) {
     $row = [];
@@ -58,15 +57,15 @@ foreach ($rResult as $aRow) {
         } else {
             $_data = $aRow[$aColumns[$i]];
         }
-        if ($aColumns[$i] == 'tblexpenses.id') {
+        if ($aColumns[$i] == db_prefix() . 'expenses.id') {
             $_data = '<span class="label label-default inline-block">' . $_data . '</span>';
         } elseif ($aColumns[$i] == 'category') {
-            $_data = '<a href="' . admin_url('expenses/list_expenses/' . $aRow['tblexpenses.id']) . '" target="_blank">' . $aRow['name'] . '</a>';
+            $_data = '<a href="' . admin_url('expenses/list_expenses/' . $aRow[db_prefix() . 'expenses.id']) . '" target="_blank">' . $aRow['name'] . '</a>';
             if ($aRow['billable'] == 1) {
                 if ($aRow['invoiceid'] == null) {
                     $_data .= '<p class="text-danger">' . _l('expense_list_unbilled') . '</p>';
                 } else {
-                    if (total_rows('tblinvoices', [
+                    if (total_rows(db_prefix() . 'invoices', [
                         'id' => $aRow['invoiceid'],
                         'status' => 2,
                     ]) > 0) {
@@ -87,7 +86,7 @@ foreach ($rResult as $aRow) {
                 $_tax = get_tax_by_id($aRow['tax2']);
                 $total += ($tmp_total / 100 * $_tax->taxrate);
             }
-            $_data = format_money($total, $this->ci->currencies_model->get($aRow['currency'])->symbol);
+            $_data = app_format_money($total, get_currency($aRow['currency']));
         } elseif ($aColumns[$i] == 'paymentmode') {
             $_data = '';
             if ($aRow['paymentmode'] != '0' && !empty($aRow['paymentmode'])) {
@@ -95,7 +94,7 @@ foreach ($rResult as $aRow) {
             }
         } elseif ($aColumns[$i] == 'file_name') {
             if (!empty($_data)) {
-                $_data = '<a href="' . site_url('download/file/expense/' . $aRow['tblexpenses.id']) . '">' . $_data . '</a>';
+                $_data = '<a href="' . site_url('download/file/expense/' . $aRow[db_prefix() . 'expenses.id']) . '">' . $_data . '</a>';
             }
         } elseif ($aColumns[$i] == 'date') {
             $_data = _d($_data);
@@ -106,7 +105,7 @@ foreach ($rResult as $aRow) {
                 $_data = '';
             }
         } else {
-            if (_startsWith($aColumns[$i], 'ctable_') && is_date($_data)) {
+            if (startsWith($aColumns[$i], 'ctable_') && is_date($_data)) {
                 $_data = _d($_data);
             }
         }

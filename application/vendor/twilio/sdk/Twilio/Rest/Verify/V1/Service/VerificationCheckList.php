@@ -45,7 +45,13 @@ class VerificationCheckList extends ListResource {
     public function create($code, $options = array()) {
         $options = new Values($options);
 
-        $data = Values::of(array('Code' => $code, 'To' => $options['to'], ));
+        $data = Values::of(array(
+            'Code' => $code,
+            'To' => $options['to'],
+            'VerificationSid' => $options['verificationSid'],
+            'Amount' => $options['amount'],
+            'Payee' => $options['payee'],
+        ));
 
         $payload = $this->version->create(
             'POST',

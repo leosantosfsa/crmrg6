@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="modal fade" id="consentModal" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <?php echo form_open('', ['id'=>'consentForm']); ?>

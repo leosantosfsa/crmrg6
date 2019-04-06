@@ -1,4 +1,4 @@
-<?php
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 if(count($tracked_emails) === 0) {
    echo '<h4 class="no-mbot">'._l('no_tracked_emails_sent').'</h4>';
 } else {

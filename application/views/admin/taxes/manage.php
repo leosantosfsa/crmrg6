@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php init_head(); ?>
 <div id="wrapper">
 	<div class="content">
@@ -63,7 +64,7 @@
 
 			initDataTable('.table-taxes', window.location.href, [3], [3], undefined, [2,'asc']);
 
-			_validate_form($('form'),{
+			appValidateForm($('form'),{
 				name:{
 					required:true,
 					remote: {

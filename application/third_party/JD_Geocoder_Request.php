@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 class JD_Geocoder_Request
 {
     // Google´s geocode URL

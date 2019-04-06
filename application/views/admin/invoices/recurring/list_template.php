@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="col-md-12">
    <div class="panel_s mbot10">
       <div class="panel-body _buttons">

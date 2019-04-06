@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <h4 class="customer-profile-group-heading"><?php echo _l('customer_statement'); ?></h4>
 <div class="row">
  <div class="col-md-4">
@@ -145,7 +146,7 @@
         <?php echo form_close(); ?>
     </div>
 </div>
-<?php add_action('after_js_scripts_render','parse_customer_statement_html');
+<?php hooks()->add_action('app_admin_footer','parse_customer_statement_html');
 function parse_customer_statement_html(){ ?>
 <script>
     $(function(){

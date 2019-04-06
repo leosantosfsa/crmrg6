@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Contracts_model extends CRM_Model
+class Contracts_model extends App_Model
 {
     public function __construct()
     {
@@ -19,20 +19,24 @@ class Contracts_model extends CRM_Model
      */
     public function get($id = '', $where = [], $for_editor = false)
     {
-        $this->db->select('*,tblcontracttypes.name as type_name,tblcontracts.id as id, tblcontracts.addedfrom');
+        $this->db->select('*,' . db_prefix() . 'contracts_types.name as type_name,' . db_prefix() . 'contracts.id as id, ' . db_prefix() . 'contracts.addedfrom');
         $this->db->where($where);
-        $this->db->join('tblcontracttypes', 'tblcontracttypes.id = tblcontracts.contract_type', 'left');
-        $this->db->join('tblclients', 'tblclients.userid = tblcontracts.client');
+        $this->db->join(db_prefix() . 'contracts_types', '' . db_prefix() . 'contracts_types.id = ' . db_prefix() . 'contracts.contract_type', 'left');
+        $this->db->join(db_prefix() . 'clients', '' . db_prefix() . 'clients.userid = ' . db_prefix() . 'contracts.client');
         if (is_numeric($id)) {
-            $this->db->where('tblcontracts.id', $id);
-            $contract = $this->db->get('tblcontracts')->row();
+            $this->db->where(db_prefix() . 'contracts.id', $id);
+            $contract = $this->db->get(db_prefix() . 'contracts')->row();
             if ($contract) {
                 $contract->attachments = $this->get_contract_attachments('', $contract->id);
                 if ($for_editor == false) {
+                    $this->load->library('merge_fields/client_merge_fields');
+                    $this->load->library('merge_fields/contract_merge_fields');
+                    $this->load->library('merge_fields/other_merge_fields');
+
                     $merge_fields = [];
-                    $merge_fields = array_merge($merge_fields, get_contract_merge_fields($id));
-                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract->client));
-                    $merge_fields = array_merge($merge_fields, get_other_merge_fields());
+                    $merge_fields = array_merge($merge_fields, $this->contract_merge_fields->format($id));
+                    $merge_fields = array_merge($merge_fields, $this->client_merge_fields->format($contract->client));
+                    $merge_fields = array_merge($merge_fields, $this->other_merge_fields->format());
                     foreach ($merge_fields as $key => $val) {
                         if (stripos($contract->content, $key) !== false) {
                             $contract->content = str_ireplace($key, $val, $contract->content);
@@ -45,7 +49,7 @@ class Contracts_model extends CRM_Model
 
             return $contract;
         }
-        $contracts = $this->db->get('tblcontracts')->result_array();
+        $contracts = $this->db->get(db_prefix() . 'contracts')->result_array();
         $i         = 0;
         foreach ($contracts as $contract) {
             $contracts[$i]['attachments'] = $this->get_contract_attachments('', $contract['id']);
@@ -61,7 +65,7 @@ class Contracts_model extends CRM_Model
      */
     public function get_contracts_years()
     {
-        return $this->db->query('SELECT DISTINCT(YEAR(datestart)) as year FROM tblcontracts')->result_array();
+        return $this->db->query('SELECT DISTINCT(YEAR(datestart)) as year FROM ' . db_prefix() . 'contracts')->result_array();
     }
 
     /**
@@ -74,13 +78,13 @@ class Contracts_model extends CRM_Model
         if (is_numeric($attachment_id)) {
             $this->db->where('id', $attachment_id);
 
-            return $this->db->get('tblfiles')->row();
+            return $this->db->get(db_prefix() . 'files')->row();
         }
         $this->db->order_by('dateadded', 'desc');
         $this->db->where('rel_id', $id);
         $this->db->where('rel_type', 'contract');
 
-        return $this->db->get('tblfiles')->result_array();
+        return $this->db->get(db_prefix() . 'files')->result_array();
     }
 
     /**
@@ -119,15 +123,17 @@ class Contracts_model extends CRM_Model
 
         $data['hash'] = app_generate_hash();
 
-        $data = do_action('before_contract_added', $data);
-        $this->db->insert('tblcontracts', $data);
+        $data = hooks()->apply_filters('before_contract_added', $data);
+
+        $this->db->insert(db_prefix() . 'contracts', $data);
         $insert_id = $this->db->insert_id();
+
         if ($insert_id) {
             if (isset($custom_fields)) {
                 handle_custom_fields_post($insert_id, $custom_fields);
             }
-            do_action('after_contract_added', $insert_id);
-            logActivity('New Contract Added [' . $data['subject'] . ']');
+            hooks()->do_action('after_contract_added', $insert_id);
+            log_activity('New Contract Added [' . $data['subject'] . ']');
 
             return $insert_id;
         }
@@ -142,7 +148,8 @@ class Contracts_model extends CRM_Model
      */
     public function update($data, $id)
     {
-        $affectedRows      = 0;
+        $affectedRows = 0;
+
         $data['datestart'] = to_sql_date($data['datestart']);
         if ($data['dateend'] == '') {
             $data['dateend'] = null;
@@ -159,11 +166,9 @@ class Contracts_model extends CRM_Model
         } else {
             $data['not_visible_to_client'] = 0;
         }
-        $_data = do_action('before_contract_updated', [
-            'data' => $data,
-            'id'   => $id,
-        ]);
-        $data = $_data['data'];
+
+        $data = hooks()->apply_filters('before_contract_updated', $data, $id);
+
         if (isset($data['custom_fields'])) {
             $custom_fields = $data['custom_fields'];
             if (handle_custom_fields_post($id, $custom_fields)) {
@@ -171,30 +176,29 @@ class Contracts_model extends CRM_Model
             }
             unset($data['custom_fields']);
         }
+
         $this->db->where('id', $id);
-        $this->db->update('tblcontracts', $data);
+        $this->db->update(db_prefix() . 'contracts', $data);
+
         if ($this->db->affected_rows() > 0) {
-            do_action('after_contract_updated', $id);
-            logActivity('Contract Updated [' . $data['subject'] . ']');
+            hooks()->do_action('after_contract_updated', $id);
+            log_activity('Contract Updated [' . $data['subject'] . ']');
 
             return true;
         }
-        if ($affectedRows > 0) {
-            return true;
-        }
 
-        return false;
+        return $affectedRows > 0;
     }
 
     public function clear_signature($id)
     {
         $this->db->select('signature');
         $this->db->where('id', $id);
-        $contract = $this->db->get('tblcontracts')->row();
+        $contract = $this->db->get(db_prefix() . 'contracts')->row();
 
         if ($contract) {
             $this->db->where('id', $id);
-            $this->db->update('tblcontracts', array_merge(get_acceptance_info_array(true), ['signed' => 0]));
+            $this->db->update(db_prefix() . 'contracts', array_merge(get_acceptance_info_array(true), ['signed' => 0]));
 
             if (!empty($contract->signature)) {
                 unlink(get_upload_path_by_type('contract') . $id . '/' . $contract->signature);
@@ -229,7 +233,7 @@ class Contracts_model extends CRM_Model
         }
 
         $data['content'] = nl2br($data['content']);
-        $this->db->insert('tblcontractcomments', $data);
+        $this->db->insert(db_prefix() . 'contract_comments', $data);
         $insert_id = $this->db->insert_id();
 
         if ($insert_id) {
@@ -239,17 +243,12 @@ class Contracts_model extends CRM_Model
                 return true;
             }
 
-            $this->load->model('emails_model');
-
-            $this->emails_model->set_rel_id($data['contract_id']);
-            $this->emails_model->set_rel_type('contract');
-
             if ($client == true) {
 
                 // Get creator
                 $this->db->select('staffid, email, phonenumber');
                 $this->db->where('staffid', $contract->addedfrom);
-                $staff_contract = $this->db->get('tblstaff')->result_array();
+                $staff_contract = $this->db->get(db_prefix() . 'staff')->result_array();
 
                 $notifiedUsers = [];
 
@@ -269,24 +268,23 @@ class Contracts_model extends CRM_Model
                         array_push($notifiedUsers, $member['staffid']);
                     }
 
-                    $merge_fields = [];
-                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract->client));
-                    $merge_fields = array_merge($merge_fields, get_contract_merge_fields($contract->id));
-                    $merge_fields = array_merge($merge_fields, get_staff_merge_fields($member['staffid']));
+                    $template     = mail_template('contract_comment_to_staff', $contract, $member);
+                    $merge_fields = $template->get_merge_fields();
+                    $template->send();
+
                     // Send email/sms to admin that client commented
-                    $this->emails_model->send_email_template('contract-comment-to-admin', $member['email'], $merge_fields);
-                    $this->sms->trigger(SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_STAFF, $member['phonenumber'], $merge_fields);
+                    $this->app_sms->trigger(SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_STAFF, $member['phonenumber'], $merge_fields);
                 }
                 pusher_trigger_notification($notifiedUsers);
             } else {
                 $contacts = $this->clients_model->get_contacts($contract->client, ['active' => 1, 'contract_emails' => 1]);
 
                 foreach ($contacts as $contact) {
-                    $merge_fields = [];
-                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract->client, $contact['id']));
-                    $merge_fields = array_merge($merge_fields, get_contract_merge_fields($contract->id));
-                    $this->emails_model->send_email_template('contract-comment-to-client', $contact['email'], $merge_fields);
-                    $this->sms->trigger(SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_CUSTOMER, $contact['phonenumber'], $merge_fields);
+                    $template     = mail_template('contract_comment_to_customer', $contract, $contact);
+                    $merge_fields = $template->get_merge_fields();
+                    $template->send();
+
+                    $this->app_sms->trigger(SMS_TRIGGER_CONTRACT_NEW_COMMENT_TO_CUSTOMER, $contact['phonenumber'], $merge_fields);
                 }
             }
 
@@ -299,7 +297,7 @@ class Contracts_model extends CRM_Model
     public function edit_comment($data, $id)
     {
         $this->db->where('id', $id);
-        $this->db->update('tblcontractcomments', [
+        $this->db->update(db_prefix() . 'contract_comments', [
             'content' => nl2br($data['content']),
         ]);
 
@@ -320,7 +318,7 @@ class Contracts_model extends CRM_Model
         $this->db->where('contract_id', $id);
         $this->db->order_by('dateadded', 'ASC');
 
-        return $this->db->get('tblcontractcomments')->result_array();
+        return $this->db->get(db_prefix() . 'contract_comments')->result_array();
     }
 
     /**
@@ -332,7 +330,7 @@ class Contracts_model extends CRM_Model
     {
         $this->db->where('id', $id);
 
-        return $this->db->get('tblcontractcomments')->row();
+        return $this->db->get(db_prefix() . 'contract_comments')->row();
     }
 
     /**
@@ -345,9 +343,9 @@ class Contracts_model extends CRM_Model
         $comment = $this->get_comment($id);
 
         $this->db->where('id', $id);
-        $this->db->delete('tblcontractcomments');
+        $this->db->delete(db_prefix() . 'contract_comments');
         if ($this->db->affected_rows() > 0) {
-            logActivity('Contract Comment Removed [Contract ID:' . $comment->contract_id . ', Comment Content: ' . $comment->content . ']');
+            log_activity('Contract Comment Removed [Contract ID:' . $comment->contract_id . ', Comment Content: ' . $comment->content . ']');
 
             return true;
         }
@@ -358,7 +356,7 @@ class Contracts_model extends CRM_Model
     public function copy($id)
     {
         $contract       = $this->get($id, [], true);
-        $fields         = $this->db->list_fields('tblcontracts');
+        $fields         = $this->db->list_fields(db_prefix() . 'contracts');
         $newContactData = [];
 
         foreach ($fields as $field) {
@@ -393,7 +391,7 @@ class Contracts_model extends CRM_Model
             foreach ($custom_fields as $field) {
                 $value = get_custom_field_value($id, $field['id'], 'contracts', false);
                 if ($value != '') {
-                    $this->db->insert('tblcustomfieldsvalues', [
+                    $this->db->insert(db_prefix() . 'customfieldsvalues', [
                     'relid'   => $newId,
                     'fieldid' => $field['id'],
                     'fieldto' => 'contracts',
@@ -413,45 +411,45 @@ class Contracts_model extends CRM_Model
      */
     public function delete($id)
     {
-        do_action('before_contract_deleted', $id);
+        hooks()->do_action('before_contract_deleted', $id);
         $this->clear_signature($id);
         $contract = $this->get($id);
         $this->db->where('id', $id);
-        $this->db->delete('tblcontracts');
+        $this->db->delete(db_prefix() . 'contracts');
         if ($this->db->affected_rows() > 0) {
             $this->db->where('contract_id', $id);
-            $this->db->delete('tblcontractcomments');
+            $this->db->delete(db_prefix() . 'contract_comments');
 
             // Delete the custom field values
             $this->db->where('relid', $id);
             $this->db->where('fieldto', 'contracts');
-            $this->db->delete('tblcustomfieldsvalues');
+            $this->db->delete(db_prefix() . 'customfieldsvalues');
 
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'contract');
-            $attachments = $this->db->get('tblfiles')->result_array();
+            $attachments = $this->db->get(db_prefix() . 'files')->result_array();
             foreach ($attachments as $attachment) {
                 $this->delete_contract_attachment($attachment['id']);
             }
 
             $this->db->where('rel_id', $id);
             $this->db->where('rel_type', 'contract');
-            $this->db->delete('tblnotes');
+            $this->db->delete(db_prefix() . 'notes');
 
 
             $this->db->where('contractid', $id);
-            $this->db->delete('tblcontractrenewals');
+            $this->db->delete(db_prefix() . 'contract_renewals');
             // Get related tasks
             $this->db->where('rel_type', 'contract');
             $this->db->where('rel_id', $id);
-            $tasks = $this->db->get('tblstafftasks')->result_array();
+            $tasks = $this->db->get(db_prefix() . 'tasks')->result_array();
             foreach ($tasks as $task) {
                 $this->tasks_model->delete_task($task['id']);
             }
 
             delete_tracked_emails($id, 'contract');
 
-            logActivity('Contract Deleted [' . $id . ']');
+            log_activity('Contract Deleted [' . $id . ']');
 
             return true;
         }
@@ -468,52 +466,39 @@ class Contracts_model extends CRM_Model
      */
     public function send_contract_to_client($id, $attachpdf = true, $cc = '')
     {
-        $this->load->model('emails_model');
-
-        $this->emails_model->set_rel_id($id);
-        $this->emails_model->set_rel_type('contract');
-
         $contract = $this->get($id);
 
         if ($attachpdf) {
+            set_mailing_constant();
             $pdf    = contract_pdf($contract);
             $attach = $pdf->Output(slug_it($contract->subject) . '.pdf', 'S');
         }
 
         $sent_to = $this->input->post('sent_to');
         $sent    = false;
+
         if (is_array($sent_to)) {
             $i = 0;
             foreach ($sent_to as $contact_id) {
                 if ($contact_id != '') {
+                    $contact = $this->clients_model->get_contact($contact_id);
+
+                    // Send cc only for the first contact
+                    if (!empty($cc) && $i > 0) {
+                        $cc = '';
+                    }
+
+                    $template = mail_template('contract_send_to_customer', $contract, $contact, $cc);
+
                     if ($attachpdf) {
-                        $this->emails_model->add_attachment([
+                        $template->add_attachment([
                             'attachment' => $attach,
                             'filename'   => slug_it($contract->subject) . '.pdf',
                             'type'       => 'application/pdf',
                         ]);
                     }
-                    if ($this->input->post('email_attachments')) {
-                        $_other_attachments = $this->input->post('email_attachments');
-                        foreach ($_other_attachments as $attachment) {
-                            $_attachment = $this->get_contract_attachments($attachment);
-                            $this->emails_model->add_attachment([
-                                'attachment' => get_upload_path_by_type('contract') . $id . '/' . $_attachment->file_name,
-                                'filename'   => $_attachment->file_name,
-                                'type'       => $_attachment->filetype,
-                                'read'       => true,
-                            ]);
-                        }
-                    }
-                    $contact      = $this->clients_model->get_contact($contact_id);
-                    $merge_fields = [];
-                    $merge_fields = array_merge($merge_fields, get_client_contact_merge_fields($contract->client, $contact_id));
-                    $merge_fields = array_merge($merge_fields, get_contract_merge_fields($id));
-                    // Send cc only for the first contact
-                    if (!empty($cc) && $i > 0) {
-                        $cc = '';
-                    }
-                    if ($this->emails_model->send_email_template('send-contract', $contact->email, $merge_fields, '', $cc)) {
+
+                    if ($template->send()) {
                         $sent = true;
                     }
                 }
@@ -544,10 +529,10 @@ class Contracts_model extends CRM_Model
                 unlink(get_upload_path_by_type('contract') . $attachment->rel_id . '/' . $attachment->file_name);
             }
             $this->db->where('id', $attachment->id);
-            $this->db->delete('tblfiles');
+            $this->db->delete(db_prefix() . 'files');
             if ($this->db->affected_rows() > 0) {
                 $deleted = true;
-                logActivity('Contract Attachment Deleted [ContractID: ' . $attachment->rel_id . ']');
+                log_activity('Contract Attachment Deleted [ContractID: ' . $attachment->rel_id . ']');
             }
 
             if (is_dir(get_upload_path_by_type('contract') . $attachment->rel_id)) {
@@ -585,7 +570,7 @@ class Contracts_model extends CRM_Model
         // get the original contract so we can check if is expiry notified on delete the expiry to revert
         $_contract                         = $this->get($data['contractid']);
         $data['is_on_old_expiry_notified'] = $_contract->isexpirynotified;
-        $this->db->insert('tblcontractrenewals', $data);
+        $this->db->insert(db_prefix() . 'contract_renewals', $data);
         $insert_id = $this->db->insert_id();
         if ($insert_id) {
             $this->db->where('id', $data['contractid']);
@@ -607,15 +592,15 @@ class Contracts_model extends CRM_Model
                 }
             }
 
-            $this->db->update('tblcontracts', $_data);
+            $this->db->update(db_prefix() . 'contracts', $_data);
             if ($this->db->affected_rows() > 0) {
-                logActivity('Contract Renewed [ID: ' . $data['contractid'] . ']');
+                log_activity('Contract Renewed [ID: ' . $data['contractid'] . ']');
 
                 return true;
             }
             // delete the previous entry
             $this->db->where('id', $insert_id);
-            $this->db->delete('tblcontractrenewals');
+            $this->db->delete(db_prefix() . 'contract_renewals');
 
             return false;
         }
@@ -632,17 +617,17 @@ class Contracts_model extends CRM_Model
     public function delete_renewal($id, $contractid)
     {
         // check if this renewal is last so we can revert back the old values, if is not last we wont do anything
-        $this->db->select('id')->from('tblcontractrenewals')->where('contractid', $contractid)->order_by('id', 'desc')->limit(1);
+        $this->db->select('id')->from(db_prefix() . 'contract_renewals')->where('contractid', $contractid)->order_by('id', 'desc')->limit(1);
         $query                 = $this->db->get();
         $last_contract_renewal = $query->row()->id;
         $is_last               = false;
         if ($last_contract_renewal == $id) {
             $is_last = true;
             $this->db->where('id', $id);
-            $original_renewal = $this->db->get('tblcontractrenewals')->row();
+            $original_renewal = $this->db->get(db_prefix() . 'contract_renewals')->row();
         }
         $this->db->where('id', $id);
-        $this->db->delete('tblcontractrenewals');
+        $this->db->delete(db_prefix() . 'contract_renewals');
         if ($this->db->affected_rows() > 0) {
             if ($is_last == true) {
                 $this->db->where('id', $contractid);
@@ -654,9 +639,9 @@ class Contracts_model extends CRM_Model
                 if ($original_renewal->old_end_date != '0000-00-00') {
                     $data['dateend'] = $original_renewal->old_end_date;
                 }
-                $this->db->update('tblcontracts', $data);
+                $this->db->update(db_prefix() . 'contracts', $data);
             }
-            logActivity('Contract Renewed [RenewalID: ' . $id . ', ContractID: ' . $contractid . ']');
+            log_activity('Contract Renewed [RenewalID: ' . $id . ', ContractID: ' . $contractid . ']');
 
             return true;
         }
@@ -674,7 +659,7 @@ class Contracts_model extends CRM_Model
         $this->db->where('contractid', $id);
         $this->db->order_by('date_renewed', 'asc');
 
-        return $this->db->get('tblcontractrenewals')->result_array();
+        return $this->db->get(db_prefix() . 'contract_renewals')->result_array();
     }
 
     /**

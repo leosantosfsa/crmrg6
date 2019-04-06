@@ -1,5 +1,7 @@
 <?php
 
+defined('BASEPATH') or exit('No direct script access allowed');
+
 $dimensions = $pdf->getPageDimensions();
 
 $info_right_column = '';
@@ -12,7 +14,7 @@ if (get_option('show_status_on_pdf_ei') == 1) {
     $info_right_column .= '<br /><span style="color:rgb(' . invoice_status_color_pdf($status) . ');text-transform:uppercase;">' . format_invoice_status($status, '', false) . '</span>';
 }
 
-if ($status != 2 && $status != 5 && get_option('show_pay_link_to_invoice_pdf') == 1
+if ($status != Invoices_model::STATUS_PAID && $status != Invoices_model::STATUS_CANCELLED && get_option('show_pay_link_to_invoice_pdf') == 1
     && found_invoice_mode($payment_modes, $invoice->id, false)) {
     $info_right_column .= ' - <a style="color:#84c529;text-decoration:none;text-transform:uppercase;" href="' . site_url('invoice/' . $invoice->id . '/' . $invoice->hash) . '"><1b>' . _l('view_invoice_pdf_link_pay') . '</1b></a>';
 }
@@ -67,63 +69,19 @@ foreach ($pdf_custom_fields as $field) {
     $invoice_info .= $field['name'] . ': ' . $value . '<br />';
 }
 
-$left_info = $swap == '1' ? $invoice_info : $organization_info;
+$left_info  = $swap == '1' ? $invoice_info : $organization_info;
 $right_info = $swap == '1' ? $organization_info : $invoice_info;
 
 pdf_multi_row($left_info, $right_info, $pdf, ($dimensions['wk'] / 2) - $dimensions['lm']);
 
 // The Table
-$pdf->Ln(do_action('pdf_info_and_table_separator', 6));
-$item_width = 38;
+$pdf->Ln(hooks()->apply_filters('pdf_info_and_table_separator', 6));
 
-// If show item taxes is disabled in PDF we should increase the item width table heading
-$item_width = get_option('show_tax_per_item') == 0 ? $item_width + 15 : $item_width;
+// The items table
+$items = get_items_table_data($invoice, 'invoice', 'pdf');
 
-$custom_fields_items = get_items_custom_fields_for_table_html($invoice->id, 'invoice');
-// Calculate headings width, in case there are custom fields for items
-$total_headings = get_option('show_tax_per_item') == 1 ? 4 : 3;
-$total_headings += count($custom_fields_items);
-$headings_width = (100 - ($item_width + 6)) / $total_headings;
+$tblhtml = $items->table();
 
-// Header
-$qty_heading = _l('invoice_table_quantity_heading');
-if ($invoice->show_quantity_as == 2) {
-    $qty_heading = _l('invoice_table_hours_heading');
-} elseif ($invoice->show_quantity_as == 3) {
-    $qty_heading = _l('invoice_table_quantity_heading') . '/' . _l('invoice_table_hours_heading');
-}
-
-$tblhtml = '<table width="100%" bgcolor="#fff" cellspacing="0" cellpadding="8">';
-
-$tblhtml .= '<tr height="30" bgcolor="' . get_option('pdf_table_heading_color') . '" style="color:' . get_option('pdf_table_heading_text_color') . ';">';
-
-$tblhtml .= '<th width="5%;" align="center">'._l('the_number_sign').'</th>';
-$tblhtml .= '<th width="' . $item_width . '%" align="left">' . _l('invoice_table_item_heading') . '</th>';
-
-foreach ($custom_fields_items as $cf) {
-    $tblhtml .= '<th width="' . $headings_width . '%" align="left">' . $cf['name'] . '</th>';
-}
-
-$tblhtml .= '<th width="' . $headings_width . '%" align="right">' . $qty_heading . '</th>';
-$tblhtml .= '<th width="' . $headings_width . '%" align="right">' . _l('invoice_table_rate_heading') . '</th>';
-
-if (get_option('show_tax_per_item') == 1) {
-    $tblhtml .= '<th width="' . $headings_width . '%" align="right">' . _l('invoice_table_tax_heading') . '</th>';
-}
-
-$tblhtml .= '<th width="' . $headings_width . '%" align="right">' . _l('invoice_table_amount_heading') . '</th>';
-$tblhtml .= '</tr>';
-
-// Items
-$tblhtml .= '<tbody>';
-
-$items_data = get_table_items_and_taxes($invoice->items, 'invoice');
-
-$tblhtml .= $items_data['html'];
-$taxes = $items_data['taxes'];
-
-$tblhtml .= '</tbody>';
-$tblhtml .= '</table>';
 $pdf->writeHTML($tblhtml, true, false, false, false, '');
 
 $pdf->Ln(8);
@@ -133,7 +91,7 @@ $tbltotal .= '<table cellpadding="6" style="font-size:' . ($font_size + 4) . 'px
 $tbltotal .= '
 <tr>
     <td align="right" width="85%"><strong>' . _l('invoice_subtotal') . '</strong></td>
-    <td align="right" width="15%">' . format_money($invoice->subtotal, $invoice->symbol) . '</td>
+    <td align="right" width="15%">' . app_format_money($invoice->subtotal, $invoice->currency_name) . '</td>
 </tr>';
 
 if (is_sale_discount_applied($invoice)) {
@@ -141,44 +99,44 @@ if (is_sale_discount_applied($invoice)) {
     <tr>
         <td align="right" width="85%"><strong>' . _l('invoice_discount');
     if (is_sale_discount($invoice, 'percent')) {
-        $tbltotal .= '(' . _format_number($invoice->discount_percent, true) . '%)';
+        $tbltotal .= '(' . app_format_number($invoice->discount_percent, true) . '%)';
     }
     $tbltotal .= '</strong>';
     $tbltotal .= '</td>';
-    $tbltotal .= '<td align="right" width="15%">-' . format_money($invoice->discount_total, $invoice->symbol) . '</td>
+    $tbltotal .= '<td align="right" width="15%">-' . app_format_money($invoice->discount_total, $invoice->currency_name) . '</td>
     </tr>';
 }
 
-foreach ($taxes as $tax) {
+foreach ($items->taxes() as $tax) {
     $tbltotal .= '<tr>
-    <td align="right" width="85%"><strong>' . $tax['taxname'] . ' (' . _format_number($tax['taxrate']) . '%)' . '</strong></td>
-    <td align="right" width="15%">' . format_money($tax['total_tax'], $invoice->symbol) . '</td>
+    <td align="right" width="85%"><strong>' . $tax['taxname'] . ' (' . app_format_number($tax['taxrate']) . '%)' . '</strong></td>
+    <td align="right" width="15%">' . app_format_money($tax['total_tax'], $invoice->currency_name) . '</td>
 </tr>';
 }
 
 if ((int) $invoice->adjustment != 0) {
     $tbltotal .= '<tr>
     <td align="right" width="85%"><strong>' . _l('invoice_adjustment') . '</strong></td>
-    <td align="right" width="15%">' . format_money($invoice->adjustment, $invoice->symbol) . '</td>
+    <td align="right" width="15%">' . app_format_money($invoice->adjustment, $invoice->currency_name) . '</td>
 </tr>';
 }
 
 $tbltotal .= '
 <tr style="background-color:#f0f0f0;">
     <td align="right" width="85%"><strong>' . _l('invoice_total') . '</strong></td>
-    <td align="right" width="15%">' . format_money($invoice->total, $invoice->symbol) . '</td>
+    <td align="right" width="15%">' . app_format_money($invoice->total, $invoice->currency_name) . '</td>
 </tr>';
 
 if (count($invoice->payments) > 0 && get_option('show_total_paid_on_invoice') == 1) {
     $tbltotal .= '
     <tr>
         <td align="right" width="85%"><strong>' . _l('invoice_total_paid') . '</strong></td>
-        <td align="right" width="15%">-' . format_money(sum_from_table('tblinvoicepaymentrecords', [
+        <td align="right" width="15%">-' . app_format_money(sum_from_table(db_prefix().'invoicepaymentrecords', [
         'field' => 'amount',
         'where' => [
             'invoiceid' => $invoice->id,
         ],
-    ]), $invoice->symbol) . '</td>
+    ]), $invoice->currency_name) . '</td>
     </tr>';
 }
 
@@ -186,14 +144,14 @@ if (get_option('show_credits_applied_on_invoice') == 1 && $credits_applied = tot
     $tbltotal .= '
     <tr>
         <td align="right" width="85%"><strong>' . _l('applied_credits') . '</strong></td>
-        <td align="right" width="15%">-' . format_money($credits_applied, $invoice->symbol) . '</td>
+        <td align="right" width="15%">-' . app_format_money($credits_applied, $invoice->currency_name) . '</td>
     </tr>';
 }
 
-if (get_option('show_amount_due_on_invoice') == 1 && $invoice->status != 5) {
+if (get_option('show_amount_due_on_invoice') == 1 && $invoice->status != Invoices_model::STATUS_CANCELLED) {
     $tbltotal .= '<tr style="background-color:#f0f0f0;">
        <td align="right" width="85%"><strong>' . _l('invoice_amount_due') . '</strong></td>
-       <td align="right" width="15%">' . format_money($invoice->total_left_to_pay, $invoice->symbol) . '</td>
+       <td align="right" width="15%">' . app_format_money($invoice->total_left_to_pay, $invoice->currency_name) . '</td>
    </tr>';
 }
 
@@ -234,7 +192,7 @@ if (count($invoice->payments) > 0 && get_option('show_transactions_on_invoice_pd
             <td>' . $payment['paymentid'] . '</td>
             <td>' . $payment_name . '</td>
             <td>' . _d($payment['date']) . '</td>
-            <td>' . format_money($payment['amount'], $invoice->symbol) . '</td>
+            <td>' . app_format_money($payment['amount'], $invoice->currency_name) . '</td>
             </tr>
         ';
     }

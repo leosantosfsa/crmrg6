@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="modal fade _event" id="newEventModal">
   <div class="modal-dialog">
     <div class="modal-content">

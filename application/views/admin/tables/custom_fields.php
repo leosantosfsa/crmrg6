@@ -1,6 +1,7 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+
 $aColumns = [
     'id',
     'name',
@@ -10,7 +11,7 @@ $aColumns = [
     'active',
     ];
 $sIndexColumn = 'id';
-$sTable       = 'tblcustomfields';
+$sTable       = db_prefix().'customfields';
 
 $result  = data_tables_init($aColumns, $sIndexColumn, $sTable);
 $output  = $result['output'];

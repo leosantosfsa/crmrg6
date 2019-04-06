@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="clearfix"></div>
 <?php if(count($checklists) > 0){ ?>
 <h4 class="bold chk-heading th font-medium"><?php echo _l('task_checklist_items'); ?></h4>
@@ -18,13 +19,13 @@
         </a>
         <?php } ?>
         <?php if(has_permission('checklist_templates','','create')){ ?>
-            <a href="#" class="pull-right text-muted mright5 save-checklist-template<?php if($list['description'] == '' || total_rows('tblcheckliststemplates',array('description'=>$list['description'])) > 0){echo ' hide';} ?>" data-toggle="tooltip" data-title="<?php echo _l('save_as_template'); ?>" onclick="save_checklist_item_template(<?php echo $list['id']; ?>,this); return false;">
+            <a href="#" class="pull-right text-muted mright5 save-checklist-template<?php if($list['description'] == '' || total_rows(db_prefix().'tasks_checklist_templates',array('description'=>$list['description'])) > 0){echo ' hide';} ?>" data-toggle="tooltip" data-title="<?php echo _l('save_as_template'); ?>" onclick="save_checklist_item_template(<?php echo $list['id']; ?>,this); return false;">
             <i class="fa fa-level-up" aria-hidden="true"></i>
             </a>
         <?php } ?>
     </div>
     <?php if($list['finished'] == 1 || $list['addedfrom'] != get_staff_user_id()){ ?>
-    <p class="font-medium-xs mtop15 text-muted checklist-item-completed-by">
+    <p class="font-medium-xs mtop15 text-muted checklist-item-info">
         <?php
             if($list['addedfrom'] != get_staff_user_id()) {
                 echo _l('task_created_by',get_staff_full_name($list['addedfrom']));

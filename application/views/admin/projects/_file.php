@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="modal fade _project_file" tabindex="-1" role="dialog" data-toggle="modal">
    <div class="modal-dialog full-screen-modal" role="document">
       <div class="modal-content">

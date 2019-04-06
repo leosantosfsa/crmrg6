@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="row">
 	<div class="col-md-12">
 		<?php $company_logo = get_option('company_logo'); ?>

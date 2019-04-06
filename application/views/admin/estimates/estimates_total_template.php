@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="row">
 <?php if(count($estimates_years) > 1 || isset($currencies)){ ?>
   <div class="col-md-12 simple-bootstrap-select mbot5">
@@ -36,7 +37,7 @@
       <div class="panel_s">
         <div class="panel-body">
           <h3 class="text-muted _total">
-            <?php echo format_money($data['total'],$data['symbol']); ?>
+            <?php echo app_format_money($data['total'], $data['currency_name']); ?>
           </h3>
           <span class="text-<?php echo $class; ?>"><?php echo $name; ?></span>
         </div>

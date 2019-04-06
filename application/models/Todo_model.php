@@ -2,14 +2,14 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Todo_model extends CRM_Model
+class Todo_model extends App_Model
 {
     public $todo_limit;
 
     public function __construct()
     {
         parent::__construct();
-        $this->todo_limit = do_action('todos_limit', 20);
+        $this->todo_limit = hooks()->apply_filters('todos_limit', 20);
     }
 
     public function setTodosLimit($limit)
@@ -29,10 +29,10 @@ class Todo_model extends CRM_Model
         if (is_numeric($id)) {
             $this->db->where('todoid', $id);
 
-            return $this->db->get('tbltodoitems')->row();
+            return $this->db->get(db_prefix().'todos')->row();
         }
 
-        return $this->db->get('tbltodoitems')->result_array();
+        return $this->db->get(db_prefix().'todos')->result_array();
     }
 
     /**
@@ -44,7 +44,7 @@ class Todo_model extends CRM_Model
     public function get_todo_items($finished, $page = '')
     {
         $this->db->select();
-        $this->db->from('tbltodoitems');
+        $this->db->from(db_prefix().'todos');
         $this->db->where('finished', $finished);
         $this->db->where('staffid', get_staff_user_id());
         $this->db->order_by('item_order', 'asc');
@@ -76,7 +76,7 @@ class Todo_model extends CRM_Model
         $data['dateadded']   = date('Y-m-d H:i:s');
         $data['description'] = nl2br($data['description']);
         $data['staffid']     = get_staff_user_id();
-        $this->db->insert('tbltodoitems', $data);
+        $this->db->insert(db_prefix().'todos', $data);
 
         return $this->db->insert_id();
     }
@@ -86,7 +86,7 @@ class Todo_model extends CRM_Model
         $data['description'] = nl2br($data['description']);
 
         $this->db->where('todoid', $id);
-        $this->db->update('tbltodoitems', $data);
+        $this->db->update(db_prefix().'todos', $data);
         if ($this->db->affected_rows() > 0) {
             return true;
         }
@@ -109,7 +109,7 @@ class Todo_model extends CRM_Model
                 $update['datefinished'] = date('Y-m-d H:i:s');
             }
             $this->db->where('todoid', $data['data'][$i][0]);
-            $this->db->update('tbltodoitems', $update);
+            $this->db->update(db_prefix().'todos', $update);
         }
     }
 
@@ -122,7 +122,7 @@ class Todo_model extends CRM_Model
     {
         $this->db->where('todoid', $id);
         $this->db->where('staffid', get_staff_user_id());
-        $this->db->delete('tbltodoitems');
+        $this->db->delete(db_prefix().'todos');
         if ($this->db->affected_rows() > 0) {
             return true;
         }
@@ -141,7 +141,7 @@ class Todo_model extends CRM_Model
         $this->db->where('todoid', $id);
         $this->db->where('staffid', get_staff_user_id());
         $date = date('Y-m-d H:i:s');
-        $this->db->update('tbltodoitems', [
+        $this->db->update(db_prefix().'todos', [
             'finished'     => $status,
             'datefinished' => $date,
         ]);

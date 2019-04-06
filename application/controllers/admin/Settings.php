@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Settings extends Admin_controller
+class Settings extends AdminController
 {
     public function __construct()
     {
@@ -17,6 +17,9 @@ class Settings extends Admin_controller
         if (!has_permission('settings', '', 'view')) {
             access_denied('settings');
         }
+
+        $tab = $this->input->get('group');
+
         if ($this->input->post()) {
             if (!has_permission('settings', '', 'edit')) {
                 access_denied('settings');
@@ -54,14 +57,14 @@ class Settings extends Admin_controller
             }
 
             // Do hard refresh on general for the logo
-            if ($this->input->get('group') == 'general') {
-                redirect(admin_url('settings?group=' . $this->input->get('group')), 'refresh');
+            if ($tab == 'general') {
+                redirect(admin_url('settings?group=' . $tab), 'refresh');
             } elseif ($signatureUploaded) {
                 redirect(admin_url('settings?group=pdf&tab=signature'));
             } else {
-                $redUrl = admin_url('settings?group=' . $this->input->get('group'));
-                if($this->input->get('active_tab')) {
-                    $redUrl .= '&tab='.$this->input->get('active_tab');
+                $redUrl = admin_url('settings?group=' . $tab);
+                if ($this->input->get('active_tab')) {
+                    $redUrl .= '&tab=' . $this->input->get('active_tab');
                 }
                 redirect($redUrl);
             }
@@ -78,15 +81,29 @@ class Settings extends Admin_controller
         $data['leads_sources']                           = $this->leads_model->get_source();
         $data['leads_statuses']                          = $this->leads_model->get_status();
         $data['title']                                   = _l('options');
-        if (!$this->input->get('group') || ($this->input->get('group') == 'update' && !is_admin())) {
-            $view = 'general';
-        } else {
-            $view = $this->input->get('group');
+
+        $data['admin_tabs'] = ['update', 'info'];
+
+
+
+        if (!$tab || (!in_array($tab, $data['admin_tabs']) && !is_admin())) {
+            $tab = 'general';
         }
 
-        $view = do_action('settings_group_view_name', $view);
+        $data['tabs'] = $this->app_tabs->get_settings_tabs();
+        if (!in_array($tab, $data['admin_tabs'])) {
+            $data['tab'] = $this->app_tabs->filter_tab($data['tabs'], $tab);
+        } else {
+            // Core tabs are not registered
+            $data['tab']['slug'] = $tab;
+            $data['tab']['view'] = 'admin/settings/includes/' . $tab;
+        }
 
-        if ($view == 'update') {
+        if (!$data['tab']) {
+            show_404();
+        }
+
+        if ($data['tab']['slug'] == 'update') {
             if (!extension_loaded('curl')) {
                 $data['update_errors'][] = 'CURL Extension not enabled';
                 $data['latest_version']  = 0;
@@ -109,15 +126,11 @@ class Settings extends Admin_controller
             }
 
             $data['current_version'] = $this->app->get_current_db_version();
-        } elseif ($view == 'pdf') {
-            $this->load->library('pdf');
         }
 
         $data['contacts_permissions'] = get_contact_permissions();
-        $data['payment_gateways']     = $this->payment_modes_model->get_online_payment_modes(true);
-        $data['view_name']            = $view;
-        $groups_path                  = do_action('settings_groups_path', 'admin/settings/includes');
-        $data['group_view']           = $this->load->view($groups_path . '/' . $view, $data, true);
+        $data['payment_gateways']     = $this->payment_modes_model->get_payment_gateways(true);
+
         $this->load->view('admin/settings/all', $data);
     }
 
@@ -132,9 +145,9 @@ class Settings extends Admin_controller
         }
 
         $this->db->where('id', $id);
-        $this->db->delete('tbltags');
+        $this->db->delete(db_prefix() . 'tags');
         $this->db->where('tag_id', $id);
-        $this->db->delete('tbltags_in');
+        $this->db->delete(db_prefix() . 'taggables');
 
         redirect(admin_url('settings?group=tags'));
     }
@@ -158,7 +171,7 @@ class Settings extends Admin_controller
     /* Remove company logo from settings / ajax */
     public function remove_company_logo($type = '')
     {
-        do_action('before_remove_company_logo');
+        hooks()->do_action('before_remove_company_logo');
 
         if (!has_permission('settings', '', 'delete')) {
             access_denied('settings');
@@ -180,7 +193,7 @@ class Settings extends Admin_controller
 
     public function remove_favicon()
     {
-        do_action('before_remove_favicon');
+        hooks()->do_action('before_remove_favicon');
         if (!has_permission('settings', '', 'delete')) {
             access_denied('settings');
         }
@@ -191,13 +204,14 @@ class Settings extends Admin_controller
         redirect($_SERVER['HTTP_REFERER']);
     }
 
-    public function delete_option($id)
+    public function delete_option($name)
     {
         if (!has_permission('settings', '', 'delete')) {
             access_denied('settings');
         }
+
         echo json_encode([
-            'success' => delete_option($id),
+            'success' => delete_option($name),
         ]);
     }
 }

@@ -2,7 +2,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Consent extends Clients_controller
+class Consent extends ClientsController
 {
     public function index()
     {
@@ -17,7 +17,7 @@ class Consent extends Clients_controller
 
         $this->db->where('meta_value', $key);
         $this->db->where('meta_key', 'consent_key');
-        $meta = $this->db->get('tblusermeta')->row();
+        $meta = $this->db->get(db_prefix() . 'user_meta')->row();
 
         if (!$meta) {
             show_404();
@@ -52,12 +52,12 @@ class Consent extends Clients_controller
         $data['title']    = _l('gdpr') . ' - ' . $contact->firstname . ' ' . $contact->lastname;
 
         $data['bodyclass'] = 'consent';
-        $this->data        = $data;
-        $this->view        = 'consent';
+        $this->data($data);
+        $this->view('consent');
         no_index_customers_area();
 
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
+        $this->disableNavigation();
+        $this->disableSubMenu();
         $this->layout();
     }
 
@@ -68,7 +68,7 @@ class Consent extends Clients_controller
         }
 
         $this->db->where('hash', $hash);
-        $lead = $this->db->get('tblleads')->row();
+        $lead = $this->db->get(db_prefix() . 'leads')->row();
 
         if (!$lead) {
             show_404();
@@ -97,12 +97,12 @@ class Consent extends Clients_controller
         $data['title']    = _l('gdpr') . ' - ' . $lead->name;
 
         $data['bodyclass'] = 'consent';
-        $this->data        = $data;
-        $this->view        = 'consent';
+        $this->data($data);
+        $this->view('consent');
         no_index_customers_area();
 
-        $this->use_navigation = false;
-        $this->use_submenu    = false;
+        $this->disableNavigation();
+        $this->disableSubMenu();
         $this->layout();
     }
 }

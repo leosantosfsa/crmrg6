@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="modal fade invoice-project" id="invoice-project-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-xxl" role="document">
         <?php echo form_open('admin/projects/invoice_project/'.$project->id,array('id'=>'invoice_project_form','class'=>'_transaction_form invoice-form')); ?>

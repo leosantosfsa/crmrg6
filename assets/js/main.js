@@ -1,20 +1,12 @@
-/* v2.1.12 */
 /* jshint expr: true */
 /* jshint sub:true */
 /* jshint loopfunc:true */
+
 /**
- * Core JS Files
+ * Core Admin JS Files
  * Not recommened to edit this file directly if you plan to upgrade the script when new versions are released.
  * Use hooks to inject custom javascript code
  */
-
-$.fn.isInViewport = function() {
-    var elementTop = $(this).offset().top;
-    var elementBottom = elementTop + $(this).outerHeight();
-    var viewportTop = $(window).scrollTop();
-    var viewportBottom = viewportTop + $(window).height();
-    return elementBottom > viewportTop && elementTop < viewportBottom;
-};
 
 $(window).on('load', function() {
     init_btn_with_tooltips();
@@ -24,9 +16,9 @@ $(window).on('load', function() {
 $.fn.dataTable.ext.errMode = 'throw';
 $.fn.dataTableExt.oStdClasses.sWrapper = 'dataTables_wrapper form-inline dt-bootstrap table-loading';
 
-if (app_enable_google_picker == '1') {
-    $.fn.googleDrivePicker.defaults.clientId = app_google_client_id;
-    $.fn.googleDrivePicker.defaults.developerKey = google_api;
+if (app.options.enable_google_picker == '1') {
+    $.fn.googleDrivePicker.defaults.clientId = app.options.google_client_id;
+    $.fn.googleDrivePicker.defaults.developerKey = app.options.google_api;
 }
 
 // Set dropzone not auto discover
@@ -34,59 +26,9 @@ Dropzone.options.newsFeedDropzone = false;
 Dropzone.options.salesUpload = false;
 
 // Check for desktop notifications permissions
-if (("Notification" in window) && app_desktop_notifications == '1') {
+if (("Notification" in window) && app.options.desktop_notifications == '1') {
     Notification.requestPermission();
 }
-
-// Jquery validate set default options
-$.validator.setDefaults({
-    highlight: function(element) {
-        var $child_tab_in_form = $(element).parents('.tab-pane');
-        if ($child_tab_in_form.length && !$child_tab_in_form.is(':visible')) {
-            $('a[href="#' + $child_tab_in_form.attr('id') + '"]')
-                .css('border-bottom', '1px solid red')
-                .css('color', 'red')
-                .addClass('tab-validation');
-        }
-        setTimeout(function() {
-            $(element).closest('.form-group').addClass('has-error');
-        }, 200);
-    },
-    unhighlight: function(element) {
-        element = $(element);
-        var $child_tab_in_form = element.parents('.tab-pane');
-        if ($child_tab_in_form.length) {
-            $('a[href="#' + $child_tab_in_form.attr('id') + '"]').removeAttr('style').removeClass('tab-validation');
-        }
-        element.closest('.form-group').removeClass('has-error');
-    },
-    errorElement: 'p',
-    errorClass: 'text-danger',
-    errorPlacement: function(error, element) {
-        if (element.parent('.input-group').length || element.parents('.chk').length) {
-            if (!element.parents('.chk').length) {
-                error.insertAfter(element.parent());
-            } else {
-                error.insertAfter(element.parents('.chk'));
-            }
-        } else if (element.is('select') && (element.hasClass('selectpicker') || element.hasClass('ajax-search'))) {
-            error.insertAfter(element.parents('.form-group *').last());
-        } else {
-            error.insertAfter(element);
-        }
-    }
-});
-
-// New validation method filesize
-$.validator.addMethod('filesize', function(value, element, param) {
-    return this.optional(element) || (element.files[0].size <= param);
-}, appLang.file_exceeds_max_filesize);
-
-// New validation method extension based on app extensions
-$.validator.addMethod("extension", function(value, element, param) {
-    param = typeof param === "string" ? param.replace(/,/g, "|") : "png|jpe?g|gif";
-    return this.optional(element) || value.match(new RegExp("\\.(" + param + ")$", "i"));
-}, $.validator.format(appLang.validation_extension_not_allowed));
 
 // Predefined global variables
 var original_top_search_val,
@@ -181,6 +123,33 @@ $(function() {
 
     $('.screen-options-btn').on('click', function() {
         $('.screen-options-area').slideToggle();
+    });
+
+    // Make the deprecated errors more clear
+    if ($('body').hasClass('has-deprecated-errors')) {
+        (function() {
+            var $errors = $("div:contains('A PHP Error was encountered')");
+            var totalErrorsHeight = 0;
+            $.each($errors, function() {
+                totalErrorsHeight += $(this).outerHeight();
+                $(this).css('background', '#fff');
+            })
+            if (totalErrorsHeight > 0) {
+                $('#menu, #setup-menu-wrapper').css('top', (totalErrorsHeight + 70) + 'px');
+            }
+        })();
+    }
+
+    // Form entities where HTML is available, causing issue on mod_security servers, will entitiy encode then before saving in database entiity decode
+    $('form').has('[data-entities-encode="true"]').on('submit.app.entity', function(e) {
+        if ($(this).validate().checkForm()) {
+            $.each($('[data-entities-encode="true"]'), function() {
+                if (!$(this).hasClass('_entities-processed')) {
+                    $(this).val(htmlEntities($(this).val()));
+                    $(this).addClass('_entities-processed');
+                }
+            });
+        }
     });
 
     /** Create New Customer **/
@@ -345,7 +314,7 @@ $(function() {
     });
 
     // Custom option to show setup menu item only on hover, not applied on mobile
-    if (app_show_setup_menu_item_only_on_hover == 1 && !is_mobile()) {
+    if (app.options.show_setup_menu_item_only_on_hover == 1 && !is_mobile()) {
         side_bar.hover(
             function() {
                 setTimeout(function() {
@@ -372,11 +341,10 @@ $(function() {
         $navTabs.find('[data-group="' + tab_group + '"]').parents('li').addClass('active');
     }
     // Set moment locale
-    moment.locale(locale);
+    moment.locale(app.locale);
     // Set timezone locale
-    moment().tz(app_timezone).format();
-    // Set datetimepicker locale
-    jQuery.datetimepicker.setLocale(locale);
+    moment().tz(app.options.timezone).format();
+
     // Init tinymce editors
     init_editor();
     // Dont close dropdown on timer top click
@@ -491,7 +459,7 @@ $(function() {
         });
     }
 
-    if (app_user_browser == 'safari') {
+    if (app.browser == 'safari') {
         $('body').on('input', '.bootstrap-select .bs-searchbox input', function() {
             $(this).trigger('keyup');
         });
@@ -508,55 +476,7 @@ $(function() {
         init_timers();
     });
 
-    // Fix for dropdown overlay in .table-responsive, last rows are overlapping e.q. on tasks table
-    $("body").on('click', '.table-responsive .dropdown-toggle', function(event) {
-        if ($(this).next().hasClass('dropdown-menu')) {
-            var elm = $(this).next(),
-                docHeight = $(document).height(),
-                docWidth = $(document).width(),
-                btn_offset = $(this).offset(),
-                btn_width = $(this).outerWidth(),
-                btn_height = $(this).outerHeight(),
-                elm_width = elm.outerWidth(),
-                elm_height = elm.outerHeight(),
-                table_offset = $(".table-responsive").offset(),
-                table_width = $(".table-responsive").width(),
-                table_height = $(".table-responsive").height(),
-
-                tableoffright = table_width + table_offset.left,
-                tableoffbottom = table_height + table_offset.top,
-                rem_tablewidth = docWidth - tableoffright,
-                rem_tableheight = docHeight - tableoffbottom,
-                elm_offsetleft = btn_offset.left,
-                elm_offsetright = btn_offset.left + btn_width,
-                elm_offsettop = btn_offset.top + btn_height,
-                btn_offsetbottom = elm_offsettop,
-
-                left_edge = (elm_offsetleft - table_offset.left) < elm_width,
-                top_edge = btn_offset.top < elm_height,
-                right_edge = (table_width - elm_offsetleft) < elm_width,
-                bottom_edge = (tableoffbottom - btn_offsetbottom) < elm_height;
-
-            var table_offset_bottom = docHeight - (table_offset.top + table_height);
-
-            var touchTableBottom = (btn_offset.top + btn_height + (elm_height * 2)) - table_offset.top;
-
-            var bottomedge = touchTableBottom > table_offset_bottom;
-
-            if (left_edge) {
-                $(this).addClass('left-edge');
-            } else {
-                $('.dropdown-menu').removeClass('left-edge');
-            }
-            if (bottom_edge) {
-                $(this).parent().addClass('dropup');
-            } else {
-                $(this).parent().removeClass('dropup');
-            }
-        }
-    });
-
-    set_search_history(userRecentSearches);
+    set_search_history(app.user_recent_searches);
 
     $('#search-history').on('click', '.remove-history', function(e) {
         e.stopImmediatePropagation();
@@ -591,7 +511,7 @@ $(function() {
     });
 
     // Top search input fetch results
-    $('#search_input').on('keyup paste' + (app_user_browser == 'safari' ? ' input' : ''), function() {
+    $('#search_input').on('keyup paste' + (app.browser == 'safari' ? ' input' : ''), function() {
 
         var $searchHistory = $('#search-history');
         $searchHistory.removeClass('display-block');
@@ -610,8 +530,8 @@ $(function() {
         }
 
         if (q.length < 2 &&
-            (app_language.indexOf('chinese') === -1 &&
-                app_language.indexOf('japanese') === -1)) {
+            (app.user_language.indexOf('chinese') === -1 &&
+                app.user_language.indexOf('japanese') === -1)) {
             return;
         }
 
@@ -711,7 +631,7 @@ $(function() {
         if (confirm_delete()) {
             requestGetJSON($(this).attr('href')).done(function(response) {
                 alert_float(response.alert_type, response.message);
-                if($('#task-modal').is(':visible')) {
+                if ($('#task-modal').is(':visible')) {
                     _task_append_html(response.taskHtml);
                 }
                 reload_reminders_tables();
@@ -811,6 +731,11 @@ $(function() {
     $('[data-can-view-own], [data-can-view]').on('change', function() {
         var is_own_attr = $(this).attr('data-can-view-own');
         view_chk_selector = $(this).parents('tr').find('td input[' + (typeof is_own_attr !== typeof undefined && is_own_attr !== false ? 'data-can-view' : 'data-can-view-own') + ']');
+
+        if (view_chk_selector.data('not-applicable') == true) {
+            return;
+        }
+
         view_chk_selector.prop('checked', false);
         view_chk_selector.prop('disabled', $(this).prop('checked') === true);
     });
@@ -1136,21 +1061,21 @@ $(function() {
                 right: 'month,agendaWeek,agendaDay,viewFullCalendar,calendarFilter'
             },
             editable: false,
-            eventLimit: parseInt(app_calendar_events_limit) + 1,
+            eventLimit: parseInt(app.options.calendar_events_limit) + 1,
 
             views: {
                 day: {
                     eventLimit: false
                 }
             },
-            defaultView: app_default_view_calendar,
+            defaultView: app.options.default_view_calendar,
             isRTL: (isRTL == 'true' ? true : false),
             eventStartEditable: false,
-            timezone: app_timezone,
-            firstDay: parseInt(app_calendar_first_day),
-            year: moment.tz(app_timezone).format("YYYY"),
-            month: moment.tz(app_timezone).format("M"),
-            date: moment.tz(app_timezone).format("DD"),
+            timezone: app.options.timezone,
+            firstDay: parseInt(app.options.calendar_first_day),
+            year: moment.tz(app.options.timezone).format("YYYY"),
+            month: moment.tz(app.options.timezone).format("M"),
+            date: moment.tz(app.options.timezone).format("DD"),
             loading: function(isLoading, view) {
                 isLoading && $('#calendar .fc-header-toolbar .btn-default').addClass('btn-info').removeClass('btn-default').css('display', 'block');
                 !isLoading ? $('.dt-loader').addClass('hide') : $('.dt-loader').removeClass('hide');
@@ -1189,7 +1114,7 @@ $(function() {
                 if (!$.fullCalendar.moment(d).hasTime()) {
                     d += ' 00:00';
                 }
-                var vformat = (app_time_format == 24 ? app_date_format + ' H:i' : app_date_format + ' g:i A');
+                var vformat = (app.options.time_format == 24 ? app.options.date_format + ' H:i' : app.options.date_format + ' g:i A');
                 var fmt = new DateFormatter();
                 var d1 = fmt.formatDate(new Date(d), vformat);
                 $("input[name='start'].datetimepicker").val(d1);
@@ -1199,29 +1124,29 @@ $(function() {
         };
         if ($("body").hasClass('dashboard')) {
             calendar_settings.customButtons.viewFullCalendar = {
-                text: appLang.calendar_expand,
+                text: app.lang.calendar_expand,
                 click: function() {
                     window.location.href = admin_url + 'utilities/calendar';
                 }
             };
         }
         calendar_settings.customButtons.calendarFilter = {
-            text: appLang.filter_by.toLowerCase(),
+            text: app.lang.filter_by.toLowerCase(),
             click: function() {
                 slideToggle('#calendar_filters');
             }
         };
-        if (is_staff_member == 1) {
-            if (google_api !== '') {
-                calendar_settings.googleCalendarApiKey = google_api;
+        if (app.user_is_staff_member == 1) {
+            if (app.options.google_api !== '') {
+                calendar_settings.googleCalendarApiKey = app.options.google_api;
             }
-            if (calendarIDs !== '') {
-                calendarIDs = JSON.parse(calendarIDs);
-                if (calendarIDs.length != 0) {
-                    if (google_api !== '') {
-                        for (var i = 0; i < calendarIDs.length; i++) {
+            if (app.calendarIDs !== '') {
+                app.calendarIDs = JSON.parse(app.calendarIDs);
+                if (app.calendarIDs.length != 0) {
+                    if (app.options.google_api !== '') {
+                        for (var i = 0; i < app.calendarIDs.length; i++) {
                             var _gcal = {};
-                            _gcal.googleCalendarId = calendarIDs[i];
+                            _gcal.googleCalendarId = app.calendarIDs[i];
                             calendar_settings.eventSources.push(_gcal);
                         }
                     } else {
@@ -1287,18 +1212,17 @@ $(function() {
         });
 
         $applyCredits.find('#credits-alert').remove();
-        $applyCredits.find('.amount-to-credit').html(accounting.formatNumber(total));
+        $applyCredits.find('.amount-to-credit').html(format_money(total));
         if (creditsRemaining < total) {
             $('.credits-table').before($('<div/>', {
                 id: 'credits-alert',
                 class: 'alert alert-danger',
-            }).html(appLang.credit_amount_bigger_then_credit_note_remaining_credits));
+            }).html(app.lang.credit_amount_bigger_then_credit_note_remaining_credits));
             $applyCredits.find('[type="submit"]').prop('disabled', true);
         } else {
-            $applyCredits.find('.credit-note-balance-due').html(accounting.formatNumber(creditsRemaining - total));
+            $applyCredits.find('.credit-note-balance-due').html(format_money(creditsRemaining - total));
             $applyCredits.find('[type="submit"]').prop('disabled', false);
         }
-
     });
 
     $('body').on('change blur', '.apply-credits-from-invoice .apply-credits-field', function() {
@@ -1321,15 +1245,15 @@ $(function() {
         });
 
         $applyCredits.find('#credits-alert').remove();
-        $applyCredits.find('.amount-to-credit').html(accounting.formatNumber(total));
+        $applyCredits.find('.amount-to-credit').html(format_money(total));
         if (total > invoiceBalanceDue) {
             $('.credits-table').before($('<div/>', {
                 id: 'credits-alert',
                 class: 'alert alert-danger',
-            }).html(appLang.credit_amount_bigger_then_invoice_balance));
+            }).html(app.lang.credit_amount_bigger_then_invoice_balance));
             $applyCredits.find('[type="submit"]').prop('disabled', true);
         } else {
-            $applyCredits.find('.invoice-balance-due').html(accounting.formatNumber(invoiceBalanceDue - total));
+            $applyCredits.find('.invoice-balance-due').html(format_money(invoiceBalanceDue - total));
             $applyCredits.find('[type="submit"]').prop('disabled', false);
         }
     });
@@ -1385,33 +1309,6 @@ $(function() {
         if (typeof(leadAttachmentsDropzone) != 'undefined') { leadAttachmentsDropzone.destroy(); }
     });
 
-    // + button for adding more attachments
-    var addMoreAttachmentsInputKey = 1;
-    $("body").on('click', '.add_more_attachments', function() {
-        if ($(this).hasClass('disabled')) { return false; }
-        var total_attachments = $('.attachments input[name*="attachments"]').length;
-        if ($(this).data('ticket') && total_attachments >= app_maximum_allowed_ticket_attachments) {
-            return false;
-        }
-        var newattachment = $('.attachments').find('.attachment').eq(0).clone().appendTo('.attachments');
-        newattachment.find('input').removeAttr('aria-describedby aria-invalid');
-        newattachment.find('.has-error').removeClass('has-error');
-        newattachment.find('input').attr('name', 'attachments[' + addMoreAttachmentsInputKey + ']').val('');
-        newattachment.find('p[id*="error"]').remove();
-        newattachment.find('i').removeClass('fa-plus').addClass('fa-minus');
-        newattachment.find('button').removeClass('add_more_attachments').addClass('remove_attachment').removeClass('btn-success').addClass('btn-danger');
-        addMoreAttachmentsInputKey++;
-    });
-
-    // Remove attachment
-    $("body").on('click', '.remove_attachment', function() {
-        $(this).parents('.attachment').remove();
-    });
-
-    // Fix lead conver to customer modal, make the modal empty
-    $("body").on("hidden.bs.modal", '#convert_lead_to_client_modal', function(event) {
-        $(this).data('bs.modal', null);
-    });
 
     $('body').on('submit', '#lead-modal .consent-form', function() {
         var data = $(this).serialize();
@@ -1535,16 +1432,6 @@ $(function() {
         }
     });
 
-    // Show please wait text on button where data-loading-text is added
-    $("body").on('click', '[data-loading-text]', function() {
-        var form = $(this).data('form');
-        if (form !== null && typeof(form) != 'undefined') {
-            if ($(form).valid()) { $(this).button('loading'); }
-        } else {
-            $(this).button('loading');
-        }
-    });
-
     // Custom close function for reminder modals in case is modal in modal
     $("body").on('click', '.close-reminder-modal', function() {
         $(".reminder-modal-" + $(this).data('rel-type') + '-' + $(this).data('rel-id')).modal('hide');
@@ -1657,32 +1544,10 @@ $(function() {
         selector: '[data-toggle="popover"]',
     });
 
-    // Remove tooltip fix on body click (in case user clicked link and tooltip stays open)
-    $("body").on('click', function() {
-        $('.tooltip').remove();
-    });
-
-    // Close all popovers if user click on body and the click is not inside the popover content area
-    $("body").on('click', function(e) {
-        $('[data-toggle="popover"],.manual-popover').each(function() {
-            //the 'is' for buttons that trigger popups
-            //the 'has' for icons within a button that triggers a popup
-            if (!$(this).is(e.target) && $(this).has(e.target).length === 0 && $('.popover').has(e.target).length === 0) {
-                $(this).popover('hide');
-            }
-        });
-    });
-
     // Do not close the dropdownmenu for filter when filtering
     $("body").on('click', '._filter_data ul.dropdown-menu li a,.not-mark-as-read-inline,.not_mark_all_as_read a', function(e) {
         e.stopPropagation();
         e.preventDefault();
-    });
-
-    // Add are you sure on all delete links (onclick is not included here)
-    $("body").on('click', '._delete', function(e) {
-        if (confirm_delete()) { return true; }
-        return false;
     });
 
     // On shown for all modals
@@ -1726,16 +1591,6 @@ $(function() {
             $("body").find('#cycles_wrapper').addClass('hide');
             $("body").find('#cycles_wrapper #cycles').val(0);
             $('#unlimited_cycles').prop('checked', true).change();
-        }
-    });
-
-    $('select[name="range"]').on('change', function() {
-        var $period = $('.period');
-        if ($(this).val() == 'period') {
-            $period.removeClass('hide');
-        } else {
-            $period.addClass('hide');
-            $period.find('input').val('');
         }
     });
 
@@ -1813,45 +1668,50 @@ $(function() {
     });
 
     /* Custom notifications links */
-    $("body").on('click', '.notifications a.notification-top, .notification_link', function(e) {
+    $("body").on('click' + (navigator.userAgent.match(/iPad/i) != null ? ' touchstart' : ''),
+        '.notifications a.notification-top, .notification_link',
+        function(e) {
+            e.preventDefault();
+            var $notLink = $(this);
+            var not_href_id;
 
-        e.preventDefault();
-        var $notLink = $(this);
-        var not_href_id;
+            var not_href = $notLink.hasClass('notification_link') ? $notLink.data('link') : e.currentTarget.href;
 
-        var not_href = $notLink.hasClass('notification_link') ? $notLink.data('link') : e.currentTarget.href;
+            var not_href_array = not_href.split('#');
+            var notRedirect = true;
+            if (not_href_array[1] && not_href_array[1].indexOf('=') > -1) {
+                notRedirect = false;
+                not_href_id = not_href_array[1].split('=')[1];
+                if (not_href_array[1].indexOf('postid') > -1) {
+                    postid = not_href_id;
+                    if ($(window).width() > 769) {
+                        $('.open_newsfeed.desktop').click();
+                    } else {
+                        $('.open_newsfeed.mobile').click();
+                    }
+                } else if (not_href_array[1].indexOf('taskid') > -1) {
 
-        var not_href_array = not_href.split('#');
-        var notRedirect = true;
-        if (not_href_array[1] && not_href_array[1].indexOf('=') > -1) {
-            notRedirect = false;
-            not_href_id = not_href_array[1].split('=')[1];
-            if (not_href_array[1].indexOf('postid') > -1) {
-                postid = not_href_id;
-                $('.open_newsfeed').click();
-            } else if (not_href_array[1].indexOf('taskid') > -1) {
-
-                var comment_id = undefined;
-                if (not_href.indexOf('#comment_') > -1) {
-                    var task_comment_id = not_href.split('#comment_');
-                    comment_id = task_comment_id[task_comment_id.length - 1];
+                    var comment_id = undefined;
+                    if (not_href.indexOf('#comment_') > -1) {
+                        var task_comment_id = not_href.split('#comment_');
+                        comment_id = task_comment_id[task_comment_id.length - 1];
+                    }
+                    init_task_modal(not_href_id, comment_id);
+                } else if (not_href_array[1].indexOf('leadid') > -1) {
+                    init_lead(not_href_id);
+                } else if (not_href_array[1].indexOf('eventid') > -1) {
+                    view_event(not_href_id);
                 }
-                init_task_modal(not_href_id, comment_id);
-            } else if (not_href_array[1].indexOf('leadid') > -1) {
-                init_lead(not_href_id);
-            } else if (not_href_array[1].indexOf('eventid') > -1) {
-                view_event(not_href_id);
             }
-        }
-        if (!$notLink.hasClass('desktopClick')) {
-            $notLink.parent('li').find('.not-mark-as-read-inline').click();
-        }
-        if (notRedirect) {
-            setTimeout(function() {
-                window.location.href = not_href_array;
-            }, 50);
-        }
-    });
+            if (!$notLink.hasClass('desktopClick')) {
+                $notLink.parent('li').find('.not-mark-as-read-inline').click();
+            }
+            if (notRedirect) {
+                setTimeout(function() {
+                    window.location.href = not_href_array;
+                }, 50);
+            }
+        });
 
     // Set notifications to read when notifictions dropdown is opened
     $('.notifications-wrapper').on('show.bs.dropdown', function() {
@@ -1980,7 +1840,7 @@ $(function() {
     }
 
     // Newsfeed close and open
-    $("body").on('click', '.open_newsfeed,.close_newsfeed', function(e) {
+    $("body").on('click', '.open_newsfeed, .close_newsfeed', function(e) {
         e.preventDefault();
         if (typeof($(this).data('close')) == 'undefined') {
             requestGet('newsfeed/get_data').done(function(response) {
@@ -2002,7 +1862,13 @@ $(function() {
         $("body").toggleClass('noscroll');
     });
 
-    if ($('[data-newsfeed-auto]').length > 0) { $('.open_newsfeed').click(); }
+    if ($('[data-newsfeed-auto]').length > 0) {
+        if ($(window).width() > 769) {
+            $('.open_newsfeed.desktop').click();
+        } else {
+            $('.open_newsfeed.mobile').click();
+        }
+    }
 
     // When adding comment if user press enter to submit comment too for newsfeed comments
     $("body").on('keyup', '.comment-input input', function(event) {
@@ -2051,11 +1917,6 @@ $(function() {
         $('#post-attachments').toggleClass('hide');
     });
 
-    // Jump to page feature
-    $(document).on("change", ".dt-page-jump-select", function() {
-        $('#' + $(this).attr('data-id')).DataTable().page($(this).val() - 1).draw(false);
-    });
-
     // Init invoices top stats
     init_invoices_total();
     // Init expenses total
@@ -2082,7 +1943,6 @@ $(function() {
         proposal_pipeline_open(proposal_id);
     }
 
-
     $("body").on('submit', '._transaction_form', function() {
 
         // On submit re-calculate total and reorder the items for all cases.
@@ -2095,7 +1955,7 @@ $(function() {
         if ($previewItem.find('[name="description"]').length && $previewItem.find('[name="description"]').val().trim().length > 0 &&
             $previewItem.find('[name="rate"]').val().trim().length > 0) {
 
-            $itemsTable.before('<div class="alert alert-warning mbot20" id="items-warning">' + appLang.item_forgotten_in_preview + '<i class="fa fa-angle-double-down pointer pull-right fa-2x" style="margin-top:-4px;" onclick="add_item_to_table(\'undefined\',\'undefined\',undefined); return false;"></i></div>');
+            $itemsTable.before('<div class="alert alert-warning mbot20" id="items-warning">' + app.lang.item_forgotten_in_preview + '<i class="fa fa-angle-double-down pointer pull-right fa-2x" style="margin-top:-4px;" onclick="add_item_to_table(\'undefined\',\'undefined\',undefined); return false;"></i></div>');
 
             $('html,body').animate({
                 scrollTop: $("#items-warning").offset().top
@@ -2105,7 +1965,7 @@ $(function() {
 
         } else {
             if ($itemsTable.length && $itemsTable.find('.item').length === 0) {
-                $itemsTable.before('<div class="alert alert-warning mbot20" id="items-warning">' + appLang.no_items_warning + '</div>');
+                $itemsTable.before('<div class="alert alert-warning mbot20" id="items-warning">' + app.lang.no_items_warning + '</div>');
                 $('html,body').animate({
                     scrollTop: $("#items-warning").offset().top
                 });
@@ -2219,13 +2079,13 @@ $(function() {
                     salesExtenalFileUpload(files, 'dropbox');
                 },
                 linkType: "preview",
-                extensions: app_allowed_files.split(','),
+                extensions: app.options.allowed_files.split(','),
             }));
         }
     }
 
     if ($('#sales-upload').length > 0) {
-        new Dropzone('#sales-upload', $.extend({}, _dropzone_defaults(), {
+        new Dropzone('#sales-upload', appCreateDropzoneOptions({
             sending: function(file, xhr, formData) {
                 formData.append("rel_id", $("body").find('input[name="_attachment_sale_id"]').val());
                 formData.append("type", $("body").find('input[name="_attachment_sale_type"]').val());
@@ -2236,11 +2096,7 @@ $(function() {
                 var dl_url, delete_function;
                 dl_url = 'download/file/sales_attachment/';
                 delete_function = 'delete_' + type + '_attachment';
-                if (type == 'invoice') {
-                    init_invoice(response.rel_id);
-                } else if (type == 'credit_note') {
-                    init_credit_note(response.rel_id);
-                } else if (type == 'estimate') {
+                if (type == 'estimate') {
                     $("body").hasClass('estimates-pipeline') ?
                         estimate_pipeline_open(response.rel_id) :
                         init_estimate(response.rel_id);
@@ -2248,6 +2104,10 @@ $(function() {
                     $("body").hasClass('proposals-pipeline') ?
                         proposal_pipeline_open(response.rel_id) :
                         init_proposal(response.rel_id);
+                } else {
+                    if (typeof(window['init_' + type]) == 'function') {
+                        window['init_' + type](response.rel_id);
+                    }
                 }
                 var data = '';
                 if (response.success === true || response.success == 'true') {
@@ -2299,7 +2159,7 @@ $(function() {
 
     // On change currency recalculate price and change symbol
     $("body").on('change', 'select[name="currency"]', function() {
-        init_currency_symbol();
+        init_currency();
     });
 
     // Recaulciate total on these changes
@@ -2448,7 +2308,7 @@ $(function() {
             _init_tasks_billable_select(response['billable_tasks'], projectAjax.selectpicker('val'));
             response.customer_has_projects === true ? projectsWrapper.removeClass('hide') : projectsWrapper.addClass('hide');
             s_currency.selectpicker('refresh');
-            init_currency_symbol();
+            init_currency();
         });
 
     });
@@ -2477,15 +2337,14 @@ $(function() {
     });
 
     if (typeof(accounting) != 'undefined') {
-        // Used for formatting money
-        accounting.settings.currency.decimal = app_decimal_separator;
-        accounting.settings.currency.thousand = app_thousand_separator;
-        accounting.settings.currency.precision = app_decimal_places;
+
+        // For currency
+        accounting.settings.currency.precision = app.options.decimal_places;
 
         // Used for numbers
-        accounting.settings.number.thousand = app_thousand_separator;
-        accounting.settings.number.decimal = app_decimal_separator;
-        accounting.settings.number.precision = app_decimal_places;
+        accounting.settings.number.thousand = app.options.thousand_separator;
+        accounting.settings.number.decimal = app.options.decimal_separator;
+        accounting.settings.number.precision = app.options.decimal_places;
 
         calculate_total();
     }
@@ -2554,13 +2413,6 @@ $(function() {
 $(document).keyup(function(e) {
     if (e.keyCode == 27) { // escape key maps to keycode `27`
 
-        // Close modal if only modal is opened and there is no 2 modals opened
-        // This will trigger only if there is only 1 modal visible/opened
-
-        if ($('.modal').is(':visible') && $('.modal:visible').length === 1) {
-            $("body").find('.modal:visible [onclick^="close_modal_manually"]').eq(0).click();
-        }
-
         if ($('.popup-wrapper').is(':visible')) {
             $('.popup-wrapper').find('.system-popup-close').click();
         }
@@ -2572,7 +2424,7 @@ $(document).keyup(function(e) {
 });
 
 function _make_task_checklist_items_deletable() {
-    if (has_permission_tasks_checklist_items_delete == '1') {
+    if (app.options.has_permission_tasks_checklist_items_delete == '1') {
         var itemsHtml = $("body").find('.checklist-templates-wrapper ul.dropdown-menu li').not(':first-child');
         var itemsSelect = $("body").find('.checklist-templates-wrapper select option').not(':first-child');
         $.each(itemsSelect, function(i, item) {
@@ -2595,7 +2447,7 @@ function _init_tasks_billable_select(tasks, project_id) {
         $.each(tasks, function(i, obj) {
             option_data = ' ';
             if (obj.started_timers === true) {
-                option_data += 'disabled class="text-danger important" data-subtext="' + appLang.invoice_task_billable_timers_found + '"';
+                option_data += 'disabled class="text-danger important" data-subtext="' + app.lang.invoice_task_billable_timers_found + '"';
             } else if (obj.started_timers === false && obj.rel_type != 'project') {
                 option_data += 'data-subtext="' + obj.rel_name + '"';
             }
@@ -2609,9 +2461,9 @@ function _init_tasks_billable_select(tasks, project_id) {
         var help_tooltip = '';
 
         if (!empty(project_id)) {
-            help_tooltip = appLang['showing_billable_tasks_from_project'] + ' ' + $('#project_id option:selected').text().trim();
+            help_tooltip = app.lang['showing_billable_tasks_from_project'] + ' ' + $('#project_id option:selected').text().trim();
         } else {
-            help_tooltip = appLang['invoice_task_item_project_tasks_not_included'];
+            help_tooltip = app.lang['invoice_task_item_project_tasks_not_included'];
         }
 
         tasks_help_wrapper.html('<span class="pointer popover-invoker" data-container=".form-group-select-task_select" data-trigger="click" data-placement="top" data-toggle="popover" data-content="' + help_tooltip + '"><i class="fa fa-question-circle"></i></span>');
@@ -2626,48 +2478,6 @@ function _init_tasks_billable_select(tasks, project_id) {
     }
 
     billable_tasks_area.selectpicker('refresh');
-}
-// Lightbox plugins for images
-function init_lightbox(options) {
-    if (typeof(lightbox) != 'undefined') {
-        var _lightBoxOptions = {
-            'showImageNumberLabel': false,
-            resizeDuration: 200,
-            positionFromTop: 25
-        };
-        if (typeof(options) != 'undefined') {
-            jQuery.extend(_lightBoxOptions, options);
-        }
-        lightbox.option(_lightBoxOptions);
-    }
-}
-
-// Progress bar animation load
-function init_progress_bars() {
-    var progress_bars = $('body').find('.progress div.progress-bar');
-    if (progress_bars.length) {
-        progress_bars.each(function() {
-            var bar = $(this);
-            var perc = bar.attr("data-percent");
-            bar.css('width', (perc) + '%');
-            if (!bar.hasClass('no-percent-text')) { bar.text((perc) + '%'); }
-        });
-    }
-}
-
-// Get url params like $_GET
-function get_url_param(param) {
-    var vars = {};
-    window.location.href.replace(location.hash, '').replace(
-        /[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
-        function(m, key, value) { // callback
-            vars[key] = value !== undefined ? value : '';
-        }
-    );
-    if (param) {
-        return vars[param] ? vars[param] : null;
-    }
-    return vars;
 }
 
 // Fix for height on the wrapper
@@ -2707,17 +2517,6 @@ function set_body_small() {
     }
 }
 
-// Generate random password
-function generatePassword(field) {
-    var length = 12,
-        charset = "abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        retVal = "";
-    for (var i = 0, n = charset.length; i < length; ++i) {
-        retVal += charset.charAt(Math.floor(Math.random() * n));
-    }
-    $(field).parents().find('input.password').val(retVal);
-}
-
 // Switch field make request
 function switch_field(field) {
     var status, url, id;
@@ -2729,64 +2528,15 @@ function switch_field(field) {
 }
 
 // General validate form function
-function _validate_form(form, form_rules, submithandler) {
-    var $form = $(form);
-    if ($form.length) {
-        var f = $form.validate({
-            rules: form_rules,
-            messages: {
-                email: {
-                    remote: appLang.email_exists,
-                },
-            },
-            ignore: [],
-            submitHandler: function(form) {
-                if ($(form).hasClass('disable-on-submit')) {
-                    $(form).find('[type="submit"]').prop('disabled', true);
-                }
-                if (typeof(submithandler) !== 'undefined') {
-                    submithandler(form);
-                } else {
-                    return true;
-                }
-            },
-        });
-
-        var custom_required_fields = $form.find('[data-custom-field-required]');
-        if (custom_required_fields.length > 0) {
-
-            $.each(custom_required_fields, function() {
-
-                // for custom fields in tr.main, do not validate those
-                if (!$(this).parents('tr.main').length) {
-
-                    $(this).rules("add", {
-                        required: true
-                    });
-
-                    var name = $(this).attr('name');
-                    var label = $(this).parents('.form-group').find('[for="' + name + '"]');
-                    if (label.length > 0 && label.find('.req').length === 0) {
-                        label.prepend('<small class="req text-danger">* </small>');
-                    }
-                }
-            });
-        }
-        $.each(form_rules, function(name, rule) {
-            if ((rule == 'required' && !jQuery.isPlainObject(rule)) || (jQuery.isPlainObject(rule) && rule.hasOwnProperty('required'))) {
-                var label = $form.find('[for="' + name + '"]');
-                if (label.length > 0 && label.find('.req').length === 0) {
-                    label.prepend(' <small class="req text-danger">* </small>');
-                }
-            }
-        });
-
-        $(document).trigger('app.form-validate', $form);
-    }
-    return false;
+// This should not be used too, but it's added for readibility
+// @deprecated 2.3.
+function _validate_form(form, form_rules, submithandler, overwriteMessages) {
+    appValidateForm(form, form_rules, submithandler, overwriteMessages)
 }
 
 // Delete option from database AJAX
+// Not tested, do not use this function
+// Not used?
 function delete_option(child, id) {
     if (confirm_delete()) {
         requestGetJSON('settings/delete_option/' + id).done(function(response) {
@@ -2795,38 +2545,6 @@ function delete_option(child, id) {
             }
         });
     }
-}
-
-// Slide toggle any selector passed
-function slideToggle(selector, callback) {
-    var $element = $(selector);
-    if ($element.hasClass('hide')) { $element.removeClass('hide', 'slow'); }
-    if ($element.length) { $element.slideToggle(); }
-    // Set all progress bar to 0 percent
-    var progress_bars = $('.progress-bar').not('.not-dynamic');
-    if (progress_bars.length > 0) {
-        progress_bars.each(function() {
-            $(this).css('width', 0 + '%');
-            $(this).text(0 + '%');
-        });
-        // Init the progress bars again
-        init_progress_bars();
-    }
-    // Possible callback after slide toggle
-    if (typeof(callback) == 'function') { callback(); }
-}
-
-// Generate float alert
-function alert_float(type, message, timeout) {
-    var aId, el;
-    aId = $("body").find('float-alert').length;
-    aId++;
-    aId = 'alert_float_' + aId;
-    el = $('<div id="' + aId + '" class="float-alert animated fadeInRight col-xs-11 col-sm-4 alert alert-' + type + '"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><span class="fa fa-bell-o" data-notify="icon"></span><span class="alert-title">' + message + '</span></div>');
-    $("body").append(el);
-    setTimeout(function() {
-        $('#' + aId).hide('fast', function() { $('#' + aId).remove(); });
-    }, timeout ? timeout : 3500);
 }
 
 // Initing relation tasks tables
@@ -2854,361 +2572,15 @@ function init_rel_tasks_table(rel_id, rel_type, selector) {
     initDataTable($selector, url, tasksRelationTableNotSortable, tasksRelationTableNotSortable, TasksServerParams, [$selector.find('th.duedate').index(), 'asc']);
 }
 
-// Returns datatbles export button array based on settings
-function get_datatable_buttons(table) {
-    // pdfmake arabic fonts support
-    if (app_language.toLowerCase() == 'persian' || app_language.toLowerCase() == 'arabic') {
-        if ($('body').find('#amiri').length === 0) {
-            var mainjs = document.createElement('script');
-            mainjs.setAttribute('src', 'https://rawgit.com/xErik/pdfmake-fonts-google/master/build/script/ofl/amiri.js');
-            mainjs.setAttribute('id', 'amiri');
-            document.head.appendChild(mainjs);
-
-            var mapjs = document.createElement('script');
-            mapjs.setAttribute('src', 'https://rawgit.com/xErik/pdfmake-fonts-google/master/build/script/ofl/amiri.map.js');
-            document.head.appendChild(mapjs);
-        }
-    }
-
-    var formatExport = {
-        body: function(data, row, column, node) {
-
-            // Fix for notes inline datatables
-            // Causing issues because of the hidden textarea for edit and the content is duplicating
-            // This logic may be extended in future for other similar fixes
-            var newTmpRow = $('<div></div>', data);
-            newTmpRow.append(data);
-
-            if (newTmpRow.find('[data-note-edit-textarea]').length > 0) {
-                newTmpRow.find('[data-note-edit-textarea]').remove();
-                data = newTmpRow.html().trim();
-            }
-
-            if (newTmpRow.find('.row-options').length > 0) {
-                newTmpRow.find('.row-options').remove();
-                data = newTmpRow.html().trim();
-            }
-
-            if (newTmpRow.find('.table-export-exclude').length > 0) {
-                newTmpRow.find('.table-export-exclude').remove();
-                data = newTmpRow.html().trim();
-            }
-
-            // Datatables use the same imlpementation to strip the html.
-            var div = document.createElement("div");
-            div.innerHTML = data;
-            var text = div.textContent || div.innerText || "";
-
-            return text.trim();
-        }
-    };
-    var table_buttons_options = [];
-
-    if (!table_export_button_is_hidden()) {
-        table_buttons_options.push({
-            extend: 'collection',
-            text: appLang.dt_button_export,
-            className: 'btn btn-default-dt-options',
-            buttons: [{
-                extend: 'excel', // Causing issues with formats, the excel is still using csv so in this case will work good
-                text: appLang.dt_button_excel,
-                footer: true,
-                exportOptions: {
-                    columns: [':not(.not-export)'],
-                    rows: function(index) {
-                        return _dt_maybe_export_only_selected_rows(index, table);
-                    },
-                    format: formatExport,
-                },
-            }, {
-                extend: 'csvHtml5',
-                text: appLang.dt_button_csv,
-                footer: true,
-                exportOptions: {
-                    columns: [':not(.not-export)'],
-                    rows: function(index) {
-                        return _dt_maybe_export_only_selected_rows(index, table);
-                    },
-                    format: formatExport,
-                }
-            }, {
-                extend: 'pdfHtml5',
-                text: appLang.dt_button_pdf,
-                footer: true,
-                exportOptions: {
-                    columns: [':not(.not-export)'],
-                    rows: function(index) {
-                        return _dt_maybe_export_only_selected_rows(index, table);
-                    },
-                    format: formatExport,
-                },
-                orientation: 'landscape',
-                customize: function(doc) {
-                    // Fix for column widths
-                    var table_api = $(table).DataTable();
-                    var columns = table_api.columns().visible();
-                    var columns_total = columns.length;
-                    var pdf_widths = [];
-                    var total_visible_columns = 0;
-                    for (i = 0; i < columns_total; i++) {
-                        // Is only visible column
-                        if (columns[i] == true) {
-                            total_visible_columns++;
-                        }
-                    }
-                    setTimeout(function() {
-                        if (total_visible_columns <= 5) {
-                            for (i = 0; i < total_visible_columns; i++) {
-                                pdf_widths.push((735 / total_visible_columns));
-                            }
-                            doc.content[1].table.widths = pdf_widths;
-                        }
-                    }, 10);
-
-                    if (app_language.toLowerCase() == 'persian' || app_language.toLowerCase() == 'arabic') {
-                        doc.defaultStyle.font = Object.keys(pdfMake.fonts)[0];
-                    }
-                    //  doc.defaultStyle.font = 'test';
-                    doc.styles.tableHeader.alignment = 'left';
-                    doc.styles.tableHeader.margin = [5, 5, 5, 5];
-                    doc.pageMargins = [12, 12, 12, 12];
-                }
-            }, {
-                extend: 'print',
-                text: appLang.dt_button_print,
-                footer: true,
-                exportOptions: {
-                    columns: [':not(.not-export)'],
-                    rows: function(index) {
-                        return _dt_maybe_export_only_selected_rows(index, table);
-                    },
-                    format: formatExport,
-                }
-            }],
-        });
-    }
-    var tableButtons = $("body").find('.table-btn');
-
-    $.each(tableButtons, function() {
-        var b = $(this);
-        if (b.length && b.attr('data-table')) {
-            if ($(table).is(b.attr('data-table'))) {
-                table_buttons_options.push({
-                    text: b.text().trim(),
-                    className: 'btn btn-default-dt-options',
-                    action: function(e, dt, node, config) {
-                        b.click();
-                    }
-                });
-            }
-        }
-    });
-
-    if (!$(table).hasClass('dt-no-serverside')) {
-        table_buttons_options.push({
-            text: '<i class="fa fa-refresh"></i>',
-            className: 'btn btn-default-dt-options btn-dt-reload',
-            action: function(e, dt, node, config) {
-                dt.ajax.reload();
-            }
-        });
-    }
-
-    // TODO
-    // console.log
-
-    /*   if ($(table).hasClass('customizable-table')) {
-            table_buttons_options.push({
-                columns: '.toggleable',
-                text: '<i class="fa fa-cog"></i>',
-                extend: 'colvis',
-                className: 'btn btn-default-dt-options dt-column-visibility',
-            });
-        }*/
-
-    return table_buttons_options;
-}
-
-// Check if table export button should be hidden based on settings
-function table_export_button_is_hidden() {
-    if (app_show_table_export_button != 'to_all') {
-        if (app_show_table_export_button === 'hide' || app_show_table_export_button === 'only_admins' && is_admin == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Datatables inline/offline lazy load images
-function DataTablesOfflineLazyLoadImages(nRow, aData, iDisplayIndex) {
-    var img = $('img.img-table-loading', nRow);
-    img.attr('src', img.data('orig'));
-    img.prev('div').addClass('hide');
-    return nRow;
-}
-
-function _dt_maybe_export_only_selected_rows(index, table) {
-    table = $(table);
-    index = index.toString();
-    var bulkActionsCheckbox = table.find('thead th input[type="checkbox"]').eq(0);
-    if (bulkActionsCheckbox && bulkActionsCheckbox.length > 0) {
-        var rows = table.find('tbody tr');
-        var anyChecked = false;
-        $.each(rows, function() {
-            if ($(this).find('td:first input[type="checkbox"]:checked').length) {
-                anyChecked = true;
-            }
-        });
-
-        if (anyChecked) {
-            if (table.find('tbody tr:eq(' + (index) + ') td:first input[type="checkbox"]:checked').length > 0) {
-                return index;
-            } else {
-                return null;
-            }
-        } else {
-            return index;
-        }
-    }
-    return index;
-}
-
-// Datatables custom job to page function
-function _table_jump_to_page(table, oSettings) {
-
-    var paginationData = table.DataTable().page.info();
-    var previousDtPageJump = $("body").find('#dt-page-jump-' + oSettings.sTableId);
-
-    if (previousDtPageJump.length) {
-        previousDtPageJump.remove();
-    }
-
-    if (paginationData.pages > 1) {
-
-        var jumpToPageSelect = $("<select></select>", {
-            "data-id": oSettings.sTableId,
-            "class": "dt-page-jump-select form-control",
-            'id': 'dt-page-jump-' + oSettings.sTableId
-        });
-
-        var paginationHtml = '';
-
-        for (var i = 1; i <= paginationData.pages; i++) {
-            var selectedCurrentPage = ((paginationData.page + 1) === i) ? 'selected' : '';
-            paginationHtml += "<option value='" + i + "'" + selectedCurrentPage + ">" + i + "</option>";
-        }
-
-        if (paginationHtml != '') {
-            jumpToPageSelect.append(paginationHtml);
-        }
-
-        $("#" + oSettings.sTableId + "_wrapper .dt-page-jump").append(jumpToPageSelect);
-    }
-}
-
-// @deprecated
-function initDatatableOffline(dt_table) {
-    initDataTableInline(dt_table);
-}
 
 // Datatbles inline/offline - no serverside
 function initDataTableInline(dt_table) {
-
-    var selector = typeof(dt_table) !== 'undefined' ? dt_table : '.dt-table';
-    var tables = $(selector);
-
-    if (tables.length === 0) {
-        return;
-    }
-
-    var length_options = [10, 25, 50, 100];
-    var length_options_names = [10, 25, 50, 100];
-
-    app_tables_pagination_limit = parseFloat(app_tables_pagination_limit);
-
-    if ($.inArray(app_tables_pagination_limit, length_options) == -1) {
-        length_options.push(app_tables_pagination_limit);
-        length_options_names.push(app_tables_pagination_limit);
-    }
-
-    length_options.sort(function(a, b) {
-        return a - b;
+    appDataTableInline(dt_table, {
+        supportsButtons: true,
+        supportsLoading: true,
+        autoWidth: false,
+        scrollResponsive: app.options.scroll_responsive_tables,
     });
-
-    length_options_names.sort(function(a, b) {
-        return a - b;
-    });
-
-    length_options.push(-1);
-    length_options_names.push(appLang.dt_length_menu_all);
-
-
-    if (tables.length) {
-        var order_col, order_type, options, _buttons;
-        var _options = {
-            "language": appLang.datatables,
-            "processing": true,
-            'paginate': true,
-            "responsive": true,
-            "autoWidth": false,
-            "order": [0, 'desc'],
-            "pageLength": app_tables_pagination_limit,
-            "lengthMenu": [length_options, length_options_names],
-            "fnRowCallback": DataTablesOfflineLazyLoadImages,
-            "fnDrawCallback": function(oSettings) {
-                _table_jump_to_page(this, oSettings);
-                if (oSettings.aoData.length === 0 || oSettings.aiDisplay.length === 0) {
-                    $(oSettings.nTableWrapper).addClass('app_dt_empty');
-                } else {
-                    $(oSettings.nTableWrapper).removeClass('app_dt_empty');
-                }
-            },
-            "initComplete": function(settings, json) {
-                var dtOfflineEmpty = this.find('.dataTables_empty');
-
-                if (this.hasClass('scroll-responsive') || app_scroll_responsive_tables == 1) {
-                    this.wrap('<div class="table-responsive"></div>');
-                }
-
-                if (dtOfflineEmpty.length) {
-                    dtOfflineEmpty.attr('colspan', this.find('thead th').length);
-                }
-
-                this.parents('.table-loading').removeClass('table-loading');
-                var t_export = $(selector);
-                var th_last_child = t_export.find('thead th:last-child');
-                var th_first_child = t_export.find('thead th:first-child');
-                if (th_last_child.text().trim() == appLang.options) {
-                    th_last_child.addClass('not-export');
-                }
-                if (th_first_child.find('input[type="checkbox"]').length > 0) {
-                    th_first_child.addClass('not-export');
-                }
-            },
-            dom: "<'row'><'row'<'col-md-6'lB><'col-md-6'f>r>t<'row'<'col-md-4'i>><'row'<'#colvis'><'.dt-page-jump'>p>",
-        };
-
-        order_col = $($(this)).attr('data-order-col');
-        order_type = $($(this)).attr('data-order-type');
-        $.each(tables, function() {
-            $(this).addClass('dt-no-serverside');
-            options = _options;
-            if ($(this).hasClass('scroll-responsive') || app_scroll_responsive_tables == 1) {
-                options.responsive = false;
-            }
-            order_col = $(this).attr('data-order-col');
-            order_type = $(this).attr('data-order-type');
-            if (order_col && order_type) {
-                options.order = [
-                    [order_col, order_type]
-                ];
-            }
-            _buttons = get_datatable_buttons(this);
-            // Remove the reload button here because its not ajax request
-            options.buttons = _buttons;
-            $(this).DataTable(options);
-        });
-    }
 }
 
 // General function for all datatables serverside
@@ -3251,11 +2623,11 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
     var length_options = [10, 25, 50, 100];
     var length_options_names = [10, 25, 50, 100];
 
-    app_tables_pagination_limit = parseFloat(app_tables_pagination_limit);
+    app.options.tables_pagination_limit = parseFloat(app.options.tables_pagination_limit);
 
-    if ($.inArray(app_tables_pagination_limit, length_options) == -1) {
-        length_options.push(app_tables_pagination_limit);
-        length_options_names.push(app_tables_pagination_limit);
+    if ($.inArray(app.options.tables_pagination_limit, length_options) == -1) {
+        length_options.push(app.options.tables_pagination_limit);
+        length_options_names.push(app.options.tables_pagination_limit);
     }
 
     length_options.sort(function(a, b) {
@@ -3266,10 +2638,10 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
     });
 
     length_options.push(-1);
-    length_options_names.push(appLang.dt_length_menu_all);
+    length_options_names.push(app.lang.dt_length_menu_all);
 
     var dtSettings = {
-        "language": appLang.datatables,
+        "language": app.lang.datatables,
         "processing": true,
         "retrieve": true,
         "serverSide": true,
@@ -3279,7 +2651,7 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
         "responsive": true,
         "autoWidth": false,
         dom: "<'row'><'row'<'col-md-7'lB><'col-md-5'f>>rt<'row'<'col-md-4'i>><'row'<'#colvis'><'.dt-page-jump'>p>",
-        "pageLength": app_tables_pagination_limit,
+        "pageLength": app.options.tables_pagination_limit,
         "lengthMenu": [length_options, length_options_names],
         "columnDefs": [{
             "searchable": false,
@@ -3305,13 +2677,13 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
             var t = this;
             var $btnReload = $('.btn-dt-reload');
             $btnReload.attr('data-toggle', 'tooltip');
-            $btnReload.attr('title', appLang.dt_button_reload);
+            $btnReload.attr('title', app.lang.dt_button_reload);
 
             var $btnColVis = $('.dt-column-visibility');
             $btnColVis.attr('data-toggle', 'tooltip');
-            $btnColVis.attr('title', appLang.dt_button_column_visibility);
+            $btnColVis.attr('title', app.lang.dt_button_column_visibility);
 
-            if (t.hasClass('scroll-responsive') || app_scroll_responsive_tables == 1) {
+            if (t.hasClass('scroll-responsive') || app.options.scroll_responsive_tables == 1) {
                 t.wrap('<div class="table-responsive"></div>');
             }
 
@@ -3330,7 +2702,7 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
             t.removeClass('dt-table-loading');
             var th_last_child = t.find('thead th:last-child');
             var th_first_child = t.find('thead th:first-child');
-            if (th_last_child.text().trim() == appLang.options) {
+            if (th_last_child.text().trim() == app.lang.options) {
                 th_last_child.addClass('not-export');
             }
             if (th_first_child.find('input[type="checkbox"]').length > 0) {
@@ -3357,7 +2729,7 @@ function initDataTable(selector, url, notsearchable, notsortable, fnserverparams
         buttons: get_datatable_buttons(table),
     };
 
-    if (table.hasClass('scroll-responsive') || app_scroll_responsive_tables == 1) {
+    if (table.hasClass('scroll-responsive') || app.options.scroll_responsive_tables == 1) {
         dtSettings.responsive = false;
     }
 
@@ -3540,137 +2912,36 @@ function edit_todo_item(id) {
 }
 
 // Date picker init with selected timeformat from settings
-function init_datepicker(element, element_time, opts_date, opts_datetime) {
-
-    var datepickers = typeof(element) == 'undefined' ? $('.datepicker') : element;
-    var datetimepickers = typeof(element_time) == 'undefined' ? $('.datetimepicker') : element_time;
-
-    if (datetimepickers.length === 0 && datepickers.length === 0) { return; }
-    // Datepicker without time
-    $.each(datepickers, function() {
-        var that = $(this);
-        var opt = {
-            timepicker: false,
-            scrollInput: false,
-            lazyInit: true,
-            format: app_date_format,
-            dayOfWeekStart: app_calendar_first_day,
-        };
-
-        // Check in case the input have date-end-date or date-min-date
-        var max_date = that.attr('data-date-end-date');
-        var min_date = that.attr('data-date-min-date');
-        var lazy = that.attr('data-lazy');
-
-        if (lazy) {
-            opt.lazyInit = lazy == 'true';
-        }
-
-        if (max_date) {
-            opt.maxDate = max_date;
-        }
-
-        if (min_date) {
-            opt.minDate = min_date;
-        }
-
-        // Init the picker
-        that.datetimepicker(opt);
-
-        that.parents('.form-group').find('.calendar-icon').on('click', function() {
-            that.focus();
-            that.trigger('open.xdsoft');
-        });
+function init_datepicker(element_date, element_time) {
+    appDatepicker({
+        element_date: element_date,
+        element_time: element_time,
     });
-
-    // Datepicker with time
-    $.each(datetimepickers, function() {
-        var that = $(this);
-        var opt_time = {
-            lazyInit: true,
-            scrollInput: false,
-            validateOnBlur: false,
-            dayOfWeekStart: app_calendar_first_day
-        };
-        if (app_time_format == 24) {
-            opt_time.format = app_date_format + ' H:i';
-        } else {
-            opt_time.format = app_date_format + ' g:i A';
-            opt_time.formatTime = 'g:i A';
-        }
-        // Check in case the input have date-end-date or date-min-date
-        var max_date = that.attr('data-date-end-date');
-        var min_date = that.attr('data-date-min-date');
-        var lazy = that.attr('data-lazy');
-
-        if (lazy) {
-            opt.lazyInit = lazy == 'true';
-        }
-
-        if (max_date) {
-            opt_time.maxDate = max_date;
-        }
-
-        if (min_date) {
-            opt_time.minDate = min_date;
-        }
-        // Init the picker
-        that.datetimepicker(opt_time);
-
-        that.parents('.form-group').find('.calendar-icon').on('click', function() {
-            that.focus();
-            that.trigger('open.xdsoft');
-        });
-    });
-}
-
-// All inputs used for tags
-function init_tags_inputs() {
-    var tags_inputs = $("body").find('input.tagsinput');
-    if (tags_inputs.length) {
-        tags_inputs.tagit({
-            availableTags: availableTags,
-            allowSpaces: true,
-            animate: false,
-            placeholderText: appLang.tag,
-            showAutocompleteOnFocus: true,
-            caseSensitive: false,
-            autocomplete: {
-                appendTo: '#inputTagsWrapper',
-            },
-            afterTagAdded: function(event, ui) {
-                var tagIndexAvailable = availableTags.indexOf($.trim($(ui.tag).find('.tagit-label').text()));
-                if (tagIndexAvailable > -1) {
-                    var _tagId = availableTagsIds[tagIndexAvailable];
-                    $(ui.tag).addClass('tag-id-' + _tagId);
-                }
-                showHideTagsPlaceholder($(this));
-            },
-            afterTagRemoved: function(event, ui) {
-                showHideTagsPlaceholder($(this));
-            }
-        });
-    }
 }
 
 // Init color pickers
 function init_color_pickers() {
-    var color_pickers = $("body").find('div.colorpicker-input');
-    if (color_pickers.length) {
-        color_pickers.colorpicker({
-            format: "hex"
-        });
-    }
+    appColorPicker();
 }
 
-// Init bootstrap select picker
+// Init select picker
 function init_selectpicker() {
-    var select_pickers = $("body").find('select.selectpicker');
-    if (select_pickers.length) {
-        select_pickers.selectpicker({
-            showSubtext: true
-        });
-    }
+    appSelectPicker();
+}
+
+// Init light box
+function init_lightbox() {
+    appLightbox();
+}
+
+// Init progress bars
+function init_progress_bars() {
+    appProgressBar();
+}
+
+// All inputs used for tags
+function init_tags_inputs() {
+    appTagsInput();
 }
 
 // Datatables custom view will fill input with the value
@@ -3755,41 +3026,26 @@ function init_roles_permissions(roleid, user_changed) {
 
     // Get all permissions
     var permissions = $('table.roles').find('tr');
-    requestGetJSON('misc/get_role_permissions_ajax/' + roleid).done(function(response) {
-        var can_view_st, can_view_own_st;
+    requestGetJSON('staff/role_changed/' + roleid).done(function(response) {
+
+        permissions.find('.capability').not('[data-not-applicable="true"]').prop('checked', false).trigger('change');
 
         $.each(permissions, function() {
-            var permissionid = $(this).data('id');
             var row = $(this);
-
-            // No permissions for this role
-            if (response.length === 0) {
-                row.find('input[type="checkbox"]').prop('checked', false);
-            }
-
-            $.each(response, function(i, obj) {
-                if (permissionid == obj.permissionid) {
-                    can_view_st = (obj.can_view == 1 ? true : false);
-                    can_view_own_st = (obj.can_view_own == 1 ? true : false);
-                    row.find('[data-can-view]').prop('checked', can_view_st);
-                    if (can_view_st === true) {
-                        row.find('[data-can-view]').change();
-                    }
-                    row.find('[data-can-view-own]').prop('checked', can_view_own_st);
-                    if (can_view_own_st === true) {
-                        row.find('[data-can-view-own]').change();
-                    }
-                    row.find('[data-can-edit]').prop('checked', (obj.can_edit == 1 ? true : false));
-                    row.find('[data-can-create]').prop('checked', (obj.can_create == 1 ? true : false));
-                    row.find('[data-can-delete]').prop('checked', (obj.can_delete == 1 ? true : false));
+            $.each(response, function(feature, obj) {
+                if (row.data('name') == feature) {
+                    $.each(obj, function(i, capability) {
+                        row.find('input[id="' + feature + '_' + capability + '"]').prop('checked', true);
+                        if (capability == 'view') {
+                            row.find('[data-can-view]').change();
+                        } else if (capability == 'view_own') {
+                            row.find('[data-can-view-own]').change();
+                        }
+                    });
                 }
             });
         });
     });
-}
-// Generate hidden input field
-function hidden_input(name, val) {
-    return '<input type="hidden" name="' + name + '" value="' + val + '">';
 }
 
 // Show/hide full table
@@ -3815,38 +3071,6 @@ function toggle_small_view(table, main_data) {
     $(window).trigger('resize');
 }
 
-// Strip html from string
-function stripTags(html) {
-    var tmp = document.createElement("DIV");
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
-}
-
-// Check if field is empty
-function empty(data) {
-    if (typeof(data) == 'number' || typeof(data) == 'boolean') {
-        return false;
-    }
-    if (typeof(data) == 'undefined' || data === null) {
-        return true;
-    }
-    if (typeof(data.length) != 'undefined') {
-        return data.length === 0;
-    }
-    var count = 0;
-    for (var i in data) {
-        if (data.hasOwnProperty(i)) {
-            count++;
-        }
-    }
-    return count === 0;
-}
-
-// Is mobile checker javascript
-function is_mobile() {
-    return app_is_mobile;
-}
-
 // Main logout function check if timers found to show the warning
 function logout() {
     var started_timers = $('.started-timers-top').find('li.timer').length;
@@ -3861,37 +3085,11 @@ function logout() {
     }
 }
 
-// Generate color rgb
-function color(r, g, b) {
-    return 'rgb(' + r + ',' + g + ',' + b + ')';
-}
-
-// Url builder function with parameteres
-function buildUrl(url, parameters) {
-    var qs = "";
-    for (var key in parameters) {
-        var value = parameters[key];
-        qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
-    }
-    if (qs.length > 0) {
-        qs = qs.substring(0, qs.length - 1); //chop off last "&"
-        url = url + "?" + qs;
-    }
-    return url;
-}
-
-// Function that convert decimal logged time to HH:MM format
-function decimalToHM(decimal) {
-    var hrs = parseInt(Number(decimal));
-    var min = Math.round((Number(decimal) - hrs) * 60);
-    return (hrs < 10 ? "0" + hrs : hrs) + ':' + (min < 10 ? "0" + min : min);
-}
-
 // Init the media elfinder for tinymce browser
 function elFinderBrowser(field_name, url, type, win) {
     tinymce.activeEditor.windowManager.open({
         file: admin_url + 'misc/tinymce_file_browser',
-        title: appLang.media_files,
+        title: app.lang.media_files,
         width: 900,
         height: 450,
         resizable: 'yes'
@@ -3925,7 +3123,7 @@ function init_editor(selector, settings) {
         height: 400,
         theme: 'modern',
         skin: 'perfex',
-        language: tinymceLang,
+        language: app.tinymce_lang,
         relative_urls: false,
         inline_styles: true,
         verify_html: false,
@@ -3966,7 +3164,11 @@ function init_editor(selector, settings) {
     // Possible settings passed to be overwrited or added
     if (typeof(settings) != 'undefined') {
         for (var key in settings) {
-            _settings[key] = settings[key];
+            if (key != 'append_plugins') {
+                _settings[key] = settings[key];
+            } else {
+                _settings['plugins'].push(settings[key]);
+            }
         }
     }
 
@@ -3983,21 +3185,6 @@ function _formatMenuIconInput(e) {
     var _input = $(e.target);
     if (!_input.val().match(/^fa /)) {
         _input.val('fa ' + _input.val());
-    }
-}
-
-// Show password on hidden input field
-function showPassword(name) {
-    var target = $('input[name="' + name + '"]');
-    if ($(target).attr('type') == 'password' && $(target).val() !== '') {
-        $(target)
-            .queue(function() {
-                $(target).attr('type', 'text').dequeue();
-            });
-    } else {
-        $(target).queue(function() {
-            $(target).attr('type', 'password').dequeue();
-        });
     }
 }
 
@@ -4048,37 +3235,41 @@ function do_hash_helper(hash) {
 // Validate the form reminder
 function init_form_reminder(rel_type) {
 
-    var forms = !rel_type ? $('[id^="form-reminder-"]') : $('#form-reminder-'+rel_type);
+    var forms = !rel_type ? $('[id^="form-reminder-"]') : $('#form-reminder-' + rel_type);
 
     $.each(forms, function(i, form) {
-        _validate_form($(form), {
-            date: 'required',
-            staff: 'required'
-        }, reminderFormHandler);
+        $(form).appFormValidator({
+            rules: {
+                date: 'required',
+                staff: 'required',
+                description: 'required'
+            },
+            submitHandler: reminderFormHandler
+        });
     });
 
 }
 
 // New task reminder custom function
-function new_task_reminder(id){
+function new_task_reminder(id) {
     var $container = $('#newTaskReminderToggle');
-    if(!$container.is(':visible') || $container.is(':visible') && $container.attr('data-edit') != undefined){
+    if (!$container.is(':visible') || $container.is(':visible') && $container.attr('data-edit') != undefined) {
 
-        $container.slideDown(400, function(){
+        $container.slideDown(400, function() {
             fix_task_modal_left_col_height();
         });
 
-        $('#taskReminderFormSubmit').html(appLang.create_reminder);
-        $container.find('form').attr('action',admin_url+'tasks/add_reminder/'+id);
+        $('#taskReminderFormSubmit').html(app.lang.create_reminder);
+        $container.find('form').attr('action', admin_url + 'tasks/add_reminder/' + id);
 
         $container.find('#description').val('');
         $container.find('#date').val('');
         $container.find('#staff').selectpicker('val', $container.find('#staff').attr('data-current-staff'));
         $container.find('#notify_by_email').prop('checked', false);
-        if($container.attr('data-edit') != undefined) {
+        if ($container.attr('data-edit') != undefined) {
             $container.removeAttr('data-edit');
         }
-        if(!$container.isInViewport()){
+        if (!$container.isInViewport()) {
             $('#task-modal').animate({
                 scrollTop: $container.offset().top + 'px'
             }, 'fast');
@@ -4098,26 +3289,26 @@ function edit_reminder(id, e) {
             $container = $('.reminder-modal--');
             $container.find('input[name="rel_type"]').val(response.rel_type);
             $container.find('input[name="rel_id"]').val(response.rel_id);
-        } else if($('#task-modal').is(':visible')) {
+        } else if ($('#task-modal').is(':visible')) {
 
             $container = $('#newTaskReminderToggle');
 
-            if( $container.attr('data-edit') &&  $container.attr('data-edit') == id) {
+            if ($container.attr('data-edit') && $container.attr('data-edit') == id) {
                 $container.slideUp();
                 $container.removeAttr('data-edit');
             } else {
-                $container.slideDown(400, function(){
+                $container.slideDown(400, function() {
                     fix_task_modal_left_col_height();
                 });
                 $container.attr('data-edit', id);
-                if(!$container.isInViewport()){
+                if (!$container.isInViewport()) {
                     $('#task-modal').animate({
                         scrollTop: $container.offset().top + 'px'
                     }, 'fast');
                 }
             }
             actionURL = admin_url + 'tasks/edit_reminder/' + id;
-            $('#taskReminderFormSubmit').html(appLang.save);
+            $('#taskReminderFormSubmit').html(app.lang.save);
         }
 
         $container.find('form').attr('action', actionURL);
@@ -4127,7 +3318,7 @@ function edit_reminder(id, e) {
         $container.find('#date').val(response.date);
         $container.find('#staff').selectpicker('val', response.staff);
         $container.find('#notify_by_email').prop('checked', response.notify_by_email == 1 ? true : false);
-        if($container.hasClass('modal')){
+        if ($container.hasClass('modal')) {
             $container.modal('show');
         }
     });
@@ -4169,18 +3360,6 @@ function reload_reminders_tables() {
     });
 }
 
-// Function to close modal manually... needed in some modals where the data is flexible.
-function close_modal_manually(modal) {
-    modal = $(modal).length === 0 ? $("body").find(modal) : modal = $(modal);
-    modal.fadeOut('fast', function() {
-        modal.remove();
-        if (!$("body").find('.modal').is(':visible')) {
-            $('.modal-backdrop').remove();
-            $("body").removeClass('modal-open');
-        }
-    });
-}
-
 /* Global function for editing notes */
 function toggle_edit_note(id) {
     $("body").find('[data-note-edit-textarea="' + id + '"]').toggleClass('hide');
@@ -4213,12 +3392,6 @@ function toggle_file_visibility(attachment_id, rel_id, invoker) {
             $(invoker).find('i').removeClass('fa fa-toggle-on').addClass('fa fa-toggle-off');
         }
     });
-}
-
-// Equivalent function like php nl2br
-function nl2br(str, is_xhtml) {
-    var breakTag = (is_xhtml || typeof is_xhtml === 'undefined') ? '<br />' : '<br>';
-    return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1' + breakTag + '$2');
 }
 
 // Fixes kanban height to be compatible with content and screen height
@@ -4409,25 +3582,6 @@ function init_kan_ban_sort_icon(sort, type) {
     $('body').find('.' + type).prepend(" <i class=\'kanban-sort-icon fa fa-sort-amount-" + sort.toLowerCase() + '\'></i>');
 }
 
-// Kanban til direction
-function tilt_direction(item) {
-    setTimeout(function() {
-        var left_pos = item.position().left,
-            move_handler = function(e) {
-                if (e.pageX >= left_pos) {
-                    item.addClass("right");
-                    item.removeClass("left");
-                } else {
-                    item.addClass("left");
-                    item.removeClass("right");
-                }
-                left_pos = e.pageX;
-            };
-        $("html").on("mousemove", move_handler);
-        item.data("move_handler", move_handler);
-    }, 1000);
-}
-
 // When window scroll to down load more posts
 $('#newsfeed').scroll(function(e) {
     var elem = $(e.currentTarget);
@@ -4459,12 +3613,12 @@ function init_newsfeed_form() {
         });
     }
 
-    newsFeedDropzone = new Dropzone("#new-post-form", $.extend({}, _dropzone_defaults(), {
+    newsFeedDropzone = new Dropzone("#new-post-form", appCreateDropzoneOptions({
         clickable: '.add-post-attachments',
         autoProcessQueue: false,
         addRemoveLinks: true,
-        parallelUploads: app_newsfeed_maximum_files_upload,
-        maxFiles: app_newsfeed_maximum_files_upload,
+        parallelUploads: app.options.newsfeed_maximum_files_upload,
+        maxFiles: app.options.newsfeed_maximum_files_upload,
         dragover: function(file) {
             $('#new-post-form').addClass('dropzone-active');
         },
@@ -4742,8 +3896,9 @@ function init_lead(id, isEdit) {
 
 // Lead form validation
 function validate_lead_form() {
-    _validate_form($('#lead_form'), {
+    var validationObject = {
         name: 'required',
+        source: 'required',
         status: {
             required: {
                 depends: function(element) {
@@ -4755,23 +3910,35 @@ function validate_lead_form() {
                 }
             }
         },
-        source: 'required',
-        email: {
-            email: true,
-            remote: {
-                url: admin_url + "leads/email_exists",
-                type: 'post',
-                data: {
-                    email: function() {
-                        return $('input[name="email"]').val();
-                    },
-                    leadid: function() {
-                        return $('input[name="leadid"]').val();
-                    }
+    };
+
+    var messages = {};
+    $.each(leadUniqueValidationFields, function(key, field) {
+        validationObject[field] = {};
+
+        if (field == 'email') {
+            validationObject[field].email = true;
+        }
+
+        validationObject[field].remote = {
+            url: admin_url + "leads/validate_unique_field",
+            type: 'post',
+            data: {
+                field: field,
+                lead_id: function() {
+                    return $('#lead-modal').find('input[name="leadid"]').val();
                 }
             }
         }
-    }, lead_profile_form_handler);
+
+        if (typeof(app.lang[field + '_exists']) != 'undefined') {
+            messages[field] = {
+                remote: app.lang[field + '_exists']
+            }
+        }
+    });
+
+    appValidateForm($('#lead_form'), validationObject, lead_profile_form_handler, messages);
 }
 
 // Lead conver to customer form validation
@@ -4804,10 +3971,10 @@ function validate_lead_convert_to_client_form() {
             }
         }
     };
-    if (app_company_is_required == 1) {
+    if (app.options.company_is_required == 1) {
         rules_convert_lead.company = 'required';
     }
-    _validate_form($('#lead_to_client_form'), rules_convert_lead);
+    appValidateForm($('#lead_to_client_form'), rules_convert_lead);
 }
 
 // Lead profile data function form handler
@@ -4862,6 +4029,7 @@ function _lead_init_data(data, id) {
     $('#lead_reminder_modal').html(data.leadView.reminder_data);
 
     $leadModal.find('.data').html(data.leadView.data);
+
     $leadModal.modal({ show: true, backdrop: 'static' });
 
     init_tags_inputs();
@@ -4892,7 +4060,7 @@ function _lead_init_data(data, id) {
                     leadExternalFileUpload(files, 'dropbox', id);
                 },
                 linkType: "preview",
-                extensions: app_allowed_files.split(','),
+                extensions: app.options.allowed_files.split(','),
             }));
         }
 
@@ -4900,7 +4068,7 @@ function _lead_init_data(data, id) {
             leadAttachmentsDropzone.destroy();
         }
 
-        leadAttachmentsDropzone = new Dropzone("#lead-attachment-upload", $.extend({}, _dropzone_defaults(), {
+        leadAttachmentsDropzone = new Dropzone("#lead-attachment-upload", appCreateDropzoneOptions({
             sending: function(file, xhr, formData) {
                 formData.append("id", id);
                 if (this.getQueuedFiles().length === 0) {
@@ -4935,6 +4103,7 @@ function _lead_init_data(data, id) {
 function init_lead_modal_data(id, url, isEdit) {
 
     var requestURL = (typeof(url) != 'undefined' ? url : 'leads/lead/') + (typeof(id) != 'undefined' ? id : '');
+
     if (isEdit === true) {
         var concat = '?';
         if (requestURL.indexOf('?') > -1) {
@@ -4967,7 +4136,7 @@ function print_lead_information() {
 
     var mywindow = _create_print_window(name)
 
-    mywindow.document.write('<html><head><title>' + appLang.lead + '</title>');
+    mywindow.document.write('<html><head><title>' + app.lang.lead + '</title>');
     _add_print_window_default_styles(mywindow);
     mywindow.document.write('<style>');
     mywindow.document.write('.lead-information-col { ' +
@@ -5000,7 +4169,7 @@ function print_expense_information() {
 
     var mywindow = _create_print_window(name)
 
-    mywindow.document.write('<html><head><title>' + appLang.expense + '</title>');
+    mywindow.document.write('<html><head><title>' + app.lang.expense + '</title>');
 
     _add_print_window_default_styles(mywindow);
 
@@ -5023,7 +4192,7 @@ function print_ticket_message(id, type) {
     var printSubject = $('#ticket_subject').text().trim();
     var mywindow = _create_print_window(printSubject)
 
-    mywindow.document.write('<html><head><title>' + appLang.ticket + '</title>');
+    mywindow.document.write('<html><head><title>' + app.lang.ticket + '</title>');
 
     _add_print_window_default_styles(mywindow);
 
@@ -5039,34 +4208,6 @@ function print_ticket_message(id, type) {
     mywindow.close();
 }
 
-function _create_print_window(name) {
-
-    var params = 'width=' + screen.width;
-    params += ', height=' + screen.height;
-    params += ', top=0, left=0';
-    params += ', fullscreen=yes';
-
-    return window.open('', name, params);
-}
-
-function _add_print_window_default_styles(mywindow) {
-    mywindow.document.write('<style>');
-    mywindow.document.write('.clearfix:after { ' +
-        'clear: both;' +
-        '}' +
-        '.clearfix:before, .clearfix:after { ' +
-        'display: table; content: " ";' +
-        '}' +
-        'body { ' +
-        'font-family: Arial, Helvetica, sans-serif;color: #444; font-size:13px;' +
-        '}' +
-        '.bold { ' +
-        'font-weight: bold !important;' +
-        '}' +
-        '');
-
-    mywindow.document.write('</style>');
-}
 // Kan ban leads sorting
 function leads_kanban_sort(type) {
     kan_ban_sort(type, leads_kanban);
@@ -5202,17 +4343,29 @@ function lead_unmark_as_junk(id) {
 
 // Convert lead to customer
 function convert_lead_to_customer(id) {
-    $('#lead-modal').modal('hide');
-    requestGet('leads/get_convert_data/' + id).done(function(response) {
-        $('#lead_convert_to_customer').html(response);
-        $('#convert_lead_to_client_modal').modal({
-            show: true,
-            backdrop: 'static',
-            keyboard: false
-        });
-    }).fail(function(data) {
-        alert_float('danger', data.responseText);
+
+    var $leadModal = $('#lead-modal');
+    var eventNamespace = 'hidden.bs.modal.convert';
+
+    $leadModal.on(eventNamespace, function() {
+        $leadModal.find('.data').html('');
+
+        requestGet('leads/get_convert_data/' + id).done(function(response) {
+            $('#lead_convert_to_customer').html(response);
+
+            $('#convert_lead_to_client_modal').modal({
+                show: true,
+                backdrop: 'static',
+                keyboard: false
+            });
+        }).fail(function(data) {
+            alert_float('danger', data.responseText);
+        }).always(function() {
+            $leadModal.off(eventNamespace);
+        })
     });
+
+    $leadModal.modal('hide');
 }
 
 // Leads bulk action
@@ -5263,6 +4416,197 @@ function leads_bulk_action(event) {
             });
         }, 200);
     }
+}
+
+function init_proposal_editor() {
+
+    tinymce.remove('div.editable');
+
+    var _templates = [];
+
+    $.each(proposalsTemplates, function(i, template) {
+        _templates.push({
+            url: admin_url + 'proposals/get_template?name=' + template,
+            title: template
+        });
+    });
+
+    var settings = {
+        selector: 'div.editable',
+        inline: true,
+        theme: 'inlite',
+        // skin: 'perfex',
+        relative_urls: false,
+        remove_script_host: false,
+        inline_styles: true,
+        verify_html: false,
+        cleanup: false,
+        apply_source_formatting: false,
+        valid_elements: '+*[*]',
+        valid_children: "+body[style], +style[type]",
+        file_browser_callback: elFinderBrowser,
+        table_default_styles: {
+            width: '100%'
+        },
+        fontsize_formats: '8pt 10pt 12pt 14pt 18pt 24pt 36pt',
+        pagebreak_separator: '<p pagebreak="true"></p>',
+        plugins: [
+            'advlist pagebreak autolink autoresize lists link image charmap hr',
+            'searchreplace visualblocks visualchars code',
+            'media nonbreaking table contextmenu',
+            'paste textcolor colorpicker'
+        ],
+        autoresize_bottom_margin: 50,
+        insert_toolbar: 'image media quicktable | bullist numlist | h2 h3 | hr',
+        selection_toolbar: 'save_button bold italic underline superscript | forecolor backcolor link | alignleft aligncenter alignright alignjustify | fontselect fontsizeselect h2 h3',
+        contextmenu: "image media inserttable | cell row column deletetable | paste pastetext searchreplace | visualblocks pagebreak charmap | code",
+        setup: function(editor) {
+
+            editor.addCommand('mceSave', function() {
+                save_proposal_content(true);
+            });
+
+            editor.addShortcut('Meta+S', '', 'mceSave');
+
+            editor.on('MouseLeave blur', function() {
+                if (tinymce.activeEditor.isDirty()) {
+                    save_proposal_content();
+                }
+            });
+
+            editor.on('MouseDown ContextMenu', function() {
+                if (!is_mobile() && !$('#small-table').hasClass('hide')) {
+                    small_table_full_view();
+                }
+            });
+
+            editor.on('blur', function() {
+                $.Shortcuts.start();
+            });
+
+            editor.on('focus', function() {
+                $.Shortcuts.stop();
+            });
+        },
+    };
+
+    if (is_mobile()) {
+
+        settings.theme = 'modern';
+        settings.mobile = {};
+        settings.mobile.theme = 'mobile';
+        settings.mobile.toolbar = _tinymce_mobile_toolbar();
+
+        settings.inline = false;
+
+        window.addEventListener("beforeunload", function(event) {
+            if (tinymce.activeEditor.isDirty()) {
+                save_proposal_content();
+            }
+        });
+    }
+
+    if (_templates.length > 0) {
+        settings.templates = _templates;
+        settings.plugins[3] = 'template ' + settings.plugins[3];
+        settings.contextmenu = settings.contextmenu.replace('inserttable', 'inserttable template')
+    }
+
+    tinymce.init(settings);
+}
+
+function add_proposal_comment() {
+    var comment = $('#comment').val();
+    if (comment == '') { return; }
+    var data = {};
+    data.content = comment;
+    data.proposalid = proposal_id;
+    $('body').append('<div class="dt-loader"></div>');
+    $.post(admin_url + 'proposals/add_proposal_comment', data).done(function(response) {
+        response = JSON.parse(response);
+        $('body').find('.dt-loader').remove();
+        if (response.success == true) {
+            $('#comment').val('');
+            get_proposal_comments();
+        }
+    });
+}
+
+function get_proposal_comments() {
+    if (typeof(proposal_id) == 'undefined') { return; }
+    requestGet('proposals/get_proposal_comments/' + proposal_id).done(function(response) {
+        $('body').find('#proposal-comments').html(response);
+    });
+}
+
+function remove_proposal_comment(commentid) {
+    if (confirm_delete()) {
+        requestGetJSON('proposals/remove_comment/' + commentid).done(function(response) {
+            if (response.success == true) {
+                $('[data-commentid="' + commentid + '"]').remove();
+            }
+        });
+    }
+}
+
+function edit_proposal_comment(id) {
+    var content = $('body').find('[data-proposal-comment-edit-textarea="' + id + '"] textarea').val();
+    if (content != '') {
+        $.post(admin_url + 'proposals/edit_comment/' + id, { content: content }).done(function(response) {
+            response = JSON.parse(response);
+            if (response.success == true) {
+                alert_float('success', response.message);
+                $('body').find('[data-proposal-comment="' + id + '"]').html(nl2br(content));
+            }
+        });
+        toggle_proposal_comment_edit(id);
+    }
+}
+
+function toggle_proposal_comment_edit(id) {
+    $('body').find('[data-proposal-comment="' + id + '"]').toggleClass('hide');
+    $('body').find('[data-proposal-comment-edit-textarea="' + id + '"]').toggleClass('hide');
+}
+
+function proposal_convert_template(invoker) {
+    var template = $(invoker).data('template');
+    var html_helper_selector;
+    if (template == 'estimate') {
+        html_helper_selector = 'estimate';
+    } else if (template == 'invoice') {
+        html_helper_selector = 'invoice';
+    } else {
+        return false;
+    }
+
+    requestGet('proposals/get_' + html_helper_selector + '_convert_data/' + proposal_id).done(function(data) {
+        if ($('.proposal-pipeline-modal').is(':visible')) {
+            $('.proposal-pipeline-modal').modal('hide');
+        }
+        $('#convert_helper').html(data);
+        $('#convert_to_' + html_helper_selector).modal({ show: true, backdrop: 'static' });
+        reorder_items();
+    });
+
+}
+
+function save_proposal_content(manual) {
+    var editor = tinyMCE.activeEditor;
+    var data = {};
+    data.proposal_id = proposal_id;
+    data.content = editor.getContent();
+    $.post(admin_url + 'proposals/save_proposal_data', data).done(function(response) {
+        response = JSON.parse(response);
+        if (typeof(manual) != 'undefined') {
+            // Show some message to the user if saved via CTRL + S
+            alert_float('success', response.message);
+        }
+        // Invokes to set dirty to false
+        editor.save();
+    }).fail(function(error) {
+        var response = JSON.parse(error.responseText);
+        alert_float('danger', response.message);
+    });
 }
 
 // Proposal sync data in case eq mail is changed, shown for lead and customers.
@@ -5578,26 +4922,6 @@ function remove_assignee(id, task_id) {
     }
 }
 
-// Check if is ios Device
-function is_ios() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-
-// Check if is Microsoft Browser, Internet Explorer 10 od order, Internet Explorer 11 or Edge (any version)
-function is_ms_browser() {
-    if (/MSIE/i.test(navigator.userAgent) || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
-        // this is internet explorer 10
-        return true;
-    }
-
-    if (/Edge/i.test(navigator.userAgent)) {
-        // this is Microsoft Edge
-        return true;
-    }
-
-    return false;
-}
-
 // Remove task follower
 function remove_follower(id, task_id) {
     if (confirm_delete()) {
@@ -5715,7 +5039,9 @@ function new_task(url) {
     requestGet(url).done(function(response) {
         $('#_task').html(response);
         $("body").find('#_task_modal').modal({ show: true, backdrop: 'static' });
-    });
+    }).fail(function(error) {
+        alert_float('danger', error.responseText);
+    })
 }
 
 // Show/hide tags placeholder
@@ -5850,14 +5176,14 @@ function timer_action(e, task_id, timer_id, adminStop) {
         var popupData = {};
         popupData.content = '';
         popupData.content += '<div class="row">';
-        popupData.content += '<div class="form-group"><select id="timer_add_task_id" data-empty-title="' + appLang.search_tasks + '" data-width="60%" class="ajax-search" data-live-search="true">';
+        popupData.content += '<div class="form-group"><select id="timer_add_task_id" data-empty-title="' + app.lang.search_tasks + '" data-width="60%" class="ajax-search" data-live-search="true">';
         popupData.content += '</select></div>';
         popupData.content += '<div class="form-group">';
-        popupData.content += '<textarea id="timesheet_note" placeholder="' + appLang.note + '" style="margin:0 auto;width:60%;" rows="4" class="form-control"></textarea>';
+        popupData.content += '<textarea id="timesheet_note" placeholder="' + app.lang.note + '" style="margin:0 auto;width:60%;" rows="4" class="form-control"></textarea>';
         popupData.content += '</div>';
-        popupData.content += '<button type=\'button\' onclick=\'timer_action(this,document.getElementById("timer_add_task_id").value,' + timer_id + ');return false;\' class=\'btn btn-info\'>' + appLang.confirm + '</button>';
+        popupData.content += '<button type=\'button\' onclick=\'timer_action(this,document.getElementById("timer_add_task_id").value,' + timer_id + ');return false;\' class=\'btn btn-info\'>' + app.lang.confirm + '</button>';
 
-        popupData.message = appLang.task_stop_timer;
+        popupData.message = app.lang.task_stop_timer;
         var $popupHTML = system_popup(popupData);
         $popupHTML.attr('id', 'timer-select-task');
         init_ajax_search('tasks', '#timer_add_task_id', undefined, admin_url + 'tasks/ajax_search_assign_task_to_timer');
@@ -5878,6 +5204,12 @@ function timer_action(e, task_id, timer_id, adminStop) {
     }
     $.post(reqUrl, data).done(function(response) {
         response = JSON.parse(response);
+
+        // Timer action, stopping from staff/member/id
+        if ($('body').hasClass('member')) {
+            window.location.reload();
+        }
+
         if (taskModalVisible) { _task_append_html(response.taskHtml); }
 
         if ($timerSelectTask.is(':visible')) {
@@ -5936,6 +5268,14 @@ function _task_append_html(html) {
         }
         init_form_reminder('task');
         fix_task_modal_left_col_height();
+
+        // Show the comment area on mobile when task modal is opened
+        // Because the user may want only to upload file, but if the comment textarea is not focused the dropzone won't be shown
+
+        if (is_mobile()) {
+            init_new_task_comment(true);
+        }
+
     }, 150);
 }
 
@@ -5975,36 +5315,6 @@ function edit_task_comment(id) {
         init_editor('#task_comment_' + id, editorConfig);
         tinymce.triggerSave();
     }
-}
-
-function _tinymce_mobile_toolbar() {
-    return [
-        'undo',
-        'redo',
-        'styleselect',
-        'bold',
-        'italic',
-        'link',
-        'image',
-        'bullist',
-        'numlist',
-        'forecolor',
-        'fontsizeselect',
-    ];
-}
-
-function _simple_editor_config() {
-    return {
-        height: !is_mobile() ? 100 : 50,
-        menubar: false,
-        autoresize_bottom_margin: 15,
-        plugins: [
-            'table advlist codesample autosave' + (!is_mobile() ? ' autoresize ' : ' ') + 'lists link image textcolor media contextmenu paste',
-        ],
-        toolbar: 'insert formatselect bold forecolor backcolor' + (is_mobile() ? ' | ' : ' ') + 'alignleft aligncenter alignright bullist numlist | restoredraft',
-        insert_button_items: 'image media link codesample',
-        toolbar1: ''
-    };
 }
 
 // Cancel editing commment after clicked on edit href
@@ -6169,6 +5479,7 @@ function load_small_table_item(id, selector, input_name, url, table) {
         }
     }
     if (typeof(id) == 'undefined' || id === '') { return; }
+    destroy_dynamic_scripts_in_element($(selector))
     if (!$("body").hasClass('small-table')) { toggle_small_view(table, selector); }
     $('input[name="' + input_name + '"]').val(id);
     do_hash_helper(id);
@@ -6401,7 +5712,7 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
     }
 
     var amount = data.rate * data.qty;
-    amount = accounting.formatNumber(amount);
+
     var tax_name = 'newitems[' + item_key + '][taxname][]';
     $("body").append('<div class="dt-loader"></div>');
     var regex = /<br[^>]*>/gi;
@@ -6495,15 +5806,15 @@ function add_item_to_table(data, itemid, merge_invoice, bill_expense) {
             data.unit = '';
         }
 
-        table_row += '<input type="text" placeholder="' + appLang.unit + '" name="newitems[' + item_key + '][unit]" class="form-control input-transparent text-right" value="' + data.unit + '">';
+        table_row += '<input type="text" placeholder="' + app.lang.unit + '" name="newitems[' + item_key + '][unit]" class="form-control input-transparent text-right" value="' + data.unit + '">';
 
         table_row += '</td>';
 
-        table_row += '<td class="rate"><input type="number" data-toggle="tooltip" title="' + appLang.item_field_not_formatted + '" onblur="calculate_total();" onchange="calculate_total();" name="newitems[' + item_key + '][rate]" value="' + data.rate + '" class="form-control"></td>';
+        table_row += '<td class="rate"><input type="number" data-toggle="tooltip" title="' + app.lang.item_field_not_formatted + '" onblur="calculate_total();" onchange="calculate_total();" name="newitems[' + item_key + '][rate]" value="' + data.rate + '" class="form-control"></td>';
 
         table_row += '<td class="taxrate">' + tax_dropdown + '</td>';
 
-        table_row += '<td class="amount" align="right">' + amount + '</td>';
+        table_row += '<td class="amount" align="right">' + format_money(amount, true) + '</td>';
 
         table_row += '<td><a href="#" class="btn btn-danger pull-left" onclick="delete_item(this,' + itemid + '); return false;"><i class="fa fa-trash"></i></a></td>';
 
@@ -6608,14 +5919,6 @@ function init_ajax_projects_search(selector) {
     init_ajax_search('project', selector);
 }
 
-// Fix for reordering the items the tables to show the full width
-function fixHelperTableHelperSortable(e, ui) {
-    ui.children().each(function() {
-        $(this).width($(this).width());
-    });
-    return ui;
-}
-
 // Make items sortable with jquery sort plugin
 function init_items_sortable(preview_table) {
     var _items_sortable = $("#wrapper").find('.items tbody');
@@ -6651,17 +5954,16 @@ function init_items_sortable(preview_table) {
 
 // Save the items from order from the admin preview
 function save_ei_items_order() {
-    var rows = $('.table.invoice-items-preview.items tbody tr,.table.estimate-items-preview.items tbody tr,.table.credit-note-items-preview.items tbody tr');
+
+    var table = $('.table.items-preview');
+    var rows = table.find('tbody tr');
     var i = 1,
+        type = table.attr('data-type'),
         order = [],
-        _order_id, type, item_id;
-    if ($('.table.items').hasClass('invoice-items-preview')) {
-        type = 'invoice';
-    } else if ($('.table.items').hasClass('estimate-items-preview')) {
-        type = 'estimate';
-    } else if ($('.table.items').hasClass('credit-note-items-preview')) {
-        type = 'credit_note';
-    } else {
+        _order_id,
+        item_id;
+
+    if (!type) {
         return false;
     }
 
@@ -6681,7 +5983,7 @@ function save_ei_items_order() {
 
 // Reoder the items in table edit for estimate and invoices
 function reorder_items() {
-    var rows = $('.table.table-main-invoice-edit tbody tr.item,.table.table-main-estimate-edit tbody tr.item, .table.table-main-credit-note-edit tbody tr.item');
+    var rows = $('.table.has-calculations tbody tr.item');
     var i = 1;
     $.each(rows, function() {
         $(this).find('input.order').val(i);
@@ -6720,26 +6022,28 @@ function calculate_total() {
         total = 0,
         quantity = 1,
         total_discount_calculated = 0,
-        rows = $('.table.table-main-invoice-edit tbody tr.item,.table.table-main-estimate-edit tbody tr.item,.table.table-main-credit-note-edit tbody tr.item'),
+        rows = $('.table.has-calculations tbody tr.item'),
         discount_area = $('#discount_area'),
         adjustment = $('input[name="adjustment"]').val(),
         discount_percent = $('input[name="discount_percent"]').val(),
         discount_fixed = $('input[name="discount_total"]').val(),
         discount_total_type = $('.discount-total-type.selected'),
         discount_type = $('select[name="discount_type"]').val();
+
     $('.tax-area').remove();
 
     $.each(rows, function() {
+
         quantity = $(this).find('[data-quantity]').val();
         if (quantity === '') {
             quantity = 1;
             $(this).find('[data-quantity]').val(1);
         }
 
-        _amount = accounting.toFixed($(this).find('td.rate input').val() * quantity, app_decimal_places);
+        _amount = accounting.toFixed($(this).find('td.rate input').val() * quantity, app.options.decimal_places);
         _amount = parseFloat(_amount);
 
-        $(this).find('td.amount').html(accounting.formatNumber(_amount));
+        $(this).find('td.amount').html(format_money(_amount, true));
         subtotal += _amount;
         row = $(this);
         item_taxes = $(this).find('select.tax').selectpicker('val');
@@ -6780,7 +6084,7 @@ function calculate_total() {
         }
 
         total += total_tax;
-        total_tax = accounting.formatNumber(total_tax);
+        total_tax = format_money(total_tax);
         $('#tax_id_' + slugify(taxname)).html(total_tax);
     });
 
@@ -6801,20 +6105,21 @@ function calculate_total() {
         total = total + adjustment;
     }
 
-    var discount_html = '-' + accounting.formatNumber(total_discount_calculated);
-    $('input[name="discount_total"]').val(accounting.toFixed(total_discount_calculated, app_decimal_places));
+    var discount_html = '-' + format_money(total_discount_calculated);
+    $('input[name="discount_total"]').val(accounting.toFixed(total_discount_calculated, app.options.decimal_places));
 
     // Append, format to html and display
     $('.discount-total').html(discount_html);
-    $('.adjustment').html(accounting.formatNumber(adjustment));
-    $('.subtotal').html(accounting.formatNumber(subtotal) + hidden_input('subtotal', accounting.toFixed(subtotal, app_decimal_places)));
-    $('.total').html(format_money(total) + hidden_input('total', accounting.toFixed(total, app_decimal_places)));
+    $('.adjustment').html(format_money(adjustment));
+    $('.subtotal').html(format_money(subtotal) + hidden_input('subtotal', accounting.toFixed(subtotal, app.options.decimal_places)));
+    $('.total').html(format_money(total) + hidden_input('total', accounting.toFixed(total, app.options.decimal_places)));
+
     $(document).trigger('sales-total-calculated');
 }
 
 function exclude_tax_from_amount(tax_percent, total_amount) {
-    totalTax = accounting.toFixed((total_amount * tax_percent / (100 + tax_percent)), app_decimal_places);
-    return accounting.toFixed(total_amount - totalTax, app_decimal_places);
+    totalTax = accounting.toFixed((total_amount * tax_percent / (100 + tax_percent)), app.options.decimal_places);
+    return accounting.toFixed(total_amount - totalTax, app.options.decimal_places);
 }
 
 // Deletes invoice items
@@ -6831,24 +6136,33 @@ function delete_item(row, itemid) {
     }
 }
 
-// Format money functions
-function format_money(total) {
-    if (app_currency_placement === 'after') {
-        return accounting.formatMoney(total, {
-            format: "%v %s"
-        });
-    } else {
-        return accounting.formatMoney(total);
+// Format money function
+function format_money(total, excludeSymbol) {
+
+    if (typeof(excludeSymbol) != 'undefined' && excludeSymbol) {
+        return accounting.formatMoney(total, { symbol: '' });
     }
+
+    return accounting.formatMoney(total);
 }
 
-// Set the currency symbol for accounting
-function init_currency_symbol() {
+// Set the currency for accounting
+function init_currency(id) {
     var $accountingTemplate = $("body").find('.accounting-template');
-    if ($accountingTemplate.length) {
-        accounting.settings.currency.symbol = $accountingTemplate.find('select[name="currency"] option:selected')
-            .data('subtext');
-        calculate_total();
+
+    if ($accountingTemplate.length || id) {
+
+        var selectedCurrencyId = !id ? $accountingTemplate.find('select[name="currency"]').val() : id;
+
+        requestGetJSON('misc/get_currency/' + selectedCurrencyId)
+            .done(function(currency) {
+                // Used for formatting money
+                accounting.settings.currency.decimal = currency.decimal_separator;
+                accounting.settings.currency.thousand = currency.thousand_separator;
+                accounting.settings.currency.symbol = currency.symbol;
+                accounting.settings.currency.format = currency.placement == 'after' ? '%v %s' : '%s%v';
+                calculate_total();
+            });
     }
 }
 
@@ -7028,7 +6342,7 @@ function init_expenses_total() {
 function validate_invoice_form(selector) {
     selector = typeof(selector) == 'undefined' ? '#invoice-form' : selector;
 
-    _validate_form($(selector), {
+    appValidateForm($(selector), {
         clientid: {
             required: {
                 depends: function() {
@@ -7039,6 +6353,7 @@ function validate_invoice_form(selector) {
         },
         date: 'required',
         currency: 'required',
+        repeat_every_custom: { min: 1 },
         number: {
             required: true,
         }
@@ -7063,7 +6378,7 @@ function validate_invoice_form(selector) {
             }
         },
         messages: {
-            remote: appLang.invoice_number_exists,
+            remote: app.lang.invoice_number_exists,
         }
     });
 }
@@ -7071,7 +6386,7 @@ function validate_invoice_form(selector) {
 function validate_credit_note_form(selector) {
     selector = typeof(selector) == 'undefined' ? '#credit-note-form' : selector;
 
-    _validate_form($(selector), {
+    appValidateForm($(selector), {
         clientid: {
             required: {
                 depends: function() {
@@ -7104,7 +6419,7 @@ function validate_credit_note_form(selector) {
             }
         },
         messages: {
-            remote: appLang.credit_note_number_exists,
+            remote: app.lang.credit_note_number_exists,
         }
     });
 }
@@ -7114,7 +6429,7 @@ function validate_estimate_form(selector) {
 
     selector = typeof(selector) == 'undefined' ? '#estimate-form' : selector;
 
-    _validate_form($(selector), {
+    appValidateForm($(selector), {
         clientid: {
             required: {
                 depends: function() {
@@ -7150,7 +6465,7 @@ function validate_estimate_form(selector) {
             }
         },
         messages: {
-            remote: appLang.estimate_number_exists,
+            remote: app.lang.estimate_number_exists,
         }
     });
 
@@ -7317,14 +6632,14 @@ function do_prefix_year(date) {
                     string = string.substr(-2);
                 } else if ($pYear.hasClass('format-mm-yyyy')) {
                     var month_index;
-                    if (app_date_format == 'd-m-Y' ||
-                        app_date_format == 'd/m/Y' ||
-                        app_date_format == 'Y-m-d' ||
-                        app_date_format == 'd.m.Y') {
+                    if (app.options.date_format == 'd-m-Y' ||
+                        app.options.date_format == 'd/m/Y' ||
+                        app.options.date_format == 'Y-m-d' ||
+                        app.options.date_format == 'd.m.Y') {
                         month_index = 1;
-                    } else if (app_date_format == 'm-d-Y' ||
-                        app_date_format == 'm.d.Y' ||
-                        app_date_format == 'm/d/Y') {
+                    } else if (app.options.date_format == 'm-d-Y' ||
+                        app.options.date_format == 'm.d.Y' ||
+                        app.options.date_format == 'm/d/Y') {
                         month_index = 0;
                     }
                     $('#prefix_month').html(date_array[month_index]);
@@ -7342,17 +6657,17 @@ function unformat_date(date) {
         month_index = 1,
         year_index = 0,
         day_index = 2;
-    if (app_date_format == 'd-m-Y' || app_date_format == 'd/m/Y' || app_date_format == 'd.m.Y') {
+    if (app.options.date_format == 'd-m-Y' || app.options.date_format == 'd/m/Y' || app.options.date_format == 'd.m.Y') {
         day_index = 0;
         month_index = 1;
         year_index = 2;
     }
-    /* else if (app_date_format == 'Y-m-d') {
+    /* else if (app.options.date_format == 'Y-m-d') {
             day_index = 2;
             month_index = 1;
             year_index = 0;
         }*/
-    else if (app_date_format == 'm-d-Y' || app_date_format == 'm.d.Y' || app_date_format == 'm/d/Y') {
+    else if (app.options.date_format == 'm-d-Y' || app.options.date_format == 'm.d.Y' || app.options.date_format == 'm/d/Y') {
         day_index = 1;
         month_index = 0;
         year_index = 2;
@@ -7453,13 +6768,13 @@ function delete_event(id) {
 
 // Validate calendar event form
 function validate_calendar_form() {
-    _validate_form($("body").find('._event form'), {
+    appValidateForm($("body").find('._event form'), {
         title: 'required',
         start: 'required',
         reminder_before: 'required'
     }, calendar_form_handler);
 
-    _validate_form($("body").find('#viewEvent form'), {
+    appValidateForm($("body").find('#viewEvent form'), {
         title: 'required',
         start: 'required',
         reminder_before: 'required'
@@ -7483,22 +6798,6 @@ function calendar_form_handler(form) {
     return false;
 }
 
-// Will give alert to confirm delete
-function confirm_delete() {
-    var r = confirm(appLang.confirm_action_prompt);
-    if (r == false) { return false; }
-    return true;
-}
-
-// Attached new hotkey handler
-function add_hotkey(key, func) {
-    $.Shortcuts.add({
-        type: 'down',
-        mask: key,
-        handler: func
-    });
-}
-
 // Fetches notifications
 function fetch_notifications(callback) {
     requestGetJSON('misc/notifications_check').done(function(response) {
@@ -7507,7 +6806,7 @@ function fetch_notifications(callback) {
         var total = nw.find('ul.notifications').attr('data-total-unread');
         document.title = total > 0 ? ('(' + total + ') ' + doc_initial_title) : doc_initial_title;
         var nIds = response.notificationsIds;
-        if (app_user_browser == 'firefox' && nIds.length > 1) {
+        if (app.browser == 'firefox' && nIds.length > 1) {
             var lastNotification = nIds[0];
             nIds = [];
             nIds.push(lastNotification);
@@ -7518,12 +6817,12 @@ function fetch_notifications(callback) {
                     var nSelector = 'li[data-notification-id="' + notId + '"]';
                     var $not = nw.find(nSelector);
                     $.notify("", {
-                        'title': appLang.new_notification,
+                        'title': app.lang.new_notification,
                         'body': $not.find('.notification-title').text(),
                         'requireInteraction': true,
                         'icon': $not.find('.notification-image').attr('src'),
                         'tag': notId,
-                        'closeTime': app_dismiss_desktop_not_after != "0" ? app_dismiss_desktop_not_after * 1000 : null
+                        'closeTime': app.options.dismiss_desktop_not_after != "0" ? app.options.dismiss_desktop_not_after * 1000 : null
                     }).close(function() {
                         requestGet('misc/set_desktop_notification_read/' + notId).done(function(response) {
                             var $totalIndicator = nw.find('.icon-total-indicator');
@@ -7553,7 +6852,7 @@ function fetch_notifications(callback) {
     });
 }
 
-function init_new_task_comment() {
+function init_new_task_comment(manual) {
 
     if (tinymce.editors.task_comment) {
         tinymce.remove('#task_comment');
@@ -7566,7 +6865,7 @@ function init_new_task_comment() {
     $('#dropzoneTaskComment').removeClass('hide');
     $('#addTaskCommentBtn').removeClass('hide');
 
-    taskCommentAttachmentDropzone = new Dropzone("#task-comment-form", $.extend({}, _dropzone_defaults(), {
+    taskCommentAttachmentDropzone = new Dropzone("#task-comment-form", appCreateDropzoneOptions({
         uploadMultiple: true,
         clickable: '#dropzoneTaskComment',
         previewsContainer: '.dropzone-task-comment-previews',
@@ -7593,7 +6892,9 @@ function init_new_task_comment() {
     }));
 
     var editorConfig = _simple_editor_config();
-    editorConfig.auto_focus = true;
+    if (typeof(manual) == 'undefined' || manual === false) {
+        editorConfig.auto_focus = true;
+    }
     var iOS = is_ios();
     // Not working fine on iOs
     if (!iOS) {
@@ -7620,12 +6921,12 @@ function init_ajax_search(type, selector, server_data, url) {
                 }
             },
             locale: {
-                emptyTitle: appLang.search_ajax_empty,
-                statusInitialized: appLang.search_ajax_initialized,
-                statusSearching: appLang.search_ajax_searching,
-                statusNoResults: appLang.not_results_found,
-                searchPlaceholder: appLang.search_ajax_placeholder,
-                currentlySelected: appLang.currently_selected
+                emptyTitle: app.lang.search_ajax_empty,
+                statusInitialized: app.lang.search_ajax_initialized,
+                statusSearching: app.lang.search_ajax_searching,
+                statusNoResults: app.lang.not_results_found,
+                searchPlaceholder: app.lang.search_ajax_placeholder,
+                currentlySelected: app.lang.currently_selected
             },
             requestDelay: 500,
             cache: false,
@@ -7664,97 +6965,6 @@ function merge_field_format_url(url, node, on_save, name) {
     return url;
 }
 
-// Predefined and default dropzone plugin options
-function _dropzone_defaults() {
-    return {
-        createImageThumbnails: true,
-        dictDefaultMessage: appLang.drop_files_here_to_upload,
-        dictFallbackMessage: appLang.browser_not_support_drag_and_drop,
-        dictFileTooBig: appLang.file_exceeds_maxfile_size_in_form,
-        dictCancelUpload: appLang.cancel_upload,
-        dictRemoveFile: appLang.remove_file,
-        dictMaxFilesExceeded: appLang.you_can_not_upload_any_more_files,
-        maxFilesize: (max_php_ini_upload_size_bytes / (1024 * 1024)).toFixed(0),
-        acceptedFiles: app_allowed_files,
-        error: function(file, response) {
-            alert_float('danger', response);
-        },
-        complete: function(file) {
-            this.files.length && this.removeFile(file);
-        },
-    };
-}
-
-function onChartClickRedirect(evt, chart, fetchUrl) {
-    if (typeof(fetchUrl) == 'undefined') {
-        fetchUrl = 'statusLink';
-    }
-    var item = chart.getElementAtEvent(evt)[0];
-    if (item) {
-        var link = chart.data.datasets[0][fetchUrl][item['_index']];
-        if (link) {
-            window.location.href = link;
-        }
-    }
-}
-
-// Function to slug string
-function slugify(string) {
-    return string
-        .toString()
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w\-]+/g, "")
-        .replace(/\-\-+/g, "-")
-        .replace(/^-+/, "")
-        .replace(/-+$/, "");
-}
-
-// Delay function
-var delay = (function() {
-    var timer = 0;
-    return function(callback, ms) {
-        clearTimeout(timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
-
-// General helper function for $.get ajax requests
-function requestGet(uri, params) {
-    params = typeof(params) == 'undefined' ? {} : params;
-    var options = {
-        type: 'GET',
-        url: uri.indexOf(admin_url) > -1 ? uri : admin_url + uri
-    };
-    return $.ajax($.extend({}, options, params));
-}
-
-// General helper function for $.get ajax requests with dataType JSON
-function requestGetJSON(uri, params) {
-    params = typeof(params) == 'undefined' ? {} : params;
-    params.dataType = 'json';
-    return requestGet(uri, params);
-}
-
-// Clear memory leak
-function destroy_dynamic_scripts_in_element(element) {
-    element.find('input.tagsinput').tagit('destroy')
-        .find('.manual-popover').popover('destroy')
-        .find('.datepicker').datetimepicker('destroy')
-        .find('select').selectpicker('destroy');
-}
-
-function onGoogleApiLoad() {
-    var pickers = $('.gpicker');
-    $.each(pickers, function() {
-        var that = $(this);
-        setTimeout(function() {
-            that.googleDrivePicker();
-        }, 10);
-    });
-}
-
 function salesGoogleDriveSave(pickData) {
     salesExtenalFileUpload(pickData, 'gdrive');
 }
@@ -7786,11 +6996,7 @@ function salesExtenalFileUpload(files, externalType) {
     _data.files = files;
     _data.external = externalType;
     $.post(admin_url + 'misc/add_sales_external_attachment', _data).done(function() {
-        if (_data.type == 'invoice') {
-            init_invoice(_data.rel_id);
-        } else if (_data.type == 'credit_note') {
-            init_credit_note(_data.rel_id);
-        } else if (_data.type == 'estimate') {
+        if (_data.type == 'estimate') {
             if ($("body").hasClass('estimates-pipeline')) {
                 estimate_pipeline_open(_data.rel_id);
             } else {
@@ -7801,6 +7007,10 @@ function salesExtenalFileUpload(files, externalType) {
                 proposal_pipeline_open(_data.rel_id);
             } else {
                 init_proposal(_data.rel_id);
+            }
+        } else {
+            if (typeof(window['init_' + _data.type]) == 'function') {
+                window['init_' + _data.type](_data.rel_id);
             }
         }
         $('#sales_attach_file').modal('hide');
@@ -7814,4 +7024,42 @@ function set_search_history(history) {
         historyHtml += '<li data-index="' + i + '"><a href="#" class="history">' + history[i] + ' <span class="remove-history pointer pull-right" style="z-index:1500"><i class="fa fa-remove"></i></span></a></li>';
     }
     $searchHistory.html(historyHtml);
+}
+
+// General helper function for $.get ajax requests
+function requestGet(uri, params) {
+    params = typeof(params) == 'undefined' ? {} : params;
+    var options = {
+        type: 'GET',
+        url: uri.indexOf(admin_url) > -1 ? uri : admin_url + uri
+    };
+    return $.ajax($.extend({}, options, params));
+}
+
+// General helper function for $.get ajax requests with dataType JSON
+function requestGetJSON(uri, params) {
+    params = typeof(params) == 'undefined' ? {} : params;
+    params.dataType = 'json';
+    return requestGet(uri, params);
+}
+
+/**
+ * @DEPRECATED FUNCTIONS
+ */
+
+/**
+ * @deprecated
+ */
+function initDatatableOffline(dt_table) {
+    console.warn('"initDatatableOffline" is deprecated, use "initDataTableInline" instead.')
+    initDataTableInline(dt_table);
+}
+
+/**
+ * @deprecated
+ * @since  2.3.2
+ */
+function init_currency_symbol() {
+    console.warn('"init_currency_symbol" is deprecated, use "init_currency" instead')
+    init_currency();
 }

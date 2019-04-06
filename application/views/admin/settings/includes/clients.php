@@ -1,3 +1,4 @@
+<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <?php echo form_hidden('settings[customer_settings]','true'); ?>
 <div class="form-group">
 	<label for="clients_default_theme" class="control-label"><?php echo _l('settings_clients_default_theme'); ?></label>
@@ -10,18 +11,23 @@
 <hr />
 <?php echo render_select( 'settings[customer_default_country]',get_all_countries(),array( 'country_id',array( 'short_name')), 'customer_default_country',get_option('customer_default_country')); ?>
 <hr />
-<?php $tabs = get_customer_profile_tabs(null);
-$current_selected_tabs = get_option('visible_customer_profile_tabs');
-if($current_selected_tabs != 'all') {
-	$current_selected_tabs = unserialize($current_selected_tabs);
-}
+<?php
+	$tabs = get_customer_profile_tabs();
+	$current_tabs = get_option('visible_customer_profile_tabs');
+	if($current_tabs != 'all') {
+		$current_tabs = unserialize($current_tabs);
+	}
 ?>
 <div class="form-group">
 	<label for="visible_customer_profile_tabs" class="control-label"><?php echo _l('visible_tabs'); ?> (<?php echo _l('client_add_edit_profile'); ?>)</label>
 	<select name="settings[visible_customer_profile_tabs][]" id="visible_customer_profile_tabs" multiple class="form-control selectpicker" data-none-selected-text="<?php echo _l('all'); ?>" data-actions-box="true">
-		<?php foreach($tabs as $tab){
-			if($tab['name'] == 'profile'){continue;} ?>
-			<option value="<?php echo $tab['name']; ?>"<?php if(is_array($current_selected_tabs) && in_array($tab['name'],$current_selected_tabs)){echo ' selected';} ?>><?php echo $tab['lang']; ?></option>
+		<?php foreach($tabs as $tabKey => $tab){
+			if($tabKey == 'profile' || $tabKey =='contacts'){continue;} ?>
+			<option value="<?php echo $tabKey; ?>"<?php if((is_array($current_tabs)
+			&& array_key_exists($tabKey, $current_tabs) && $current_tabs[$tabKey] == true) || (is_array($current_tabs) && !array_key_exists($tabKey, $current_tabs))){
+				echo ' selected';} ?>>
+				<?php echo $tab['name']; ?>
+			</option>
 		<?php } ?>
 	</select>
 </div>
@@ -75,7 +81,7 @@ if($current_selected_tabs != 'all') {
 if(count($custom_fields) > 0){
 	echo '<hr />';
 	echo '<p class="no-mbot font-medium"><b>'._l('custom_fields').'</b></p>';
-	if(total_rows('tblcustomfields',array('fieldto'=>'customers','show_on_client_portal'=>1)) == 0){
+	if(total_rows(db_prefix().'customfields',array('fieldto'=>'customers','show_on_client_portal'=>1)) == 0){
 		echo '<p>' . _l('custom_field_pdf_html_help'). '</p>';
 		echo '<hr />';
 	}

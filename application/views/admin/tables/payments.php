@@ -5,45 +5,45 @@ defined('BASEPATH') or exit('No direct script access allowed');
 $hasPermissionDelete = has_permission('payments', '', 'delete');
 
 $aColumns = [
-    'tblinvoicepaymentrecords.id as id',
+    db_prefix() . 'invoicepaymentrecords.id as id',
     'invoiceid',
     'paymentmode',
     'transactionid',
     get_sql_select_client_company(),
     'amount',
-    'tblinvoicepaymentrecords.date as date',
+    db_prefix() . 'invoicepaymentrecords.date as date',
     ];
 
 $join = [
-    'LEFT JOIN tblinvoices ON tblinvoices.id = tblinvoicepaymentrecords.invoiceid',
-    'LEFT JOIN tblclients ON tblclients.userid = tblinvoices.clientid',
-    'LEFT JOIN tblcurrencies ON tblcurrencies.id = tblinvoices.currency',
-    'LEFT JOIN tblinvoicepaymentsmodes ON tblinvoicepaymentsmodes.id = tblinvoicepaymentrecords.paymentmode',
+    'LEFT JOIN ' . db_prefix() . 'invoices ON ' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid',
+    'LEFT JOIN ' . db_prefix() . 'clients ON ' . db_prefix() . 'clients.userid = ' . db_prefix() . 'invoices.clientid',
+    'LEFT JOIN ' . db_prefix() . 'currencies ON ' . db_prefix() . 'currencies.id = ' . db_prefix() . 'invoices.currency',
+    'LEFT JOIN ' . db_prefix() . 'payment_modes ON ' . db_prefix() . 'payment_modes.id = ' . db_prefix() . 'invoicepaymentrecords.paymentmode',
     ];
 
 $where = [];
 if ($clientid != '') {
-    array_push($where, 'AND tblclients.userid=' . $clientid);
+    array_push($where, 'AND ' . db_prefix() . 'clients.userid=' . $clientid);
 }
 
 if (!has_permission('payments', '', 'view')) {
     $whereUser = '';
-    $whereUser .= 'AND (invoiceid IN (SELECT id FROM tblinvoices WHERE (addedfrom=' . get_staff_user_id() . ' AND addedfrom IN (SELECT staffid FROM tblstaffpermissions JOIN tblpermissions ON tblpermissions.permissionid=tblstaffpermissions.permissionid WHERE tblpermissions.name = "invoices" AND can_view_own=1)))';
+    $whereUser .= 'AND (invoiceid IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE (addedfrom=' . get_staff_user_id() . ' AND addedfrom IN (SELECT staff_id FROM ' . db_prefix() . 'staff_permissions WHERE feature = "invoices" AND capability="view_own")))';
     if (get_option('allow_staff_view_invoices_assigned') == 1) {
-        $whereUser .= ' OR invoiceid IN (SELECT id FROM tblinvoices WHERE sale_agent=' . get_staff_user_id() . ')';
+        $whereUser .= ' OR invoiceid IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE sale_agent=' . get_staff_user_id() . ')';
     }
     $whereUser .= ')';
     array_push($where, $whereUser);
 }
 
 $sIndexColumn = 'id';
-$sTable       = 'tblinvoicepaymentrecords';
+$sTable       = db_prefix() . 'invoicepaymentrecords';
 
 $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'clientid',
-    'symbol',
-    'tblinvoicepaymentsmodes.name as payment_mode_name',
-    'tblinvoicepaymentsmodes.id as paymentmodeid',
+    db_prefix() . 'currencies.name as currency_name',
+    db_prefix() . 'payment_modes.name as payment_mode_name',
+    db_prefix() . 'payment_modes.id as paymentmodeid',
     'paymentmethod',
     ]);
 
@@ -51,7 +51,7 @@ $output  = $result['output'];
 $rResult = $result['rResult'];
 
 $this->ci->load->model('payment_modes_model');
-$online_modes = $this->ci->payment_modes_model->get_online_payment_modes(true);
+$payment_gateways = $this->ci->payment_modes_model->get_payment_gateways(true);
 
 foreach ($rResult as $aRow) {
     $row = [];
@@ -79,14 +79,16 @@ foreach ($rResult as $aRow) {
     $row[] = '<a href="' . admin_url('invoices/list_invoices/' . $aRow['invoiceid']) . '">' . format_invoice_number($aRow['invoiceid']) . '</a>';
 
     $outputPaymentMode = $aRow['payment_mode_name'];
+
     // Since version 1.0.1
     if (is_null($aRow['paymentmodeid'])) {
-        foreach ($online_modes as $online_mode) {
-            if ($aRow['paymentmode'] == $online_mode['id']) {
-                $outputPaymentMode = $online_mode['name'];
+        foreach ($payment_gateways as $gateway) {
+            if ($aRow['paymentmode'] == $gateway['id']) {
+                $outputPaymentMode = $gateway['name'];
             }
         }
     }
+
     if (!empty($aRow['paymentmethod'])) {
         $outputPaymentMode .= ' - ' . $aRow['paymentmethod'];
     }
@@ -96,7 +98,7 @@ foreach ($rResult as $aRow) {
 
     $row[] = '<a href="' . admin_url('clients/client/' . $aRow['clientid']) . '">' . $aRow['company'] . '</a>';
 
-    $row[] = format_money($aRow['amount'], $aRow['symbol']);
+    $row[] = app_format_money($aRow['amount'], $aRow['currency_name']);
 
     $row[] = _d($aRow['date']);
 
