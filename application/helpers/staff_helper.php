@@ -233,7 +233,7 @@ function staff_profile_image($id, $classes = ['staff-profile-image'], $type = 's
 
     $_attributes = '';
     foreach ($img_attrs as $key => $val) {
-        $_attributes .= $key . '=' . '"' . $val . '" ';
+        $_attributes .= $key . '=' . '"' . html_escape($val) . '" ';
     }
 
     $blankImageFormatted = '<img src="' . $url . '" ' . $_attributes . ' class="' . implode(' ', $classes) . '" />';
@@ -259,12 +259,12 @@ function staff_profile_image($id, $classes = ['staff-profile-image'], $type = 's
     if ($result && $result->profile_image !== null) {
         $profileImagePath = 'uploads/staff_profile_images/' . $id . '/' . $type . '_' . $result->profile_image;
         if (file_exists($profileImagePath)) {
-            $profile_image = '<img ' . $_attributes . ' src="' . base_url($profileImagePath) . '" class="' . implode(' ', $classes) . '" alt="' . $result->firstname . ' ' . $result->lastname . '" />';
+            $profile_image = '<img ' . $_attributes . ' src="' . base_url($profileImagePath) . '" class="' . implode(' ', $classes) . '" />';
         } else {
             return $blankImageFormatted;
         }
     } else {
-        $profile_image = '<img src="' . $url . '" ' . $_attributes . ' class="' . implode(' ', $classes) . '" alt="' . $result->firstname . ' ' . $result->lastname . '" />';
+        $profile_image = '<img src="' . $url . '" ' . $_attributes . ' class="' . implode(' ', $classes) . '" />';
     }
 
     return $profile_image;
@@ -295,7 +295,7 @@ function get_staff_full_name($userid = '')
         $CI->app_object_cache->add('staff-full-name-data-' . $userid, $staff);
     }
 
-    return $staff ? $staff->firstname . ' ' . $staff->lastname : '';
+    return html_escape($staff ? $staff->firstname . ' ' . $staff->lastname : '');
 }
 
 /**

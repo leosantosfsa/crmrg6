@@ -64,6 +64,8 @@ class Locale
             return 'he_IL';
         } elseif ($locale == 'sv') {
             return 'sv_SE';
+        } elseif ($locale == 'sl') {
+            return 'sl_SI';
         }
 
         foreach ($availableLanguages as $lang) {

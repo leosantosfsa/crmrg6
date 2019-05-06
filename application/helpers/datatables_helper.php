@@ -147,7 +147,7 @@ function data_tables_init($aColumns, $sIndexColumn, $sTable, $join = [], $where 
                 if (stripos($columnName, 'AVG(') !== false || stripos($columnName, 'SUM(') !== false) {
                 } else {
                     // Use index
-                    $sWhere .= 'convert(' . $searchAdditionalField . ' USING utf8)' . " LIKE '" . $search_value . "%' OR ";
+                    $sWhere .= 'convert(' . $searchAdditionalField . ' USING utf8)' . " LIKE '%" . $search_value . "%' OR ";
                 }
             }
         }

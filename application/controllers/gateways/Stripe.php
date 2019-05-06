@@ -105,7 +105,7 @@ class Stripe extends App_Controller
                                 data-label="'.(isset($data['stripe_customer']) && !empty($data['stripe_customer']->default_source) ? _l('enter_new_card') : _l('pay_with_card')).'"
                                 data-key="' . $this->stripe_gateway->getSetting('api_publishable_key') . '"
                                 data-amount="' . (strcasecmp($data['invoice']->currency_name, 'JPY') == 0 ? $data['total'] : $data['total'] * 100) . '"
-                                data-name="' . get_option('companyname') . '"
+                                data-name="' . html_escape(get_option('companyname')) . '"
                                 data-billing-address="true"
                                 data-description=" ' . _l('payment_for_invoice') . ' ' . format_invoice_number($data['invoice']->id) . '";
                                 data-locale="'.$data['locale'].'"

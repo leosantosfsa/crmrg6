@@ -60,6 +60,11 @@
                                     <label for="invoice_<?php echo format_invoice_status($status,'',false); ?>"><?php echo format_invoice_status($status,'',false); ?></label>
                                 </div>
                             <?php } ?>
+                            <hr />
+                             <div class="radio radio-primary">
+                                    <input type="radio" id="invoice_not_send" value="not_send" name="invoices_export_status">
+                                    <label for="invoice_not_send"><?php echo _l('not_sent_indicator'); ?></label>
+                                </div>
                         </div>
                         <div class="form-group hide shifter" id="proposal_status">
                             <label for="proposals_export_status"><?php echo _l('bulk_export_status'); ?></label>

@@ -4782,14 +4782,23 @@ function update_checklist_order() {
 }
 
 // New task checklist item
-function add_task_checklist_item(task_id, description) {
+function add_task_checklist_item(task_id, description, e) {
+    if (e) {
+        $(e).addClass('disabled');
+    }
+
     description = typeof(description) == 'undefined' ? '' : description;
+
     $.post(admin_url + 'tasks/add_checklist_item', {
         taskid: task_id,
         description: description
     }).done(function() {
         init_tasks_checklist_items(true, task_id);
-    });
+    }).always(function() {
+        if (e) {
+            $(e).removeClass('disabled');
+        }
+    })
 }
 
 function update_task_checklist_item(textArea) {

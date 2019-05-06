@@ -13,17 +13,16 @@ define('SURVEYS_MODULE_NAME', 'surveys');
 
 hooks()->add_action('after_cron_run', 'surveys_send');
 hooks()->add_action('admin_init', 'surveys_module_init_menu_items');
-
-hooks()->add_filter('numbers_of_features_using_cron_job', 'surveys_numbers_of_features_using_cron_job');
-hooks()->add_filter('used_cron_features', 'surveys_used_cron_features');
-hooks()->add_filter('admin_init', 'surveys_permissions');
-hooks()->add_filter('migration_tables_to_replace_old_links', 'surveys_migration_tables_to_replace_old_links');
-hooks()->add_filter('global_search_result_query', 'surveys_global_search_result_query', 10, 3);
-hooks()->add_filter('global_search_result_output', 'surveys_global_search_result_output', 10, 2);
-
+hooks()->add_action('admin_init', 'surveys_permissions');
 hooks()->add_action('after_cron_settings_last_tab', 'survey_cron_settings_tab');
 hooks()->add_action('after_cron_settings_last_tab_content', 'survey_cron_settings_tab_content');
 hooks()->add_action('contact_deleted', 'survey_contact_deleted_hook', 10, 2);
+
+hooks()->add_filter('numbers_of_features_using_cron_job', 'surveys_numbers_of_features_using_cron_job');
+hooks()->add_filter('used_cron_features', 'surveys_used_cron_features');
+hooks()->add_filter('migration_tables_to_replace_old_links', 'surveys_migration_tables_to_replace_old_links');
+hooks()->add_filter('global_search_result_query', 'surveys_global_search_result_query', 10, 3);
+hooks()->add_filter('global_search_result_output', 'surveys_global_search_result_output', 10, 2);
 
 function surveys_global_search_result_output($output, $data)
 {

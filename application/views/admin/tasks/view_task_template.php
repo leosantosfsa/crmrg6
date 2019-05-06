@@ -143,7 +143,7 @@
                      <tr>
                         <td>
                            <?php if($timesheet['note']){
-                              echo '<i class="fa fa-comment" data-html="true" data-placement="right" data-toggle="tooltip" data-title="'.htmlspecialchars($timesheet['note'],ENT_COMPAT).'"></i>';
+                              echo '<i class="fa fa-comment" data-html="true" data-placement="right" data-toggle="tooltip" data-title="'.html_escape($timesheet['note']).'"></i>';
                               }
                               ?>
                            <a href="<?php echo admin_url('staff/profile/' . $timesheet['staff_id']); ?>" target="_blank">
@@ -284,7 +284,7 @@
             } ?>
          <div class="clearfix"></div>
          <hr />
-         <a href="#" onclick="add_task_checklist_item('<?php echo $task->id; ?>'); return false" class="mbot10 inline-block">
+         <a href="#" onclick="add_task_checklist_item('<?php echo $task->id; ?>', undefined, this); return false" class="mbot10 inline-block">
          <span class="new-checklist-item"><i class="fa fa-plus-circle"></i>
          <?php echo _l('add_checklist_item'); ?>
          </span>
@@ -846,7 +846,7 @@
                   $_remove_assigne = ' <a href="#" class="remove-task-user text-danger" onclick="remove_assignee(' . $assignee['id'] . ',' . $task->id . '); return false;"><i class="fa fa-remove"></i></a>';
                }
                $_assignees .= '
-               <div class="task-user"  data-toggle="tooltip" data-title="'.$assignee['full_name'].'">
+               <div class="task-user"  data-toggle="tooltip" data-title="'.html_escape($assignee['full_name']).'">
                <a href="' . admin_url('profile/' . $assignee['assigneeid']) . '" target="_blank">' . staff_profile_image($assignee['assigneeid'], array(
                 'staff-profile-image-small'
                )) .'</a> ' . $_remove_assigne . '</span>
@@ -888,7 +888,7 @@
                    $_remove_follower = ' <a href="#" class="remove-task-user text-danger" onclick="remove_follower(' . $follower['id'] . ',' . $task->id . '); return false;"><i class="fa fa-remove"></i></a>';
                 }
                 $_followers .= '
-                <span class="task-user" data-toggle="tooltip" data-title="'.$follower['full_name'].'">
+                <span class="task-user" data-toggle="tooltip" data-title="'.html_escape($follower['full_name']).'">
                 <a href="' . admin_url('profile/' . $follower['followerid']) . '" target="_blank">' . staff_profile_image($follower['followerid'], array(
                  'staff-profile-image-small'
                )) . '</a> ' . $_remove_follower . '</span>

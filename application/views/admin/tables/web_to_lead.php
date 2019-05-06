@@ -23,7 +23,7 @@ foreach ($rResult as $aRow) {
             $_data .= ' | <a href="' . admin_url('leads/delete_form/' . $aRow['id']) . '" class="text-danger _delete">' . _l('delete') . '</a>';
             $_data .= '</div>';
         } elseif ($aColumns[$i] == 'dateadded') {
-            $_data = '<span class="text-has-action" data-toggle="tooltip" data-title="' . _dt($_data) . '">' . time_ago($_data) . '</span>';
+            $_data = '<span class="text-has-action is-date" data-toggle="tooltip" data-title="' . _dt($_data) . '">' . time_ago($_data) . '</span>';
         }
 
         $row[] = $_data;

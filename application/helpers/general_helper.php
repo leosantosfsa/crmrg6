@@ -428,7 +428,7 @@ function _l($line, $label = '', $log_errors = true)
 
     if ($_line != '') {
         if (preg_match('/"/', $_line) && !is_html($_line)) {
-            $_line = htmlspecialchars($_line, ENT_COMPAT);
+            $_line = html_escape($_line);
         }
 
         return ForceUTF8\Encoding::toUTF8($_line);

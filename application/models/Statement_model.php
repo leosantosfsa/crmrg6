@@ -244,7 +244,6 @@ class Statement_model extends App_Model
     {
         $sent = false;
         if (is_array($send_to) && count($send_to) > 0) {
-            $this->load->model('emails_model');
 
             $statement = $this->get_statement($customer_id, to_sql_date($from), to_sql_date($to));
             set_mailing_constant();

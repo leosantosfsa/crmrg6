@@ -224,7 +224,7 @@
                                $fullName = $contact['firstname'] . ' ' . $contact['lastname'];
                                $dateLoggedIn = _dt($contact['last_login']);
                                $html = "<a href='$url' target='_blank'>$fullName</a><br /><small>$dateLoggedIn</small><br />";
-                               $contactsTemplate .= htmlspecialchars('<p class="mbot5">'.$html.'</p>');
+                               $contactsTemplate .= html_escape('<p class="mbot5">'.$html.'</p>');
                            }
                            ?>
                         <?php } ?>

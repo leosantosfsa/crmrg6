@@ -2858,6 +2858,14 @@ label:not(.control-label) {
     height: 34px;
 }
 
+[dir="rtl"] .bootstrap-select .dropdown-toggle .filter-option {
+    right: 0;
+    margin-left: 100%;
+    margin-right: auto;
+    text-align: right;
+    padding-right: 16px;
+}
+
 .dropdown-menu>li>a:focus,
 .dropdown-menu>li>a:hover {
     outline: 0 !important;

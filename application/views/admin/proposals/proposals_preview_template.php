@@ -209,7 +209,7 @@
                            <?php
                               $tags = get_tags_in($proposal->id,'proposal');
                               if(count($tags) > 0){
-                               echo '<i class="fa fa-tag" aria-hidden="true" data-toggle="tooltip" data-title="'.implode(', ',$tags).'"></i>';
+                               echo '<i class="fa fa-tag" aria-hidden="true" data-toggle="tooltip" data-title="'.html_escape(implode(', ',$tags)).'"></i>';
                               }
                               ?>
                            <a href="<?php echo admin_url('proposals/proposal/'.$proposal->id); ?>">

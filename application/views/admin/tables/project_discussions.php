@@ -40,7 +40,7 @@ foreach ($rResult as $aRow) {
             }
         } elseif ($aColumns[$i] == 'last_activity') {
             if (!is_null($_data)) {
-                $_data = '<span class="text-has-action" data-toggle="tooltip" data-title="' . _dt($_data) . '">' . time_ago($_data) . '</span>';
+                $_data = '<span class="text-has-action is-date" data-toggle="tooltip" data-title="' . _dt($_data) . '">' . time_ago($_data) . '</span>';
             } else {
                 $_data = _l('project_discussion_no_activity');
             }

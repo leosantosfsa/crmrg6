@@ -192,6 +192,7 @@ class Invoices_model extends App_Model
         $has_permission_view                = has_permission('invoices', '', 'view');
         $has_permission_view_own            = has_permission('invoices', '', 'view_own');
         $allow_staff_view_invoices_assigned = get_option('allow_staff_view_invoices_assigned');
+        $noPermissionsQuery                 = get_invoices_where_sql_for_staff(get_staff_user_id());
 
         for ($i = 1; $i <= 3; $i++) {
             $select = 'id,total';
@@ -227,7 +228,7 @@ class Invoices_model extends App_Model
             }
 
             if (!$has_permission_view) {
-                $whereUser = get_invoices_where_sql_for_staff(get_staff_user_id());
+                $whereUser = $noPermissionsQuery;
                 $this->db->where('(' . $whereUser . ')');
             }
 
@@ -513,13 +514,13 @@ class Invoices_model extends App_Model
             self::STATUS_OVERDUE,
             self::STATUS_DRAFT,
         ];
-
+        $noPermissionsQuery  = get_invoices_where_sql_for_staff(get_staff_user_id());
         $has_permission_view = has_permission('invoices', '', 'view');
         $this->db->select('id');
         $this->db->where('clientid', $client_id);
         $this->db->where('STATUS IN (' . implode(', ', $statuses) . ')');
         if (!$has_permission_view) {
-            $whereUser = get_invoices_where_sql_for_staff(get_staff_user_id());
+            $whereUser = $noPermissionsQuery;
             $this->db->where('(' . $whereUser . ')');
         }
         if ($current_invoice != '') {
@@ -1352,7 +1353,7 @@ class Invoices_model extends App_Model
      * @param  boolean $attachpdf attach invoice pdf or not
      * @return boolean
      */
-    public function send_invoice_to_client($id, $template_name = '', $attachpdf = true, $cc = '', $manually = false)
+    public function send_invoice_to_client($id, $template_name = '', $attachpdf = true, $cc = '', $manually = false, $attachStatement = [])
     {
         $invoice = $this->get($id);
 
@@ -1382,7 +1383,17 @@ class Invoices_model extends App_Model
             }
         }
 
+        $attachStatementPdf = false;
         if (is_array($sent_to) && count($sent_to) > 0) {
+            if (isset($attachStatement['attach']) && $attachStatement['attach'] == true) {
+                $statement    = $this->clients_model->get_statement($invoice->clientid, $attachStatement['from'], $attachStatement['to']);
+                $statementPdf = statement_pdf($statement);
+
+                $statementPdfFileName = slug_it(_l('customer_statement') . '-' . $statement['client']->company);
+
+                $attachStatementPdf = $statementPdf->Output($statementPdfFileName . '.pdf', 'S');
+            }
+
             $status_updated = update_invoice_status($invoice->id, true, true);
 
             if ($attachpdf) {
@@ -1409,6 +1420,14 @@ class Invoices_model extends App_Model
                         $template->add_attachment([
                             'attachment' => $attach,
                             'filename'   => str_replace('/', '-', $invoice_number . '.pdf'),
+                            'type'       => 'application/pdf',
+                        ]);
+                    }
+
+                    if ($attachStatementPdf) {
+                        $template->add_attachment([
+                            'attachment' => $attachStatementPdf,
+                            'filename'   => $statementPdfFileName,
                             'type'       => 'application/pdf',
                         ]);
                     }

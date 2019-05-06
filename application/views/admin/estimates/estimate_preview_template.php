@@ -106,7 +106,7 @@
                      $_tooltip = _l('estimate_sent_to_email_tooltip');
                      $_tooltip_already_send = '';
                      if($estimate->sent == 1){
-                        $_tooltip_already_send = _l('estimate_already_send_to_client_tooltip',time_ago($estimate->datesend));
+                        $_tooltip_already_send = _l('estimate_already_send_to_client_tooltip', time_ago($estimate->datesend));
                      }
                      ?>
                   <?php if(!empty($estimate->clientid)){ ?>
@@ -224,7 +224,7 @@
                            <?php
                               $tags = get_tags_in($estimate->id,'estimate');
                               if(count($tags) > 0){
-                                echo '<i class="fa fa-tag" aria-hidden="true" data-toggle="tooltip" data-title="'.implode(', ',$tags).'"></i>';
+                                echo '<i class="fa fa-tag" aria-hidden="true" data-toggle="tooltip" data-title="'.html_escape(implode(', ',$tags)).'"></i>';
                               }
                               ?>
                            <a href="<?php echo admin_url('estimates/estimate/'.$estimate->id); ?>">

@@ -1435,7 +1435,7 @@ CREATE TABLE `tblmigrations` (
 --
 
 INSERT INTO `tblmigrations` (`version`) VALUES
-(234);
+(235);
 
 -- --------------------------------------------------------
 

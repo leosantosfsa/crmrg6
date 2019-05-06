@@ -320,8 +320,8 @@ class App_mail_template
     {
         $bcc = '';
         // Used for action hooks
-        if (isset($template->bcc)) {
-            $bcc = $template->bcc;
+        if (isset($this->template->bcc)) {
+            $bcc = $this->template->bcc;
             if (is_array($bcc)) {
                 $bcc = implode(', ', $bcc);
             }

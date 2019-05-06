@@ -55,6 +55,9 @@ class Migration_Version_230 extends CI_Migration
             $this->db->query('ALTER TABLE `tblcreditnoterefunds` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;');
         }
 
+        $this->db->query('ALTER TABLE `tblcontacts` CHANGE `lastname` `lastname` VARCHAR(191) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;');
+        $this->db->query('ALTER TABLE `tblcontacts` CHANGE `firstname` `firstname` VARCHAR(191) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;');
+
         $this->db->query('ALTER TABLE `tblcontacts` ADD INDEX(`email`);');
 
         $this->db->query('ALTER TABLE `tblcustomfields` CHANGE `fieldto` `fieldto` VARCHAR(15) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;');
@@ -77,7 +80,7 @@ class Migration_Version_230 extends CI_Migration
             add_option('230_cp_tabs_processed', 'true', 0);
         }
 
-        @$this->db->query("ALTER TABLE `tblprojects` CHANGE `name` `name` VARCHAR(191) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;");
+        @$this->db->query('ALTER TABLE `tblprojects` CHANGE `name` `name` VARCHAR(191) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;');
 
         $databaseName = APP_DB_NAME;
         $myISAMTables = $this->db->query("SELECT TABLE_NAME,

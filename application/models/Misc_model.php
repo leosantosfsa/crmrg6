@@ -695,6 +695,7 @@ class Misc_model extends App_Model
                 $q = trim($q);
                 $q = ltrim($q, '0');
             }
+            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
             // Invoice payment records
             $this->db->select('*,' . db_prefix() . 'invoicepaymentrecords.id as paymentid');
             $this->db->from(db_prefix() . 'invoicepaymentrecords');
@@ -702,7 +703,7 @@ class Misc_model extends App_Model
             $this->db->join(db_prefix() . 'invoices', '' . db_prefix() . 'invoices.id = ' . db_prefix() . 'invoicepaymentrecords.invoiceid');
 
             if (!$has_permission_view_payments) {
-                $this->db->where('invoiceid IN (select id from ' . db_prefix() . 'invoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
+                $this->db->where('invoiceid IN (select id from ' . db_prefix() . 'invoices where ' . $noPermissionQuery . ')');
             }
 
             $this->db->where('(' . db_prefix() . 'invoicepaymentrecords.id LIKE "' . $q . '"
@@ -737,12 +738,13 @@ class Misc_model extends App_Model
         $allow_staff_view_invoices_assigned = get_option('allow_staff_view_invoices_assigned');
 
         if ($has_permission_view_invoices || $has_permission_view_invoices_own || $allow_staff_view_invoices_assigned == '1') {
+            $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
             $this->db->select()->from(db_prefix() . 'itemable');
             $this->db->where('rel_type', 'invoice');
             $this->db->where('(description LIKE "%' . $q . '%" OR long_description LIKE "%' . $q . '%")');
 
             if (!$has_permission_view_invoices) {
-                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'invoices where ' . get_invoices_where_sql_for_staff(get_staff_user_id()) . ')');
+                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'invoices where ' . $noPermissionQuery . ')');
             }
 
             $this->db->order_by('description', 'ASC');
@@ -758,11 +760,13 @@ class Misc_model extends App_Model
         $has_permission_view_estimates_own   = has_permission('estimates', '', 'view_own');
         $allow_staff_view_estimates_assigned = get_option('allow_staff_view_estimates_assigned');
         if ($has_permission_view_estimates || $has_permission_view_estimates_own || $allow_staff_view_estimates_assigned) {
+            $noPermissionQuery = get_estimates_where_sql_for_staff(get_staff_user_id());
+
             $this->db->select()->from(db_prefix() . 'itemable');
             $this->db->where('rel_type', 'estimate');
 
             if (!$has_permission_view_estimates) {
-                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'estimates where ' . get_estimates_where_sql_for_staff(get_staff_user_id()) . ')');
+                $this->db->where('rel_id IN (select id from ' . db_prefix() . 'estimates where ' . $noPermissionQuery . ')');
             }
             $this->db->where('(description LIKE "%' . $q . '%" OR long_description LIKE "%' . $q . '%")');
             $this->db->order_by('description', 'ASC');

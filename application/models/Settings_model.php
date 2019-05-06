@@ -50,7 +50,7 @@ class Settings_model extends App_Model
             }
 
             if ($tagsExists) {
-                set_alert('warning', 'Some tags are not updated because the name of the tag already exist');
+                set_alert('warning', _l('tags_update_replace_warning'));
 
                 return false;
             }
@@ -100,7 +100,6 @@ class Settings_model extends App_Model
                     $val = serialize($newVisibleTabs);
                 }
             } elseif ($name == 'email_signature') {
-                $val = nl2br_save_html($val);
                 $val = html_entity_decode($val);
             } elseif ($name == 'email_header' || $name == 'email_footer') {
                 $val = html_entity_decode($val);

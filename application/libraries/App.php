@@ -116,10 +116,6 @@ class App
      */
     public function upgrade_database()
     {
-        if (!is_really_writable(APPPATH . 'config/config.php')) {
-            show_error('/config/config.php file is not writable. You need to change the permissions to 0644. This error occurs while trying to update database to latest version.');
-            die;
-        }
 
         $update = $this->upgrade_database_silent();
 
@@ -131,7 +127,7 @@ class App
             if (is_staff_logged_in()) {
                 redirect(admin_url(), 'refresh');
             } else {
-                redirect(admin_url('authentication/admin'));
+                redirect(admin_url('authentication'));
             }
         }
     }

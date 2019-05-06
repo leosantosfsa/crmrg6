@@ -14,8 +14,8 @@ define('GOALS_MODULE_NAME', 'goals');
 hooks()->add_action('after_cron_run', 'goals_notification');
 hooks()->add_action('admin_init', 'goals_module_init_menu_items');
 hooks()->add_action('staff_member_deleted', 'goals_staff_member_deleted');
+hooks()->add_action('admin_init', 'goals_permissions');
 
-hooks()->add_filter('admin_init', 'goals_permissions');
 hooks()->add_filter('migration_tables_to_replace_old_links', 'goals_migration_tables_to_replace_old_links');
 hooks()->add_filter('global_search_result_query', 'goals_global_search_result_query', 10, 3);
 hooks()->add_filter('global_search_result_output', 'goals_global_search_result_output', 10, 2);

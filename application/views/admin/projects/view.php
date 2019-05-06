@@ -12,7 +12,9 @@
                         <h3 class="hide project-name"><?php echo $project->name; ?></h3>
                         <div id="project_view_name" class="pull-left">
                            <select class="selectpicker" id="project_top" data-width="fit"<?php if(count($other_projects) > 6){ ?> data-live-search="true" <?php } ?>>
-                              <option value="<?php echo $project->id; ?>" selected><?php echo $project->name; ?></option>
+                              <option value="<?php echo $project->id; ?>" selected data-content="<?php echo $project->name; ?> - <small><?php echo $project->client_data->company; ?></small>">
+                                <?php echo $project->client_data->company; ?> <?php echo $project->name; ?>
+                              </option>
                               <?php foreach($other_projects as $op){ ?>
                               <option value="<?php echo $op['id']; ?>" data-subtext="<?php echo $op['company']; ?>">#<?php echo $op['id']; ?> - <?php echo $op['name']; ?></option>
                               <?php } ?>

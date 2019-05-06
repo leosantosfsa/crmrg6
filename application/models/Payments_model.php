@@ -307,8 +307,9 @@ class Payments_model extends App_Model
                     if (is_staff_logged_in() && $member['staffid'] == get_staff_user_id()) {
                         continue;
                     }
-
-                    $notified = add_notification([
+                    // E.q. had permissions create not don't have, so we must re-check this
+                    if (user_can_view_invoice($invoice->id, $member['staffid'])) {
+                        $notified = add_notification([
                         'fromcompany'     => true,
                         'touserid'        => $member['staffid'],
                         'description'     => 'not_invoice_payment_recorded',
@@ -317,19 +318,20 @@ class Payments_model extends App_Model
                             format_invoice_number($invoice->id),
                         ]),
                     ]);
-                    if ($notified) {
-                        array_push($notifiedUsers, $member['staffid']);
+                        if ($notified) {
+                            array_push($notifiedUsers, $member['staffid']);
+                        }
                     }
-                }
 
-                send_mail_template(
-                    'invoice_payment_recorded_to_staff',
-                    $member['email'],
-                    $member['staffid'],
-                    $invoice,
-                    $attach,
-                    $payment->id
-                );
+                    send_mail_template(
+                        'invoice_payment_recorded_to_staff',
+                        $member['email'],
+                        $member['staffid'],
+                        $invoice,
+                        $attach,
+                        $payment->id
+                    );
+                }
             }
 
             pusher_trigger_notification($notifiedUsers);

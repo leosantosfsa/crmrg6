@@ -58,6 +58,7 @@ $(function() {
         var note_description = $('textarea[name="note_description"]').val();
         var ticketid = $('input[name="ticketid"]').val();
         if (note_description == '') { return; }
+        $(e.target).addClass('disabled');
         $.post(admin_url + 'misc/add_note/' + ticketid + '/ticket', {
             description: note_description
         }).done(function() {

@@ -261,11 +261,16 @@ class App_bulk_pdf_export
     private function invoices()
     {
         $noPermissionQuery = get_invoices_where_sql_for_staff(get_staff_user_id());
+        $notSentQuery = 'sent=0 AND status NOT IN(2,5)' . (!$this->can_view ? ' AND (' . $noPermissionQuery . ')' : '');
 
         $this->ci->db->select('id');
         $this->ci->db->from(db_prefix() . 'invoices');
         if ($this->status != 'all') {
-            $this->ci->db->where('status', $this->status);
+            if(is_numeric($status)){
+                $this->ci->db->where('status', $this->status);
+            } else {
+                $this->ci->db->where($notSentQuery);
+            }
         }
 
         if (!$this->can_view) {

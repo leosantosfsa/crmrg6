@@ -556,6 +556,7 @@ $config['proxy_ips'] = '';
 |--------------------------------------------------------------------------
 |
 | APP_MEMORY_LIMIT should be defined in app-config.php file.
+| For example: define('APP_MEMORY_LIMIT', '256m');
 */
 if (defined('APP_MEMORY_LIMIT')) {
     @ini_set('memory_limit', APP_MEMORY_LIMIT);

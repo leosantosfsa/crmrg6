@@ -74,7 +74,8 @@
          <ul class="nav nav-second-level collapse" aria-expanded="false">
             <?php foreach($item['children'] as $submenu){
                ?>
-            <li class="sub-menu-item-<?php echo $submenu['slug']; ?>"><a href="<?php echo $submenu['href']; ?>">
+            <li class="sub-menu-item-<?php echo $submenu['slug']; ?>">
+              <a href="<?php echo $submenu['href']; ?>">
                <?php if(!empty($submenu['icon'])){ ?>
                <i class="<?php echo $submenu['icon']; ?> menu-icon"></i>
                <?php } ?>

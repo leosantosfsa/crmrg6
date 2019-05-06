@@ -53,17 +53,20 @@ class ViewsTracking
                 $notification_link        = 'invoices/list_invoices/' . $rel_id;
                 $notification_description = 'not_customer_viewed_invoice';
                 array_push($notification_data, format_invoice_number($rel_id));
+                $canViewFunction = 'user_can_view_invoice';
             } elseif ($rel_type == 'estimate') {
                 $table                    = db_prefix() . 'estimates';
                 $notification_link        = 'estimates/list_estimates/' . $rel_id;
                 $notification_description = 'not_customer_viewed_estimate';
                 array_push($notification_data, format_estimate_number($rel_id));
+                $canViewFunction = 'user_can_view_estimate';
             } else {
                 $responsible_column       = 'assigned';
                 $table                    = db_prefix() . 'proposals';
                 $notification_description = 'not_customer_viewed_proposal';
                 $notification_link        = 'proposals/list_proposals/' . $rel_id;
                 array_push($notification_data, format_proposal_number($rel_id));
+                $canViewFunction = 'user_can_view_proposal';
             }
 
             $notification_data = serialize($notification_data);
@@ -90,6 +93,10 @@ class ViewsTracking
         $view_id = $CI->db->insert_id();
         if ($view_id) {
             foreach ($members as $member) {
+                // E.q. had permissions create not don't have, so we must re-check this
+                if(!$canViewFunction($rel_id, $member['staffid'])) {
+                    continue;
+                }
                 $notification = [
                     'fromcompany'     => true,
                     'touserid'        => $member['staffid'],

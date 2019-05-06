@@ -15,6 +15,7 @@ $additionalSelect = [
     'articleid',
     'slug',
     'staff_article',
+     db_prefix() . 'knowledge_base.description',
     ];
 $join = [
     'LEFT JOIN ' . db_prefix() . 'knowledge_base_groups ON ' . db_prefix() . 'knowledge_base_groups.groupid = ' . db_prefix() . 'knowledge_base.articlegroup',

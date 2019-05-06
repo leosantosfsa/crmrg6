@@ -78,7 +78,7 @@ class Contract_merge_fields extends App_merge_fields
 
         $fields['{contract_id}']             = $contract->id;
         $fields['{contract_subject}']        = $contract->subject;
-        $fields['{contract_description}']    = $contract->description;
+        $fields['{contract_description}']    = nl2br($contract->description);
         $fields['{contract_datestart}']      = _d($contract->datestart);
         $fields['{contract_dateend}']        = _d($contract->dateend);
         $fields['{contract_contract_value}'] = app_format_money($contract->contract_value, $currency);

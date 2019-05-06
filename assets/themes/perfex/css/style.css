@@ -2902,3 +2902,11 @@ div:not(.preview-sticky-header) .preview-sticky-container {
     float: left;
     margin-right: 15px;
 }
+
+[dir="rtl"] .bootstrap-select .dropdown-toggle .filter-option {
+    right: 0;
+    margin-left: 100%;
+    margin-right: auto;
+    text-align: right;
+    padding-right: 16px;
+}

@@ -90,7 +90,7 @@ $(function() {
         });
     });
 
-    $('select[name="range"]').on('change', function() {
+    $('body').on('change', 'select[name="range"]', function() {
         var $period = $('.period');
         if ($(this).val() == 'period') {
             $period.removeClass('hide');
@@ -796,6 +796,12 @@ function get_datatable_buttons(table) {
             if (newTmpRow.find('[data-note-edit-textarea]').length > 0) {
                 newTmpRow.find('[data-note-edit-textarea]').remove();
                 data = newTmpRow.html().trim();
+            }
+            // Convert e.q. two months ago to actual date
+            var exportTextHasActionDate = newTmpRow.find('.text-has-action.is-date');
+
+            if(exportTextHasActionDate.length) {
+               data = exportTextHasActionDate.attr('data-title');
             }
 
             if (newTmpRow.find('.row-options').length > 0) {

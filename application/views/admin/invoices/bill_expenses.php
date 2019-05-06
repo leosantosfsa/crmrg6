@@ -12,13 +12,13 @@ foreach($expenses_to_bill as $expense){
   <?php if(!empty($expense['note'])){ ?>
   <div class="checkbox checkbox-primary invoice_inc_expense_additional_info">
     <input type="checkbox" id="inc_note" data-id="<?php echo $expense['id']; ?>" data-content="<?php echo $expense['note']; ?>">
-    <label for="inc_note" data-toggle="tooltip" data-title="<?php echo $expense['note']; ?>"><?php echo _l('expense'); ?> <?php echo _l('expense_add_edit_note'); ?></label>
+    <label for="inc_note" data-toggle="tooltip" data-title="<?php echo html_escape($expense['note']); ?>"><?php echo _l('expense'); ?> <?php echo _l('expense_add_edit_note'); ?></label>
   </div>
   <?php } ?>
   <?php if(!empty($expense['expense_name'])){ ?>
   <div class="checkbox checkbox-primary invoice_inc_expense_additional_info">
     <input type="checkbox" id="inc_name" data-id="<?php echo $expense['id']; ?>" data-content="<?php echo $expense['expense_name']; ?>">
-    <label for="inc_name" data-toggle="tooltip" data-title="<?php echo $expense['expense_name']; ?>">
+    <label for="inc_name" data-toggle="tooltip" data-title="<?php echo html_escape($expense['expense_name']); ?>">
       <?php echo _l('expense'); ?> <?php echo _l('expense_name'); ?>
     </label>
   </div>
