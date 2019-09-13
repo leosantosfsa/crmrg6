@@ -99,7 +99,6 @@ $(window).on("load resize", function(e) {
         // Add special class to minimalize page elements when screen is less than 768px
         set_body_small();
     }
-
     // Wait until metsiMenu, collapse and other effect finish and set wrapper height
     setTimeout(function() {
         mainWrapperHeightFix();
@@ -445,6 +444,10 @@ $(function() {
         if (setup_menu.hasClass('display-block')) {
             $('.close-customizer').click();
         }
+        // Fix columns going out of the table
+        delay(function(){
+            $($.fn.dataTable.tables(true)).DataTable().responsive.recalc();
+        }, 300)
     });
 
     // Hide sidebar on content click on mobile
@@ -5083,7 +5086,10 @@ function edit_task(task_id) {
 function task_form_handler(form) {
 
     tinymce.triggerSave();
+
     $('#_task_modal').find('input[name="startdate"]').prop('disabled', false);
+    // Disable the save button in cases od duplicate clicks
+    $('#_task_modal').find('button[type="submit"]').prop('disabled', true);
 
     $("#_task_modal input[type=file]").each(function() {
         if ($(this).val() === "") {

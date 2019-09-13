@@ -362,15 +362,19 @@ class Tasks extends AdminController
             }
             $title = _l('edit', _l('task_lowercase')) . ' ' . $data['task']->name;
         }
+
         $data['project_end_date_attrs'] = [];
-        if ($this->input->get('rel_type') == 'project' && $this->input->get('rel_id')) {
-            $project = $this->projects_model->get($this->input->get('rel_id'));
+        if ($this->input->get('rel_type') == 'project' && $this->input->get('rel_id') || ($id !== '' && $data['task']->rel_type == 'project')) {
+
+            $project = $this->projects_model->get($id === '' ? $this->input->get('rel_id') : $data['task']->rel_id);
+
             if ($project->deadline) {
                 $data['project_end_date_attrs'] = [
                     'data-date-end-date' => $project->deadline,
                 ];
             }
         }
+
         $data['id']    = $id;
         $data['title'] = $title;
         $this->load->view('admin/tasks/task', $data);

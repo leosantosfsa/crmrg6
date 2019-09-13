@@ -318,12 +318,14 @@ function handle_task_attachments_array($taskid, $index_name = 'attachments')
                 // Upload the file into the temp dir
                 if (move_uploaded_file($tmpFilePath, $newFilePath)) {
                     array_push($uploaded_files, [
-                    'file_name' => $filename,
-                    'filetype'  => $_FILES[$index_name]['type'][$i],
+                        'file_name' => $filename,
+                        'filetype'  => $_FILES[$index_name]['type'][$i],
                     ]);
+
                     if (is_image($newFilePath)) {
                         create_img_thumb($path, $filename);
                     }
+
                 }
             }
         }
@@ -563,10 +565,11 @@ function handle_company_logo_upload()
 {
     $logoIndex = ['logo', 'logo_dark'];
     $success   = false;
+
     foreach ($logoIndex as $logo) {
         $index = 'company_' . $logo;
 
-        if (isset($_FILES[$index]) && _perfex_upload_error($_FILES[$index]['error'])) {
+        if (isset($_FILES[$index]) && !empty($_FILES[$index]['name']) && _perfex_upload_error($_FILES[$index]['error'])) {
             set_alert('warning', _perfex_upload_error($_FILES[$index]['error']));
 
             return false;
