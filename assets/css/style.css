@@ -5289,13 +5289,13 @@ body.rtl a+.main-tasks-table-href-name {
     padding: 5px 15px 5px 5px;
     margin-top: 10px;
     border-radius: 4px;
-    height: 34px;
     cursor: move;
 }
 
 .checklist .checkbox.checklist-checkbox {
     margin-top: 0;
     margin-bottom: 0;
+    height:25px;
 }
 
 .checklist:hover,
@@ -8578,8 +8578,7 @@ body.rtl .task-table-related:before {
 }
 
 .checklist-item-info {
-    position: absolute;
-    bottom: -30px;
+    margin: 5px 0px 0px 0px;
 }
 
 .mobile .checklist-item-info {

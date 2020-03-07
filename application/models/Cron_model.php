@@ -66,6 +66,7 @@ class Cron_model extends App_Model
             $this->auto_import_imap_tickets();
             $this->check_leads_email_integration();
             $this->delete_activity_log();
+            $this->send_scheduled_emails();
 
             /**
              * Finally send any emails in the email queue - if enabled and any
@@ -216,7 +217,6 @@ class Cron_model extends App_Model
                     'status' => 5,
                 ]);
                 if ($this->db->affected_rows() > 0) {
-
                     hooks()->do_action('after_ticket_status_changed', [
                         'id'     => $ticket['ticketid'],
                         'status' => 5,
@@ -787,6 +787,39 @@ class Cron_model extends App_Model
         }
     }
 
+    private function send_scheduled_emails()
+    {
+        $this->db->where('scheduled_at <=', date('Y-m-d H:i:s'));
+        $emails = $this->db->get('scheduled_emails')->result_array();
+
+        $this->load->model('invoices_model');
+
+        foreach ($emails as $email) {
+            $type = $email['rel_type'];
+
+            $GLOBALS['scheduled_email_contacts'] = explode(',', $email['contacts']);
+
+            switch ($type) {
+                case 'invoice':
+                    $this->invoices_model->send_invoice_to_client(
+                        $email['rel_id'],
+                        $email['template'],
+                        $email['attach_pdf'],
+                        $email['cc']
+                    );
+
+                break;
+            }
+
+            $this->db->where('id', $email['id']);
+            $this->db->delete('scheduled_emails');
+        }
+
+        if (isset($GLOBALS['scheduled_email_contacts'])) {
+            unset($GLOBALS['scheduled_email_contacts']);
+        }
+    }
+
     private function tasks_reminders()
     {
         $reminder_before = get_option('tasks_reminder_notification_before');
@@ -912,7 +945,7 @@ class Cron_model extends App_Model
         $this->load->model('invoices_model');
         $this->db->select('id,date,status,last_overdue_reminder,duedate,cancel_overdue_reminders');
         $this->db->from(db_prefix() . 'invoices');
-        $this->db->where('(duedate != "" AND duedate IS NOT NULL)'); // We dont need invoices with no duedate
+        $this->db->where('duedate IS NOT NULL'); // We dont need invoices with no duedate
         $this->db->where('status !=', 2); // We dont need paid status
         $this->db->where('status !=', 5); // We dont need cancelled status
         $this->db->where('status !=', 6); // We dont need draft status
@@ -920,6 +953,11 @@ class Cron_model extends App_Model
 
         $now = time();
         foreach ($invoices as $invoice) {
+
+            if (empty($invoice['duedate'])) {
+                continue;
+            }
+
             $statusid = update_invoice_status($invoice['id']);
 
             if ($invoice['cancel_overdue_reminders'] == 0 && is_invoices_overdue_reminders_enabled()) {
@@ -1465,8 +1503,8 @@ class Cron_model extends App_Model
             return;
         }
 
-        $this->db->query('DELETE FROM ' . db_prefix() . 'activity_log WHERE date < DATE_SUB(NOW(), INTERVAL ' . $older_then_months . ' MONTH);');
-        $this->db->query('DELETE FROM ' . db_prefix() . 'tickets_pipe_log WHERE date < DATE_SUB(NOW(), INTERVAL ' . $older_then_months . ' MONTH);');
+        $this->db->query('DELETE FROM ' . db_prefix() . 'activity_log WHERE date < DATE_SUB(NOW(), INTERVAL ' . $this->db->escape_str($older_then_months) . ' MONTH);');
+        $this->db->query('DELETE FROM ' . db_prefix() . 'tickets_pipe_log WHERE date < DATE_SUB(NOW(), INTERVAL ' . $this->db->escape_str($older_then_months) . ' MONTH);');
     }
 
     private function _maybe_fix_duplicate_tasks_assignees_and_followers()

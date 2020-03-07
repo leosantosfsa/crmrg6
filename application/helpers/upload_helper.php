@@ -747,8 +747,8 @@ function handle_staff_profile_image_upload($staff_id = '')
                 $config['source_image']   = $newFilePath;
                 $config['new_image']      = 'small_' . $filename;
                 $config['maintain_ratio'] = true;
-                $config['width']          = hooks()->apply_filters('staff_profile_image_small_width', 32);
-                $config['height']         = hooks()->apply_filters('staff_profile_image_small_height', 32);
+                $config['width']          = hooks()->apply_filters('staff_profile_image_small_width', 96);
+                $config['height']         = hooks()->apply_filters('staff_profile_image_small_height', 96);
                 $CI->image_lib->initialize($config);
                 $CI->image_lib->resize();
                 $CI->db->where('staffid', $staff_id);

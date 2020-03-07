@@ -33,7 +33,6 @@ class Clients_model extends App_Model
         }
 
         if (is_numeric($id)) {
-
             $this->db->where(db_prefix() . 'clients.userid', $id);
             $client = $this->db->get(db_prefix() . 'clients')->row();
 
@@ -387,6 +386,11 @@ class Clients_model extends App_Model
                 $set_password_email_sent = $this->authentication_model->set_password_email($data['email'], 0);
             }
         }
+
+        if ($affectedRows > 0) {
+            hooks()->do_action('contact_updated', $id, $data);
+        }
+
         if ($affectedRows > 0 && !$set_password_email_sent) {
             log_activity('Contact Updated [ID: ' . $id . ']');
 
@@ -463,7 +467,7 @@ class Clients_model extends App_Model
         $data['userid']       = $customer_id;
         if (isset($data['password'])) {
             $password_before_hash = $data['password'];
-            $data['password'] = app_hash_password($data['password']);
+            $data['password']     = app_hash_password($data['password']);
         }
 
         $data['datecreated'] = date('Y-m-d H:i:s');
@@ -545,8 +549,14 @@ class Clients_model extends App_Model
                 }
             }
 
-            if ($send_welcome_email == true) {
-                send_mail_template('customer_created_welcome_mail', $data['email'], $data['userid'], $contact_id, $password_before_hash);
+            if ($send_welcome_email == true && !empty($data['email'])) {
+                send_mail_template(
+                    'customer_created_welcome_mail',
+                    $data['email'],
+                    $data['userid'],
+                    $contact_id,
+                    $password_before_hash
+                );
             }
 
             if ($send_set_password_email) {
@@ -1202,6 +1212,11 @@ class Clients_model extends App_Model
             'active' => $status,
         ]);
         if ($this->db->affected_rows() > 0) {
+            hooks()->do_action('contact_status_changed', [
+                'id'     => $id,
+                'status' => $status,
+            ]);
+
             log_activity('Contact Status Changed [ContactID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
 
             return true;
@@ -1224,6 +1239,11 @@ class Clients_model extends App_Model
         ]);
 
         if ($this->db->affected_rows() > 0) {
+            hooks()->do_action('client_status_changed', [
+                'id'     => $id,
+                'status' => $status,
+            ]);
+
             log_activity('Customer Status Changed [ID: ' . $id . ' Status(Active/Inactive): ' . $status . ']');
 
             return true;
@@ -1502,6 +1522,7 @@ class Clients_model extends App_Model
 
     public function get_staff_members_that_can_access_customer($id)
     {
+        $id = $this->db->escape_str($id);
 
         return $this->db->query('SELECT * FROM ' . db_prefix() . 'staff
             WHERE (

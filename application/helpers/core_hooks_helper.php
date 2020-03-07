@@ -25,7 +25,7 @@ hooks()->add_action('admin_init', 'app_init_customer_profile_tabs');
 hooks()->add_action('admin_init', 'app_init_project_tabs');
 hooks()->add_action('admin_init', 'app_init_settings_tabs');
 
-if (defined('APP_CSRF_PROTECTION') && APP_CSRF_PROTECTION) {
+if (get_instance()->config->item('csrf_protection')) {
     hooks()->add_action('app_admin_head', 'csrf_jquery_token');
     hooks()->add_action('app_customers_head', 'csrf_jquery_token');
     hooks()->add_action('app_external_form_head', 'csrf_jquery_token');

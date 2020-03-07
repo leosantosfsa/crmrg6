@@ -1467,6 +1467,18 @@ $(function() {
         $('.mass_delete_separator').toggleClass('hide');
     });
 
+    // Fix for bigger items descriptions, the select is going out of the container
+    $('body').on('change loaded.bs.select', '#item_select', function() {
+        var selectWrapper = $('.items-wrapper .items-select-wrapper');
+        var selectAddon = $('.items-wrapper .input-group-addon');
+           if(selectAddon.length === 0){
+                // No items create permissions, so no + input group
+                $('.items-wrapper .bootstrap-select').css('width', '100%')
+            } else {
+                $('.items-wrapper .bootstrap-select').css('width', (selectWrapper.width() - selectAddon.width()) + 12 +'px');
+            }
+    });
+
     // Send test sms
     $('.send-test-sms').on('click', function() {
         var id = $(this).data('id');
@@ -1999,6 +2011,8 @@ $(function() {
                 form.append(hidden_input('save_and_send', 'true'));
             } else if (that.hasClass('save-and-record-payment')) {
                 form.append(hidden_input('save_and_record_payment', 'true'));
+            } else if (that.hasClass('save-and-send-later')) {
+                form.append(hidden_input('save_and_send_later', 'true'));
             }
         }
         form.submit();
@@ -3963,7 +3977,7 @@ function validate_lead_convert_to_client_form() {
             required: true,
             email: true,
             remote: {
-                url: site_url + "admin/misc/contact_email_exists",
+                url: admin_url + "misc/contact_email_exists",
                 type: 'post',
                 data: {
                     email: function() {
@@ -5584,6 +5598,14 @@ function record_payment(id) {
     $('#invoice').load(admin_url + 'invoices/record_invoice_payment_ajax/' + id);
 }
 
+function schedule_invoice_send(id) {
+    $('#invoice').load(admin_url + 'email_schedule_invoice/create/' + id);
+}
+
+function edit_invoice_scheduled_email(schedule_id) {
+    $('#invoice').load(admin_url + 'email_schedule_invoice/edit/' + schedule_id);
+}
+
 // Add item to preview
 function add_item_to_preview(id) {
     requestGetJSON('invoice_items/get_item_by_id/' + id).done(function(response) {
@@ -6975,6 +6997,8 @@ function merge_field_format_url(url, node, on_save, name) {
     // Merge fields url
     if (url.indexOf("{") > -1 && url.indexOf("}") > -1) {
         url = '{' + url.split('{')[1];
+    } else if (url.indexOf("%7B") > -1 && url.indexOf("%7D") > -1) {
+        url = '{'+url.replace('%7B', '').replace('%7D', '')+'}'
     }
     // Return new URL
     return url;

@@ -171,11 +171,10 @@ class Authentication extends App_Controller
     {
         if (!$this->Authentication_model->can_set_password($staff, $userid, $new_pass_key)) {
             set_alert('danger', _l('password_reset_key_expired'));
-            redirect(admin_url('authentication'));
             if ($staff == 1) {
                 redirect(admin_url('authentication'));
             } else {
-                redirect(site_url());
+                redirect(site_url('authentication'));
             }
         }
         $this->form_validation->set_rules('password', _l('admin_auth_set_password'), 'required');

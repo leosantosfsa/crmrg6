@@ -93,7 +93,7 @@ if ($url_f_open != '1'
 	</thead>
 	<tbody>
 		<tr>
-			<td>PHP 5.6.4+ </td>
+			<td>PHP >= 5.6.4 (PHP >= 7.2 recommended)</td>
 			<td><?php echo $requirement1; ?></td>
 		</tr>
 		<tr>

@@ -81,14 +81,14 @@ class Clients extends ClientsController
         $where = 'clientid=' . get_client_user_id();
 
         if (is_numeric($status)) {
-            $where .= ' AND status=' . $status;
+            $where .= ' AND status=' . $this->db->escape_str($status);
         } else {
             $listStatusesIds = [];
             $where .= ' AND status IN (';
             foreach ($data['project_statuses'] as $projectStatus) {
                 if (isset($projectStatus['filter_default']) && $projectStatus['filter_default'] == true) {
                     $listStatusesIds[] = $projectStatus['id'];
-                    $where .= $projectStatus['id'] . ',';
+                    $where .= $this->db->escape_str($projectStatus['id']) . ',';
                 }
             }
             $where = rtrim($where, ',');
@@ -463,6 +463,31 @@ class Clients extends ClientsController
         $this->layout();
     }
 
+    public function download_all_project_files($id)
+    {
+        if (!has_contact_permission('projects')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+
+        $files = $this->projects_model->get_files($id);
+
+        if (count($files) == 0) {
+            set_alert('warning', _l('no_files_found'));
+            redirect(site_url('clients/project/' . $id . '?group=project_files'));
+        }
+
+        $path = get_upload_path_by_type('project') . $id;
+        $this->load->library('zip');
+
+        foreach ($files as $file) {
+            $this->zip->read_file($path . '/' . $file['file_name']);
+        }
+
+        $this->zip->download(slug_it(get_project_name_by_id($id)) . '-files.zip');
+        $this->zip->clear_data();
+    }
+
     public function files()
     {
         $files_where = 'visible_to_customer = 1 AND id IN (SELECT file_id FROM ' . db_prefix() . 'shared_customer_files WHERE contact_id =' . get_contact_user_id() . ')';
@@ -575,7 +600,7 @@ class Clients extends ClientsController
         if (!is_numeric($status)) {
             $where .= ' AND status IN (' . implode(', ', $defaultStatuses) . ')';
         } else {
-            $where .= ' AND status=' . $status;
+            $where .= ' AND status=' . $this->db->escape_str($status);
         }
 
         $data['list_statuses'] = is_numeric($status) ? [$status] : $defaultStatuses;
@@ -1446,6 +1471,6 @@ class Clients extends ClientsController
 
     public function contact_email_profile_unique($email)
     {
-        return total_rows(db_prefix() . 'contacts', 'id !=' . get_contact_user_id() . ' AND email="' . $email . '"') > 0 ? false : true;
+        return total_rows(db_prefix() . 'contacts', 'id !=' . get_contact_user_id() . ' AND email="' . get_instance()->db->escape_str($email) . '"') > 0 ? false : true;
     }
 }
