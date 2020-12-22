@@ -543,7 +543,7 @@ class Proposals_model extends App_Model
                         'description'     => 'not_proposal_comment_from_client',
                         'touserid'        => $member['staffid'],
                         'fromcompany'     => 1,
-                        'fromuserid'      => null,
+                        'fromuserid'      => 0,
                         'link'            => 'proposals/list_proposals/' . $data['proposalid'],
                         'additional_data' => serialize([
                             $proposal->subject,
@@ -841,6 +841,10 @@ class Proposals_model extends App_Model
         $this->db->where('id', $id);
         $this->db->delete(db_prefix() . 'proposals');
         if ($this->db->affected_rows() > 0) {
+            if (!is_null($proposal->short_link)) {
+                app_archive_short_link($proposal->short_link);
+            }
+
             delete_tracked_emails($id, 'proposal');
 
             $this->db->where('proposalid', $id);

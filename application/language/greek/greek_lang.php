@@ -1782,7 +1782,6 @@ $lang['ticket_pipe_status']   = 'Κατάσταση';
 # Home
 $lang['home_latest_activity']   = 'Κινήσεις CRM';
 $lang['home_my_tasks']          = 'Task μου';
-$lang['home_latest_activity']   = 'Κινήσεις CRM';
 $lang['home_my_todo_items']     = 'To do\'s';
 $lang['home_widget_view_all']   = 'Εμφάνιση όλων';
 $lang['home_stats_full_report'] = 'Πλήρης αναφορά';
@@ -2603,15 +2602,10 @@ $lang['task_single_log_user'] = $lang['project_timesheet_user'];
 $lang['milestone_description']                      = 'Περιγραφή';
 $lang['description_visible_to_customer']            = 'Δείξτε περιγραφή στον πελάτη';
 $lang['upcoming_tasks']                             = 'Επόμενα Task';
-$lang['paymentmethod_two_checkout_account_number']  = 'Αριθμός Λογαριασμού (ID Πωλητή)';
-$lang['paymentmethod_two_checkout_private_key']     = 'Ιδιωτικό Κλειδί';
-$lang['paymentmethod_two_checkout_publishable_key'] = 'Δημοσιεύσιμο Κλειδί';
 $lang['payment_credit_card_number']                 = 'Αριθμός Κάρτας';
 $lang['payment_credit_card_expiration_date']        = 'Ημερομηνία Λήξης';
 $lang['payment_billing_email']                      = 'Email';
 $lang['submit_payment']                             = 'Υποβολή πληρωμής';
-$lang['2checkout_notice_payment']                   = 'Τα στοιχεία της πιστωτικής κάρτας επεξεργάστηκαν μέσω ασφαλούς ένδειξης που παρέχεται από 2Checkout';
-$lang['2checkout_usage_notice']                     = 'Το SSL απαιτείται εάν χρησιμοποιείτε το API πληρωμής 2Checkout. Απαιτείται να καλέσετε με ασφαλή τρόπο το tokenization και τις εξουσιοδοτήσεις. Το σύστημα θα λειτουργήσει χωρίς SSL, ωστόσο, αυτό θα σας απομακρύνει από τη συμμόρφωση, γεγονός που διακινδυνεύει την απενεργοποίηση των δικαιωμάτων API σας';
 $lang['custom_field_disallow_customer_to_edit']     = 'Απενεργοποιήστε τον πελάτη για να επεξεργαστείτε αυτό το πεδίο';
 $lang['project_due_notice']                         = 'Αυτό το project λήγει σε %s μέρες';
 $lang['not_lead_added_attachment']                  = 'πρόσθήκη νέου επισυναπτόμενου σε lead %s';
@@ -2761,7 +2755,6 @@ $lang['no_leads_found']                              = 'Δεν βρέθηκαν 
 $lang['created_today']                               = 'Δημιουργήθηκαν σήμερα';
 $lang['total_tasks_deleted']                         = 'Συνολικά διαγραμμένα task: %s';
 $lang['total_tickets_delete']                        = 'Συνολικά διαγραμμένα tickets: %s';
-$lang['total_tickets_delete']                        = 'Συνολικά tickets διαγράφονται: %s';
 $lang['format_letter_portrait']                      = 'Κάθετη εμφάνιση';
 $lang['format_letter_landscape']                     = 'Οριζόντια εμφάνιση';
 $lang['period_datepicker']                           = 'Περίοδος';
@@ -3456,7 +3449,6 @@ $lang['view_consent']                                           = 'Προβολ�
 $lang['transfer_consent']                                       = 'Μεταφορά συγκατάθεσης';
 $lang['view_public_form']                                       = 'Προβολή δημόσιας φόρμας';
 $lang['update_consent']                                         = 'Ενημέρωση συγκατάθεσης';
-$lang['update_consent']                                         = 'Ενημέρωση συγκατάθεσης';
 $lang['consent_last_updated']                                   = 'Τελευταία ενημέρωση: %s';
 $lang['showing_search_result']                                  = 'Αποτελέσματα για: %s';
 $lang['per_page']                                               = 'Για κάθε σελίδα';
@@ -3630,3 +3622,77 @@ $lang['schedule_email_for']             = 'Προγραμματισμός email 
 $lang['schedule_date']                  = 'Πότε θέλετε να στείλετε το email;';
 $lang['email_scheduled_successfully']   = 'Το email έχει προγραμματιστεί με επιτυχία';
 $lang['invoice_will_be_sent_at']        = 'Το τιμολόγιο θα αποσταλεί στις %s';
+
+# Version 2.5.0
+$lang['recaptcha_ignore_ips']               = 'Διευθύνσεις IP που αγνοήθηκαν';
+$lang['recaptcha_ignore_ips_info']          = 'Εισαγάγετε διευθύνσεις IP διαχωρισμένες με κόμμα που θέλετε να παραλείψει την επικύρωση το reCaptcha.';
+$lang['show_task_reminders_on_calendar']    = 'Υπενθυμίσεις task';
+$lang['contracts_about_to_expire']          = 'Συμβόλαια που λήγουν σύντομα';
+$lang['no_contracts_about_to_expire']       = 'Δεν υπάρχουν συμβόλαια που πρόκειται να λήξουν τις επόμενες %s ημέρες.';
+$lang['lead_value']                         = 'Αξία Lead';
+$lang['lead_value_tooltip']                 = 'Το βασικό νόμισμα θα χρησιμοποιηθεί.';
+$lang['leads_dt_lead_value']                = 'Αξία Lead';
+$lang['leads_canban_lead_value']            = 'Αξία Lead: %s';
+$lang['lead_add_edit_lead_value']           = 'Αξία Lead';
+
+# Version 2.6.0
+$lang['gantt_view_day'] = 'Προβολή ημερών';
+$lang['gantt_view_week'] = 'Προβολή εβδομάδων';
+$lang['gantt_view_month'] = 'Προβολή μηνών';
+$lang['gantt_view_year'] = 'Προβολή ετών';
+
+# Version 2.7.0
+$lang['hour_of_day_perform_tasks_reminder_notification_help'] = 'Μορφή 24 ωρών π.χ. 9 για 9πμ ή 15 για 3μμ. Χρησιμοποιείται για επαναλαμβανόμενες εργασίες, υπενθυμίσεις εργασιών κ.λπ.';
+$lang['clients_nav_contacts']                                 = 'Επαφές';
+$lang['clients_my_contacts']                                  = 'Επαφές';
+$lang['clients_my_contact']                                   = 'Επαφή';
+$lang['new_contact']                                          = 'Νέα επαφή';
+$lang['customer_contact']                                     = 'Οι επαφές μου';
+$lang['clients_contact_added']                                = 'Η επαφή προστέθηκε με επιτυχία';
+$lang['clients_contact_updated']                              = 'Η επαφή ενημερώθηκε με επιτυχία';
+$lang['allow_primary_contact_to_manage_other_contacts']       = 'Επιτρέψτε στην κύρια επαφή να διαχειρίζεται άλλες επαφές πελατών';
+$lang['contact_form_validation_is_unique']                    = 'Η επαφή με {field} υπάρχει ήδη στο σύστημά μας';
+$lang['invoice_number_not_applied_on_draft']                  = 'Εάν το τιμολόγιο αποθηκευτεί ως πρόχειρο, ο αριθμός δεν θα εφαρμοστεί, αντ \'αυτού, ο επόμενος αριθμός τιμολογίου θα δοθεί όταν το τιμολόγιο αποσταλεί στον πελάτη ή επισημανθεί ως απεσταλμένο.';
+$lang['two_factor_authentication_disabed']                    = 'Απενεργοποιημένο';
+$lang['enable_google_two_factor_authentication']              = 'Ενεργοποιήστε Google Authentication';
+$lang['set_google_two_factor_authentication_failed']          = 'Η αποθήκευση έλεγχου ταυτότητας απέτυχε, παρακαλούμε προσπαθήστε ξανά';
+$lang['enter_two_factor_auth_code_from_mobile']               = 'Προσθέστε τον κωδικό έλεγχου ταυτότητας από την εφαρμογή Google Authenticator.';
+$lang['staff_two_factor_authentication']                      = 'Έλεγχος ταυτότητας δύο παραγόντων';
+$lang['google_authentication_code']                           = 'Προσθέστε τον κωδικό από την εφαρμογή Google Authenticator';
+$lang['set_two_factor_authentication_successful']             = 'Ενημερώθηκε με επιτυχία οι ρυθμίσεις ελέγχου ταυτότητας δύο παραγόντων';
+$lang['set_two_factor_authentication_failed']                 = 'Δεν ήταν δυνατή η ενημέρωση των ρυθμίσεων ελέγχου ταυτότητας δύο παραγόντων';
+$lang['google_2fa_code_valid']                                = 'Επιβεβαιώθηκε με επιτυχία ο έλεγχος ταυτότητας';
+$lang['google_2fa_code_invalid']                              = 'Λάθος κωδικός έλεγχου ταυτότητας, προσπαθήστε ξανά.';
+$lang['google_2fa_scan_qr_guide']                             = 'Σαρώστε το QR παρακάτω με την εφαρμογή Google Authenticator στην κινητή συσκευή σας, μετά συμπληρώστε το παρακάτω πεδίο με τον κωδικό που δημιουργείται στην εφαρμογή';
+$lang['google_2fa_manul_input_secret']                        = 'Μυστικό κλειδί για χειροκίνητη εισαγωγή';
+
+# Version 2.7.1
+$lang['templates']                                   = 'Templates';
+$lang['add_template']                                = 'Add Template';
+$lang['edit_template']                               = 'Edit Template';
+$lang['template_added']                              = 'Template added successfully';
+$lang['template_updated']                            = 'Template updated successfully';
+$lang['template_name']                               = 'Template Title';
+$lang['template_content']                            = 'Template Content';
+$lang['insert_template']                             = 'Insert';
+$lang['items_table_amounts_exclude_currency_symbol'] = 'Exclude currency symbol from items table Amount';
+
+$lang['multiplies_of']               = 'Multiplies of';
+$lang['round_off_task_timer_option'] = 'Round off task timer';
+$lang['task_timer_dont_round_off']   = 'Don\'t round off';
+$lang['task_timer_round_up']         = 'Round up';
+$lang['task_timer_round_down']       = 'Round down';
+$lang['task_timer_round_nearest']    = 'Round to nearest';
+$lang['calendar_task_reminder']      = 'Task Reminder';
+$lang['projects_chart']              = 'Projects Chart';
+$lang['overdue_by_days']             = 'OVERDUE BY %s DAYS';
+
+$lang['two_checkout_payment_processing'] = 'Payment is been processed,you will be notified if successful';
+$lang['two_checkout_payment_cancelled']  = 'Payment Cancelled';
+$lang['two_checkout_merchant_code']      = 'Merchant Code';
+$lang['two_checkout_secret_Key']         = 'Secret Code';
+$lang['two_gateway_webhook_notice']      = 'The IPN Endpoint for 2Checkout is ( %s )';
+$lang['something_went_wrong']            = 'Something went wrong. Try again';
+$lang['imap_folder']                     = 'Folder';
+$lang['retrieve_folders']                = 'Retrieve Folders';
+$lang['email_to_ticket_config']          = 'Email to ticket configuration';

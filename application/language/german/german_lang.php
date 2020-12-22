@@ -1652,7 +1652,6 @@ $lang['ticket_pipe_status']                                                   = 
 # Home
 $lang['home_latest_activity']                                                 = 'Letzte Aufgaben';
 $lang['home_my_tasks']                                                        = 'Meine Aufgaben';
-$lang['home_latest_activity']                                                 = 'Letzte Aufgaben';
 $lang['home_my_todo_items']                                                   = 'Meine ToDos';
 $lang['home_widget_view_all']                                                 = 'Alle anzeigen';
 $lang['home_stats_full_report']                                               = 'Komplette Aufzeichnung';
@@ -2448,15 +2447,10 @@ $lang['task_single_log_user']                                                 = 
 $lang['milestone_description']                                                = 'Beschreibung';
 $lang['description_visible_to_customer']                                      = 'Beschreibung dem Kunden zeigen';
 $lang['upcoming_tasks']                                                       = 'Kommende Aufgaben';
-$lang['paymentmethod_two_checkout_account_number']                            = 'Kontonummer (Verkäufer-ID)';
-$lang['paymentmethod_two_checkout_private_key']                               = 'Privater Schlüssel';
-$lang['paymentmethod_two_checkout_publishable_key']                           = 'öffentlicher Schlüssel';
 $lang['payment_credit_card_number']                                           = 'Kartennummer';
 $lang['payment_credit_card_expiration_date']                                  = 'Ablaufdatum';
 $lang['payment_billing_email']                                                = 'E-Mail';
 $lang['submit_payment']                                                       = 'Zahlung senden';
-$lang['2checkout_notice_payment']                                             = 'Kreditkartendaten werden über eine sichere Verbindung von 2Checkout verarbeitet';
-$lang['2checkout_usage_notice']                                               = 'Für die Nutzung der 2Checkout Bezahl-API ist SSL erforderlich. Dies ist für einen sicheren Verbindungsaufbau notwendig. Das System funktioniert auch ohne SSL, doch in diesem Fall wird außerhalb der Richtlinien gehandelt, was die Deaktivierung der API-Berechtigung zufolge haben kann.';
 $lang['custom_field_disallow_customer_to_edit']                               = 'Kunde darf dieses Feld nicht bearbeiten';
 $lang['project_due_notice']                                                   = 'Dieses Projekt ist seit %s Tagen überfällig';
 $lang['not_lead_added_attachment']                                            = 'hat eine neue Anlage zum Interessenten %s hinzugefügt';
@@ -3468,3 +3462,77 @@ $lang['schedule_email_for']                                                   = 
 $lang['schedule_date']                                                        = 'Wann soll die E-Mail gesendet werden?';
 $lang['email_scheduled_successfully']                                         = 'E-Mail erfolgreich geplant';
 $lang['invoice_will_be_sent_at']                                              = 'Die Rechnung wird versandt am %s';
+
+# Version 2.5.0
+$lang['recaptcha_ignore_ips']                                                 = 'Ignorierte IP-Adressen';
+$lang['recaptcha_ignore_ips_info']                                            = 'Kommagetrennte IP-Adressen eingeben, die die reCaptcha Validierung überspringen soll.';
+$lang['show_task_reminders_on_calendar']                                      = 'Aufgaben-Erinnerungen';
+$lang['contracts_about_to_expire']                                            = 'Bald auslaufende Verträge';
+$lang['no_contracts_about_to_expire']                                         = 'Es gibt keine Verträge, die in den nächsten %s-Tagen auslaufen.';
+$lang['lead_value']                                                           = 'Intressenten Wert';
+$lang['lead_value_tooltip']                                                   = 'Die Basiswährung wird verwendet.';
+$lang['leads_dt_lead_value']                                                  = 'Intressenten Wert';
+$lang['leads_canban_lead_value']                                              = 'Intressenten Wert: %s';
+$lang['lead_add_edit_lead_value']                                             = 'Intressenten Wert';
+
+# Version 2.6.0
+$lang['gantt_view_day']                                                       = 'Tagesansicht';
+$lang['gantt_view_week']                                                      = 'Wochenansicht';
+$lang['gantt_view_month']                                                     = 'Monatsansicht';
+$lang['gantt_view_year']                                                      = 'Jahresansicht';
+
+# Version 2.7.0
+$lang['hour_of_day_perform_tasks_reminder_notification_help']                 = '24-Stunden-Format: 9 für 9 Uhr morgens oder 15 für 15 Uhr abends. Wird für wiederkehrende Aufgaben, Aufgabenerinnerungen usw. verwendet.';
+$lang['clients_nav_contacts']                                                 = 'Kontakte';
+$lang['clients_my_contacts']                                                  = 'Kontakte';
+$lang['clients_my_contact']                                                   = 'Kontakt';
+$lang['new_contact']                                                          = 'Neuer Kontakt';
+$lang['customer_contact']                                                     = 'Meine Kontakte';
+$lang['clients_contact_added']                                                = 'Kontakt wurde erfolgreich hinzugefügt';
+$lang['clients_contact_updated']                                              = 'Kontakt wurde erfolgreich aktualisiert';
+$lang['allow_primary_contact_to_manage_other_contacts']                       = 'Dem Hauptkontakt erlauben, andere Kundenkontakte zu verwalten';
+$lang['contact_form_validation_is_unique']                                    = 'Kontakt mit diesem {field} besteht bereits in unserem System';
+$lang['invoice_number_not_applied_on_draft']                                  = 'Wenn die Rechnung als Entwurf gespeichert wird, wird die Nummer nicht übernommen. Stattdessen wird die nächste Rechnungsnummer angegeben, wenn die Rechnung an den Kunden gesendet wird oder die Rechnung als gesendet markiert wird.';
+$lang['two_factor_authentication_disabed']                                    = 'Deaktivert';
+$lang['enable_google_two_factor_authentication']                              = 'Google-Authenticator aktivieren';
+$lang['set_google_two_factor_authentication_failed']                          = 'Speichern der Authentifizierung fehlgeschlagen, bitte versuchen Sie es erneut';
+$lang['enter_two_factor_auth_code_from_mobile']                               = 'Authentifizierungscode aus der Authentifizierungsanwendung eingeben';
+$lang['staff_two_factor_authentication']                                      = 'Zwei-Faktor-Authentifizierung';
+$lang['google_authentication_code']                                           = 'Code aus Authentifizierungsanwendung eingeben';
+$lang['set_two_factor_authentication_successful']                             = 'Zwei-Faktor-Authentifizierungseinstellungen wurden erfolgreich aktualisiert';
+$lang['set_two_factor_authentication_failed']                                 = 'Zwei-Faktor-Authentifizierungseinstellungen konnte nicht aktualisieren werden';
+$lang['google_2fa_code_valid']                                                = 'Erfolgreiche Überprüfung der Authentifizierung';
+$lang['google_2fa_code_invalid']                                              = 'Ungültiger Authentifizierungscode eingegeben, versuchen Sie es erneut.';
+$lang['google_2fa_scan_qr_guide']                                             = 'Scannen Sie den unten stehenden QR mit der Google Authenticator-Anwendung auf Ihrem Mobilgerät und füllen Sie anschließend das unten stehende Feld mit dem in der Anwendung generierten Code aus';
+$lang['google_2fa_manul_input_secret']                                        = 'Geheimschlüssel für manuelle Eingabe';
+
+# Version 2.7.1
+$lang['templates']                                   = 'Templates';
+$lang['add_template']                                = 'Add Template';
+$lang['edit_template']                               = 'Edit Template';
+$lang['template_added']                              = 'Template added successfully';
+$lang['template_updated']                            = 'Template updated successfully';
+$lang['template_name']                               = 'Template Title';
+$lang['template_content']                            = 'Template Content';
+$lang['insert_template']                             = 'Insert';
+$lang['items_table_amounts_exclude_currency_symbol'] = 'Exclude currency symbol from items table Amount';
+
+$lang['multiplies_of']               = 'Multiplies of';
+$lang['round_off_task_timer_option'] = 'Round off task timer';
+$lang['task_timer_dont_round_off']   = 'Don\'t round off';
+$lang['task_timer_round_up']         = 'Round up';
+$lang['task_timer_round_down']       = 'Round down';
+$lang['task_timer_round_nearest']    = 'Round to nearest';
+$lang['calendar_task_reminder']      = 'Task Reminder';
+$lang['projects_chart']              = 'Projects Chart';
+$lang['overdue_by_days']             = 'OVERDUE BY %s DAYS';
+
+$lang['two_checkout_payment_processing'] = 'Payment is been processed,you will be notified if successful';
+$lang['two_checkout_payment_cancelled']  = 'Payment Cancelled';
+$lang['two_checkout_merchant_code']      = 'Merchant Code';
+$lang['two_checkout_secret_Key']         = 'Secret Code';
+$lang['two_gateway_webhook_notice']      = 'The IPN Endpoint for 2Checkout is ( %s )';
+$lang['something_went_wrong']            = 'Something went wrong. Try again';
+$lang['imap_folder']                     = 'Folder';
+$lang['retrieve_folders']                = 'Retrieve Folders';
+$lang['email_to_ticket_config']          = 'Email to ticket configuration';

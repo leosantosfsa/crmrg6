@@ -238,6 +238,19 @@ class App_sms
         return $this->get_option($id, 'initialized') == '' ? false : true;
     }
 
+    /**
+     * Log success message
+     *
+     * @param  string $number
+     * @param  string $message
+     *
+     * @return void
+     */
+    protected function logSuccess($number, $message)
+    {
+        return log_activity('SMS sent to ' . $number . ', Message: ' . $message);
+    }
+
     private function set_default_triggers()
     {
         $customer_merge_fields = [
@@ -257,6 +270,7 @@ class App_sms
             '{invoice_subtotal}',
             '{invoice_total}',
             '{invoice_amount_due}',
+            '{invoice_short_url}',
         ];
 
         $proposal_merge_fields = [
@@ -268,6 +282,7 @@ class App_sms
             '{proposal_total}',
             '{proposal_proposal_to}',
             '{proposal_link}',
+            '{proposal_short_url}',
         ];
 
         $contract_merge_fields = [
@@ -277,12 +292,13 @@ class App_sms
             '{contract_dateend}',
             '{contract_contract_value}',
             '{contract_link}',
+            '{contract_short_url}',
         ];
 
         $triggers = [
 
             SMS_TRIGGER_INVOICE_OVERDUE => [
-                'merge_fields' => array_merge($customer_merge_fields, $invoice_merge_fields),
+                'merge_fields' => array_merge($customer_merge_fields, $invoice_merge_fields, ['{total_days_overdue}']),
                 'label'        => 'Invoice Overdue Notice',
                 'info'         => 'Trigger when invoice overdue notice is sent to customer contacts.',
             ],
@@ -303,6 +319,7 @@ class App_sms
                         '{estimate_status}',
                         '{estimate_subtotal}',
                         '{estimate_total}',
+                        '{estimate_short_url}',
                     ]
                 ),
                 'label' => 'Estimate Expiration Reminder',

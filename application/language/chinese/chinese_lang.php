@@ -1839,7 +1839,6 @@ $lang['ticket_pipe_status']   = '状态';
 # Home
 $lang['home_latest_activity']   = '最新活动';
 $lang['home_my_tasks']          = '我的任务';
-$lang['home_latest_activity']   = '最新活动';
 $lang['home_my_todo_items']     = '我的所有项目';
 $lang['home_widget_view_all']   = '查看所有';
 $lang['home_stats_full_report'] = '完整的报告';
@@ -2672,15 +2671,10 @@ $lang['task_single_log_user'] = $lang['project_timesheet_user'];
 $lang['milestone_description']                      = 'Description';
 $lang['description_visible_to_customer']            = 'Show description to customer';
 $lang['upcoming_tasks']                             = 'Upcoming Tasks';
-$lang['paymentmethod_two_checkout_account_number']  = 'Account Number (Seller ID)';
-$lang['paymentmethod_two_checkout_private_key']     = 'Private Key';
-$lang['paymentmethod_two_checkout_publishable_key'] = 'Publishable Key';
 $lang['payment_credit_card_number']                 = 'Card Number';
 $lang['payment_credit_card_expiration_date']        = 'Expiration Date';
 $lang['payment_billing_email']                      = 'Email';
 $lang['submit_payment']                             = 'Submit Payment';
-$lang['2checkout_notice_payment']                   = 'Credit card details are processed via secure token provided from 2Checkout';
-$lang['2checkout_usage_notice']                     = 'SSL is required if you\'re using the 2Checkout payment API. It is required to safely call the tokenization and authorizations. The system will function without SSL, however, this will place you out of compliance, which risks deactivation of your API permissions.';
 $lang['custom_field_disallow_customer_to_edit']     = 'Disalow customer to edit this field';
 $lang['project_due_notice']                         = 'This project is overdue by %s days';
 $lang['not_lead_added_attachment']                  = 'added new attachment to lead %s';
@@ -2828,7 +2822,6 @@ $lang['show_pay_link_to_invoice_pdf']                = 'Show Pay Invoice link to
 $lang['no_leads_found']                              = 'No Leads Found';
 $lang['created_today']                               = 'Created Today';
 $lang['total_tasks_deleted']                         = 'Total Tasks Deleted: %s';
-$lang['total_tickets_delete']                        = 'Total Tickets Deleted: %s';
 $lang['total_tickets_delete']                        = 'Total Tickets Deleted: %s';
 $lang['format_letter_portrait']                      = 'Letter Portrait';
 $lang['format_letter_landscape']                     = 'Letter Landscape';
@@ -3523,7 +3516,6 @@ $lang['view_consent']                                           = 'View Consent'
 $lang['transfer_consent']                                       = 'Transfer Consent';
 $lang['view_public_form']                                       = '檢視公開表單';
 $lang['update_consent']                                         = 'Update Consent';
-$lang['update_consent']                                         = 'Update Consent';
 $lang['consent_last_updated']                                   = 'Last Updated: %s';
 $lang['showing_search_result']                                  = 'Showing search results for: %s';
 $lang['per_page']                                               = 'Per Page';
@@ -3697,3 +3689,78 @@ $lang['schedule_email_for']             = 'Schedule Email for %s';
 $lang['schedule_date']                  = 'When would you like to send the email?';
 $lang['email_scheduled_successfully']   = 'Email scheduled successfully';
 $lang['invoice_will_be_sent_at']        = 'Invoice will be sent at %s';
+
+# Version 2.5.0
+$lang['recaptcha_ignore_ips']               = 'Ignored IP Addresses';
+$lang['recaptcha_ignore_ips_info']          = 'Enter coma separated IP addresses that you want the reCaptcha to skip validation.';
+$lang['show_task_reminders_on_calendar']    = 'Task Reminders';
+$lang['contracts_about_to_expire']          = 'Contracts Expiring Soon';
+$lang['no_contracts_about_to_expire']       = 'There are no contracts that are going to expire in the next %s days.';
+$lang['lead_value']                         = 'Lead value';
+$lang['lead_value_tooltip']                 = 'Base currency will be used.';
+$lang['leads_dt_lead_value']                = 'Lead Value';
+$lang['leads_canban_lead_value']            = 'Lead Value: %s';
+$lang['lead_add_edit_lead_value']           = 'Lead Value';
+
+# Version 2.6.0
+$lang['gantt_view_day'] = 'Days View';
+$lang['gantt_view_week'] = 'Weeks View';
+$lang['gantt_view_month'] = 'Months View';
+$lang['gantt_view_year'] = 'Years View';
+
+# Version 2.7.0
+$lang['hour_of_day_perform_tasks_reminder_notification_help'] = '24 hours format eq. 9 for 9am or 15 for 3pm. It is used for recurring Task, Task reminders etc.';
+$lang['clients_nav_contacts']                                 = 'Contacts';
+$lang['clients_my_contacts']                                  = 'Contacts';
+$lang['clients_my_contact']                                   = 'Contact';
+$lang['new_contact']                                          = 'New Contact';
+$lang['customer_contact']                                     = 'My Contacts';
+$lang['clients_contact_added']                                = 'Contact added successfuly';
+$lang['clients_contact_updated']                              = 'Contact updated successfuly';
+$lang['allow_primary_contact_to_manage_other_contacts']       = 'Allow primary contact to manage other customer contacts';
+$lang['contact_form_validation_is_unique']                    = 'Contact with this {field} already exists in our system';
+$lang['invoice_number_not_applied_on_draft']                  = 'If the invoice is saved as draft, the number won\'t be applied, instead, the next invoice number will be given when the invoice is sent to the customer or is marked as sent.';
+
+$lang['two_factor_authentication_disabed']                    = 'Disabled';
+$lang['enable_google_two_factor_authentication']              = 'Enable Google Authenticator';
+$lang['set_google_two_factor_authentication_failed']          = 'Saving authentication failed, please try again';
+$lang['enter_two_factor_auth_code_from_mobile']               = 'Enter authentication code from the Authenticator app';
+$lang['staff_two_factor_authentication']                      = 'Two Factor Authentication';
+$lang['google_authentication_code']                           = 'Enter code from Authenticator app';
+$lang['set_two_factor_authentication_successful']             = 'Successfully updated two factor authentication settings';
+$lang['set_two_factor_authentication_failed']                 = 'Could not update two factor authentication settings';
+$lang['google_2fa_code_valid']                                = 'Successfuly verified the authentication';
+$lang['google_2fa_code_invalid']                              = 'Invalid authentication code entered, try again.';
+$lang['google_2fa_scan_qr_guide']                             = 'Scan the QR below with the Google Authenticator app on your mobile device, after that fill in the field below with the code generated in the app';
+$lang['google_2fa_manul_input_secret']                        = 'Secret key for manual input';
+
+# Version 2.7.1
+$lang['templates']                                   = 'Templates';
+$lang['add_template']                                = 'Add Template';
+$lang['edit_template']                               = 'Edit Template';
+$lang['template_added']                              = 'Template added successfully';
+$lang['template_updated']                            = 'Template updated successfully';
+$lang['template_name']                               = 'Template Title';
+$lang['template_content']                            = 'Template Content';
+$lang['insert_template']                             = 'Insert';
+$lang['items_table_amounts_exclude_currency_symbol'] = 'Exclude currency symbol from items table Amount';
+
+$lang['multiplies_of']               = 'Multiplies of';
+$lang['round_off_task_timer_option'] = 'Round off task timer';
+$lang['task_timer_dont_round_off']   = 'Don\'t round off';
+$lang['task_timer_round_up']         = 'Round up';
+$lang['task_timer_round_down']       = 'Round down';
+$lang['task_timer_round_nearest']    = 'Round to nearest';
+$lang['calendar_task_reminder']      = 'Task Reminder';
+$lang['projects_chart']              = 'Projects Chart';
+$lang['overdue_by_days']             = 'OVERDUE BY %s DAYS';
+
+$lang['two_checkout_payment_processing'] = 'Payment is been processed,you will be notified if successful';
+$lang['two_checkout_payment_cancelled']  = 'Payment Cancelled';
+$lang['two_checkout_merchant_code']      = 'Merchant Code';
+$lang['two_checkout_secret_Key']         = 'Secret Code';
+$lang['two_gateway_webhook_notice']      = 'The IPN Endpoint for 2Checkout is ( %s )';
+$lang['something_went_wrong']            = 'Something went wrong. Try again';
+$lang['imap_folder']                     = 'Folder';
+$lang['retrieve_folders']                = 'Retrieve Folders';
+$lang['email_to_ticket_config']          = 'Email to ticket configuration';

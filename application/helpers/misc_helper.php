@@ -3,6 +3,28 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
+ * Check whether recaptcha should be shown
+ *
+ * @return boolean
+ */
+function show_recaptcha()
+{
+    if (get_option('recaptcha_secret_key') == '' || get_option('recaptcha_site_key') == '') {
+        return false;
+    }
+
+    $excludedIps = explode(',', get_option('recaptcha_ignore_ips'));
+
+    $excludedIps = array_filter(array_map(function ($ip) {
+        return trim($ip);
+    }, $excludedIps));
+
+    $CI = &get_instance();
+
+    return !in_array($CI->input->ip_address(), $excludedIps);
+}
+
+/**
  * Return locale for media usafe plugin
  * @return string
  */
@@ -22,26 +44,6 @@ function get_tinymce_language($locale)
     return app\services\utilities\Locale::getTinyMceLangKey($locale, list_files(FCPATH . 'assets/plugins/tinymce/langs/'));
 }
 
-/**
- * Replace google drive links with actual a tag
- * @param  string $text
- * @return string
- */
-function handle_google_drive_links_in_text($text)
-{
-    $pattern = '#\bhttps?://drive.google.com[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#';
-    preg_match_all($pattern, $text, $matchGoogleDriveLinks);
-
-    if (isset($matchGoogleDriveLinks[0]) && is_array($matchGoogleDriveLinks[0])) {
-        foreach ($matchGoogleDriveLinks[0] as $driveLink) {
-            $link = '<a href="' . $driveLink . '">' . $driveLink . '</a>';
-            $text = str_replace($driveLink, $link, $text);
-            $text = str_replace('<' . $link . '>', $link, $text);
-        }
-    }
-
-    return $text;
-}
 /**
  * Get system favourite colors
  * @return array
@@ -208,17 +210,9 @@ function get_alert_class()
  */
 function generate_two_factor_auth_key()
 {
-    $key  = '';
-    $keys = array_merge(range(0, 9), range('a', 'z'));
-
-    for ($i = 0; $i < 16; $i++) {
-        $key .= $keys[array_rand($keys)];
-    }
-
-    $key .= uniqid();
-
-    return $key;
+    return bin2hex(get_instance()->encryption->create_key(4));
 }
+
 /**
  * Function that will replace the dropbox link size for the images
  * This function is used to preview dropbox image attachments
@@ -423,6 +417,18 @@ function app_set_update_message_info($version)
 }
 
 /**
+ * Get the scheduled email default date
+ *
+ * @since 2.7.0
+ *
+ * @return string
+ */
+function get_scheduled_email_default_date()
+{
+    return hooks()->apply_filters('scheduled_email_default_date', date('Y-m-d 08:00', strtotime('+1 day')));
+}
+
+/**
  * Set pipe.php file permissions to 0755 after update
  */
 function app_set_pipe_php_permissions()
@@ -495,7 +501,7 @@ function _maybe_mistaken_login_area_check_performed()
     if (get_instance()->session->flashdata('mistaken_login_area_check_performed') === '1') {
         echo '<div class="alert alert-warning">';
         echo '<h4>Temporary Message</h4>';
-        echo '<b>It looks like yo are trying to login as admin/staff member in the clients area.</b><br /><br />';
+        echo '<b>It looks like you are trying to login as admin/staff member in the clients area.</b><br /><br />';
         echo 'Administrators/staff <b>must</b> log in at <a href="' . admin_url() . '">' . admin_url() . '</a><br /><br />';
         echo 'Customer contacts <b>must</b> login at <a href="' . site_url() . '">' . site_url() . '</a><br />';
         echo '</div>';

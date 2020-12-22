@@ -193,6 +193,18 @@ function format_seconds($seconds)
 /**
  * @deprecated
  */
+function can_logged_in_contact_change_language()
+{
+    if (!isset($GLOBALS['contact'])) {
+        return false;
+    }
+
+    return $GLOBALS['contact']->is_primary == '1' && get_option('disable_language') == 0;
+}
+
+/**
+ * @deprecated
+ */
 function add_encryption_key_old()
 {
     $CI          = & get_instance();
@@ -1197,4 +1209,27 @@ function get_permission_conditions()
             'delete'   => true,
         ],
     ]);
+}
+
+/**
+ * Replace google drive links with actual a tag
+ * @param  string $text
+ * @return string
+ */
+function handle_google_drive_links_in_text($text)
+{
+    _deprecated_function('logActivity', '2.7.3');
+
+    $pattern = '#\bhttps?://drive.google.com[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#';
+    preg_match_all($pattern, $text, $matchGoogleDriveLinks);
+
+    if (isset($matchGoogleDriveLinks[0]) && is_array($matchGoogleDriveLinks[0])) {
+        foreach ($matchGoogleDriveLinks[0] as $driveLink) {
+            $link = '<a href="' . $driveLink . '">' . $driveLink . '</a>';
+            $text = str_replace($driveLink, $link, $text);
+            $text = str_replace('<' . $link . '>', $link, $text);
+        }
+    }
+
+    return $text;
 }

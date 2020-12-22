@@ -19,6 +19,17 @@
             <option value=""></option>
             <?php if(isset($plans->data)){ ?>
             <?php foreach($plans->data as $plan) {
+
+              if(!$plan->active) {
+                if(!isset($subscription)) {
+                  continue;
+                } else {
+                  if($subscription->stripe_plan_id != $plan->id) {
+                    continue;
+                  }
+                }
+            }
+
                $selected = '';
                if(isset($subscription) && $subscription->stripe_plan_id == $plan->id) {
                  $selected = ' selected';
@@ -32,12 +43,14 @@
                ?>
             <option value="<?php echo $plan->id; ?>" data-interval-count="<?php echo $plan->interval_count; ?>" data-interval="<?php echo $plan->interval; ?>" data-amount="<?php echo $plan->amount; ?>" data-subtext="<?php echo $subtext; ?>"<?php echo $selected; ?>>
                <?php
-                  if(empty($plan->nickname)) {
-                    echo '[Plan Name Not Set in Stripe, ID:'.$plan->id.']';
-                  } else {
-                    echo $plan->nickname;
-                  }
-                  ?>
+                if(!empty($plan->nickname)) {
+                  echo $plan->nickname;
+                } else if(isset($plan->product->name)) {
+                  echo $plan->product->name;
+                } else {
+                  echo '[Plan Name Not Set in Stripe, ID:'.$plan->id.']';
+                }
+              ?>
             </option>
             <?php } ?>
             <?php } ?>
@@ -124,19 +137,58 @@
       <?php } ?>
       <?php } ?>
       <?php echo render_select('currency', $currencies, array('id', 'name', 'symbol'), 'currency', $selected,  $s_attrs, [], '', 'ays-ignore'); ?>
-      <div class="form-group select-placeholder">
-         <label class="control-label" for="tax"><?php echo _l('tax'); ?> (Stripe)</label>
-         <select class="selectpicker" data-width="100%" name="stripe_tax_id" data-none-selected-text="<?php echo _l('no_tax'); ?>">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group select-placeholder">
+           <label class="control-label" for="tax"><?php echo _l('tax_1'); ?> (Stripe)</label>
+           <select class="selectpicker" data-width="100%" name="stripe_tax_id" data-none-selected-text="<?php echo _l('no_tax'); ?>">
             <option value=""></option>
             <?php foreach($stripe_tax_rates->data as $tax){
-                if($tax->inclusive) {
+              if($tax->inclusive) {
+                continue;
+              }
+              if(!$tax->active) {
+                if(!isset($subscription)) {
+                  continue;
+                } else {
+                  if($subscription->stripe_tax_id != $tax->id) {
+                    continue;
+                  }
+                }
+            }
+              ?>
+              <option value="<?php echo $tax->id; ?>" data-subtext="<?php echo $tax->display_name; ?>"<?php if(isset($subscription) && $subscription->stripe_tax_id == $tax->id){echo ' selected';} ?>><?php echo $tax->percentage; ?>%</option>
+            <?php } ?>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-6">
+
+        <div class="form-group select-placeholder">
+         <label class="control-label" for="tax"><?php echo _l('tax_2'); ?> (Stripe)</label>
+         <select class="selectpicker" data-width="100%" name="stripe_tax_id_2" data-none-selected-text="<?php echo _l('no_tax'); ?>">
+          <option value=""></option>
+          <?php foreach($stripe_tax_rates->data as $tax){
+            if($tax->inclusive) {
+              continue;
+            }
+            if(!$tax->active) {
+              if(!isset($subscription)) {
+                continue;
+              } else {
+                if($subscription->stripe_tax_id_2 != $tax->id) {
                   continue;
                 }
-             ?>
-            <option value="<?php echo $tax->id; ?>" data-subtext="<?php echo $tax->display_name; ?>"<?php if(isset($subscription) && $subscription->stripe_tax_id == $tax->id){echo ' selected';} ?>><?php echo $tax->percentage; ?>%</option>
-            <?php } ?>
-         </select>
+              }
+            }
+            ?>
+            <option value="<?php echo $tax->id; ?>" data-subtext="<?php echo $tax->display_name; ?>"<?php if(isset($subscription) && $subscription->stripe_tax_id_2 == $tax->id){echo ' selected';} ?>><?php echo $tax->percentage; ?>%</option>
+          <?php } ?>
+        </select>
       </div>
+    </div>
+  </div>
+
       <?php $value = (isset($subscription) ? $subscription->terms : ''); ?>
      <?php echo render_textarea('terms', 'terms_and_conditions', $value, [ 'placeholder'=> _l('subscriptions_terms_info') ], [], '','ays-ignore'); ?>
    </div>

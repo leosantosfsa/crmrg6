@@ -1,5 +1,7 @@
 <?php
 
+use app\services\utilities\Arr;
+
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Misc_model extends App_Model
@@ -99,7 +101,7 @@ class Misc_model extends App_Model
         }
 
         // Clear the duplicates
-        $taxes = array_map('unserialize', array_unique(array_map('serialize', $taxes)));
+        $taxes = Arr::uniqueByKey($taxes, 'name');
 
         $select = '<select class="selectpicker display-block tax" data-width="100%" name="' . $name . '" multiple data-none-selected-text="' . _l('no_tax') . '">';
 
@@ -573,6 +575,7 @@ class Misc_model extends App_Model
                 OR address LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR email LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR CONCAT(firstname, \' \', lastname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR CONCAT(lastname, \' \', firstname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR ' . db_prefix() . 'countries.short_name LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR ' . db_prefix() . 'countries.long_name LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR ' . db_prefix() . 'countries.numcode LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
@@ -947,6 +950,7 @@ class Misc_model extends App_Model
                     OR message LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                     OR ' . db_prefix() . 'contacts.email LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                     OR CONCAT(firstname, \' \', lastname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                    OR CONCAT(lastname, \' \', firstname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                     OR company LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                     OR vat LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                     OR ' . db_prefix() . 'contacts.phonenumber LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
@@ -999,6 +1003,7 @@ class Misc_model extends App_Model
                 OR lastname LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR email LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR CONCAT(firstname, \' \', lastname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR CONCAT(lastname, \' \', firstname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR ' . db_prefix() . 'contacts.phonenumber LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR ' . db_prefix() . 'contacts.title LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR company LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
@@ -1034,6 +1039,7 @@ class Misc_model extends App_Model
             $this->db->like('firstname', $q);
             $this->db->or_like('lastname', $q);
             $this->db->or_like("CONCAT(firstname, ' ', lastname)", $q, false);
+            $this->db->or_like("CONCAT(lastname, ' ', firstname)", $q, false);
             $this->db->or_like('facebook', $q);
             $this->db->or_like('linkedin', $q);
             $this->db->or_like('phonenumber', $q);
@@ -1184,6 +1190,8 @@ class Misc_model extends App_Model
                 OR
                 CONCAT(firstname,\' \',lastname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
+                CONCAT(lastname,\' \',firstname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR
                 ' . db_prefix() . 'invoices.billing_street LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
                 ' . db_prefix() . 'invoices.billing_city LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
@@ -1291,6 +1299,8 @@ class Misc_model extends App_Model
                 ' . db_prefix() . 'creditnotes.adminnote LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
                 CONCAT(firstname,\' \',lastname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
+                OR
+                CONCAT(lastname,\' \',firstname) LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR
                 ' . db_prefix() . 'creditnotes.billing_street LIKE "%' . $this->db->escape_like_str($q) . '%" ESCAPE \'!\'
                 OR

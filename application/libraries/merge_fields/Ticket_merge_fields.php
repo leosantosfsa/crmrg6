@@ -15,7 +15,7 @@ class Ticket_merge_fields extends App_merge_fields
                     ],
                 ],
                 [
-                    'name'      => 'Ticket Customers Area URL',
+                    'name'      => 'Ticket URL',
                     'key'       => '{ticket_url}',
                     'available' => [
                         'ticket',
@@ -84,6 +84,13 @@ class Ticket_merge_fields extends App_merge_fields
                         'ticket',
                     ],
                 ],
+                [
+                    'name'      => 'Project name',
+                    'key'       => '{project_name}',
+                    'available' => [
+                        'ticket',
+                    ],
+                ],
             ];
     }
 
@@ -145,10 +152,8 @@ class Ticket_merge_fields extends App_merge_fields
             }
         }
 
-        $fields['{ticket_status}'] = ticket_status_translate($ticket->status);
-
+        $fields['{ticket_status}']   = ticket_status_translate($ticket->status);
         $fields['{ticket_priority}'] = ticket_priority_translate($ticket->priority);
-
 
         $custom_fields = get_custom_fields('tickets');
         foreach ($custom_fields as $field) {
@@ -163,6 +168,7 @@ class Ticket_merge_fields extends App_merge_fields
 
         $this->ci->db->where('serviceid', $ticket->service);
         $service = $this->ci->db->get(db_prefix() . 'services')->row();
+
         if ($service) {
             $fields['{ticket_service}'] = $service->name;
         }
@@ -196,6 +202,8 @@ class Ticket_merge_fields extends App_merge_fields
         $fields['{ticket_date}']       = _dt($ticket->date);
         $fields['{ticket_subject}']    = $ticket->subject;
         $fields['{ticket_public_url}'] = get_ticket_public_url($ticket);
+        $fields['{project_name}']      = get_project_name_by_id($ticket->project_id);
+
 
         return hooks()->apply_filters('ticket_merge_fields', $fields, [
         'id'       => $ticket_id,

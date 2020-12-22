@@ -1517,7 +1517,7 @@ $lang['more']            = 'Daha';
 $lang['add_item']        = 'Ürün/Hizmet Ekle';
 $lang['goto_admin_area'] = 'Yönetim Paneline Git';
 $lang['delete']          = 'Sil %s';
-$lang['welcome_top']     = 'Hoşgeldiniz %s';
+$lang['welcome_top']     = 'Hoşgeldin %s';
 
 # Customers
 $lang['customer_permissions']         = 'İzinler';
@@ -1761,7 +1761,6 @@ $lang['ticket_pipe_status']   = 'Durum';
 # Home
 $lang['home_latest_activity']   = 'Son Aktivite';
 $lang['home_my_tasks']          = 'Görevlerim';
-$lang['home_latest_activity']   = 'Son Aktiviteler';
 $lang['home_my_todo_items']     = 'Yapılacak İşlerim';
 $lang['home_widget_view_all']   = 'Hepsini Görüntüle';
 $lang['home_stats_full_report'] = 'Tam Rapor';
@@ -2581,15 +2580,10 @@ $lang['task_single_log_user'] = $lang['project_timesheet_user'];
 $lang['milestone_description']                      = 'Açıklama';
 $lang['description_visible_to_customer']            = 'Açıklamayı müşteriye göster';
 $lang['upcoming_tasks']                             = 'Yaklaşan Görevler';
-$lang['paymentmethod_two_checkout_account_number']  = 'Hesap Numarası (Satıcı Kimliği)';
-$lang['paymentmethod_two_checkout_private_key']     = 'Özet Anahtar';
-$lang['paymentmethod_two_checkout_publishable_key'] = 'Paylaşılabilir Anahtar';
 $lang['payment_credit_card_number']                 = 'Kard Numarası';
 $lang['payment_credit_card_expiration_date']        = 'Son Kullanma Tarihi';
 $lang['payment_billing_email']                      = 'E-posta';
 $lang['submit_payment']                             = 'Ödeme Gönder';
-$lang['2checkout_notice_payment']                   = 'Kredi Kartı bilgileri 2CheckoutCredit ile güvenli bağlantı kullanılarak işlenecektir ';
-$lang['2checkout_usage_notice']                     = 'Eğer 2Checkout Ödeme API si kullanacaksanız SSL gerekli. It is required to safely call the tokenization and authorizations. The system will function without SSL, however, this will place you out of compliance, which risks deactivation of your API permissions.';
 $lang['custom_field_disallow_customer_to_edit']     = 'Bu alanın müşteri tarafından düzenlenmesine izin verme';
 $lang['project_due_notice']                         = 'Bu proje %s gün gecikti';
 $lang['not_lead_added_attachment']                  = '%s fırsatına yeni dosya eklendi';
@@ -2737,7 +2731,6 @@ $lang['show_pay_link_to_invoice_pdf']                = 'PDF te Fatura Ödeme Lin
 $lang['no_leads_found']                              = 'Fırsat Bulunamadı';
 $lang['created_today']                               = 'Bugün Oluşturulan';
 $lang['total_tasks_deleted']                         = 'Silinen Toplam Görev: %s';
-$lang['total_tickets_delete']                        = 'Silinen Toplam Talep: %s';
 $lang['total_tickets_delete']                        = 'Silinen Toplam Talep: %s';
 $lang['format_letter_portrait']                      = 'Mektup Dikey';
 $lang['format_letter_landscape']                     = 'Mektup Yatay';
@@ -3418,7 +3411,7 @@ $lang['settings_require_client_logged_in_to_view_contract']     = 'Sözleşmeyi 
 $lang['privacy_policy']                                         = 'Gizlilik Politikası';
 $lang['gdpr_terms_agree']                                       = '<a href="%s" target="_blank">Şartlar Ve Koşulları</a> Onaylayın.';
 $lang['terms_and_conditions_validation']                        = 'Devam etmek için & Şartları kabul etmelisiniz.';
-$lang['gdpr']                                                   = 'Genel Veri Koruma Yönetmeliği (GVKY)';
+$lang['gdpr']                                                   = 'Kişisel Verilerin Korunması Kanunu (KVKK)';
 $lang['data_removal_request_sent']                              = 'Veri kaldırma isteği gönderildi';
 $lang['gdpr_consents']                                          = 'Kabul Et';
 $lang['gdpr_consent']                                           = 'Kabul Et';
@@ -3430,7 +3423,6 @@ $lang['gdpr_consent_disagree']                                  = 'Katılmıyoru
 $lang['view_consent']                                           = 'Onayı Görüntüle';
 $lang['transfer_consent']                                       = 'Aktarım Onayı';
 $lang['view_public_form']                                       = 'Genel Formu Görüntüle';
-$lang['update_consent']                                         = 'Güncelleme Onayı';
 $lang['update_consent']                                         = 'Güncelleme Onayı';
 $lang['consent_last_updated']                                   = 'Son Güncelleme: %s';
 $lang['showing_search_result']                                  = 'Arama Sonuçları: %s';
@@ -3464,13 +3456,13 @@ $lang['subscription_option_send_invoice'] = 'Fatura Gönder';
 $lang['subscription_option_send_payment_receipt'] = 'Ödeme Makbuzu Gönderin';
 $lang['subscription_option_send_payment_receipt_and_invoice'] = 'Fatura ve Ödeme Makbuzu Gönder';
 $lang['subscription_option_do_nothing'] = 'Hiçbir şey yapma';
-$lang['gdpr_not_enabled'] = 'GVKY etkin değil';
-$lang['enable_gdpr'] = 'GVKY Aktif Et';
+$lang['gdpr_not_enabled'] = 'KVKK etkin değil';
+$lang['enable_gdpr'] = 'KVKK Aktif Et';
 $lang['gdpr_right_to_rectification'] = 'Düzeltme hakkı';
 $lang['test_sms_config'] = 'SMS Ayar Testi';
 $lang['test_sms_message'] = 'Test Mesajı';
 $lang['send_test_sms'] = 'SMS Test Mesajı Gönder';
-$lang['gdpr_short'] = 'GVKY';
+$lang['gdpr_short'] = 'KVKK';
 $lang['allow_non_admin_staff_to_delete_ticket_attachments'] = 'Yönetici olmayan personelin destek eklerini silmesine izin ver';
 
 # Version 2.1.0
@@ -3594,15 +3586,90 @@ $lang['stripe_subscription_select_plan'] = 'Stripe Planı Seçin';
 
 
 # Version 2.4.1
-$lang['contract_content_permission_edit_warning'] = 'Your current permissions does not allows you to edit the contract content. Consult with an
-                              administrator to allow you permission to edit contracts.';
-$lang['mark_as_signed']                 = 'Mark as signed';
-$lang['unmark_as_signed']               = 'Unmark as signed';
-$lang['marked_as_signed']               = 'Marked as signed';
-$lang['contract_marked_as_signed_info'] = 'This contract is manually marked as signed.';
-$lang['save_and_send_later']            = 'Save and Send Later';
-$lang['schedule']                       = 'Schedule';
-$lang['schedule_email_for']             = 'Schedule Email for %s';
-$lang['schedule_date']                  = 'When would you like to send the email?';
+$lang['contract_content_permission_edit_warning'] = 'Mevcut izinleriniz sözleşme içeriğini düzenlemenize izin vermiyor. Sözleşmeleri düzenleme izni için bir yöneticiye danışın.';
+
+$lang['mark_as_signed']                 = 'İmzalandı olarak işaretle';
+$lang['unmark_as_signed']               = 'İmzalanmadı olarak işaretle';
+$lang['marked_as_signed']               = 'İmzalandı olarak işaretlendi';
+$lang['contract_marked_as_signed_info'] = 'Bu sözleşme manuel olarak imzalandı olarak işaretlendi.';
+$lang['save_and_send_later']            = 'Kaydet ve Daha Sonra Gönder';
+$lang['schedule']                       = 'Planla';
+$lang['schedule_email_for']             = 'Epostayı şunun için planla %s';
+$lang['schedule_date']                  = 'E-postayı ne zaman göndermek istersiniz?';
 $lang['email_scheduled_successfully']   = 'Email scheduled successfully';
-$lang['invoice_will_be_sent_at']        = 'Invoice will be sent at %s';
+$lang['invoice_will_be_sent_at']        = 'Fatura şu tarihte gönderilecek %s';
+
+# Version 2.5.0
+$lang['recaptcha_ignore_ips']               = 'Yoksayılan IP Adresleri';
+$lang['recaptcha_ignore_ips_info']          = 'reCaptcha doğrulamayı atlamasını istediğiniz, IP adreslerini viirgülle ayırarak girin.';
+$lang['show_task_reminders_on_calendar']    = 'Görev Hatırlatıcıları';
+$lang['contracts_about_to_expire']          = 'Yakında Bitecek Sözleşmeler';
+$lang['no_contracts_about_to_expire']       = 'Önümüzdeki %s gün içinde süresi bitecek sözleşme yok.';
+$lang['lead_value']                         = 'Fırsat değeri';
+$lang['lead_value_tooltip']                 = 'Temel para birimi kullanılacak.';
+$lang['leads_dt_lead_value']                = 'Fırsat Değeri';
+$lang['leads_canban_lead_value']            = 'Fırsat Değeri: %s';
+$lang['lead_add_edit_lead_value']           = 'Fırsat Değeri';
+
+# Version 2.6.0
+$lang['gantt_view_day'] = 'Gün Görünümü';
+$lang['gantt_view_week'] = 'Hafta Görünümü';
+$lang['gantt_view_month'] = 'Ay Görünümü';
+$lang['gantt_view_year'] = 'Yıl Görünümü';
+
+# Version 2.7.0
+$lang['hour_of_day_perform_tasks_reminder_notification_help'] = '24 saat biçimi örn. sabah 9 için 9am ya da öğlen 15 için 3pm. Yinelenen görevler,görev hatırlatıcıları vb. için kullanılır.';
+$lang['clients_nav_contacts']                                 = 'Kişiler';
+$lang['clients_my_contacts']                                  = 'Kişiler';
+$lang['clients_my_contact']                                   = 'Kişi';
+$lang['new_contact']                                          = 'Yeni Kişi';
+$lang['customer_contact']                                     = 'Kişilerim';
+$lang['clients_contact_added']                                = 'Kişi başarıyla eklendi';
+$lang['clients_contact_updated']                              = 'Kişi başarıyla güncellendi';
+$lang['allow_primary_contact_to_manage_other_contacts']       = 'Birincil kişinin diğer müşteri kişilerini yönetmesine izin ver';
+$lang['contact_form_validation_is_unique']                    = 'Görünüşe göre bu {field} ile sisteminizde zaten bir kişi var';
+$lang['invoice_number_not_applied_on_draft']                  = 'Fatura taslak olarak kaydedilmiş ise numara uygulanmayacak, bunun yerine fatura müşteriye gönderildiğinde veya gönderilmiş olarak işaretlendiğinde bir sonraki fatura numarası verilecektir.';
+
+$lang['two_factor_authentication_disabed']                    = 'Devre Dışı';
+$lang['enable_google_two_factor_authentication']              = 'Google Authenticator uygulamasını etkinleştir';
+$lang['set_google_two_factor_authentication_failed']          = 'Kimlik doğrulama kaydedilemedi, lütfen tekrar deneyin';
+$lang['enter_two_factor_auth_code_from_mobile']               = 'Authenticator uygulamasından aldığınız kimlik doğrulama kodunu girin';
+$lang['staff_two_factor_authentication']                      = 'İki Faktörlü Kimlik Doğrulama';
+$lang['google_authentication_code']                           = 'Authenticator uygulamasından aldığınız kodu girin';
+$lang['set_two_factor_authentication_successful']             = 'İki faktörlü kimlik doğrulama ayarları başarıyla güncellendi';
+$lang['set_two_factor_authentication_failed']                 = 'İki faktörlü kimlik doğrulama ayarları güncellenemedi';
+$lang['google_2fa_code_valid']                                = 'Kimliğiniz başarıyla doğrulandı';
+$lang['google_2fa_code_invalid']                              = 'Geçersiz kimlik doğrulama kodu girildi, tekrar deneyin.';
+$lang['google_2fa_scan_qr_guide']                             = 'Aşağıdaki QR kodunu mobil cihazınızdaki Google Authenticator uygulamasıyla tarayın, uygulamada oluşturulan kodu aşağıdaki alana girin';
+$lang['google_2fa_manul_input_secret']                        = 'Manuel giriş için gizli anahtar';
+
+# Version 2.7.1
+$lang['templates']                                   = 'Templates';
+$lang['add_template']                                = 'Add Template';
+$lang['edit_template']                               = 'Edit Template';
+$lang['template_added']                              = 'Template added successfully';
+$lang['template_updated']                            = 'Template updated successfully';
+$lang['template_name']                               = 'Template Title';
+$lang['template_content']                            = 'Template Content';
+$lang['insert_template']                             = 'Insert';
+$lang['items_table_amounts_exclude_currency_symbol'] = 'Exclude currency symbol from items table Amount';
+
+$lang['multiplies_of']               = 'Multiplies of';
+$lang['round_off_task_timer_option'] = 'Round off task timer';
+$lang['task_timer_dont_round_off']   = 'Don\'t round off';
+$lang['task_timer_round_up']         = 'Round up';
+$lang['task_timer_round_down']       = 'Round down';
+$lang['task_timer_round_nearest']    = 'Round to nearest';
+$lang['calendar_task_reminder']      = 'Task Reminder';
+$lang['projects_chart']              = 'Projects Chart';
+$lang['overdue_by_days']             = 'OVERDUE BY %s DAYS';
+
+$lang['two_checkout_payment_processing'] = 'Payment is been processed,you will be notified if successful';
+$lang['two_checkout_payment_cancelled']  = 'Payment Cancelled';
+$lang['two_checkout_merchant_code']      = 'Merchant Code';
+$lang['two_checkout_secret_Key']         = 'Secret Code';
+$lang['two_gateway_webhook_notice']      = 'The IPN Endpoint for 2Checkout is ( %s )';
+$lang['something_went_wrong']            = 'Something went wrong. Try again';
+$lang['imap_folder']                     = 'Folder';
+$lang['retrieve_folders']                = 'Retrieve Folders';
+$lang['email_to_ticket_config']          = 'Email to ticket configuration';

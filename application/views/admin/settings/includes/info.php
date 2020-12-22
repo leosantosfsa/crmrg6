@@ -32,6 +32,14 @@
 				</td>
 			</tr>
 			<tr>
+				<td class="bold">Webserver User</td>
+				<td>
+					<?php
+					echo get_current_user();
+					?>
+				</td>
+			</tr>
+			<tr>
 				<td class="bold">Server Protocol</td>
 				<td>
 					<?php
@@ -239,7 +247,7 @@
 					<?php
 					$memory = ini_get('memory_limit');
 					echo $memory ? $memory : 'N/A';
-					if(floatval($memory) < 128) {
+					if(floatval($memory) < 128 && floatval($memory) > -1) {
 						echo '<br /><span class="text-warning">128M is recommended value (or bigger)</span>';
 					}
 					?>

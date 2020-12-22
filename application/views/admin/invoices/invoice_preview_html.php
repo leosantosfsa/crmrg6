@@ -4,7 +4,7 @@ if($invoice->status == Invoices_model::STATUS_DRAFT){ ?>
       <?php echo _l('invoice_draft_status_info'); ?>
    </div>
 <?php }
-if($invoice->scheduled_email) { ?>
+if(isset($invoice->scheduled_email) && $invoice->scheduled_email) { ?>
    <div class="alert alert-warning">
       <?php echo _l('invoice_will_be_sent_at', _dt($invoice->scheduled_email->scheduled_at)); ?>
       <?php if(staff_can('edit', 'invoices') || $invoice->addedfrom == get_staff_user_id()) { ?>
@@ -33,7 +33,7 @@ if($invoice->scheduled_email) { ?>
             $next_recurring_date_compare = $recurring_invoice->last_recurring_date;
          }
       } else {
-       $next_recurring_date_compare = to_sql_date($recurring_invoice->date);
+       $next_recurring_date_compare = $recurring_invoice->date;
        if($recurring_invoice->last_recurring_date){
         $next_recurring_date_compare = $recurring_invoice->last_recurring_date;
      }
@@ -56,7 +56,7 @@ if($invoice->scheduled_email) { ?>
          <?php } else if($show_recurring_invoice_info){ ?>
             <span class="label label-default padding-5">
                <?php
-               if($invoice->status == Invoices_model::STATUS_DRAFT){
+               if($recurring_invoice->status == Invoices_model::STATUS_DRAFT){
                   echo '<i class="fa fa-exclamation-circle fa-fw text-warning" data-toggle="tooltip" title="'._l('recurring_invoice_draft_notice').'"></i>';
                }
                echo _l('cycles_remaining'); ?>:
@@ -122,14 +122,14 @@ if($invoice->scheduled_email) { ?>
       <span class="bold">
          <?php echo _l('invoice_data_date'); ?>
       </span>
-      <?php echo $invoice->date; ?>
+      <?php echo _d($invoice->date); ?>
    </p>
    <?php if(!empty($invoice->duedate)){ ?>
       <p class="no-mbot">
          <span class="bold">
             <?php echo _l('invoice_data_duedate'); ?>
          </span>
-         <?php echo $invoice->duedate; ?>
+         <?php echo _d($invoice->duedate); ?>
       </p>
    <?php } ?>
    <?php if($invoice->sale_agent != 0 && get_option('show_sale_agent_on_invoices') == 1){ ?>

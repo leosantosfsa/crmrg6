@@ -2,7 +2,7 @@
 
 $error = false;
 
-if (version_compare(PHP_VERSION, '5.6.4') >= 0) {
+if (version_compare(PHP_VERSION, '7.2.5') >= 0) {
     $requirement1 = "<span class='label label-success'>v." . PHP_VERSION . '</span>';
 } else {
     $error        = true;
@@ -93,7 +93,7 @@ if ($url_f_open != '1'
 	</thead>
 	<tbody>
 		<tr>
-			<td>PHP >= 5.6.4 (PHP >= 7.2 recommended)</td>
+			<td>PHP >= 7.2.5</td>
 			<td><?php echo $requirement1; ?></td>
 		</tr>
 		<tr>

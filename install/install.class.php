@@ -15,7 +15,7 @@ class Install
 
     private $passed_steps = [];
 
-    private $config_path = '../application/config/app-config-sample.php';
+    private $config_path = '../application/config/app-config.php';
 
     public function __construct()
     {
@@ -118,11 +118,11 @@ class Install
                     }
                 }
 
-                $this->write_app_config();
-
-                if (!$this->rename_app_config()) {
-                    $rename_failed = true;
+                if (! $this->copy_app_config()) {
+                    $config_copy_failed = true;
                 }
+
+                $this->write_app_config();
 
                 require_once('phpass.php');
 
@@ -200,7 +200,7 @@ class Install
         $hostname = trim($_POST['hostname']);
         $database = trim($_POST['database']);
         $username = trim($_POST['username']);
-        $password = trim($_POST['password']);
+        $password = addslashes(trim($_POST['password']));
 
         $base_url = trim($_POST['base_url']);
         $base_url = rtrim($base_url, '/') . '/';
@@ -234,9 +234,9 @@ class Install
         return true;
     }
 
-    private function rename_app_config()
+    private function copy_app_config()
     {
-        if (@rename('../application/config/app-config-sample.php', '../application/config/app-config.php') == true) {
+        if (@copy('../application/config/app-config-sample.php', '../application/config/app-config.php') == true) {
             return true;
         }
 

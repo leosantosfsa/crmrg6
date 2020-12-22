@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.9.1
+-- version 4.9.7
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Feb 22, 2020 at 08:26 AM
--- Server version: 5.7.28-0ubuntu0.18.04.4
--- PHP Version: 7.4.0
+-- Generation Time: Dec 11, 2020 at 02:17 PM
+-- Server version: 5.7.32-0ubuntu0.18.04.1
+-- PHP Version: 7.4.13
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -67,7 +67,7 @@ CREATE TABLE `tblclients` (
   `city` varchar(100) DEFAULT NULL,
   `zip` varchar(15) DEFAULT NULL,
   `state` varchar(50) DEFAULT NULL,
-  `address` varchar(100) DEFAULT NULL,
+  `address` varchar(191) DEFAULT NULL,
   `website` varchar(150) DEFAULT NULL,
   `datecreated` datetime NOT NULL,
   `active` int(11) NOT NULL DEFAULT '1',
@@ -189,6 +189,7 @@ CREATE TABLE `tblcontracts` (
   `datestart` date DEFAULT NULL,
   `dateend` date DEFAULT NULL,
   `contract_type` int(11) DEFAULT NULL,
+  `project_id` int(11) DEFAULT NULL,
   `addedfrom` int(11) NOT NULL,
   `dateadded` datetime NOT NULL,
   `isexpirynotified` int(11) NOT NULL DEFAULT '0',
@@ -203,7 +204,8 @@ CREATE TABLE `tblcontracts` (
   `acceptance_lastname` varchar(50) DEFAULT NULL,
   `acceptance_email` varchar(100) DEFAULT NULL,
   `acceptance_date` datetime DEFAULT NULL,
-  `acceptance_ip` varchar(40) DEFAULT NULL
+  `acceptance_ip` varchar(40) DEFAULT NULL,
+  `short_link` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -718,6 +720,7 @@ CREATE TABLE `tbldepartments` (
   `host` varchar(150) DEFAULT NULL,
   `password` mediumtext,
   `encryption` varchar(3) DEFAULT NULL,
+  `folder` varchar(191) NOT NULL DEFAULT 'INBOX',
   `delete_after_import` int(11) NOT NULL DEFAULT '0',
   `calendar_id` mediumtext,
   `hidefromclient` tinyint(1) NOT NULL DEFAULT '0'
@@ -762,7 +765,7 @@ CREATE TABLE `tblemailtemplates` (
 --
 
 INSERT INTO `tblemailtemplates` (`emailtemplateid`, `type`, `slug`, `language`, `name`, `subject`, `message`, `fromname`, `fromemail`, `plaintext`, `active`, `order`) VALUES
-(1, 'client', 'new-client-created', 'english', 'New Contact Added/Registered (Welcome Email)', 'Welcome aboard', 'Dear {contact_firstname} {contact_lastname}<br /><br />Thank you for registering on the <strong>{companyname}</strong> CRM System.<br /><br />We just wanted to say welcome.<br /><br />Please contact us if you need any help.<br /><br />Click here to view your profile: <a href=\"%7Bcrm_url%7D\">{crm_url}</a><br /><br />Kind Regards, <br />{email_signature}<br /><br />(This is an automated email, so please don\'t reply to this email address)', '{companyname} | CRM', '', 0, 1, 0),
+(1, 'client', 'new-client-created', 'english', 'New Contact Added/Registered (Welcome Email)', 'Welcome aboard', 'Dear {contact_firstname} {contact_lastname}<br /><br />Thank you for registering on the <strong>{companyname}</strong> CRM System.<br /><br />We just wanted to say welcome.<br /><br />Please contact us if you need any help.<br /><br />Click here to view your profile: <a href=\"{crm_url}\">{crm_url}</a><br /><br />Kind Regards, <br />{email_signature}<br /><br />(This is an automated email, so please don\'t reply to this email address)', '{companyname} | CRM', '', 0, 1, 0),
 (2, 'invoice', 'invoice-send-to-client', 'english', 'Send Invoice to Customer', 'Invoice with number {invoice_number} created', '<span style=\"font-size: 12pt;\">Dear {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">We have prepared the following invoice for you: <strong># {invoice_number}</strong></span><br /><br /><span style=\"font-size: 12pt;\"><strong>Invoice status</strong>: {invoice_status}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the invoice on the following link: <a href=\"{invoice_link}\">{invoice_number}</a></span><br /><br /><span style=\"font-size: 12pt;\">Please contact us for more information.</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (3, 'ticket', 'new-ticket-opened-admin', 'english', 'New Ticket Opened (Opened by Staff, Sent to Customer)', 'New Support Ticket Opened', '<span style=\"font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">New support ticket has been opened.</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Subject:</strong> {ticket_subject}</span><br /><span style=\"font-size: 12pt;\"><strong>Department:</strong> {ticket_department}</span><br /><span style=\"font-size: 12pt;\"><strong>Priority:</strong> {ticket_priority}<br /></span><br /><span style=\"font-size: 12pt;\"><strong>Ticket message:</strong></span><br /><span style=\"font-size: 12pt;\">{ticket_message}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the ticket on the following link: <a href=\"{ticket_public_url}\">#{ticket_id}</a><br /><br />Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (4, 'ticket', 'ticket-reply', 'english', 'Ticket Reply (Sent to Customer)', 'New Ticket Reply', '<span style=\"font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">You have a new ticket reply to ticket <a href=\"{ticket_public_url}\">#{ticket_id}</a></span><br /><br /><span style=\"font-size: 12pt;\"><strong>Ticket Subject:</strong> {ticket_subject}<br /></span><br /><span style=\"font-size: 12pt;\"><strong>Ticket message:</strong></span><br /><span style=\"font-size: 12pt;\">{ticket_message}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the ticket on the following link: <a href=\"{ticket_public_url}\">#{ticket_id}</a></span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
@@ -771,7 +774,7 @@ INSERT INTO `tblemailtemplates` (`emailtemplateid`, `type`, `slug`, `language`, 
 (7, 'invoice', 'invoice-overdue-notice', 'english', 'Invoice Overdue Notice', 'Invoice Overdue Notice - {invoice_number}', '<span style=\"font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">This is an overdue notice for invoice <strong># {invoice_number}</strong></span><br /><br /><span style=\"font-size: 12pt;\">This invoice was due: {invoice_duedate}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the invoice on the following link: <a href=\"{invoice_link}\">{invoice_number}</a></span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (8, 'invoice', 'invoice-already-send', 'english', 'Invoice Already Sent to Customer', 'Invoice # {invoice_number} ', '<span style=\"font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">At your request, here is the invoice with number <strong># {invoice_number}</strong></span><br /><br /><span style=\"font-size: 12pt;\">You can view the invoice on the following link: <a href=\"{invoice_link}\">{invoice_number}</a></span><br /><br /><span style=\"font-size: 12pt;\">Please contact us for more information.</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (9, 'ticket', 'new-ticket-created-staff', 'english', 'New Ticket Created (Opened by Customer, Sent to Staff Members)', 'New Ticket Created', '<span style=\"font-size: 12pt;\">A new support ticket has been opened.</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Subject</strong>: {ticket_subject}</span><br /><span style=\"font-size: 12pt;\"><strong>Department</strong>: {ticket_department}</span><br /><span style=\"font-size: 12pt;\"><strong>Priority</strong>: {ticket_priority}<br /></span><br /><span style=\"font-size: 12pt;\"><strong>Ticket message:</strong></span><br /><span style=\"font-size: 12pt;\">{ticket_message}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the ticket on the following link: <a href=\"{ticket_url}\">#{ticket_id}</a></span><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
-(10, 'estimate', 'estimate-send-to-client', 'english', 'Send Estimate to Customer', 'Estimate # {estimate_number} created', '<span style=\"font-size: 12pt;\">Dear {contact_firstname} {contact_lastname}</span><br /> <br /><span style=\"font-size: 12pt;\">Please find the attached estimate <strong># {estimate_number}</strong></span><br /> <br /><span style=\"font-size: 12pt;\"><strong>Estimate status:</strong> {estimate_status}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the estimate on the following link: <a href=\"{estimate_link}\">{estimate_number}</a></span><br /> <br /><span style=\"font-size: 12pt;\">We look forward to your communication.</span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}<br /></span>', '{companyname} | CRM', '', 0, 1, 0),
+(10, 'estimate', 'estimate-send-to-client', 'english', 'Send Estimate to Customer', 'Estimate # {estimate_number} created', '<span style=\"font-size: 12pt;\">Dear {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">Please find the attached estimate <strong># {estimate_number}</strong></span><br /><br /><span style=\"font-size: 12pt;\"><strong>Estimate status:</strong> {estimate_status}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the estimate on the following link: <a href=\"{estimate_link}\">{estimate_number}</a></span><br /><br /><span style=\"font-size: 12pt;\">We look forward to your communication.</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}<br /></span>', '{companyname} | CRM', '', 0, 1, 0),
 (11, 'ticket', 'ticket-reply-to-admin', 'english', 'Ticket Reply (Sent to Staff)', 'New Support Ticket Reply', '<span style=\"font-size: 12pt;\">A new support ticket reply from {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Subject</strong>: {ticket_subject}</span><br /><span style=\"font-size: 12pt;\"><strong>Department</strong>: {ticket_department}</span><br /><span style=\"font-size: 12pt;\"><strong>Priority</strong>: {ticket_priority}</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Ticket message:</strong></span><br /><span style=\"font-size: 12pt;\">{ticket_message}</span><br /><br /><span style=\"font-size: 12pt;\">You can view the ticket on the following link: <a href=\"{ticket_url}\">#{ticket_id}</a></span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (12, 'estimate', 'estimate-already-send', 'english', 'Estimate Already Sent to Customer', 'Estimate # {estimate_number} ', '<span style=\"font-size: 12pt;\">Dear {contact_firstname} {contact_lastname}</span><br /> <br /><span style=\"font-size: 12pt;\">Thank you for your estimate request.</span><br /> <br /><span style=\"font-size: 12pt;\">You can view the estimate on the following link: <a href=\"{estimate_link}\">{estimate_number}</a></span><br /> <br /><span style=\"font-size: 12pt;\">Please contact us for more information.</span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (13, 'contract', 'contract-expiration', 'english', 'Contract Expiration Reminder (Sent to Customer Contacts)', 'Contract Expiration Reminder', '<span style=\"font-size: 12pt;\">Dear {client_company}</span><br /><br /><span style=\"font-size: 12pt;\">This is a reminder that the following contract will expire soon:</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Subject:</strong> {contract_subject}</span><br /><span style=\"font-size: 12pt;\"><strong>Description:</strong> {contract_description}</span><br /><span style=\"font-size: 12pt;\"><strong>Date Start:</strong> {contract_datestart}</span><br /><span style=\"font-size: 12pt;\"><strong>Date End:</strong> {contract_dateend}</span><br /><br /><span style=\"font-size: 12pt;\">Please contact us for more information.</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
@@ -789,7 +792,7 @@ INSERT INTO `tblemailtemplates` (`emailtemplateid`, `type`, `slug`, `language`, 
 (25, 'proposals', 'proposal-comment-to-admin', 'english', 'New Comment (Sent to Staff) ', 'New Proposal Comment', 'Hi<br /> <br />A new comment has been made to the proposal <strong>{proposal_subject}</strong><br /> <br />You can view and reply to the comment on the following link: <a href=\"{proposal_link}\">{proposal_number}</a>&nbsp;or from the admin area.<br /> <br />{email_signature}', '{companyname} | CRM', '', 0, 1, 0),
 (26, 'estimate', 'estimate-thank-you-to-customer', 'english', 'Thank You Email (Sent to Customer After Accept)', 'Thank for you accepting estimate', '<span style=\"font-size: 12pt;\">Dear {contact_firstname} {contact_lastname}</span><br /> <br /><span style=\"font-size: 12pt;\">Thank for for accepting the estimate.</span><br /> <br /><span style=\"font-size: 12pt;\">We look forward to doing business with you.</span><br /> <br /><span style=\"font-size: 12pt;\">We will contact you as soon as possible.</span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (27, 'tasks', 'task-deadline-notification', 'english', 'Task Deadline Reminder - Sent to Assigned Members', 'Task Deadline Reminder', 'Hi {staff_firstname}&nbsp;{staff_lastname}<br /><br />This is an automated email from {companyname}.<br /><br />The task <strong>{task_name}</strong> deadline is on <strong>{task_duedate}</strong>. <br />This task is still not finished.<br /><br />You can view the task on the following link: <a href=\"{task_link}\">{task_name}</a><br /><br />Kind Regards,<br />{email_signature}', '{companyname} | CRM', '', 0, 1, 0),
-(28, 'contract', 'send-contract', 'english', 'Send Contract to Customer', 'Contract - {contract_subject}', '<p><span style=\"font-size: 12pt;\">Hi&nbsp;{contact_firstname}&nbsp;{contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">Please find the {contract_subject} attached.<br /><br />Description: {contract_description}<br /><br /></span><span style=\"font-size: 12pt;\">Looking forward to hear from you.</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span></p>', '{companyname} | CRM', '', 0, 1, 0),
+(28, 'contract', 'send-contract', 'english', 'Send Contract to Customer', 'Contract - {contract_subject}', '<p><span style=\"font-size: 12pt;\">Hi&nbsp;{contact_firstname}&nbsp;{contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">Please find the <a href=\"{contract_link}\">{contract_subject}</a> attached.<br /><br />Description: {contract_description}<br /><br /></span><span style=\"font-size: 12pt;\">Looking forward to hear from you.</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span></p>', '{companyname} | CRM', '', 0, 1, 0),
 (29, 'invoice', 'invoice-payment-recorded-to-staff', 'english', 'Invoice Payment Recorded (Sent to Staff)', 'New Invoice Payment', '<span style=\"font-size: 12pt;\">Hi</span><br /><br /><span style=\"font-size: 12pt;\">Customer recorded payment for invoice <strong># {invoice_number}</strong></span><br /> <br /><span style=\"font-size: 12pt;\">You can view the invoice on the following link: <a href=\"{invoice_link}\">{invoice_number}</a></span><br /> <br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span>', '{companyname} | CRM', '', 0, 1, 0),
 (30, 'ticket', 'auto-close-ticket', 'english', 'Auto Close Ticket', 'Ticket Auto Closed', '<p><span style=\"font-size: 12pt;\">Hi {contact_firstname} {contact_lastname}</span><br /><br /><span style=\"font-size: 12pt;\">Ticket {ticket_subject} has been auto close due to inactivity.</span><br /><br /><span style=\"font-size: 12pt;\"><strong>Ticket #</strong>: <a href=\"{ticket_public_url}\">{ticket_id}</a></span><br /><span style=\"font-size: 12pt;\"><strong>Department</strong>: {ticket_department}</span><br /><span style=\"font-size: 12pt;\"><strong>Priority:</strong> {ticket_priority}</span><br /><br /><span style=\"font-size: 12pt;\">Kind Regards,</span><br /><span style=\"font-size: 12pt;\">{email_signature}</span></p>', '{companyname} | CRM', '', 0, 1, 0),
 (31, 'project', 'new-project-discussion-created-to-staff', 'english', 'New Project Discussion (Sent to Project Members)', 'New Project Discussion Created - {project_name}', '<p>Hi {staff_firstname}<br /><br />New project discussion created from <strong>{discussion_creator}</strong><br /><br /><strong>Subject:</strong> {discussion_subject}<br /><strong>Description:</strong> {discussion_description}<br /><br />You can view the discussion on the following link: <a href=\"{discussion_link}\">{discussion_subject}</a><br /><br />Kind Regards,<br />{email_signature}</p>', '{companyname} | CRM', '', 0, 1, 0),
@@ -895,7 +898,8 @@ CREATE TABLE `tblestimates` (
   `acceptance_email` varchar(100) DEFAULT NULL,
   `acceptance_date` datetime DEFAULT NULL,
   `acceptance_ip` varchar(40) DEFAULT NULL,
-  `signature` varchar(40) DEFAULT NULL
+  `signature` varchar(40) DEFAULT NULL,
+  `short_link` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -1140,7 +1144,8 @@ CREATE TABLE `tblinvoices` (
   `show_shipping_on_invoice` tinyint(1) NOT NULL DEFAULT '1',
   `show_quantity_as` int(11) NOT NULL DEFAULT '1',
   `project_id` int(11) DEFAULT '0',
-  `subscription_id` int(11) NOT NULL DEFAULT '0'
+  `subscription_id` int(11) NOT NULL DEFAULT '0',
+  `short_link` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -1291,7 +1296,8 @@ CREATE TABLE `tblleads` (
   `email_integration_uid` varchar(30) DEFAULT NULL,
   `is_public` tinyint(1) NOT NULL DEFAULT '0',
   `default_language` varchar(40) DEFAULT NULL,
-  `client_id` int(11) NOT NULL DEFAULT '0'
+  `client_id` int(11) NOT NULL DEFAULT '0',
+  `lead_value` decimal(15,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -1328,7 +1334,7 @@ CREATE TABLE `tblleads_email_integration` (
 --
 
 INSERT INTO `tblleads_email_integration` (`id`, `active`, `email`, `imap_server`, `password`, `check_every`, `responsible`, `lead_source`, `lead_status`, `encryption`, `folder`, `last_run`, `notify_lead_imported`, `notify_lead_contact_more_times`, `notify_type`, `notify_ids`, `mark_public`, `only_loop_on_unseen_emails`, `delete_after_import`, `create_task_if_customer`) VALUES
-(1, 0, '', '', '', 10, 0, 0, 0, 'tls', 'inbox', '', 1, 1, 'assigned', '', 0, 1, 0, 1);
+(1, 0, '', '', '', 10, 0, 0, 0, 'tls', 'INBOX', '', 1, 1, 'assigned', '', 0, 1, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -1437,7 +1443,7 @@ CREATE TABLE `tblmigrations` (
 --
 
 INSERT INTO `tblmigrations` (`version`) VALUES
-(244);
+(273);
 
 -- --------------------------------------------------------
 
@@ -1591,7 +1597,7 @@ INSERT INTO `tbloptions` (`id`, `name`, `value`, `autoload`) VALUES
 (7, 'use_knowledge_base', '1', 1),
 (8, 'smtp_email', '', 1),
 (9, 'smtp_password', '', 1),
-(10, 'company_info_format', '{company_name}<br />\r\n{address}<br />\r\n{city} {state}<br />\r\n{country_code} {zip_code}<br />\r\n{vat_number_with_label}', 0),
+(10, 'company_info_format', '{company_name}<br />\r\r\n{address}<br />\r\r\n{city} {state}<br />\r\r\n{country_code} {zip_code}<br />\r\r\n{vat_number_with_label}', 0),
 (11, 'smtp_port', '', 1),
 (12, 'smtp_host', '', 1),
 (13, 'smtp_email_charset', 'utf-8', 1),
@@ -1760,12 +1766,12 @@ INSERT INTO `tbloptions` (`id`, `name`, `value`, `autoload`) VALUES
 (176, 'delete_activity_log_older_then', '1', 1),
 (177, 'disable_language', '0', 1),
 (178, 'company_state', '', 1),
-(179, 'email_header', '<!doctype html>\n                            <html>\n                            <head>\n                              <meta name=\"viewport\" content=\"width=device-width\" />\n                              <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n                              <style>\n                                body {\n                                 background-color: #f6f6f6;\n                                 font-family: sans-serif;\n                                 -webkit-font-smoothing: antialiased;\n                                 font-size: 14px;\n                                 line-height: 1.4;\n                                 margin: 0;\n                                 padding: 0;\n                                 -ms-text-size-adjust: 100%;\n                                 -webkit-text-size-adjust: 100%;\n                               }\n                               table {\n                                 border-collapse: separate;\n                                 mso-table-lspace: 0pt;\n                                 mso-table-rspace: 0pt;\n                                 width: 100%;\n                               }\n                               table td {\n                                 font-family: sans-serif;\n                                 font-size: 14px;\n                                 vertical-align: top;\n                               }\n                                   /* -------------------------------------\n                                     BODY & CONTAINER\n                                     ------------------------------------- */\n                                     .body {\n                                       background-color: #f6f6f6;\n                                       width: 100%;\n                                     }\n                                     /* Set a max-width, and make it display as block so it will automatically stretch to that width, but will also shrink down on a phone or something */\n\n                                     .container {\n                                       display: block;\n                                       margin: 0 auto !important;\n                                       /* makes it centered */\n                                       max-width: 680px;\n                                       padding: 10px;\n                                       width: 680px;\n                                     }\n                                     /* This should also be a block element, so that it will fill 100% of the .container */\n\n                                     .content {\n                                       box-sizing: border-box;\n                                       display: block;\n                                       margin: 0 auto;\n                                       max-width: 680px;\n                                       padding: 10px;\n                                     }\n                                   /* -------------------------------------\n                                     HEADER, FOOTER, MAIN\n                                     ------------------------------------- */\n\n                                     .main {\n                                       background: #fff;\n                                       border-radius: 3px;\n                                       width: 100%;\n                                     }\n                                     .wrapper {\n                                       box-sizing: border-box;\n                                       padding: 20px;\n                                     }\n                                     .footer {\n                                       clear: both;\n                                       padding-top: 10px;\n                                       text-align: center;\n                                       width: 100%;\n                                     }\n                                     .footer td,\n                                     .footer p,\n                                     .footer span,\n                                     .footer a {\n                                       color: #999999;\n                                       font-size: 12px;\n                                       text-align: center;\n                                     }\n                                     hr {\n                                       border: 0;\n                                       border-bottom: 1px solid #f6f6f6;\n                                       margin: 20px 0;\n                                     }\n                                   /* -------------------------------------\n                                     RESPONSIVE AND MOBILE FRIENDLY STYLES\n                                     ------------------------------------- */\n\n                                     @media only screen and (max-width: 620px) {\n                                       table[class=body] .content {\n                                         padding: 0 !important;\n                                       }\n                                       table[class=body] .container {\n                                         padding: 0 !important;\n                                         width: 100% !important;\n                                       }\n                                       table[class=body] .main {\n                                         border-left-width: 0 !important;\n                                         border-radius: 0 !important;\n                                         border-right-width: 0 !important;\n                                       }\n                                     }\n                                   </style>\n                                 </head>\n                                 <body class=\"\">\n                                  <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"body\">\n                                    <tr>\n                                     <td>&nbsp;</td>\n                                     <td class=\"container\">\n                                      <div class=\"content\">\n                                        <!-- START CENTERED WHITE CONTAINER -->\n                                        <table class=\"main\">\n                                          <!-- START MAIN CONTENT AREA -->\n                                          <tr>\n                                           <td class=\"wrapper\">\n                                            <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n                                              <tr>\n                                               <td>', 1),
+(179, 'email_header', '<!doctype html>\r\n                            <html>\r\n                            <head>\r\n                              <meta name=\"viewport\" content=\"width=device-width\" />\r\n                              <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n                              <style>\r\n                                body {\r\n                                 background-color: #f6f6f6;\r\n                                 font-family: sans-serif;\r\n                                 -webkit-font-smoothing: antialiased;\r\n                                 font-size: 14px;\r\n                                 line-height: 1.4;\r\n                                 margin: 0;\r\n                                 padding: 0;\r\n                                 -ms-text-size-adjust: 100%;\r\n                                 -webkit-text-size-adjust: 100%;\r\n                               }\r\n                               table {\r\n                                 border-collapse: separate;\r\n                                 mso-table-lspace: 0pt;\r\n                                 mso-table-rspace: 0pt;\r\n                                 width: 100%;\r\n                               }\r\n                               table td {\r\n                                 font-family: sans-serif;\r\n                                 font-size: 14px;\r\n                                 vertical-align: top;\r\n                               }\r\n                                   /* -------------------------------------\r\n                                     BODY & CONTAINER\r\n                                     ------------------------------------- */\r\n                                     .body {\r\n                                       background-color: #f6f6f6;\r\n                                       width: 100%;\r\n                                     }\r\n                                     /* Set a max-width, and make it display as block so it will automatically stretch to that width, but will also shrink down on a phone or something */\r\n\r\n                                     .container {\r\n                                       display: block;\r\n                                       margin: 0 auto !important;\r\n                                       /* makes it centered */\r\n                                       max-width: 680px;\r\n                                       padding: 10px;\r\n                                       width: 680px;\r\n                                     }\r\n                                     /* This should also be a block element, so that it will fill 100% of the .container */\r\n\r\n                                     .content {\r\n                                       box-sizing: border-box;\r\n                                       display: block;\r\n                                       margin: 0 auto;\r\n                                       max-width: 680px;\r\n                                       padding: 10px;\r\n                                     }\r\n                                   /* -------------------------------------\r\n                                     HEADER, FOOTER, MAIN\r\n                                     ------------------------------------- */\r\n\r\n                                     .main {\r\n                                       background: #fff;\r\n                                       border-radius: 3px;\r\n                                       width: 100%;\r\n                                     }\r\n                                     .wrapper {\r\n                                       box-sizing: border-box;\r\n                                       padding: 20px;\r\n                                     }\r\n                                     .footer {\r\n                                       clear: both;\r\n                                       padding-top: 10px;\r\n                                       text-align: center;\r\n                                       width: 100%;\r\n                                     }\r\n                                     .footer td,\r\n                                     .footer p,\r\n                                     .footer span,\r\n                                     .footer a {\r\n                                       color: #999999;\r\n                                       font-size: 12px;\r\n                                       text-align: center;\r\n                                     }\r\n                                     hr {\r\n                                       border: 0;\r\n                                       border-bottom: 1px solid #f6f6f6;\r\n                                       margin: 20px 0;\r\n                                     }\r\n                                   /* -------------------------------------\r\n                                     RESPONSIVE AND MOBILE FRIENDLY STYLES\r\n                                     ------------------------------------- */\r\n\r\n                                     @media only screen and (max-width: 620px) {\r\n                                       table[class=body] .content {\r\n                                         padding: 0 !important;\r\n                                       }\r\n                                       table[class=body] .container {\r\n                                         padding: 0 !important;\r\n                                         width: 100% !important;\r\n                                       }\r\n                                       table[class=body] .main {\r\n                                         border-left-width: 0 !important;\r\n                                         border-radius: 0 !important;\r\n                                         border-right-width: 0 !important;\r\n                                       }\r\n                                     }\r\n                                   </style>\r\n                                 </head>\r\n                                 <body class=\"\">\r\n                                  <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" class=\"body\">\r\n                                    <tr>\r\n                                     <td>&nbsp;</td>\r\n                                     <td class=\"container\">\r\n                                      <div class=\"content\">\r\n                                        <!-- START CENTERED WHITE CONTAINER -->\r\n                                        <table class=\"main\">\r\n                                          <!-- START MAIN CONTENT AREA -->\r\n                                          <tr>\r\n                                           <td class=\"wrapper\">\r\n                                            <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\r\n                                              <tr>\r\n                                               <td>', 1),
 (180, 'show_pdf_signature_invoice', '1', 0),
 (181, 'show_pdf_signature_estimate', '1', 0),
 (182, 'signature_image', '', 0),
 (183, 'scroll_responsive_tables', '0', 1),
-(184, 'email_footer', '</td>\n                             </tr>\n                           </table>\n                         </td>\n                       </tr>\n                       <!-- END MAIN CONTENT AREA -->\n                     </table>\n                     <!-- START FOOTER -->\n                     <div class=\"footer\">\n                      <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n                        <tr>\n                          <td class=\"content-block\">\n                            <span>{companyname}</span>\n                          </td>\n                        </tr>\n                      </table>\n                    </div>\n                    <!-- END FOOTER -->\n                    <!-- END CENTERED WHITE CONTAINER -->\n                  </div>\n                </td>\n                <td>&nbsp;</td>\n              </tr>\n            </table>\n            </body>\n            </html>', 1),
+(184, 'email_footer', '</td>\r\n                             </tr>\r\n                           </table>\r\n                         </td>\r\n                       </tr>\r\n                       <!-- END MAIN CONTENT AREA -->\r\n                     </table>\r\n                     <!-- START FOOTER -->\r\n                     <div class=\"footer\">\r\n                      <table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\r\n                        <tr>\r\n                          <td class=\"content-block\">\r\n                            <span>{companyname}</span>\r\n                          </td>\r\n                        </tr>\r\n                      </table>\r\n                    </div>\r\n                    <!-- END FOOTER -->\r\n                    <!-- END CENTERED WHITE CONTAINER -->\r\n                  </div>\r\n                </td>\r\n                <td>&nbsp;</td>\r\n              </tr>\r\n            </table>\r\n            </body>\r\n            </html>', 1),
 (185, 'exclude_proposal_from_client_area_with_draft_status', '1', 1),
 (186, 'pusher_app_key', '', 1),
 (187, 'pusher_app_secret', '', 1),
@@ -1781,7 +1787,7 @@ INSERT INTO `tbloptions` (`id`, `name`, `value`, `autoload`) VALUES
 (197, 'show_timesheets_overview_all_members_notice_admins', '1', 0),
 (198, 'desktop_notifications', '0', 1),
 (199, 'hide_notified_reminders_from_calendar', '1', 0),
-(200, 'customer_info_format', '{company_name}<br />\r\n{street}<br />\r\n{city} {state}<br />\r\n{country_code} {zip_code}<br />\r\n{vat_number_with_label}', 0),
+(200, 'customer_info_format', '{company_name}<br />\r\r\n{street}<br />\r\r\n{city} {state}<br />\r\r\n{country_code} {zip_code}<br />\r\r\n{vat_number_with_label}', 0),
 (201, 'timer_started_change_status_in_progress', '1', 0),
 (202, 'default_ticket_reply_status', '3', 1),
 (203, 'default_task_status', 'auto', 1),
@@ -1789,7 +1795,7 @@ INSERT INTO `tbloptions` (`id`, `name`, `value`, `autoload`) VALUES
 (205, 'email_queue_enabled', '0', 1),
 (206, 'last_email_queue_retry', '', 1),
 (207, 'auto_dismiss_desktop_notifications_after', '0', 1),
-(208, 'proposal_info_format', '{proposal_to}<br />\r\n{address}<br />\r\n{city} {state}<br />\r\n{country_code} {zip_code}<br />\r\n{phone}<br />\r\n{email}', 0),
+(208, 'proposal_info_format', '{proposal_to}<br />\r\r\n{address}<br />\r\r\n{city} {state}<br />\r\r\n{country_code} {zip_code}<br />\r\r\n{phone}<br />\r\r\n{email}', 0),
 (209, 'ticket_replies_order', 'asc', 1),
 (210, 'new_recurring_invoice_action', 'generate_and_send', 0),
 (211, 'bcc_emails', '', 0),
@@ -1874,10 +1880,19 @@ INSERT INTO `tbloptions` (`id`, `name`, `value`, `autoload`) VALUES
 (290, 'custom_js_customer_scripts', '0', 1),
 (291, 'stripe_webhook_id', '', 1),
 (292, 'stripe_webhook_signing_secret', '', 1),
-(293, 'upgraded_from_version', '', 0),
-(294, 'stripe_ideal_webhook_id', '', 1),
-(295, 'stripe_ideal_webhook_signing_secret', '', 1),
-(296, 'show_php_version_notice', '1', 0);
+(293, 'stripe_ideal_webhook_id', '', 1),
+(294, 'stripe_ideal_webhook_signing_secret', '', 1),
+(295, 'show_php_version_notice', '1', 0),
+(296, 'recaptcha_ignore_ips', '', 1),
+(297, 'show_task_reminders_on_calendar', '1', 1),
+(298, 'customer_settings', 'true', 1),
+(299, 'tasks_reminder_notification_hour', '21', 1),
+(300, 'allow_primary_contact_to_manage_other_contacts', '0', 1),
+(301, 'items_table_amounts_exclude_currency_symbol', '1', 1),
+(302, 'round_off_task_timer_option', '0', 1),
+(303, 'round_off_task_timer_time', '5', 1),
+(304, 'bitly_access_token', '', 1),
+(305, 'upgraded_from_version', '', 0);
 
 -- --------------------------------------------------------
 
@@ -2105,7 +2120,8 @@ CREATE TABLE `tblproposals` (
   `acceptance_email` varchar(100) DEFAULT NULL,
   `acceptance_date` datetime DEFAULT NULL,
   `acceptance_ip` varchar(40) DEFAULT NULL,
-  `signature` varchar(40) DEFAULT NULL
+  `signature` varchar(40) DEFAULT NULL,
+  `short_link` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -2289,7 +2305,8 @@ CREATE TABLE `tblstaff` (
   `two_factor_auth_enabled` tinyint(1) DEFAULT '0',
   `two_factor_auth_code` varchar(100) DEFAULT NULL,
   `two_factor_auth_code_requested` datetime DEFAULT NULL,
-  `email_signature` text
+  `email_signature` text,
+  `google_auth_secret` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -2333,6 +2350,8 @@ CREATE TABLE `tblsubscriptions` (
   `currency` int(11) NOT NULL,
   `tax_id` int(11) NOT NULL DEFAULT '0',
   `stripe_tax_id` varchar(50) DEFAULT NULL,
+  `tax_id_2` int(11) NOT NULL DEFAULT '0',
+  `stripe_tax_id_2` varchar(50) DEFAULT NULL,
   `stripe_plan_id` text,
   `stripe_subscription_id` text NOT NULL,
   `next_billing_cycle` bigint(20) DEFAULT NULL,
@@ -2512,6 +2531,20 @@ CREATE TABLE `tbltaxes` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tbltemplates`
+--
+
+CREATE TABLE `tbltemplates` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `type` varchar(100) NOT NULL,
+  `addedfrom` int(11) NOT NULL,
+  `content` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `tbltickets`
 --
 
@@ -2683,6 +2716,20 @@ CREATE TABLE `tbltracked_mails` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tbltwocheckout_log`
+--
+
+CREATE TABLE `tbltwocheckout_log` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `reference` varchar(64) NOT NULL,
+  `invoice_id` int(11) NOT NULL,
+  `amount` varchar(25) NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `tbluser_auto_login`
 --
 
@@ -2800,7 +2847,8 @@ ALTER TABLE `tblclients`
   ADD PRIMARY KEY (`userid`),
   ADD KEY `country` (`country`),
   ADD KEY `leadid` (`leadid`),
-  ADD KEY `company` (`company`);
+  ADD KEY `company` (`company`),
+  ADD KEY `active` (`active`);
 
 --
 -- Indexes for table `tblconsents`
@@ -2960,7 +3008,8 @@ ALTER TABLE `tblestimates`
   ADD KEY `clientid` (`clientid`),
   ADD KEY `currency` (`currency`),
   ADD KEY `project_id` (`project_id`),
-  ADD KEY `sale_agent` (`sale_agent`);
+  ADD KEY `sale_agent` (`sale_agent`),
+  ADD KEY `status` (`status`);
 
 --
 -- Indexes for table `tblevents`
@@ -3039,7 +3088,8 @@ ALTER TABLE `tblinvoices`
   ADD KEY `clientid` (`clientid`),
   ADD KEY `project_id` (`project_id`),
   ADD KEY `sale_agent` (`sale_agent`),
-  ADD KEY `total` (`total`);
+  ADD KEY `total` (`total`),
+  ADD KEY `status` (`status`);
 
 --
 -- Indexes for table `tblitemable`
@@ -3071,7 +3121,8 @@ ALTER TABLE `tblitems_groups`
 --
 ALTER TABLE `tblitem_tax`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `itemid` (`itemid`);
+  ADD KEY `itemid` (`itemid`),
+  ADD KEY `rel_id` (`rel_id`);
 
 --
 -- Indexes for table `tblknowedge_base_article_feedback`
@@ -3272,7 +3323,8 @@ ALTER TABLE `tblproject_settings`
 -- Indexes for table `tblproposals`
 --
 ALTER TABLE `tblproposals`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `status` (`status`);
 
 --
 -- Indexes for table `tblproposal_comments`
@@ -3378,7 +3430,8 @@ ALTER TABLE `tbltasks`
   ADD KEY `rel_id` (`rel_id`),
   ADD KEY `rel_type` (`rel_type`),
   ADD KEY `milestone` (`milestone`),
-  ADD KEY `kanban_order` (`kanban_order`);
+  ADD KEY `kanban_order` (`kanban_order`),
+  ADD KEY `status` (`status`);
 
 --
 -- Indexes for table `tbltaskstimers`
@@ -3427,6 +3480,12 @@ ALTER TABLE `tbltask_followers`
 -- Indexes for table `tbltaxes`
 --
 ALTER TABLE `tbltaxes`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `tbltemplates`
+--
+ALTER TABLE `tbltemplates`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -3489,6 +3548,13 @@ ALTER TABLE `tbltodos`
 --
 ALTER TABLE `tbltracked_mails`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `tbltwocheckout_log`
+--
+ALTER TABLE `tbltwocheckout_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `invoice_id` (`invoice_id`);
 
 --
 -- Indexes for table `tbluser_meta`
@@ -3864,7 +3930,7 @@ ALTER TABLE `tblnotifications`
 -- AUTO_INCREMENT for table `tbloptions`
 --
 ALTER TABLE `tbloptions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=297;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=306;
 
 --
 -- AUTO_INCREMENT for table `tblpayment_modes`
@@ -4053,6 +4119,12 @@ ALTER TABLE `tbltaxes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `tbltemplates`
+--
+ALTER TABLE `tbltemplates`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `tbltickets`
 --
 ALTER TABLE `tbltickets`
@@ -4107,6 +4179,12 @@ ALTER TABLE `tbltracked_mails`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `tbltwocheckout_log`
+--
+ALTER TABLE `tbltwocheckout_log`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `tbluser_meta`
 --
 ALTER TABLE `tbluser_meta`
@@ -4129,6 +4207,16 @@ ALTER TABLE `tblviews_tracking`
 --
 ALTER TABLE `tblweb_to_lead`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `tbltwocheckout_log`
+--
+ALTER TABLE `tbltwocheckout_log`
+  ADD CONSTRAINT `tbltwocheckout_log_ibfk_1` FOREIGN KEY (`invoice_id`) REFERENCES `tblinvoices` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

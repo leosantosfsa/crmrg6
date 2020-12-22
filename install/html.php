@@ -239,9 +239,9 @@
                   </form>
                   <?php } else if($step == 5){ ?>
                   <h4 class="bold">Installation successful!</h4>
-                  <?php if(isset($rename_failed)){ ?>
+                  <?php if(isset($config_copy_failed)){ ?>
                   <p class="text-danger">
-                     Failed to rename application/config/app-config-sample.php to app-config.php. Please navigate to application/config/ and rename the file app-config-sample.php to app-config.php
+                     Failed to copy application/config/app-config-sample.php. Please navigate to application/config/ and copy the file app-config-sample.php and rename it to app-config.php
                   </p>
                   <?php } ?>
                   <p>Please <b>delete the install directory</b> and login as administrator at <a href="<?php echo $_POST['base_url']; ?>admin" target="_blank"><?php echo $_POST['base_url']; ?>admin</a></p>

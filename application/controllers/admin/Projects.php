@@ -123,8 +123,6 @@ class Projects extends AdminController
     {
         $data['title'] = _l('project_gant');
 
-
-
         $selected_statuses = [];
         $selectedMember    = null;
         $data['statuses']  = $this->projects_model->get_project_statuses();
@@ -134,9 +132,11 @@ class Projects extends AdminController
 
         $allStatusesIds = [];
         foreach ($data['statuses'] as $status) {
-            if (!isset($status['filter_default'])
+            if (
+                !isset($status['filter_default'])
                 || (isset($status['filter_default']) && $status['filter_default'])
-                && !$appliedStatuses) {
+                && !$appliedStatuses
+            ) {
                 $selected_statuses[] = $status['id'];
             } elseif ($appliedStatuses) {
                 if (in_array($status['id'], $appliedStatuses)) {
@@ -151,6 +151,7 @@ class Projects extends AdminController
         if (count($selected_statuses) == 0) {
             $selected_statuses = $allStatusesIds;
         }
+
 
         $data['selected_statuses'] = $selected_statuses;
 
@@ -211,7 +212,7 @@ class Projects extends AdminController
                 'projects-js',
                 base_url($this->app_scripts->core_file('assets/js', 'projects.js')) . '?v=' . $this->app_scripts->core_version(),
                 'admin',
-                ['app-js', 'jquery-comments-js', 'jquery-gantt-js', 'circle-progress-js']
+                ['app-js', 'jquery-comments-js', 'frappe-gantt-js', 'circle-progress-js']
             );
 
             if ($group == 'project_overview') {
@@ -268,7 +269,7 @@ class Projects extends AdminController
                 $data['percent_circle'] = $percent_circle;
 
 
-                $data['project_overview_chart'] = $this->projects_model->get_project_overview_weekly_chart_data($id, ($this->input->get('overview_chart') ? $this->input->get('overview_chart'):'this_week'));
+                $data['project_overview_chart'] = $this->projects_model->get_project_overview_weekly_chart_data($id, ($this->input->get('overview_chart') ? $this->input->get('overview_chart') : 'this_week'));
             } elseif ($group == 'project_invoices') {
                 $this->load->model('invoices_model');
 
@@ -301,6 +302,10 @@ class Projects extends AdminController
                 $data['activity'] = $this->projects_model->get_activity($id);
             } elseif ($group == 'project_notes') {
                 $data['staff_notes'] = $this->projects_model->get_staff_notes($id);
+            } elseif ($group == 'project_contracts') {
+                $this->load->model('contracts_model');
+                $data['contract_types'] = $this->contracts_model->get_contract_types();
+                $data['years']          = $this->contracts_model->get_contracts_years();
             } elseif ($group == 'project_estimates') {
                 $this->load->model('estimates_model');
                 $data['estimates_years']       = $this->estimates_model->get_estimates_years();
@@ -393,10 +398,12 @@ class Projects extends AdminController
         $data['current_user_is_admin']             = is_admin();
 
         $data['file'] = $this->projects_model->get_file($id, $project_id);
+
         if (!$data['file']) {
             header('HTTP/1.0 404 Not Found');
             die;
         }
+
         $this->load->view('admin/projects/_file', $data);
     }
 
@@ -600,11 +607,11 @@ class Projects extends AdminController
         $data['milestones'] = [];
 
         $data['milestones'][] = [
-          'name'              => _l('milestones_uncategorized'),
-          'id'                => 0,
-          'total_logged_time' => $this->projects_model->calc_milestone_logged_time($data['project_id'], 0),
-          'color'             => null,
-          ];
+            'name'              => _l('milestones_uncategorized'),
+            'id'                => 0,
+            'total_logged_time' => $this->projects_model->calc_milestone_logged_time($data['project_id'], 0),
+            'color'             => null,
+        ];
 
         $_milestones = $this->projects_model->get_milestones($data['project_id']);
 
@@ -925,13 +932,13 @@ class Projects extends AdminController
                     foreach ($tasks as $task_id) {
                         $task = $this->tasks_model->get($task_id);
                         $sec  = $this->tasks_model->calc_task_total_time($task_id);
-                        $item['long_description'] .= $task->name . ' - ' . seconds_to_time_format($sec) . ' ' . _l('hours') . "\r\n";
+                        $item['long_description'] .= $task->name . ' - ' . seconds_to_time_format(task_timer_round($sec)) . ' ' . _l('hours') . "\r\n";
                         $item['task_id'][] = $task_id;
                         if ($project->billing_type == 2) {
                             if ($sec < 60) {
                                 $sec = 0;
                             }
-                            $item['qty'] += sec2qty($sec);
+                            $item['qty'] += sec2qty(task_timer_round($sec));
                         }
                     }
                     if ($project->billing_type == 1) {
@@ -947,8 +954,8 @@ class Projects extends AdminController
                         $task                     = $this->tasks_model->get($task_id);
                         $sec                      = $this->tasks_model->calc_task_total_time($task_id);
                         $item['description']      = $project->name . ' - ' . $task->name;
-                        $item['qty']              = floatVal(sec2qty($sec));
-                        $item['long_description'] = seconds_to_time_format($sec) . ' ' . _l('hours');
+                        $item['qty']              = floatVal(sec2qty(task_timer_round($sec)));
+                        $item['long_description'] = seconds_to_time_format(task_timer_round($sec)) . ' ' . _l('hours');
                         if ($project->billing_type == 2) {
                             $item['rate'] = $project->project_rate_per_hour;
                         } elseif ($project->billing_type == 3) {
@@ -970,8 +977,8 @@ class Projects extends AdminController
 
                             array_push($added_task_ids, $timesheet['task_id']);
 
-                            $item['qty']              = floatVal(sec2qty($timesheet['total_spent']));
-                            $item['long_description'] = _l('project_invoice_timesheet_start_time', _dt($timesheet['start_time'], true)) . "\r\n" . _l('project_invoice_timesheet_end_time', _dt($timesheet['end_time'], true)) . "\r\n" . _l('project_invoice_timesheet_total_logged_time', seconds_to_time_format($timesheet['total_spent'])) . ' ' . _l('hours');
+                            $item['qty']              = floatVal(sec2qty(task_timer_round($timesheet['total_spent'])));
+                            $item['long_description'] = _l('project_invoice_timesheet_start_time', _dt($timesheet['start_time'], true)) . "\r\n" . _l('project_invoice_timesheet_end_time', _dt($timesheet['end_time'], true)) . "\r\n" . _l('project_invoice_timesheet_total_logged_time', seconds_to_time_format(task_timer_round($timesheet['total_spent']))) . ' ' . _l('hours');
 
                             if ($this->input->post('timesheets_include_notes') && $timesheet['note']) {
                                 $item['long_description'] .= "\r\n\r\n" . _l('note') . ': ' . $timesheet['note'];
@@ -1102,6 +1109,24 @@ class Projects extends AdminController
         if (is_admin()) {
             login_as_client($clientid);
             redirect(site_url('clients/project/' . $id));
+        }
+    }
+
+    public function get_staff_names_for_mentions($projectId)
+    {
+        if ($this->input->is_ajax_request()) {
+            $projectId = $this->db->escape_str($projectId);
+
+            $members = $this->projects_model->get_project_members($projectId);
+            $members = array_map(function ($member) {
+                $staff = $this->staff_model->get($member['staff_id']);
+
+                $_member['id'] = $member['staff_id'];
+                $_member['name'] = $staff->firstname . ' ' . $staff->lastname;
+                return $_member;
+            }, $members);
+
+            echo json_encode($members);
         }
     }
 }

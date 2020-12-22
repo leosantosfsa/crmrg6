@@ -1,5 +1,9 @@
 <?php
 
+use app\services\imap\Imap;
+use app\services\imap\ConnectionErrorException;
+use Ddeboer\Imap\Exception\MailboxDoesNotExistException;
+
 header('Content-Type: text/html; charset=utf-8');
 defined('BASEPATH') or exit('No direct script access allowed');
 
@@ -54,7 +58,8 @@ class Leads extends AdminController
         if (!is_staff_member()) {
             ajax_access_denied();
         }
-        $data['statuses'] = $this->leads_model->get_status();
+        $data['statuses']      = $this->leads_model->get_status();
+        $data['base_currency'] = get_base_currency();
         echo $this->load->view('admin/leads/kan-ban', $data, true);
     }
 
@@ -109,11 +114,12 @@ class Leads extends AdminController
 
     private function _get_lead_data($id = '')
     {
-        $reminder_data       = '';
-        $data['lead_locked'] = false;
-        $data['openEdit']    = $this->input->get('edit') ? true : false;
-        $data['members']     = $this->staff_model->get('', ['is_not_staff' => 0, 'active' => 1]);
-        $data['status_id']   = $this->input->get('status_id') ? $this->input->get('status_id') : get_option('leads_default_status');
+        $reminder_data         = '';
+        $data['lead_locked']   = false;
+        $data['openEdit']      = $this->input->get('edit') ? true : false;
+        $data['members']       = $this->staff_model->get('', ['is_not_staff' => 0, 'active' => 1]);
+        $data['status_id']     = $this->input->get('status_id') ? $this->input->get('status_id') : get_option('leads_default_status');
+        $data['base_currency'] = get_base_currency();
 
         if (is_numeric($id)) {
             $leadWhere = (has_permission('leads', '', 'view') ? [] : '(assigned = ' . get_staff_user_id() . ' OR addedfrom=' . get_staff_user_id() . ' OR is_public=1)');
@@ -769,6 +775,7 @@ class Leads extends AdminController
             'title',
             'email',
             'phonenumber',
+            'lead_value',
             'company',
             'address',
             'city',
@@ -801,6 +808,9 @@ class Leads extends AdminController
                 $label = _l('lead_add_edit_email');
             } elseif ($f == 'phonenumber') {
                 $label = _l('lead_add_edit_phonenumber');
+            } elseif ($f == 'lead_value') {
+                $label = _l('lead_add_edit_lead_value');
+                $type  = 'number';
             } else {
                 $label = _l('lead_' . $f);
             }
@@ -1054,6 +1064,31 @@ class Leads extends AdminController
         echo json_encode(['leadView' => $this->_get_lead_data($rel_id), 'id' => $rel_id]);
     }
 
+    public function email_integration_folders()
+    {
+       if (!is_admin()) {
+            ajax_access_denied('Leads Test Email Integration');
+        }
+
+        app_check_imap_open_function();
+
+        $imap = new Imap(
+           $this->input->post('email'),
+           $this->input->post('password', false),
+           $this->input->post('imap_server'),
+           $this->input->post('encryption')
+        );
+
+        try {
+            echo json_encode($imap->getSelectableFolders());
+        } catch (ConnectionErrorException $e) {
+            echo json_encode([
+                'alert_type' => 'warning',
+                'message'    => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function test_email_integration()
     {
         if (!is_admin()) {
@@ -1062,25 +1097,33 @@ class Leads extends AdminController
 
         app_check_imap_open_function(admin_url('leads/email_integration'));
 
-        require_once(APPPATH . 'third_party/php-imap/Imap.php');
+        $mail     = $this->leads_model->get_email_integration();
+        $password = $mail->password;
 
-        $mail = $this->leads_model->get_email_integration();
-        $ps   = $mail->password;
-        if (false == $this->encryption->decrypt($ps)) {
+        if (false == $this->encryption->decrypt($password)) {
             set_alert('danger', _l('failed_to_decrypt_password'));
             redirect(admin_url('leads/email_integration'));
         }
-        $mailbox    = $mail->imap_server;
-        $username   = $mail->email;
-        $password   = $this->encryption->decrypt($ps);
-        $encryption = $mail->encryption;
-        // open connection
-        $imap = new Imap($mailbox, $username, $password, $encryption);
 
-        if ($imap->isConnected() === false) {
-            set_alert('danger', _l('lead_email_connection_not_ok') . '<br /><b>' . $imap->getError() . '</b>');
-        } else {
-            set_alert('success', _l('lead_email_connection_ok'));
+        $imap = new Imap(
+           $mail->email,
+           $this->encryption->decrypt($password),
+           $mail->imap_server,
+           $mail->encryption
+        );
+
+        try {
+            $connection = $imap->testConnection();
+
+            try {
+                $connection->getMailbox($mail->folder);
+                set_alert('success', _l('lead_email_connection_ok'));
+            } catch (MailboxDoesNotExistException $e) {
+                set_alert('danger', str_replace(["\n", 'Mailbox'], ['<br />', 'Folder'], addslashes($e->getMessage())));
+            }
+        } catch (ConnectionErrorException $e) {
+            $error = str_replace("\n", '<br />', addslashes($e->getMessage()));
+            set_alert('danger', _l('lead_email_connection_not_ok') . '<br /><br /><b>' . $error . '</b>');
         }
 
         redirect(admin_url('leads/email_integration'));
@@ -1117,15 +1160,16 @@ class Leads extends AdminController
             'is_not_staff' => 0,
         ]);
 
-        $data['title']     = _l('leads_email_integration');
-        $data['mail']      = $this->leads_model->get_email_integration();
+        $data['title']      = _l('leads_email_integration');
+        $data['mail']       = $this->leads_model->get_email_integration();
+
         $data['bodyclass'] = 'leads-email-integration';
         $this->load->view('admin/leads/email_integration', $data);
     }
 
     public function change_status_color()
     {
-        if ($this->input->post()) {
+        if ($this->input->post() && is_admin()) {
             $this->leads_model->change_status_color($this->input->post());
         }
     }
@@ -1266,5 +1310,29 @@ class Leads extends AdminController
         if ($this->input->post('mass_delete')) {
             set_alert('success', _l('total_leads_deleted', $total_deleted));
         }
+    }
+
+    public function download_files($lead_id)
+    {
+        if (!is_staff_member() || !$this->leads_model->staff_can_access_lead($lead_id)) {
+            ajax_access_denied();
+        }
+
+        $files = $this->leads_model->get_lead_attachments($lead_id);
+
+        if (count($files) == 0) {
+            redirect($_SERVER['HTTP_REFERER']);
+        }
+
+        $path = get_upload_path_by_type('lead') . $lead_id;
+
+        $this->load->library('zip');
+
+        foreach ($files as $file) {
+            $this->zip->read_file($path . '/' . $file['file_name']);
+        }
+
+        $this->zip->download('files.zip');
+        $this->zip->clear_data();
     }
 }

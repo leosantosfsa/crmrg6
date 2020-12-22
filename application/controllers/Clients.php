@@ -164,7 +164,7 @@ class Clients extends ClientsController
                         }
                     } else {
                         if ($project->settings->edit_tasks == 1
-                            && total_rows(db_prefix() . 'tasks', ['is_added_from_contact' => 1, 'addedfrom' => get_contact_user_id()]) > 0) {
+                            && total_rows(db_prefix() . 'tasks', ['is_added_from_contact' => 1, 'addedfrom' => get_contact_user_id(), 'billed' => 0]) > 0) {
                             $affectedRows = 0;
                             $updated      = $this->tasks_model->update($data, $task_id, true);
                             if ($updated) {
@@ -393,6 +393,14 @@ class Clients extends ClientsController
             } elseif ($group == 'project_tasks') {
                 $data['tasks_statuses'] = $this->tasks_model->get_statuses();
                 $data['project_tasks']  = $this->projects_model->get_tasks($id);
+            } elseif ($group == 'project_contracts') {
+                $data['contracts'] = [];
+                if (has_contact_permission('contracts')) {
+                    $data['contracts'] = $this->contracts_model->get('', [
+                            'client'     => get_client_user_id(),
+                            'project_id' => $id,
+                        ]);
+                }
             } elseif ($group == 'project_activity') {
                 $data['activity'] = $this->projects_model->get_activity($id);
             } elseif ($group == 'project_milestones') {
@@ -1368,14 +1376,11 @@ class Clients extends ClientsController
 
     public function change_language($lang = '')
     {
-        if (!can_logged_in_contact_change_language()) {
+        if (is_language_disabled()) {
             redirect(site_url());
         }
 
-        hooks()->do_action('before_customer_change_language', $lang);
-
-        $this->db->where('userid', get_client_user_id());
-        $this->db->update(db_prefix() . 'clients', ['default_language' => $lang]);
+        set_contact_language($lang);
 
         if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
             redirect($_SERVER['HTTP_REFERER']);

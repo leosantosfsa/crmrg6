@@ -18,6 +18,22 @@ $(document).keyup(function(e) {
 
 $(function() {
 
+    setTimeout(function(){
+        // Remove the left and right resize indicators for gantt
+        $("#gantt .noDrag > g.handle-group").hide();
+
+        // Removes the gantt dragging by bar wrapper
+        var ganttBarWrappers = document.querySelectorAll('.bar-wrapper');
+
+        Array.prototype.forEach.call(ganttBarWrappers, function(el) {
+            el.addEventListener('mousedown', function(e, element) {
+                if($(e.target).closest('.bar-wrapper').hasClass('noDrag')){
+                    event.stopPropagation();
+                }
+            }, true)
+        });
+    }, 1000)
+
     // + button for adding more attachments
     var addMoreAttachmentsInputKey = 1;
     $("body").on('click', '.add_more_attachments', function() {
@@ -323,7 +339,6 @@ function _simple_editor_config() {
             'table advlist codesample autosave' + (!is_mobile() ? ' autoresize ' : ' ') + 'lists link image textcolor media contextmenu paste',
         ],
         toolbar: 'insert formatselect bold forecolor backcolor' + (is_mobile() ? ' | ' : ' ') + 'alignleft aligncenter alignright bullist numlist | restoredraft',
-        contextmenu: "link image imagetools table spellchecker inserttable | cell row column deletetable | paste pastetext",
         insert_button_items: 'image media link codesample',
         toolbar1: ''
     };
@@ -880,19 +895,22 @@ function get_datatable_buttons(table) {
                     var table_api = $(table).DataTable();
                     var columns = table_api.columns().visible();
                     var columns_total = columns.length;
-                    var pdf_widths = [];
                     var total_visible_columns = 0;
+
                     for (i = 0; i < columns_total; i++) {
                         // Is only visible column
                         if (columns[i] == true) {
                             total_visible_columns++;
                         }
                     }
+
                     setTimeout(function() {
                         if (total_visible_columns <= 5) {
+                            var pdf_widths = [];
                             for (i = 0; i < total_visible_columns; i++) {
                                 pdf_widths.push((735 / total_visible_columns));
                             }
+                            alert('test')
                             doc.content[1].table.widths = pdf_widths;
                         }
                     }, 10);
@@ -900,10 +918,17 @@ function get_datatable_buttons(table) {
                     if (app.user_language.toLowerCase() == 'persian' || app.user_language.toLowerCase() == 'arabic') {
                         doc.defaultStyle.font = Object.keys(pdfMake.fonts)[0];
                     }
-                    //  doc.defaultStyle.font = 'test';
+
                     doc.styles.tableHeader.alignment = 'left';
-                    doc.styles.tableHeader.margin = [5, 5, 5, 5];
-                    doc.pageMargins = [12, 12, 12, 12];
+                    doc.defaultStyle.fontSize = 10;
+
+                    doc.styles.tableHeader.fontSize = 10;
+                    doc.styles.tableHeader.margin = [3, 3, 3, 3];
+
+                    doc.styles.tableFooter.fontSize = 10;
+                    doc.styles.tableFooter.margin = [3, 0, 0, 0];
+
+                    doc.pageMargins = [2, 20, 2, 20];
                 }
             }, {
                 extend: 'print',
